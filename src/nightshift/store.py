@@ -120,6 +120,14 @@ class DispatcherStore(
                 WHEN 'cancelled' THEN 'CANCELLED'
                 ELSE state END"""
         )
+        roadmap_columns = {
+            row[1]
+            for row in conn.execute("PRAGMA table_info(roadmap_items)").fetchall()
+        }
+        if "generation" not in roadmap_columns:
+            conn.execute(
+                "ALTER TABLE roadmap_items ADD COLUMN generation INTEGER NOT NULL DEFAULT 1"
+            )
         if requires_pr_added:
             conn.execute(
                 "UPDATE tasks SET requires_pr = 1 WHERE risk_class = 'code_change'"

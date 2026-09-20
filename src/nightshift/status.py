@@ -50,6 +50,9 @@ def operator_snapshot(
     roadmap: Sequence[Mapping[str, Any]],
     *,
     merge_backpressure: bool,
+    builders: Sequence[str] = (),
+    paused: bool = False,
+    draining: bool = False,
 ) -> dict[str, Any]:
     """Build the compact state categories used by status and doctor output."""
 
@@ -88,7 +91,54 @@ def operator_snapshot(
     ceo_review = [
         task_summary(record) for record in records if record.state is TaskState.CEO_REVIEW
     ]
-    next_item = _next_roadmap_item(roadmap)
+    builder_ids = tuple(builders) or tuple(
+        sorted({str(item.get("builder_id")) for item in roadmap})
+    )
+    next_item = _next_roadmap_item(
+        roadmap, merge_backpressure=merge_backpressure
+    )
+    per_builder: dict[str, dict[str, Any]] = {}
+    for builder_id in builder_ids:
+        items = [item for item in roadmap if item.get("builder_id") == builder_id]
+        next_for_builder = _next_roadmap_item(
+            items, merge_backpressure=merge_backpressure
+        )
+        if paused:
+            reason = "dispatcher_paused"
+        elif draining:
+            reason = "dispatcher_draining"
+        elif next_for_builder is not None:
+            reason = "eligible"
+        elif any(
+            item.get("merge_backpressure_blocked")
+            and item.get("status") in {"PENDING", "ENQUEUED"}
+            for item in items
+        ):
+            reason = "merge_backpressure"
+        elif any(
+            (item.get("blocked_reason") or "").startswith("dependency")
+            for item in items
+        ):
+            reason = "dependency_blocked"
+        elif any(item.get("status") == "BLOCKED" for item in items):
+            reason = "blocked"
+        elif any(item.get("status") == "ENQUEUED" for item in items):
+            reason = "task_in_flight"
+        else:
+            reason = "roadmap_exhausted"
+        per_builder[builder_id] = {
+            "next_eligible_task": next_for_builder,
+            "idle_reason": reason,
+            "safe_read_only_work_available": bool(
+                next_for_builder and next_for_builder.get("risk_class") == "read_only"
+            ),
+            "rolling_generation": (
+                next_for_builder.get("generation") if next_for_builder else None
+            ),
+        }
+    safe_read_only_available = any(
+        value["safe_read_only_work_available"] for value in per_builder.values()
+    )
     return {
         "running": running,
         "parked_timeout": parked_timeout,
@@ -97,6 +147,8 @@ def operator_snapshot(
         "awaiting_ceo_review": ceo_review,
         "dead_pid": dead_pid,
         "merge_backpressure": merge_backpressure,
+        "safe_read_only_roadmap_available": safe_read_only_available,
+        "builders": per_builder,
         "intentional_idle": (
             not running
             and not paused_quota
@@ -109,6 +161,8 @@ def operator_snapshot(
 
 def _next_roadmap_item(
     roadmap: Sequence[Mapping[str, Any]],
+    *,
+    merge_backpressure: bool = False,
 ) -> dict[str, Any] | None:
     completed = {
         item.get("item_id")
@@ -118,6 +172,8 @@ def _next_roadmap_item(
     eligible = []
     for item in roadmap:
         if item.get("status") not in {"PENDING", "ENQUEUED"}:
+            continue
+        if merge_backpressure and item.get("merge_backpressure_blocked"):
             continue
         dependencies = item.get("dependency_item_ids", [])
         if any(dependency not in completed for dependency in dependencies):
@@ -138,6 +194,8 @@ def _next_roadmap_item(
         "builder_id": item.get("builder_id"),
         "template_id": item.get("template_id"),
         "status": item.get("status"),
+        "risk_class": item.get("risk_class"),
+        "generation": item.get("generation", 1),
     }
 
 

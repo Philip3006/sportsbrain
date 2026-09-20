@@ -64,10 +64,13 @@ Retry timing is orthogonal metadata, not an extra state. Code-changing work
 must pass the independent verification gate, receive a deterministic commit,
 push only its task branch, and have one real PR before `PR_READY`. Queue-level
 exhaustion is reported as `IDLE_SAFE` or `INTENTIONAL_IDLE` when an explicit
-roadmap has no eligible work. `MERGE_BACKPRESSURE` stops new roadmap selection
-while PRs await CEO review. Unsafe scope, stale worker ownership, or failed
-verification produces `FAILED_SAFE`; CEO authorization and prohibited work
-remain `BLOCKED` and cannot be released by `unblock`.
+roadmap has no eligible work. When the merge-backpressure limit is reached,
+new code-changing or PR-producing roadmap stages are held, while explicitly
+configured `read_only` stages remain eligible. Status reports
+`MERGE_BACKPRESSURE_WITH_READ_ONLY` when that safe work is available. Unsafe
+scope, stale worker ownership, or failed verification produces `FAILED_SAFE`;
+CEO authorization and prohibited work remain `BLOCKED` and cannot be released
+by `unblock`.
 
 Every transition is committed in the same SQLite transaction as its audit
 event. Leases are owned by an explicit worker instance, have an expiry, and
@@ -76,8 +79,13 @@ dead-lettered when the attempt budget is exhausted. A late completion from a
 stale owner is rejected.
 
 Tasks support explicit dependencies, priority, bounded attempts, parent task
-identity, and idempotency keys. A task is not claimable until every dependency
-is `COMPLETED`. `PR_READY` and `CEO_REVIEW` are not dependency satisfaction:
+identity, and idempotency keys. The governed roadmap is a finite rolling
+sequence: each configured item has an explicit `generation`, template, payload,
+and dependency chain. Generation one retains the legacy `roadmap:<item_id>`
+identity; later generations use `roadmap:<item_id>:generation:<N>`. The
+dispatcher never invents a later stage, and restart/concurrent materialization
+is idempotent. A task is not claimable until every dependency is `COMPLETED`.
+`PR_READY` and `CEO_REVIEW` are not dependency satisfaction:
 they represent unmerged work waiting for CEO action. Failed, cancelled,
 blocked, or dead-lettered dependencies block the dependent task rather than
 allowing it to run with incomplete context. Independent roadmap items remain
@@ -197,8 +205,8 @@ path, along with Builder 5 recursion prevention, approval, leases, retry and
 dead-letter behavior, dependency blocking, idempotency, pause, and audit-chain
 integrity. They also cover expected versus unexpected runtime dirtiness,
 control-repository isolation, explicit roadmap selection, bounded debug
-retests, blocker parking/re-eligibility, merge backpressure, and intentional
-idle.
+retests, blocker parking/re-eligibility, risk-aware merge backpressure,
+rolling explicit generations, restart idempotency, and intentional idle.
 
 ## Recovery V2 runtime policy
 
@@ -214,8 +222,9 @@ templates use 3,600 seconds:
 
 The queue policy rejects submissions above 3,600 seconds. The pre-existing
 model hard limit remains 24 hours for schema compatibility, but it is not
-reachable through governed dispatcher submission. Existing database rows are
-not rewritten; a restart is sufficient to load the new defaults.
+reachable through governed dispatcher submission. Existing task rows are not
+rewritten; legacy roadmap rows receive `generation=1` through a safe additive
+schema migration, and a restart is sufficient to load the new defaults.
 
 When a worker returns a timeout, the first occurrence may be retried within
 the task attempt budget. A second identical timeout signature is parked in
@@ -283,8 +292,10 @@ system LaunchDaemon is used.
 
 `status` and `doctor` include sanitized operator categories for running work,
 dead PIDs, parked timeouts, delivery blockers, CEO review, merge backpressure,
-intentional idle, and the next eligible explicit roadmap item. They do not
-print task payloads, credentials, or provider responses.
+intentional idle, and the next eligible explicit roadmap item. Status also
+reports the next generation and idle reason for each Builder, including whether
+safe read-only work remains eligible. They do not print task payloads,
+credentials, or provider responses.
 
 ## AI usage and quota recovery
 

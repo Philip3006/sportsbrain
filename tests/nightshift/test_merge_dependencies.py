@@ -112,9 +112,8 @@ def test_independent_roadmap_item_runs_while_parent_waits(tmp_path: Path) -> Non
 
     selected = dispatcher.select_next_roadmap_task(builder_id="builder-3")
     assert selected is not None
-    assert selected.roadmap_item_id == "roadmap-b3-observability"
-    result = dispatcher.run_once("builder-3", FakeExecutor())
-    assert result is not None and result.state is TaskState.COMPLETED
+    assert selected.roadmap_item_id == "roadmap-b3-integration-1"
+    assert selected.state is TaskState.BACKLOG
 
 
 @pytest.mark.parametrize(

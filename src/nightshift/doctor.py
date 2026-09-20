@@ -13,9 +13,11 @@ from typing import Any
 
 from .errors import ConfigurationError
 from .registry import BuilderRegistry
+from .roadmap import RoadmapRegistry
 from .status import operator_snapshot
 from .store import DispatcherStore
 from .task_states import TaskState
+from .templates import TemplateRegistry
 from .worktree import (
     RuntimeDirtyPolicy,
     WorktreeManager,
@@ -362,19 +364,46 @@ def run_doctor(
     }
     if queue_path.is_file():
         try:
+            directory = config_dir or Path(repo_root) / "config" / "night_shift"
+            configured_roadmap = RoadmapRegistry.from_file(directory / "roadmap.json")
+            templates = TemplateRegistry.from_file(directory / "templates.json")
+            configured_items = {
+                item.item_id: item for item in configured_roadmap.items
+            }
             store = DispatcherStore(queue_path)
             records = store.list_tasks(limit=1000)
             roadmap = store.roadmap_records()
             stats = store.stats()
+            merge_limit = configured_roadmap.merge_backpressure_limit
+            merge_count = (
+                stats["by_state"].get(TaskState.PR_READY.value, 0)
+                + stats["by_state"].get(TaskState.CEO_REVIEW.value, 0)
+            )
+            roadmap_for_status: list[dict[str, Any]] = []
+            for item in roadmap:
+                template = templates.resolve(item["template_id"])
+                configured = configured_items.get(item["item_id"])
+                summary = dict(item)
+                summary["generation"] = item.get(
+                    "generation", configured.generation if configured else 1
+                )
+                summary["risk_class"] = template.risk_class.value
+                read_only = (
+                    template.risk_class.value == "read_only"
+                    and template.requires_pr is not True
+                )
+                summary["merge_backpressure_blocked"] = (
+                    merge_count >= merge_limit and not read_only
+                )
+                roadmap_for_status.append(summary)
             queue_report.update(stats)
             queue_report["operator"] = operator_snapshot(
                 records,
-                roadmap,
-                merge_backpressure=(
-                    stats["by_state"].get(TaskState.PR_READY.value, 0)
-                    + stats["by_state"].get(TaskState.CEO_REVIEW.value, 0)
-                    >= 3
-                ),
+                roadmap_for_status,
+                merge_backpressure=merge_count >= merge_limit,
+                builders=registry_ids,
+                paused=stats["paused"],
+                draining=stats["draining"],
             )
         except Exception as exc:  # noqa: BLE001 - doctor reports, never raises
             queue_report["error"] = type(exc).__name__

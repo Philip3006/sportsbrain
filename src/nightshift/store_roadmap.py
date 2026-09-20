@@ -24,15 +24,17 @@ class StoreRoadmapMixin:
                     """INSERT INTO roadmap_items (
                         item_id, title, builder_id, template_id, payload_json,
                         dependency_item_ids_json, priority, status, next_eligible_at,
-                        debug_budget, repeated_failure_limit, mode, enabled, updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        debug_budget, repeated_failure_limit, mode, enabled, generation,
+                        updated_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ON CONFLICT(item_id) DO UPDATE SET
                         title = excluded.title, builder_id = excluded.builder_id,
                         template_id = excluded.template_id, payload_json = excluded.payload_json,
                         dependency_item_ids_json = excluded.dependency_item_ids_json,
                         priority = excluded.priority, debug_budget = excluded.debug_budget,
                         repeated_failure_limit = excluded.repeated_failure_limit,
-                        mode = excluded.mode, enabled = excluded.enabled, updated_at = excluded.updated_at""",
+                        mode = excluded.mode, enabled = excluded.enabled,
+                        generation = excluded.generation, updated_at = excluded.updated_at""",
                     (
                         item.item_id,
                         item.title,
@@ -47,6 +49,7 @@ class StoreRoadmapMixin:
                         item.repeated_failure_limit,
                         item.mode,
                         int(item.enabled),
+                        item.generation,
                         timestamp,
                     ),
                 )
@@ -73,6 +76,7 @@ class StoreRoadmapMixin:
                 "repeated_failure_limit": row["repeated_failure_limit"],
                 "mode": row["mode"],
                 "enabled": bool(row["enabled"]),
+                "generation": row["generation"] or 1,
                 "updated_at": row["updated_at"],
             }
             for row in rows
