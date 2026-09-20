@@ -195,6 +195,7 @@ class ControlledActivationAuthorization:
     provider_authority: ApprovedProviderResultAuthority
     controlled_shadow_run_id: str
     qualification_session_id: str
+    ceo_shadow_authorization_id: str
     fixture_scope: tuple[str, ...]
     rollback_pointer: str
     authorization_token: str
@@ -219,6 +220,7 @@ class ControlledActivationAuthorization:
             ("signal_time_experiment_id", self.signal_time_experiment_id),
             ("controlled_shadow_run_id", self.controlled_shadow_run_id),
             ("qualification_session_id", self.qualification_session_id),
+            ("ceo_shadow_authorization_id", self.ceo_shadow_authorization_id),
         ):
             _text(value, name)
         for name, value in (

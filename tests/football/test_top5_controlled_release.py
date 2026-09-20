@@ -208,6 +208,7 @@ def _context(tmp_path):
         provider_authority=approved_authority,
         controlled_shadow_run_id=receipt.controlled_shadow_run_id,
         qualification_session_id=receipt.qualification_session_id,
+        ceo_shadow_authorization_id=evidence.five_league_package.dossier.ceo_authorization_id,
         fixture_scope=tuple(item.fixture_key for item in evidence.receipts),
         rollback_pointer=f"safe-disabled:{league}",
         authorization_token="activation-specific-token",
