@@ -1176,6 +1176,10 @@ class Top5DeliveryExecutor:
             raise Top5DeliveryError(
                 "current static/Worker payload digest does not match the canonical snapshot"
             )
+        # Consume the one-time publication capability only after every
+        # pre-mutation target check has passed. A drifted static/Worker target
+        # must not burn the operator authorization or leave a retry without a
+        # valid capability.
         self.capability_consumer.consume(
             attestation,
             capability,
@@ -1205,13 +1209,19 @@ class Top5DeliveryExecutor:
             self.worker_transport.write_signals(plan.worker_payload)
             states.append(TOP5_DELIVERY_WORKER_WRITTEN)
         except (Top5DeliveryError, OSError, RuntimeError, ValueError) as exc:
-            if not self._rollback_static_stage():
+            # A transport may have applied a remote write before surfacing an
+            # error. Restore both targets; a failed restoration is an explicit
+            # rollback-required outcome, never a successful delivery.
+            worker_restored = self._restore_worker(previous_worker)
+            static_rolled_back = self._rollback_static_stage()
+            if not worker_restored or not static_rolled_back:
                 return Top5DeliveryExecutionResult(
                     TOP5_DELIVERY_ROLLBACK_REQUIRED,
                     tuple(states),
                     plan.generation_id,
                     plan.public_product_digest,
-                    "Worker failed and static stage cleanup failed",
+                    "Worker failed and target restoration failed",
+                    worker_restored,
                 )
             return Top5DeliveryExecutionResult(
                 TOP5_DELIVERY_ROLLBACK_SUCCEEDED,
@@ -1219,6 +1229,7 @@ class Top5DeliveryExecutor:
                 plan.generation_id,
                 plan.public_product_digest,
                 str(exc),
+                worker_restored,
             )
         try:
             self.static_transport.commit()

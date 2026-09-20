@@ -98,11 +98,23 @@ def _transports(current):
     )
 
 
-def _execute(static, worker, *, current, artifact, plan, attestation, capability, now=BASE, dry_run=False):
+def _execute(
+    static,
+    worker,
+    *,
+    current,
+    artifact,
+    plan,
+    attestation,
+    capability,
+    now=BASE,
+    dry_run=False,
+    capability_consumer=None,
+):
     return Top5DeliveryExecutor(
         static_transport=static,
         worker_transport=worker,
-        capability_consumer=InMemoryDeliveryCapabilityConsumer(),
+        capability_consumer=capability_consumer or InMemoryDeliveryCapabilityConsumer(),
         clock=lambda: now,
     ).execute(
         artifact=artifact,
@@ -179,6 +191,7 @@ def test_real_execution_requires_capability_consumer_and_current_target_digests(
 
     static, worker = _transports(current)
     static.payload = b"{}"
+    consumer = InMemoryDeliveryCapabilityConsumer()
     with pytest.raises(Top5DeliveryError, match="digest does not match"):
         _execute(
             static,
@@ -188,9 +201,11 @@ def test_real_execution_requires_capability_consumer_and_current_target_digests(
             plan=plan,
             attestation=attestation,
             capability=capability,
+            capability_consumer=consumer,
         )
     assert static.stage_calls == 0
     assert worker.write_calls == 0
+    assert consumer.consume_calls == 0
 
 
 @pytest.mark.parametrize(
@@ -282,6 +297,8 @@ def test_wrong_plan_digest_and_synthetic_artifact_fail_before_mutation():
 def test_worker_failure_rolls_back_static_stage_and_static_failure_never_writes_worker():
     artifact, current, plan, attestation, capability = _context()
     static, worker = _transports(current)
+    previous_static = static.payload
+    previous_worker = worker.payload
     worker.fail_write = True
     result = _execute(
         static,
@@ -293,10 +310,48 @@ def test_worker_failure_rolls_back_static_stage_and_static_failure_never_writes_
         capability=capability,
     )
     assert result.status == TOP5_DELIVERY_ROLLBACK_SUCCEEDED
+    assert result.worker_restored is True
     assert static.staged is None
-    expected = static.payload
-    assert static.payload == expected
-    assert worker.payload == expected
+    assert static.payload == previous_static
+    assert worker.payload == previous_worker
+    assert worker.restore_calls == 1
+
+    static, worker = _transports(current)
+    worker.fail_write = True
+    worker.fail_restore = True
+    result = _execute(
+        static,
+        worker,
+        current=current,
+        artifact=artifact,
+        plan=plan,
+        attestation=attestation,
+        capability=capability,
+    )
+    assert result.status == TOP5_DELIVERY_ROLLBACK_REQUIRED
+    assert result.worker_restored is False
+    assert worker.restore_calls == 1
+
+    class PartialWorkerFailure(InMemoryWorkerDeliveryTransport):
+        def write_signals(self, payload):
+            super().write_signals(payload)
+            raise Top5DeliveryError("Worker write failed after remote apply")
+
+    static, _worker = _transports(current)
+    worker = PartialWorkerFailure(initial_payload=static.payload)
+    result = _execute(
+        static,
+        worker,
+        current=current,
+        artifact=artifact,
+        plan=plan,
+        attestation=attestation,
+        capability=capability,
+    )
+    assert result.status == TOP5_DELIVERY_ROLLBACK_SUCCEEDED
+    assert result.worker_restored is True
+    assert worker.payload == static.payload
+    assert worker.restore_calls == 1
 
     static, worker = _transports(current)
     static.fail_stage = True
