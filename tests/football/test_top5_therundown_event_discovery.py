@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 
 from src.football.odds.therundown import (
+    THERUNDOWN_BASE_URL,
     THERUNDOWN_PROVIDER_NAME,
     THERUNDOWN_VERIFIED_LEAGUE_SPORT_IDS,
 )
@@ -18,6 +19,11 @@ from src.football.top5_builder2_qualification_receipt import (
 )
 from src.football.top5_shadow_provider_redundancy import make_fixture_key
 from src.football.top5_therundown_event_discovery import (
+    B4_QUOTA_PROOF_AFFILIATE_IDS,
+    B4_QUOTA_PROOF_EXECUTION_PHASE,
+    B4_QUOTA_PROOF_MAX_DATAPOINTS,
+    B4_QUOTA_PROOF_PACKAGE_SCHEMA_VERSION,
+    B4_QUOTA_PROOF_SCHEMA_VERSION,
     DISCOVERY_LEAGUE_ORDER,
     EventDiscoveryContractError,
     EventDiscoveryExecutionBlocked,
@@ -86,33 +92,135 @@ def _target(league: str, index: int) -> TheRundownEventDiscoveryTargetV1:
     )
 
 
+def _payload_digest(value: object) -> str:
+    import hashlib
+
+    return hashlib.sha256(
+        json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+
+
 def _install_proof(
     *,
     remaining_datapoints: int = 550,
     finished_at: datetime = NOW - timedelta(minutes=1),
     quota_reset_at: datetime = NOW + timedelta(hours=1),
     response_digest: str = "b" * 64,
-) -> TheRundownB4QuotaProofV1:
-    proof = TheRundownB4QuotaProofV1(
-        quota_proof_id="b4-quota-proof-20260921",
-        quota_proof_authorization_id="ceo-quota-proof-20260921",
-        provider=THERUNDOWN_PROVIDER_NAME,
-        account_scope="therundown-account-test",
-        remaining_datapoints=remaining_datapoints,
-        observed_at=finished_at - timedelta(seconds=5),
-        finished_at=finished_at,
-        quota_reset_at=quota_reset_at,
-        response_digest=response_digest,
-        provenance_source="b4-quota-proof-test",
-        evidence_digest="0" * 64,
+) -> TheRundownB4QuotaProofV1 | None:
+    proof_id = "b4-quota-proof-20260921"
+    authorization_id = "ceo-quota-proof-20260921"
+    provider_event_id = "proof-event-20260921"
+    authorization_package_digest = "a" * 64
+    configuration_digest = "c" * 64
+    proof_target_source_digest = "f" * 64
+    response_started_at = finished_at - timedelta(seconds=1)
+    quota_used_datapoints = 1000 - remaining_datapoints
+    request_shape_digest = _payload_digest(
+        {
+            "method": "GET",
+            "endpoint": f"{THERUNDOWN_BASE_URL}/events/{provider_event_id}",
+            "query": {
+                "affiliate_ids": ",".join(B4_QUOTA_PROOF_AFFILIATE_IDS),
+                "hide_closed": "true",
+                "main_line": "true",
+                "market_ids": "1",
+            },
+        }
     )
-    payload = {
-        **proof._payload_without_digest(),
-        "evidence_digest": proof.computed_evidence_digest,
+    proof_payload = {
+        "schema_version": B4_QUOTA_PROOF_SCHEMA_VERSION,
+        "execution_phase": B4_QUOTA_PROOF_EXECUTION_PHASE,
+        "proof_id": proof_id,
+        "provider": THERUNDOWN_PROVIDER_NAME,
+        "account_scope": "therundown-account-test",
+        "authorization_package_digest": authorization_package_digest,
+        "configuration_digest": configuration_digest,
+        "authorization_id": authorization_id,
+        "controlled_shadow_run_id": "quota-proof-only",
+        "qualification_session_id": "quota-proof-only",
+        "ceo_authorization_identity": "ceo-proof-20260921",
+        "request_shape_digest": request_shape_digest,
+        "credential_binding_digest": "e" * 64,
+        "request_started_at": response_started_at.isoformat(),
+        "response_finished_at": finished_at.isoformat(),
+        "billed_datapoints": B4_QUOTA_PROOF_MAX_DATAPOINTS,
+        "remaining_datapoints": remaining_datapoints,
+        "quota_used_datapoints": quota_used_datapoints,
+        "quota_limit_datapoints": 1000,
+        "quota_period": "daily",
+        "quota_reset_at": quota_reset_at.isoformat(),
+        "raw_header_evidence": {
+            "x-datapoints": str(B4_QUOTA_PROOF_MAX_DATAPOINTS),
+            "x-datapoints-used": str(quota_used_datapoints),
+            "x-datapoints-remaining": str(remaining_datapoints),
+            "x-datapoints-limit": "1000",
+            "x-datapoints-period": "daily",
+            "x-datapoints-reset": quota_reset_at.isoformat(),
+            "x-tier": "free",
+            "x-rate-limit": "1",
+            "x-data-delay-seconds": "0",
+        },
+        "response_digest": response_digest,
+        "status_code": 200,
+        "request_count": 1,
+        "retry_count": 0,
+        "no_retry": True,
+        "proof_target_source_digest": proof_target_source_digest,
+    }
+    proof_payload["evidence_digest"] = _payload_digest(proof_payload)
+    package = {
+        "schema_version": B4_QUOTA_PROOF_PACKAGE_SCHEMA_VERSION,
+        "execution_phase": B4_QUOTA_PROOF_EXECUTION_PHASE,
+        "proof": proof_payload,
+        "request": {
+            "proof_id": proof_id,
+            "provider": THERUNDOWN_PROVIDER_NAME,
+            "provider_event_id": provider_event_id,
+            "authorization_package_digest": authorization_package_digest,
+            "configuration_digest": configuration_digest,
+            "authorization_id": authorization_id,
+            "controlled_shadow_run_id": "quota-proof-only",
+            "qualification_session_id": "quota-proof-only",
+            "ceo_authorization_identity": "ceo-proof-20260921",
+            "adapter_version": "therundown-v2-experimental:2",
+            "adapter_source_sha": "a" * 40,
+            "endpoint": f"{THERUNDOWN_BASE_URL}/events/{provider_event_id}",
+            "query": {
+                "affiliate_ids": ",".join(B4_QUOTA_PROOF_AFFILIATE_IDS),
+                "hide_closed": "true",
+                "main_line": "true",
+                "market_ids": "1",
+            },
+            "request_shape_digest": request_shape_digest,
+            "proof_target_source_digest": proof_target_source_digest,
+            "maximum_datapoints": B4_QUOTA_PROOF_MAX_DATAPOINTS,
+            "request_count": 1,
+            "retry_count": 0,
+        },
+        "spend_control": {
+            "provider": THERUNDOWN_PROVIDER_NAME,
+            "evidence_kind": "provider_response_headers",
+            "account_tier": "free",
+            "overage_exposure": "none",
+            "observed_at": finished_at.isoformat(),
+            "digest": "d" * 64,
+        },
+        "safety": {
+            "five_league_requests": 0,
+            "receipt_issued": False,
+            "authority_changed": False,
+            "activation": False,
+            "publication": False,
+            "betting": False,
+            "monetary_spend_authorized": False,
+        },
     }
     b4_quota_proof_state_path().parent.mkdir(parents=True, exist_ok=True)
-    b4_quota_proof_state_path().write_text(json.dumps(payload))
-    return replace(proof, evidence_digest=proof.computed_evidence_digest)
+    b4_quota_proof_state_path().write_text(json.dumps(package))
+    try:
+        return TheRundownB4QuotaProofV1.from_package(package, now=NOW)
+    except EventDiscoveryContractError:
+        return None
 
 
 def _authorization() -> TheRundownEventDiscoveryAuthorizationV1:
@@ -128,14 +236,14 @@ def _authorization() -> TheRundownEventDiscoveryAuthorizationV1:
         adapter_version="therundown-v2-experimental:2",
         adapter_source_sha="a" * 40,
         request_shape_digest=discovery_request_shape_digest(targets),
-        quota_proof_id=proof.quota_proof_id,
-        quota_proof_authorization_id=proof.quota_proof_authorization_id,
+        quota_proof_id=proof.proof_id,
+        quota_proof_authorization_id=proof.authorization_id,
         quota_proof_evidence_digest=proof.evidence_digest,
         quota_proof_response_digest=proof.response_digest,
         quota_proof_account_scope=proof.account_scope,
         quota_proof_remaining_datapoints=proof.remaining_datapoints,
-        quota_proof_observed_at=proof.observed_at,
-        quota_proof_finished_at=proof.finished_at,
+        quota_proof_observed_at=proof.response_started_at,
+        quota_proof_finished_at=proof.response_finished_at,
         quota_proof_reset_at=proof.quota_reset_at,
         issued_at=NOW - timedelta(minutes=5),
         expires_at=NOW + timedelta(hours=1),
@@ -480,6 +588,123 @@ def test_missing_canonical_quota_proof_blocks_before_request():
     assert transport.calls == []
 
 
+def test_unmodified_pr144_package_shape_loads_directly():
+    _authorization()
+    proof = TheRundownB4QuotaProofV1.load_canonical(now=NOW)
+    assert proof.proof_id == "b4-quota-proof-20260921"
+    assert proof.authorization_id == "ceo-quota-proof-20260921"
+    assert proof.remaining_datapoints == 550
+    assert proof.response_digest == "b" * 64
+    assert len(proof.evidence_digest) == 64
+
+
+@pytest.mark.parametrize(
+    "mutator, message",
+    [
+        (
+            lambda package: package.update(
+                schema_version="top5-therundown-b4-quota-proof-v1"
+            ),
+            "package schema",
+        ),
+        (lambda package: package.pop("proof"), "proof is missing"),
+        (
+            lambda package: package["proof"].update(
+                schema_version="top5-therundown-b4-quota-proof-v0"
+            ),
+            "nested B4 quota proof schema",
+        ),
+    ],
+    ids=["outer-wrong-schema", "missing-proof", "nested-wrong-schema"],
+)
+def test_pr144_package_shape_mismatches_fail_before_transport(mutator, message):
+    authorization = _authorization()
+    package = json.loads(b4_quota_proof_state_path().read_text())
+    mutator(package)
+    b4_quota_proof_state_path().write_text(json.dumps(package))
+    transport = FakeDiscoveryTransport([])
+
+    with pytest.raises(EventDiscoveryContractError, match=message):
+        discover_five_league_events(authorization, transport=transport, now=NOW)
+    assert transport.calls == []
+
+
+def test_pr144_response_digest_tamper_fails_against_direct_nested_binding():
+    authorization = _authorization()
+    _install_proof(response_digest="c" * 64)
+    transport = FakeDiscoveryTransport([])
+
+    with pytest.raises(EventDiscoveryExecutionBlocked, match="binding mismatch"):
+        discover_five_league_events(authorization, transport=transport, now=NOW)
+    assert transport.calls == []
+
+
+def test_remaining_550_is_accepted_from_nested_proof():
+    authorization = _authorization()
+    transport = FakeDiscoveryTransport(
+        [_response(target) for target in authorization.targets]
+    )
+    evidence = discover_five_league_events(authorization, transport=transport, now=NOW)
+    assert len(evidence) == 5
+    assert len(transport.calls) == 5
+
+
+@pytest.mark.parametrize(
+    "field, value",
+    [
+        ("account_scope", "attacker-account"),
+        ("authorization_id", "attacker-proof-authorization"),
+    ],
+    ids=["account-scope", "proof-authorization-id"],
+)
+def test_nested_identity_alteration_fails_against_authorization_binding(field, value):
+    authorization = _authorization()
+    package = json.loads(b4_quota_proof_state_path().read_text())
+    package["proof"][field] = value
+    proof_without_digest = {
+        key: item for key, item in package["proof"].items() if key != "evidence_digest"
+    }
+    package["proof"]["evidence_digest"] = _payload_digest(proof_without_digest)
+    b4_quota_proof_state_path().write_text(json.dumps(package))
+    transport = FakeDiscoveryTransport([])
+
+    with pytest.raises(EventDiscoveryExecutionBlocked, match="binding mismatch"):
+        discover_five_league_events(authorization, transport=transport, now=NOW)
+    assert transport.calls == []
+
+
+def test_package_safety_metadata_cannot_grant_discovery_authority():
+    authorization = _authorization()
+    package = json.loads(b4_quota_proof_state_path().read_text())
+    package["safety"]["authority_changed"] = True
+    b4_quota_proof_state_path().write_text(json.dumps(package))
+    transport = FakeDiscoveryTransport([])
+
+    with pytest.raises(EventDiscoveryExecutionBlocked, match="safety metadata"):
+        discover_five_league_events(authorization, transport=transport, now=NOW)
+    assert transport.calls == []
+    assert authorization.production_authority is False
+    assert authorization.activation is False
+
+
+def test_flat_proof_alias_is_not_an_accepted_canonical_artifact():
+    authorization = _authorization()
+    b4_quota_proof_state_path().write_text(
+        json.dumps(
+            {
+                "schema_version": B4_QUOTA_PROOF_SCHEMA_VERSION,
+                "proof_id": "flat-proof",
+                "remaining_datapoints": 550,
+            }
+        )
+    )
+    transport = FakeDiscoveryTransport([])
+
+    with pytest.raises(EventDiscoveryContractError, match="unsupported.*schema"):
+        discover_five_league_events(authorization, transport=transport, now=NOW)
+    assert transport.calls == []
+
+
 def test_stale_or_reset_expired_quota_proof_blocks_before_request():
     authorization = _authorization()
     _install_proof(finished_at=NOW - timedelta(seconds=301))
@@ -505,10 +730,9 @@ def test_altered_quota_proof_digests_and_binding_fail_before_request():
     assert transport.calls == []
 
     authorization = _authorization()
-    proof = _install_proof()
-    payload = proof.as_payload()
-    payload["evidence_digest"] = "f" * 64
-    b4_quota_proof_state_path().write_text(json.dumps(payload))
+    package = json.loads(b4_quota_proof_state_path().read_text())
+    package["proof"]["evidence_digest"] = "f" * 64
+    b4_quota_proof_state_path().write_text(json.dumps(package))
     transport = FakeDiscoveryTransport([])
     with pytest.raises(EventDiscoveryContractError, match="digest mismatch"):
         discover_five_league_events(authorization, transport=transport, now=NOW)

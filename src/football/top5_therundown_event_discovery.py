@@ -62,7 +62,11 @@ DISCOVERY_LEAGUE_ORDER = ("EPL", "BL1", "LL", "SA", "L1")
 DISCOVERY_KICKOFF_TOLERANCE_SECONDS = 60
 DISCOVERY_MINIMUM_COMBINED_HEADROOM = 550
 DISCOVERY_QUOTA_PROOF_MAX_AGE_SECONDS = 300
-B4_QUOTA_PROOF_SCHEMA_VERSION = "top5-therundown-b4-quota-proof-v1"
+B4_QUOTA_PROOF_PACKAGE_SCHEMA_VERSION = "top5-therundown-quota-proof-package-v1"
+B4_QUOTA_PROOF_SCHEMA_VERSION = "top5-therundown-quota-proof-v1"
+B4_QUOTA_PROOF_EXECUTION_PHASE = "quota_proof"
+B4_QUOTA_PROOF_MAX_DATAPOINTS = THERUNDOWN_OBSERVED_DATAPOINTS_PER_REQUEST
+B4_QUOTA_PROOF_AFFILIATE_IDS = ("19", "22", "23")
 DISCOVERY_CONSUMPTION_SCHEMA_VERSION = (
     "top5-therundown-provider-event-discovery-consumption-v1"
 )
@@ -184,45 +188,401 @@ def _digest(value: object) -> str:
 
 @dataclass(frozen=True)
 class TheRundownB4QuotaProofV1:
-    """Canonical, external B4 proof required before discovery request one."""
+    """Validated normalized access to the real PR-144 nested proof."""
 
-    quota_proof_id: str
-    quota_proof_authorization_id: str
+    proof_id: str
+    authorization_id: str
     provider: str
     account_scope: str
     remaining_datapoints: int
-    observed_at: datetime
-    finished_at: datetime
+    response_started_at: datetime
+    response_finished_at: datetime
     quota_reset_at: datetime
     response_digest: str
-    provenance_source: str
     evidence_digest: str
-    schema_version: str = B4_QUOTA_PROOF_SCHEMA_VERSION
+    request_shape_digest: str
 
-    def _payload_without_digest(self) -> dict[str, object]:
-        return {
-            "schema_version": self.schema_version,
-            "quota_proof_id": self.quota_proof_id,
-            "quota_proof_authorization_id": self.quota_proof_authorization_id,
-            "provider": self.provider,
-            "account_scope": self.account_scope,
-            "remaining_datapoints": self.remaining_datapoints,
-            "observed_at": _utc_datetime(
-                self.observed_at, "quota observed_at"
-            ).isoformat(),
-            "finished_at": _utc_datetime(
-                self.finished_at, "quota finished_at"
-            ).isoformat(),
-            "quota_reset_at": _utc_datetime(
-                self.quota_reset_at, "quota reset_at"
-            ).isoformat(),
-            "response_digest": self.response_digest,
-            "provenance_source": self.provenance_source,
+    @staticmethod
+    def _timestamp(raw: Mapping[str, object], name: str) -> datetime:
+        value = raw.get(name)
+        if not isinstance(value, str):
+            raise EventDiscoveryContractError(f"quota proof {name} is invalid")
+        return _utc_datetime(value, f"quota proof {name}")
+
+    @classmethod
+    def _validate_package(
+        cls, package: object, *, now: datetime
+    ) -> Mapping[str, object]:
+        if not isinstance(package, Mapping):
+            raise EventDiscoveryContractError(
+                "B4 quota proof package must be an object"
+            )
+        if package.get("schema_version") != B4_QUOTA_PROOF_PACKAGE_SCHEMA_VERSION:
+            raise EventDiscoveryContractError(
+                "unsupported B4 quota proof package schema"
+            )
+        if package.get("execution_phase") != B4_QUOTA_PROOF_EXECUTION_PHASE:
+            raise EventDiscoveryExecutionBlocked(
+                "B4 quota proof package execution phase is invalid"
+            )
+        if "proof" not in package:
+            raise EventDiscoveryContractError("B4 quota proof package proof is missing")
+        if set(package) != {
+            "schema_version",
+            "execution_phase",
+            "proof",
+            "request",
+            "spend_control",
+            "safety",
+        }:
+            raise EventDiscoveryContractError(
+                "B4 quota proof package shape is not the PR-144 format"
+            )
+        proof = package.get("proof")
+        request = package.get("request")
+        spend_control = package.get("spend_control")
+        safety = package.get("safety")
+        if not isinstance(proof, Mapping):
+            raise EventDiscoveryContractError("B4 quota proof package proof is missing")
+        if not isinstance(request, Mapping):
+            raise EventDiscoveryContractError(
+                "B4 quota proof package request is missing"
+            )
+        if not isinstance(spend_control, Mapping):
+            raise EventDiscoveryContractError(
+                "B4 quota proof package spend control is invalid"
+            )
+        if not isinstance(safety, Mapping):
+            raise EventDiscoveryContractError(
+                "B4 quota proof package safety is invalid"
+            )
+        if dict(safety) != {
+            "five_league_requests": 0,
+            "receipt_issued": False,
+            "authority_changed": False,
+            "activation": False,
+            "publication": False,
+            "betting": False,
+            "monetary_spend_authorized": False,
+        }:
+            raise EventDiscoveryExecutionBlocked(
+                "B4 quota proof package safety metadata is unsafe"
+            )
+        cls._validate_nested_proof(proof, request, now=now)
+        return proof
+
+    @classmethod
+    def _validate_nested_proof(
+        cls,
+        proof: Mapping[str, object],
+        request: Mapping[str, object],
+        *,
+        now: datetime,
+    ) -> None:
+        proof_keys = {
+            "schema_version",
+            "execution_phase",
+            "proof_id",
+            "provider",
+            "account_scope",
+            "authorization_package_digest",
+            "configuration_digest",
+            "authorization_id",
+            "controlled_shadow_run_id",
+            "qualification_session_id",
+            "ceo_authorization_identity",
+            "request_shape_digest",
+            "credential_binding_digest",
+            "request_started_at",
+            "response_finished_at",
+            "billed_datapoints",
+            "remaining_datapoints",
+            "quota_used_datapoints",
+            "quota_limit_datapoints",
+            "quota_period",
+            "quota_reset_at",
+            "raw_header_evidence",
+            "response_digest",
+            "evidence_digest",
+            "status_code",
+            "request_count",
+            "retry_count",
+            "no_retry",
+            "proof_target_source_digest",
         }
+        if set(proof) != proof_keys:
+            raise EventDiscoveryContractError(
+                "B4 nested proof shape is not the PR-144 format"
+            )
+        if proof.get("schema_version") != B4_QUOTA_PROOF_SCHEMA_VERSION:
+            raise EventDiscoveryContractError(
+                "unsupported nested B4 quota proof schema"
+            )
+        if proof.get("execution_phase") != B4_QUOTA_PROOF_EXECUTION_PHASE:
+            raise EventDiscoveryExecutionBlocked(
+                "nested B4 quota proof execution phase is invalid"
+            )
+        if proof.get("provider") != THERUNDOWN_PROVIDER_NAME:
+            raise EventDiscoveryExecutionBlocked("B4 quota proof provider is invalid")
+        for name in (
+            "proof_id",
+            "account_scope",
+            "authorization_id",
+            "controlled_shadow_run_id",
+            "qualification_session_id",
+            "ceo_authorization_identity",
+        ):
+            _text(proof.get(name), f"quota proof {name}")
+        for name in (
+            "authorization_package_digest",
+            "configuration_digest",
+            "request_shape_digest",
+            "credential_binding_digest",
+            "response_digest",
+            "evidence_digest",
+        ):
+            _sha(proof.get(name), f"quota proof {name}")
+        target_digest = proof.get("proof_target_source_digest")
+        if target_digest:
+            _sha(target_digest, "quota proof proof_target_source_digest")
+        for name in (
+            "request_started_at",
+            "response_finished_at",
+            "quota_reset_at",
+        ):
+            cls._timestamp(proof, name)
+        started = cls._timestamp(proof, "request_started_at")
+        finished = cls._timestamp(proof, "response_finished_at")
+        reset = cls._timestamp(proof, "quota_reset_at")
+        current = _utc_datetime(now, "quota proof validation now")
+        if finished < started or finished > current:
+            raise EventDiscoveryExecutionBlocked(
+                "quota proof response timestamps are invalid"
+            )
+        if (current - finished).total_seconds() > DISCOVERY_QUOTA_PROOF_MAX_AGE_SECONDS:
+            raise EventDiscoveryExecutionBlocked("quota proof response is stale")
+        if reset <= finished:
+            raise EventDiscoveryExecutionBlocked(
+                "quota proof rate-limit reset period is no longer valid"
+            )
+        int_fields = (
+            "billed_datapoints",
+            "remaining_datapoints",
+            "quota_used_datapoints",
+            "quota_limit_datapoints",
+            "status_code",
+            "request_count",
+            "retry_count",
+        )
+        for name in int_fields:
+            value = proof.get(name)
+            if not isinstance(value, int) or isinstance(value, bool):
+                raise EventDiscoveryContractError(f"quota proof {name} is invalid")
+        if proof["remaining_datapoints"] < DISCOVERY_MINIMUM_COMBINED_HEADROOM:
+            raise EventDiscoveryExecutionBlocked(
+                "TOP5_PROVIDER_EVENT_ID_DISCOVERY — INSUFFICIENT_COMBINED_HEADROOM"
+            )
+        if not 200 <= proof["status_code"] < 300:
+            raise EventDiscoveryExecutionBlocked("quota proof HTTP response is invalid")
+        if not 0 < proof["billed_datapoints"] <= B4_QUOTA_PROOF_MAX_DATAPOINTS:
+            raise EventDiscoveryExecutionBlocked(
+                "quota proof billed datapoints exceed the per-request cap"
+            )
+        if proof["quota_limit_datapoints"] <= 0:
+            raise EventDiscoveryExecutionBlocked("quota proof quota limit is invalid")
+        if (
+            proof["quota_used_datapoints"] + proof["remaining_datapoints"]
+            != proof["quota_limit_datapoints"]
+            or proof["billed_datapoints"] > proof["quota_used_datapoints"]
+        ):
+            raise EventDiscoveryExecutionBlocked("quota proof quota headers contradict")
+        if proof["quota_period"] not in {"daily", "weekly", "monthly"}:
+            raise EventDiscoveryExecutionBlocked("quota proof period is unsupported")
+        if (
+            proof["request_count"] != 1
+            or proof["retry_count"] != 0
+            or proof.get("no_retry") is not True
+        ):
+            raise EventDiscoveryExecutionBlocked(
+                "quota proof must be exactly one request with zero retries"
+            )
+        headers = proof.get("raw_header_evidence")
+        if not isinstance(headers, Mapping):
+            raise EventDiscoveryContractError("quota proof raw headers are invalid")
+        required_headers = {
+            "x-datapoints",
+            "x-datapoints-used",
+            "x-datapoints-remaining",
+            "x-datapoints-limit",
+            "x-datapoints-period",
+            "x-datapoints-reset",
+            "x-tier",
+            "x-rate-limit",
+            "x-data-delay-seconds",
+        }
+        if not required_headers.issubset({str(key).casefold() for key in headers}):
+            raise EventDiscoveryExecutionBlocked(
+                "quota proof billing/rate/tier evidence is incomplete"
+            )
+        lowered_headers = {
+            str(key).casefold(): str(value).strip() for key, value in headers.items()
+        }
+        for name, expected in (
+            ("x-datapoints", proof["billed_datapoints"]),
+            ("x-datapoints-used", proof["quota_used_datapoints"]),
+            ("x-datapoints-remaining", proof["remaining_datapoints"]),
+            ("x-datapoints-limit", proof["quota_limit_datapoints"]),
+        ):
+            try:
+                actual = int(lowered_headers[name])
+            except (KeyError, ValueError) as exc:
+                raise EventDiscoveryContractError(
+                    f"quota proof header {name} is invalid"
+                ) from exc
+            if actual != expected:
+                raise EventDiscoveryExecutionBlocked(
+                    f"quota proof header {name} does not match evidence"
+                )
+        if lowered_headers["x-datapoints-period"] != proof["quota_period"]:
+            raise EventDiscoveryExecutionBlocked(
+                "quota proof period header does not match"
+            )
+        if lowered_headers["x-tier"].casefold() != "free":
+            raise EventDiscoveryExecutionBlocked("quota proof tier is not approved")
+        for name in ("x-rate-limit", "x-data-delay-seconds"):
+            try:
+                if int(lowered_headers[name]) < 0:
+                    raise ValueError
+            except (KeyError, ValueError) as exc:
+                raise EventDiscoveryContractError(
+                    f"quota proof header {name} is invalid"
+                ) from exc
+        if (
+            _utc_datetime(
+                lowered_headers["x-datapoints-reset"], "quota proof header reset"
+            )
+            != reset
+        ):
+            raise EventDiscoveryExecutionBlocked(
+                "quota proof reset header does not match evidence"
+            )
+        if proof["evidence_digest"].lower() != _digest(
+            {key: value for key, value in proof.items() if key != "evidence_digest"}
+        ):
+            raise EventDiscoveryContractError("quota proof evidence digest mismatch")
 
-    @property
-    def computed_evidence_digest(self) -> str:
-        return _digest(self._payload_without_digest())
+        request_keys = {
+            "proof_id",
+            "provider",
+            "provider_event_id",
+            "authorization_package_digest",
+            "configuration_digest",
+            "authorization_id",
+            "controlled_shadow_run_id",
+            "qualification_session_id",
+            "ceo_authorization_identity",
+            "adapter_version",
+            "adapter_source_sha",
+            "endpoint",
+            "query",
+            "request_shape_digest",
+            "proof_target_source_digest",
+            "maximum_datapoints",
+            "request_count",
+            "retry_count",
+        }
+        if set(request) != request_keys:
+            raise EventDiscoveryContractError(
+                "B4 quota proof request shape is not the PR-144 format"
+            )
+        for name in (
+            "proof_id",
+            "provider_event_id",
+            "authorization_package_digest",
+            "configuration_digest",
+            "authorization_id",
+            "controlled_shadow_run_id",
+            "qualification_session_id",
+            "ceo_authorization_identity",
+            "adapter_version",
+            "adapter_source_sha",
+            "request_shape_digest",
+        ):
+            _text(request.get(name), f"quota proof request {name}")
+        for name in (
+            "authorization_package_digest",
+            "configuration_digest",
+            "adapter_source_sha",
+            "request_shape_digest",
+        ):
+            _sha(request.get(name), f"quota proof request {name}")
+        if request.get("provider") != THERUNDOWN_PROVIDER_NAME:
+            raise EventDiscoveryExecutionBlocked(
+                "quota proof request provider is invalid"
+            )
+        for name in (
+            "proof_id",
+            "provider",
+            "authorization_package_digest",
+            "configuration_digest",
+            "authorization_id",
+            "controlled_shadow_run_id",
+            "qualification_session_id",
+            "ceo_authorization_identity",
+            "request_shape_digest",
+            "proof_target_source_digest",
+        ):
+            if request.get(name) != proof.get(name):
+                raise EventDiscoveryExecutionBlocked(
+                    f"quota proof request binding mismatch: {name}"
+                )
+        if request.get("endpoint") != (
+            f"{THERUNDOWN_BASE_URL}/events/{request['provider_event_id']}"
+        ):
+            raise EventDiscoveryExecutionBlocked("quota proof endpoint is invalid")
+        expected_query = {
+            "affiliate_ids": ",".join(B4_QUOTA_PROOF_AFFILIATE_IDS),
+            "hide_closed": "true",
+            "main_line": "true",
+            "market_ids": "1",
+        }
+        if request.get("query") != expected_query:
+            raise EventDiscoveryExecutionBlocked("quota proof request query is invalid")
+        if request["request_shape_digest"] != _digest(
+            {
+                "method": "GET",
+                "endpoint": request["endpoint"],
+                "query": expected_query,
+            }
+        ):
+            raise EventDiscoveryExecutionBlocked("quota proof request shape is invalid")
+        if (
+            request["maximum_datapoints"] != B4_QUOTA_PROOF_MAX_DATAPOINTS
+            or request["request_count"] != 1
+            or request["retry_count"] != 0
+        ):
+            raise EventDiscoveryExecutionBlocked(
+                "quota proof request limits are invalid"
+            )
+
+    @classmethod
+    def from_package(
+        cls, package: object, *, now: datetime
+    ) -> TheRundownB4QuotaProofV1:
+        proof = cls._validate_package(package, now=now)
+        return cls(
+            proof_id=proof["proof_id"],
+            authorization_id=proof["authorization_id"],
+            provider=proof["provider"],
+            account_scope=proof["account_scope"],
+            remaining_datapoints=proof["remaining_datapoints"],
+            response_started_at=cls._timestamp(proof, "request_started_at"),
+            response_finished_at=cls._timestamp(proof, "response_finished_at"),
+            quota_reset_at=cls._timestamp(proof, "quota_reset_at"),
+            response_digest=proof["response_digest"],
+            evidence_digest=proof["evidence_digest"],
+            request_shape_digest=proof["request_shape_digest"],
+        )
 
     def validate(
         self,
@@ -230,13 +590,10 @@ class TheRundownB4QuotaProofV1:
         now: datetime,
         maximum_age_seconds: int = DISCOVERY_QUOTA_PROOF_MAX_AGE_SECONDS,
     ) -> None:
-        if self.schema_version != B4_QUOTA_PROOF_SCHEMA_VERSION:
-            raise EventDiscoveryContractError("unsupported B4 quota-proof schema")
         for name, value in (
-            ("quota_proof_id", self.quota_proof_id),
-            ("quota_proof_authorization_id", self.quota_proof_authorization_id),
+            ("proof_id", self.proof_id),
+            ("authorization_id", self.authorization_id),
             ("account_scope", self.account_scope),
-            ("provenance_source", self.provenance_source),
         ):
             _text(value, name)
         if self.provider != THERUNDOWN_PROVIDER_NAME:
@@ -251,11 +608,15 @@ class TheRundownB4QuotaProofV1:
             )
         _sha(self.response_digest, "quota proof response_digest")
         _sha(self.evidence_digest, "quota proof evidence_digest")
-        observed = _utc_datetime(self.observed_at, "quota observed_at")
-        finished = _utc_datetime(self.finished_at, "quota finished_at")
+        started = _utc_datetime(
+            self.response_started_at, "quota proof request_started_at"
+        )
+        finished = _utc_datetime(
+            self.response_finished_at, "quota proof response_finished_at"
+        )
         reset = _utc_datetime(self.quota_reset_at, "quota reset_at")
         current = _utc_datetime(now, "quota proof validation now")
-        if observed > finished:
+        if started > finished:
             raise EventDiscoveryContractError("quota proof timestamps are not ordered")
         if finished > current:
             raise EventDiscoveryExecutionBlocked("quota proof is from the future")
@@ -265,47 +626,6 @@ class TheRundownB4QuotaProofV1:
             raise EventDiscoveryExecutionBlocked(
                 "quota proof rate-limit reset period is no longer valid"
             )
-        if self.evidence_digest.lower() != self.computed_evidence_digest:
-            raise EventDiscoveryContractError("quota proof evidence digest mismatch")
-
-    def as_payload(self) -> dict[str, object]:
-        self.validate(now=self.finished_at, maximum_age_seconds=2**31 - 1)
-        return {
-            **self._payload_without_digest(),
-            "evidence_digest": self.evidence_digest,
-        }
-
-    @classmethod
-    def from_payload(cls, raw: object) -> TheRundownB4QuotaProofV1:
-        if not isinstance(raw, Mapping):
-            raise EventDiscoveryContractError("B4 quota proof must be an object")
-
-        def timestamp(name: str) -> datetime:
-            try:
-                return datetime.fromisoformat(
-                    str(raw.get(name, "")).replace("Z", "+00:00")
-                )
-            except (TypeError, ValueError) as exc:
-                raise EventDiscoveryContractError(
-                    f"quota proof {name} is invalid"
-                ) from exc
-
-        return cls(
-            quota_proof_id=str(raw.get("quota_proof_id", "")),
-            quota_proof_authorization_id=str(
-                raw.get("quota_proof_authorization_id", "")
-            ),
-            provider=str(raw.get("provider", "")),
-            account_scope=str(raw.get("account_scope", "")),
-            remaining_datapoints=raw.get("remaining_datapoints", 0),  # type: ignore[arg-type]
-            observed_at=timestamp("observed_at"),
-            finished_at=timestamp("finished_at"),
-            quota_reset_at=timestamp("quota_reset_at"),
-            response_digest=str(raw.get("response_digest", "")),
-            provenance_source=str(raw.get("provenance_source", "")),
-            evidence_digest=str(raw.get("evidence_digest", "")),
-            schema_version=str(raw.get("schema_version", "")),
-        )
 
     @classmethod
     def load_canonical(cls, *, now: datetime) -> TheRundownB4QuotaProofV1:
@@ -320,9 +640,7 @@ class TheRundownB4QuotaProofV1:
             raise EventDiscoveryExecutionBlocked(
                 "canonical B4 quota proof is invalid"
             ) from exc
-        proof = cls.from_payload(raw)
-        proof.validate(now=now)
-        return proof
+        return cls.from_package(raw, now=now)
 
 
 def _team_key(value: object) -> str:
@@ -629,11 +947,11 @@ class TheRundownEventDiscoveryAuthorizationV1:
         self.validate(now=now)
         proof.validate(now=now)
         for name, actual, expected in (
-            ("quota_proof_id", self.quota_proof_id, proof.quota_proof_id),
+            ("quota_proof_id", self.quota_proof_id, proof.proof_id),
             (
                 "quota_proof_authorization_id",
                 self.quota_proof_authorization_id,
-                proof.quota_proof_authorization_id,
+                proof.authorization_id,
             ),
             (
                 "quota_proof_evidence_digest",
@@ -658,12 +976,12 @@ class TheRundownEventDiscoveryAuthorizationV1:
             (
                 "quota_proof_observed_at",
                 _utc_datetime(self.quota_proof_observed_at, "quota_proof_observed_at"),
-                _utc_datetime(proof.observed_at, "proof observed_at"),
+                _utc_datetime(proof.response_started_at, "proof request_started_at"),
             ),
             (
                 "quota_proof_finished_at",
                 _utc_datetime(self.quota_proof_finished_at, "quota_proof_finished_at"),
-                _utc_datetime(proof.finished_at, "proof finished_at"),
+                _utc_datetime(proof.response_finished_at, "proof response_finished_at"),
             ),
             (
                 "quota_proof_reset_at",
@@ -1396,6 +1714,10 @@ def materialize_prebound_network_configuration(
 
 
 __all__ = [
+    "B4_QUOTA_PROOF_AFFILIATE_IDS",
+    "B4_QUOTA_PROOF_EXECUTION_PHASE",
+    "B4_QUOTA_PROOF_MAX_DATAPOINTS",
+    "B4_QUOTA_PROOF_PACKAGE_SCHEMA_VERSION",
     "B4_QUOTA_PROOF_SCHEMA_VERSION",
     "DISCOVERY_AUTHORIZATION_SCHEMA_VERSION",
     "DISCOVERY_CONSUMPTION_SCHEMA_VERSION",
