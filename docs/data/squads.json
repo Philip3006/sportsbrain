@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-20",
+  "updated": "2026-09-21",
   "teams": {
     "Algeria": {
       "source": "wikipedia",
@@ -6415,8 +6415,7 @@
       "suspended": [
         "Cristian Roldan",
         "Weston McKennie",
-        "Christian Pulisic",
-        "Folarin Balogun"
+        "Christian Pulisic"
       ],
       "players": [
         {
@@ -6517,7 +6516,7 @@
         {
           "name": "Folarin Balogun",
           "pos": "FWD",
-          "status": "injured"
+          "status": "fit"
         },
         {
           "name": "Timothy Weah",
