@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import json
+import socket
+import ssl
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
 from pathlib import Path
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 
 import pytest
 
@@ -598,6 +600,79 @@ def test_missing_body_http_failure_and_transport_failure_never_retry():
                 _request(), api_key="test-secret", http_client=client, now=NOW
             )
         assert len(client.calls) == 1
+
+
+@pytest.mark.parametrize(
+    "error,reason_class,category,errno_value",
+    [
+        (
+            URLError(socket.gaierror(-2, "name resolution failed")),
+            "gaierror",
+            "dns",
+            -2,
+        ),
+        (
+            URLError(ssl.SSLCertVerificationError(1, "certificate verify failed")),
+            "SSLCertVerificationError",
+            "tls_certificate",
+            1,
+        ),
+        (
+            URLError(ConnectionRefusedError(111, "connection refused")),
+            "ConnectionRefusedError",
+            "tcp_refused",
+            111,
+        ),
+        (URLError(TimeoutError("timed out")), "TimeoutError", "timeout", None),
+        (URLError("opaque provider failure"), "str", "generic_urllib", None),
+        (URLError("proxy tunnel failed"), "str", "proxy", None),
+    ],
+)
+def test_urllib_transport_reason_is_normalized_without_exception_text(
+    error: Exception,
+    reason_class: str,
+    category: str,
+    errno_value: int | None,
+):
+    client = _FakeProofClient(error=error)
+    with pytest.raises(NetworkShadowExecutionBlocked) as raised:
+        execute_therundown_quota_proof(
+            _request(),
+            api_key="test-secret-never-written",
+            http_client=client,
+            now=NOW,
+        )
+
+    diagnostic = raised.value.diagnostic
+    assert diagnostic is not None
+    assert diagnostic["transport_exception_class"] == "URLError"
+    assert diagnostic["transport_reason_class"] == reason_class
+    assert diagnostic["transport_reason_category"] == category
+    assert diagnostic["transport_errno"] == errno_value
+    assert "opaque provider failure" not in json.dumps(diagnostic)
+    assert "test-secret-never-written" not in json.dumps(diagnostic)
+    assert len(client.calls) == 1
+
+
+def test_transport_failure_artifact_keeps_safe_reason_fields_only(
+    tmp_path: Path, monkeypatch
+):
+    inputs = _guarded_inputs(tmp_path, monkeypatch)
+    output_path = tmp_path / "proof.json"
+    error = URLError("https://user:password@proxy.example:443/tunnel")
+    with pytest.raises(NetworkShadowExecutionBlocked, match="transport failed"):
+        _run_guarded(inputs, output_path, _FakeProofClient(error=error))
+
+    failure = json.loads(Path(f"{output_path}.failure.json").read_text())
+    assert failure["transport_exception_class"] == "URLError"
+    assert failure["transport_reason_class"] == "str"
+    assert failure["transport_reason_category"] == "proxy"
+    assert failure["transport_errno"] is None
+    serialized = json.dumps(failure)
+    assert "user:password" not in serialized
+    assert "proxy.example" not in serialized
+    assert "Authorization" not in serialized
+    assert "test-secret" not in serialized
 
 
 @pytest.mark.parametrize("status", [401, 403, 404, 429, 500])

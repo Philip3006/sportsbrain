@@ -15,6 +15,8 @@ from __future__ import annotations
 
 import json
 import re
+import socket
+import ssl
 import time
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field, replace
@@ -24,7 +26,7 @@ from hashlib import sha256
 from math import isfinite
 from types import MappingProxyType
 from typing import Protocol
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
@@ -107,6 +109,43 @@ class NetworkShadowExecutionBlocked(NetworkShadowContractError):
     ) -> None:
         super().__init__(message)
         self.diagnostic = dict(diagnostic) if diagnostic is not None else None
+
+
+def _transport_failure_metadata(exc: BaseException) -> dict[str, object]:
+    """Normalize transport causes without retaining exception text."""
+
+    reason = getattr(exc, "reason", None) if isinstance(exc, URLError) else None
+    root = reason if reason is not None else exc
+    reason_class = type(root).__name__ if root is not None else None
+    errno_value = getattr(root, "errno", None)
+    safe_errno = (
+        int(errno_value)
+        if isinstance(errno_value, int) and not isinstance(errno_value, bool)
+        else None
+    )
+    class_name = reason_class.casefold() if reason_class else ""
+    reason_text = reason.casefold() if isinstance(reason, str) else ""
+    if isinstance(root, socket.gaierror):
+        category = "dns"
+    elif isinstance(root, ssl.SSLCertVerificationError):
+        category = "tls_certificate"
+    elif isinstance(root, ConnectionRefusedError):
+        category = "tcp_refused"
+    elif isinstance(root, (TimeoutError, socket.timeout)):
+        category = "timeout"
+    elif isinstance(exc, URLError) and (
+        "proxy" in class_name or "proxy" in reason_text or "tunnel" in reason_text
+    ):
+        category = "proxy"
+    elif isinstance(exc, URLError):
+        category = "generic_urllib"
+    else:
+        category = "generic"
+    return {
+        "transport_reason_class": reason_class,
+        "transport_reason_category": category,
+        "transport_errno": safe_errno,
+    }
 
 
 class NetworkShadowRunStatus(str, Enum):
@@ -1067,6 +1106,9 @@ class TheRundownNetworkHttpResponseV1:
     content_type: str | None = None
     body_length: int | None = None
     body_digest: str | None = None
+    transport_reason_class: str | None = None
+    transport_reason_category: str | None = None
+    transport_errno: int | None = None
 
     def validate(self) -> None:
         if self.status_code is not None and (
@@ -1094,6 +1136,9 @@ class TheRundownNetworkHttpResponseV1:
             "http_status": self.status_code,
             "safe_response_headers": _safe_quota_proof_headers(self.headers),
             "transport_exception_class": self.error_detail,
+            "transport_reason_class": self.transport_reason_class,
+            "transport_reason_category": self.transport_reason_category,
+            "transport_errno": self.transport_errno,
             "content_type": self.content_type,
             "response_body_length": self.body_length,
             "response_body_digest": self.body_digest,
@@ -2312,6 +2357,7 @@ class TheRundownUrlLibHttpClientV1:
             )
         except Exception as exc:  # noqa: BLE001 - transport boundary fails closed
             finished = datetime.now(timezone.utc)
+            transport = _transport_failure_metadata(exc)
             return TheRundownNetworkHttpResponseV1(
                 status_code=None,
                 payload=None,
@@ -2320,6 +2366,7 @@ class TheRundownUrlLibHttpClientV1:
                 finished_at=finished,
                 timed_out=type(exc).__name__ == "TimeoutError",
                 error_detail=type(exc).__name__,
+                **transport,
             )
         finished = datetime.now(timezone.utc)
         payload = _decode_json_body(body)
@@ -2353,6 +2400,7 @@ def execute_therundown_quota_proof(
         diagnostic_now = _utc(
             now or datetime.now(timezone.utc), "quota proof transport diagnostic now"
         ).isoformat()
+        transport = _transport_failure_metadata(exc)
         raise NetworkShadowExecutionBlocked(
             "quota proof provider transport failed",
             diagnostic={
@@ -2362,6 +2410,7 @@ def execute_therundown_quota_proof(
                 "http_status": None,
                 "safe_response_headers": {},
                 "transport_exception_class": type(exc).__name__,
+                **transport,
                 "content_type": None,
                 "response_body_length": None,
                 "response_body_digest": None,

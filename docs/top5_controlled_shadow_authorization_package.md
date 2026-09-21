@@ -217,8 +217,10 @@ output, using the suffix `.failure.json`. It contains only the proof and
 request identity, request timing, HTTP status when available, the approved
 safe provider quota/rate headers, transport exception class, content type,
 response byte length, response-body SHA-256 digest, failure classification,
-and the fixed `request_count=1`/`retry_count=0` bounds. It never contains the
-credential, request authorization headers, or the complete response body.
+normalized transport reason class/category, safe numeric transport errno, and
+the fixed `request_count=1`/`retry_count=0`
+bounds. It never contains the credential, request authorization headers, or
+the complete response body.
 
 HTTP status failures take precedence over body validation: 401/403/404/429
 and other non-2xx responses are reported with their status, while a 2xx

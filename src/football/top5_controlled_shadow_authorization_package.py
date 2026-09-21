@@ -1137,6 +1137,9 @@ def _write_quota_proof_failure(
             "http_status": None,
             "safe_response_headers": {},
             "transport_exception_class": type(error).__name__,
+            "transport_reason_class": None,
+            "transport_reason_category": "generic",
+            "transport_errno": None,
             "content_type": None,
             "response_body_length": None,
             "response_body_digest": None,
@@ -1185,6 +1188,32 @@ def _write_quota_proof_failure(
         "transport_exception_class": (
             str(diagnostic["transport_exception_class"])
             if diagnostic.get("transport_exception_class")
+            else None
+        ),
+        "transport_reason_class": (
+            str(diagnostic["transport_reason_class"])
+            if isinstance(diagnostic.get("transport_reason_class"), str)
+            and str(diagnostic["transport_reason_class"]).isidentifier()
+            else None
+        ),
+        "transport_reason_category": (
+            str(diagnostic["transport_reason_category"])
+            if diagnostic.get("transport_reason_category")
+            in {
+                "dns",
+                "tls_certificate",
+                "tcp_refused",
+                "timeout",
+                "proxy",
+                "generic_urllib",
+                "generic",
+            }
+            else "generic"
+        ),
+        "transport_errno": (
+            int(diagnostic["transport_errno"])
+            if isinstance(diagnostic.get("transport_errno"), int)
+            and not isinstance(diagnostic.get("transport_errno"), bool)
             else None
         ),
         "content_type": (
