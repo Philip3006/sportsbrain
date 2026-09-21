@@ -24,6 +24,7 @@ from hashlib import sha256
 from math import isfinite
 from types import MappingProxyType
 from typing import Protocol
+from urllib.error import HTTPError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
@@ -97,6 +98,15 @@ class NetworkShadowContractError(CanaryContractError):
 
 class NetworkShadowExecutionBlocked(NetworkShadowContractError):
     """Fail-closed refusal before or during a network-shadow run."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        diagnostic: Mapping[str, object] | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.diagnostic = dict(diagnostic) if diagnostic is not None else None
 
 
 class NetworkShadowRunStatus(str, Enum):
@@ -1054,6 +1064,9 @@ class TheRundownNetworkHttpResponseV1:
     finished_at: datetime
     timed_out: bool = False
     error_detail: str | None = None
+    content_type: str | None = None
+    body_length: int | None = None
+    body_digest: str | None = None
 
     def validate(self) -> None:
         if self.status_code is not None and (
@@ -1066,6 +1079,25 @@ class TheRundownNetworkHttpResponseV1:
             raise NetworkShadowContractError("HTTP timestamps are not ordered")
         if not isinstance(self.timed_out, bool):
             raise NetworkShadowContractError("HTTP timeout flag is invalid")
+
+    def safe_failure_diagnostic(self, failure_classification: str) -> dict[str, object]:
+        """Return response metadata safe for a consumed-proof failure artifact."""
+
+        return {
+            "failure_classification": failure_classification,
+            "request_started_at": _utc(
+                self.started_at, "HTTP diagnostic request start"
+            ).isoformat(),
+            "request_finished_at": _utc(
+                self.finished_at, "HTTP diagnostic request finish"
+            ).isoformat(),
+            "http_status": self.status_code,
+            "safe_response_headers": _safe_quota_proof_headers(self.headers),
+            "transport_exception_class": self.error_detail,
+            "content_type": self.content_type,
+            "response_body_length": self.body_length,
+            "response_body_digest": self.body_digest,
+        }
 
 
 _QUOTA_PROOF_SAFE_HEADERS = frozenset(
@@ -1106,6 +1138,21 @@ def _safe_quota_proof_headers(headers: Mapping[str, object]) -> dict[str, str]:
         for key, value in sorted(lowered.items())
         if key in _QUOTA_PROOF_SAFE_HEADERS
     }
+
+
+def _content_type(headers: Mapping[str, object]) -> str | None:
+    for key, value in headers.items():
+        if str(key).casefold() == "content-type":
+            normalized = str(value).strip()
+            return normalized or None
+    return None
+
+
+def _decode_json_body(body: bytes) -> object | None:
+    try:
+        return json.loads(body.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return None
 
 
 def _header_int(headers: Mapping[str, str], name: str) -> int:
@@ -1704,16 +1751,27 @@ class TheRundownQuotaProofEvidenceV1:
     ) -> TheRundownQuotaProofEvidenceV1:
         request.validate()
         response.validate()
+        if (
+            response.timed_out
+            or response.status_code is None
+            or response.error_detail not in (None, "HTTPError")
+        ):
+            raise NetworkShadowExecutionBlocked(
+                "quota proof provider transport failed",
+                diagnostic=response.safe_failure_diagnostic("transport_failure"),
+            )
+        if not 200 <= response.status_code < 300:
+            raise NetworkShadowExecutionBlocked(
+                f"quota proof provider request failed with HTTP {response.status_code}",
+                diagnostic=response.safe_failure_diagnostic("http_status_failure"),
+            )
         if response.payload is None or not isinstance(
             response.payload, (Mapping, list)
         ):
             raise NetworkShadowExecutionBlocked(
-                "quota proof response body is missing or malformed"
+                "quota proof response body is missing or malformed",
+                diagnostic=response.safe_failure_diagnostic("response_body_malformed"),
             )
-        if response.status_code is None or not 200 <= response.status_code < 300:
-            raise NetworkShadowExecutionBlocked("quota proof provider request failed")
-        if response.error_detail or response.timed_out:
-            raise NetworkShadowExecutionBlocked("quota proof provider transport failed")
         headers = _safe_quota_proof_headers(response.headers)
         billed = _header_int(headers, "x-datapoints")
         used = _header_int(headers, "x-datapoints-used")
@@ -2231,6 +2289,27 @@ class TheRundownUrlLibHttpClientV1:
                 headers = {
                     str(key): str(value) for key, value in response.headers.items()
                 }
+        except HTTPError as exc:
+            finished = datetime.now(timezone.utc)
+            try:
+                body = exc.read()
+            except Exception:  # noqa: BLE001 - diagnostic boundary stays fail-closed
+                body = b""
+            raw_headers = {
+                str(key): str(value) for key, value in (exc.headers or {}).items()
+            }
+            payload = _decode_json_body(body)
+            return TheRundownNetworkHttpResponseV1(
+                status_code=int(exc.code),
+                payload=payload,
+                headers=_safe_quota_proof_headers(raw_headers),
+                started_at=started,
+                finished_at=finished,
+                error_detail="HTTPError",
+                content_type=_content_type(raw_headers),
+                body_length=len(body),
+                body_digest=sha256(body).hexdigest(),
+            )
         except Exception as exc:  # noqa: BLE001 - transport boundary fails closed
             finished = datetime.now(timezone.utc)
             return TheRundownNetworkHttpResponseV1(
@@ -2243,16 +2322,16 @@ class TheRundownUrlLibHttpClientV1:
                 error_detail=type(exc).__name__,
             )
         finished = datetime.now(timezone.utc)
-        try:
-            payload = json.loads(body.decode("utf-8"))
-        except (UnicodeDecodeError, json.JSONDecodeError):
-            payload = None
+        payload = _decode_json_body(body)
         return TheRundownNetworkHttpResponseV1(
             status_code=status_code,
             payload=payload,
             headers=headers,
             started_at=started,
             finished_at=finished,
+            content_type=_content_type(headers),
+            body_length=len(body),
+            body_digest=sha256(body).hexdigest(),
         )
 
 
@@ -2271,15 +2350,39 @@ def execute_therundown_quota_proof(
     try:
         response = client.execute(request.as_http_request(api_key))
     except Exception as exc:
+        diagnostic_now = _utc(
+            now or datetime.now(timezone.utc), "quota proof transport diagnostic now"
+        ).isoformat()
         raise NetworkShadowExecutionBlocked(
-            "quota proof provider transport failed"
+            "quota proof provider transport failed",
+            diagnostic={
+                "failure_classification": "transport_failure",
+                "request_started_at": diagnostic_now,
+                "request_finished_at": diagnostic_now,
+                "http_status": None,
+                "safe_response_headers": {},
+                "transport_exception_class": type(exc).__name__,
+                "content_type": None,
+                "response_body_length": None,
+                "response_body_digest": None,
+            },
         ) from exc
-    return TheRundownQuotaProofEvidenceV1.from_http_response(
-        request,
-        response,
-        api_key=api_key,
-        now=now,
-    )
+    try:
+        return TheRundownQuotaProofEvidenceV1.from_http_response(
+            request,
+            response,
+            api_key=api_key,
+            now=now,
+        )
+    except NetworkShadowExecutionBlocked as exc:
+        if exc.diagnostic is not None:
+            raise
+        raise NetworkShadowExecutionBlocked(
+            str(exc),
+            diagnostic=response.safe_failure_diagnostic(
+                "quota_proof_validation_failure"
+            ),
+        ) from exc
 
 
 def _failure_response(

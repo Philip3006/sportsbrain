@@ -6,11 +6,14 @@ import json
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
+from io import BytesIO
 from pathlib import Path
+from urllib.error import HTTPError
 
 import pytest
 
 import src.football.top5_controlled_shadow_authorization_package as b4_package
+import src.football.top5_therundown_network_shadow as network_shadow
 from src.football.odds.therundown import THERUNDOWN_PROVIDER_NAME
 from src.football.top5_controlled_shadow_authorization_package import (
     ControlledShadowAuthorizationPackageError,
@@ -28,6 +31,7 @@ from src.football.top5_therundown_network_shadow import (
     TheRundownQuotaProofAuthorizationV1,
     TheRundownQuotaProofEvidenceV1,
     TheRundownQuotaProofRequestV1,
+    TheRundownUrlLibHttpClientV1,
     execute_therundown_quota_proof,
 )
 
@@ -46,6 +50,16 @@ class _FakeProofClient:
         if self.error is not None:
             raise self.error
         return self.response
+
+
+class _CountingBody(BytesIO):
+    def __init__(self, payload: bytes):
+        super().__init__(payload)
+        self.read_count = 0
+
+    def read(self, *args, **kwargs):  # type: ignore[no-untyped-def]
+        self.read_count += 1
+        return super().read(*args, **kwargs)
 
 
 def _request(**changes: object) -> TheRundownQuotaProofRequestV1:
@@ -584,6 +598,196 @@ def test_missing_body_http_failure_and_transport_failure_never_retry():
                 _request(), api_key="test-secret", http_client=client, now=NOW
             )
         assert len(client.calls) == 1
+
+
+@pytest.mark.parametrize("status", [401, 403, 404, 429, 500])
+def test_http_status_failure_precedes_body_validation(status: int):
+    response = _response(
+        status_code=status,
+        payload=None,
+        error_detail="HTTPError",
+        headers={
+            "X-Datapoints": "55",
+            "X-Datapoints-Remaining": "275",
+            "X-Tier": "free",
+        },
+    )
+    client = _FakeProofClient(response)
+    with pytest.raises(
+        NetworkShadowExecutionBlocked,
+        match=f"HTTP {status}",
+    ):
+        execute_therundown_quota_proof(
+            _request(),
+            api_key="test-secret",
+            http_client=client,
+            now=NOW,
+        )
+    assert len(client.calls) == 1
+
+
+def test_urllib_http_error_preserves_safe_status_headers_and_json(monkeypatch):
+    body = _CountingBody(b'{"error":"rate limited"}')
+    error = HTTPError(
+        "https://therundown.io/api/v2/events/event-ll-001",
+        429,
+        "rate limited",
+        {
+            "Content-Type": "application/json; charset=utf-8",
+            "X-Datapoints": "55",
+            "X-Datapoints-Remaining": "275",
+            "X-Tier": "free",
+            "Authorization": "Bearer test-secret",
+        },
+        body,
+    )
+
+    def raise_http_error(*args, **kwargs):  # type: ignore[no-untyped-def]
+        raise error
+
+    monkeypatch.setattr(network_shadow, "urlopen", raise_http_error)
+    response = TheRundownUrlLibHttpClientV1().execute(
+        _request().as_http_request("test-secret")
+    )
+
+    assert body.read_count == 1
+    assert response.status_code == 429
+    assert response.payload == {"error": "rate limited"}
+    assert response.headers == {
+        "x-datapoints": "55",
+        "x-datapoints-remaining": "275",
+        "x-tier": "free",
+    }
+    assert response.content_type == "application/json; charset=utf-8"
+    assert response.body_length == len(b'{"error":"rate limited"}')
+    assert (
+        response.body_digest
+        == network_shadow.sha256(b'{"error":"rate limited"}').hexdigest()
+    )
+    assert response.error_detail == "HTTPError"
+
+
+def test_http_error_non_json_preserves_safe_digest_without_raw_body(monkeypatch):
+    raw_body = b"upstream failure: test-secret"
+    body = _CountingBody(raw_body)
+    error = HTTPError(
+        "https://therundown.io/api/v2/events/event-ll-001",
+        503,
+        "unavailable",
+        {"Content-Type": "text/plain", "X-Rate-Limit": "1"},
+        body,
+    )
+
+    def raise_http_error(*args, **kwargs):  # type: ignore[no-untyped-def]
+        raise error
+
+    monkeypatch.setattr(network_shadow, "urlopen", raise_http_error)
+    response = TheRundownUrlLibHttpClientV1().execute(
+        _request().as_http_request("test-secret")
+    )
+
+    assert body.read_count == 1
+    assert response.status_code == 503
+    assert response.payload is None
+    assert response.content_type == "text/plain"
+    assert response.body_length == len(raw_body)
+    assert response.body_digest == network_shadow.sha256(raw_body).hexdigest()
+    assert raw_body.decode() not in json.dumps(
+        response.safe_failure_diagnostic("http_status_failure")
+    )
+
+
+def test_http_200_malformed_body_reports_body_failure():
+    client = _FakeProofClient(
+        _response(payload=None, status_code=200, error_detail=None)
+    )
+    with pytest.raises(
+        NetworkShadowExecutionBlocked,
+        match="response body is missing or malformed",
+    ):
+        execute_therundown_quota_proof(
+            _request(),
+            api_key="test-secret",
+            http_client=client,
+            now=NOW,
+        )
+
+
+def test_http_200_valid_body_reaches_quota_header_validation():
+    client = _FakeProofClient(
+        _response(
+            payload={"ok": True},
+            headers={"X-Tier": "free"},
+        )
+    )
+    with pytest.raises(
+        NetworkShadowExecutionBlocked,
+        match="quota proof header missing",
+    ):
+        execute_therundown_quota_proof(
+            _request(),
+            api_key="test-secret",
+            http_client=client,
+            now=NOW,
+        )
+
+
+def test_consumed_http_failure_writes_safe_failure_artifact(
+    tmp_path: Path, monkeypatch
+):
+    inputs = _guarded_inputs(tmp_path, monkeypatch)
+    output_path = tmp_path / "proof.json"
+    response = _response(
+        status_code=429,
+        payload={"error": "rate limited"},
+        error_detail="HTTPError",
+        content_type="application/json",
+        body_length=25,
+        body_digest="e" * 64,
+    )
+    with pytest.raises(
+        NetworkShadowExecutionBlocked,
+        match="HTTP 429",
+    ):
+        _run_guarded(inputs, output_path, _FakeProofClient(response))
+
+    failure_path = Path(f"{output_path}.failure.json")
+    failure = json.loads(failure_path.read_text())
+    assert failure["schema_version"] == "top5-therundown-quota-proof-failure-v1"
+    assert failure["http_status"] == 429
+    assert failure["safe_response_headers"]["x-tier"] == "free"
+    assert failure["content_type"] == "application/json"
+    assert failure["response_body_length"] == 25
+    assert failure["response_body_digest"] == "e" * 64
+    assert failure["request_count"] == 1
+    assert failure["retry_count"] == 0
+    assert failure["safety"]["quota_confirmed"] is False
+    serialized = json.dumps(failure)
+    assert "Authorization" not in serialized
+    assert "X-TheRundown-Key" not in serialized
+    assert "test-secret" not in serialized
+    assert "remaining_datapoints" not in failure
+    assert not output_path.exists()
+    marker_path = _quota_proof_consumption_marker_path(inputs["authorization"])
+    assert marker_path.exists()
+
+
+def test_failure_artifact_is_not_quota_proof_evidence(tmp_path: Path, monkeypatch):
+    inputs = _guarded_inputs(tmp_path, monkeypatch)
+    output_path = tmp_path / "proof.json"
+    with pytest.raises(NetworkShadowExecutionBlocked):
+        _run_guarded(
+            inputs,
+            output_path,
+            _FakeProofClient(
+                _response(status_code=401, payload=None, error_detail="HTTPError")
+            ),
+        )
+    failure = json.loads(Path(f"{output_path}.failure.json").read_text())
+    with pytest.raises(NetworkShadowContractError):
+        TheRundownQuotaProofEvidenceV1.from_payload(failure)
+    assert failure["execution_phase"] == "quota_proof_failure"
+    assert failure["safety"]["discovery_authorized"] is False
 
 
 def test_stale_response_wrong_request_shape_and_provider_mismatch_fail_closed():

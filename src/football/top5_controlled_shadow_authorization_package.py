@@ -120,6 +120,7 @@ SPEND_CONTROL_EVIDENCE_MAXIMUM_AGE_SECONDS = 86_400
 SPEND_CONTROL_DASHBOARD_SCHEMA_VERSION = "top5-spend-control-dashboard-attestation-v1"
 SPEND_CONTROL_DASHBOARD_EVIDENCE_KIND = "operator_dashboard_attestation"
 QUOTA_PROOF_CONSUMPTION_SCHEMA_VERSION = "top5-therundown-quota-proof-consumption-v1"
+QUOTA_PROOF_FAILURE_SCHEMA_VERSION = "top5-therundown-quota-proof-failure-v1"
 B2_SHADOW_TIMING_KICKOFF_TOLERANCE_SECONDS = 60
 B2_SHADOW_TIMING_MINIMUM_LEAD_SECONDS = 0
 B2_SHADOW_TIMING_MAXIMUM_LEAD_SECONDS = 10_800
@@ -1108,6 +1109,132 @@ def _write_quota_proof(
     return path
 
 
+def _write_quota_proof_failure(
+    path_value: object,
+    *,
+    request: TheRundownQuotaProofRequestV1,
+    error: Exception,
+    consumed_at: datetime,
+) -> Path:
+    """Persist only safe diagnostics after a consumed proof fails."""
+
+    output = _absolute_path(path_value, "quota proof output")
+    path = Path(f"{output}.failure.json")
+    if path.exists():
+        raise ControlledShadowAuthorizationPackageError(
+            "quota proof failure artifact already exists; refusing overwrite"
+        )
+    diagnostic = getattr(error, "diagnostic", None)
+    if not isinstance(diagnostic, Mapping):
+        diagnostic = {
+            "failure_classification": "credential_or_execution_failure",
+            "request_started_at": _utc(
+                consumed_at, "quota proof failure consumed_at"
+            ).isoformat(),
+            "request_finished_at": _utc(
+                consumed_at, "quota proof failure finished_at"
+            ).isoformat(),
+            "http_status": None,
+            "safe_response_headers": {},
+            "transport_exception_class": type(error).__name__,
+            "content_type": None,
+            "response_body_length": None,
+            "response_body_digest": None,
+        }
+    safe_diagnostic = {
+        "failure_classification": str(
+            diagnostic.get("failure_classification", "quota_proof_failure")
+        ),
+        "request_started_at": str(
+            diagnostic.get(
+                "request_started_at",
+                _utc(consumed_at, "quota proof failure consumed_at").isoformat(),
+            )
+        ),
+        "request_finished_at": str(
+            diagnostic.get(
+                "request_finished_at",
+                _utc(consumed_at, "quota proof failure consumed_at").isoformat(),
+            )
+        ),
+        "http_status": diagnostic.get("http_status"),
+        "safe_response_headers": {
+            str(key): str(value)
+            for key, value in dict(diagnostic.get("safe_response_headers", {})).items()
+            if str(key).casefold()
+            in {
+                "x-datapoints",
+                "x-datapoints-used",
+                "x-datapoints-remaining",
+                "x-datapoints-limit",
+                "x-datapoints-period",
+                "x-datapoints-reset",
+                "x-tier",
+                "x-rate-limit",
+                "x-rate-limit-remaining",
+                "x-rate-limit-reset",
+                "x-ratelimit-limit",
+                "x-ratelimit-remaining",
+                "x-ratelimit-reset",
+                "x-data-delay-seconds",
+                "x-history-access",
+                "x-live-odds-access",
+                "x-websocket-access",
+            }
+        },
+        "transport_exception_class": (
+            str(diagnostic["transport_exception_class"])
+            if diagnostic.get("transport_exception_class")
+            else None
+        ),
+        "content_type": (
+            str(diagnostic["content_type"]) if diagnostic.get("content_type") else None
+        ),
+        "response_body_length": diagnostic.get("response_body_length"),
+        "response_body_digest": (
+            str(diagnostic["response_body_digest"])
+            if diagnostic.get("response_body_digest")
+            else None
+        ),
+    }
+    payload = {
+        "schema_version": QUOTA_PROOF_FAILURE_SCHEMA_VERSION,
+        "execution_phase": "quota_proof_failure",
+        "proof_authorization_id": request.authorization_id,
+        "proof_id": request.proof_id,
+        "provider": request.provider,
+        "provider_event_id": request.provider_event_id,
+        "request_shape_digest": request.request_shape_digest,
+        **safe_diagnostic,
+        "retry_count": 0,
+        "request_count": 1,
+        "safety": {
+            "quota_confirmed": False,
+            "discovery_authorized": False,
+            "receipt_issued": False,
+            "authority_changed": False,
+            "activation": False,
+            "publication": False,
+            "betting": False,
+            "monetary_spend_authorized": False,
+        },
+    }
+    try:
+        atomic_write_json(
+            path,
+            payload,
+            indent=2,
+            ensure_ascii=False,
+            sort_keys=True,
+        )
+        path.chmod(0o600)
+    except OSError as exc:
+        raise ControlledShadowAuthorizationPackageError(
+            "quota proof failure artifact could not be written"
+        ) from exc
+    return path
+
+
 def run_guarded_quota_proof(
     proof_authorization_path: object,
     proof_target_evidence_path: object,
@@ -1154,19 +1281,28 @@ def run_guarded_quota_proof(
         proof_authorization,
         consumed_at=now,
     )
-    api_key = _read_protected_therundown_credential(credential_file)
-    evidence = execute_therundown_quota_proof(
-        request,
-        api_key=api_key,
-        http_client=http_client,
-        now=_utc(clock_fn(), "quota proof response validation now"),
-    )
-    artifact_path = _write_quota_proof(
-        output,
-        request=request,
-        evidence=evidence,
-        spend_control=spend_control,
-    )
+    try:
+        api_key = _read_protected_therundown_credential(credential_file)
+        evidence = execute_therundown_quota_proof(
+            request,
+            api_key=api_key,
+            http_client=http_client,
+            now=_utc(clock_fn(), "quota proof response validation now"),
+        )
+        artifact_path = _write_quota_proof(
+            output,
+            request=request,
+            evidence=evidence,
+            spend_control=spend_control,
+        )
+    except Exception as exc:
+        _write_quota_proof_failure(
+            output,
+            request=request,
+            error=exc,
+            consumed_at=now,
+        )
+        raise
     return {
         "status": "TOP5_B4_QUOTA_PROOF — QUOTA_CONFIRMED",
         "artifact_path": str(artifact_path),

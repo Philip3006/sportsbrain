@@ -208,6 +208,26 @@ authorization, quota-headroom, B1, billing, freshness, event, participant,
 provenance, retry, HTTP, or safety failure aborts without continuing to the
 next request.
 
+### Consumed proof failure diagnostics
+
+The proof authorization is consumed before credential or transport use. If
+the single request then fails, the guarded entrypoint writes a separate
+atomic `top5-therundown-quota-proof-failure-v1` artifact beside the requested
+output, using the suffix `.failure.json`. It contains only the proof and
+request identity, request timing, HTTP status when available, the approved
+safe provider quota/rate headers, transport exception class, content type,
+response byte length, response-body SHA-256 digest, failure classification,
+and the fixed `request_count=1`/`retry_count=0` bounds. It never contains the
+credential, request authorization headers, or the complete response body.
+
+HTTP status failures take precedence over body validation: 401/403/404/429
+and other non-2xx responses are reported with their status, while a 2xx
+non-JSON response is reported as malformed. Transport failures retain only
+the safe exception class. A failure artifact is diagnostic evidence only; it
+cannot satisfy quota proof, discovery, qualification, authority, activation,
+publication, betting, or Builder-2 receipt gates. The one-time consumption
+marker remains intact in every failure case.
+
 Preflight and all package/reconciliation functions perform no provider
 request, do not register a scheduler, and have no receipt-issuer or authority
 path. The explicit network flag is the only path that uses
