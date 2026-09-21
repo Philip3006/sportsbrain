@@ -53,6 +53,15 @@ remaining quota. If paid overage cannot be bounded, the command stops with
 with `TOP5_B4_QUOTA_PROOF — QUOTA_CONFIRMED`; no five-league request, receipt,
 authority, activation, publication, betting, or production mutation follows.
 
+Spend control may also use the separately typed
+`top5-spend-control-dashboard-attestation-v1` operator evidence. It records
+the confirmed Free plan, zero price, hard `http_429` cap, daily/monthly plan
+limits, request rate, observation time, and attestation identity. It is never
+treated as provider response headers, `X-Datapoints`, current remaining quota,
+quota-before, quota-after, or quota-proof evidence. The live proof still
+requires its billed and remaining datapoints exclusively from the provider
+response headers.
+
 The quota proof has its own `TheRundownQuotaProofAuthorizationV1`; it does not
 consume or validate the later five-league authorization package. The proof
 authorization binds exactly one provider event, its deterministic request-shape

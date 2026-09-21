@@ -658,6 +658,7 @@ def test_second_proof_output_is_rejected(tmp_path: Path):
     output = tmp_path / "quota-proof.json"
     spend_control = {
         "provider": THERUNDOWN_PROVIDER_NAME,
+        "evidence_kind": "provider_response_headers",
         "account_tier": "free",
         "overage_exposure": "none",
         "observed_at": NOW,
@@ -698,6 +699,122 @@ def test_spend_control_accepts_only_recent_free_hard_cap(tmp_path: Path):
     assert evidence["account_tier"] == "free"
     assert evidence["overage_exposure"] == "none"
     assert isinstance(evidence["digest"], str)
+
+
+def _dashboard_spend_control(**changes: object) -> dict[str, object]:
+    evidence = {
+        "schema_version": "top5-spend-control-dashboard-attestation-v1",
+        "evidence_kind": "operator_dashboard_attestation",
+        "provider": "therundown_experimental",
+        "observed_at": (NOW - timedelta(minutes=1)).isoformat(),
+        "account_tier": "free",
+        "plan_price_usd": 0,
+        "paid_overage_enabled": False,
+        "daily_datapoint_limit": 20_000,
+        "monthly_datapoint_limit": 200_000,
+        "rate_limit_requests_per_second": 1,
+        "hard_cap_behavior": "http_429",
+        "attestation_identity": "ceo:account-owner:therundown-free-tier:20260921",
+    }
+    evidence.update(changes)
+    return evidence
+
+
+def test_fresh_dashboard_free_attestation_is_spend_control_only(tmp_path: Path):
+    path = tmp_path / "dashboard-attestation.json"
+    path.write_text(json.dumps(_dashboard_spend_control()))
+    evidence = _load_spend_control_evidence(path, now=NOW)
+    assert evidence["provider"] == "therundown_experimental"
+    assert evidence["account_tier"] == "free"
+    assert evidence["overage_exposure"] == "none"
+    assert evidence["evidence_kind"] == "operator_dashboard_attestation"
+    assert (
+        evidence["observed_at"].isoformat() == (NOW - timedelta(minutes=1)).isoformat()
+    )
+    assert evidence["daily_datapoint_limit"] == 20_000
+    assert evidence["monthly_datapoint_limit"] == 200_000
+    assert isinstance(evidence["digest"], str)
+    assert "remaining_datapoints" not in evidence
+    assert "quota_used_datapoints" not in evidence
+    assert "safe_headers" not in evidence
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"evidence_kind": "provider_response_headers"},
+        {"account_tier": "pro"},
+        {"plan_price_usd": 1},
+        {"paid_overage_enabled": True},
+        {"provider": "the_odds_api"},
+        {"daily_datapoint_limit": 19_999},
+        {"monthly_datapoint_limit": 199_999},
+        {"rate_limit_requests_per_second": 2},
+        {"hard_cap_behavior": "paid_overage"},
+        {"attestation_identity": ""},
+        {"observed_at": (NOW + timedelta(seconds=1)).isoformat()},
+        {"observed_at": (NOW - timedelta(days=2)).isoformat()},
+    ],
+)
+def test_dashboard_attestation_invalid_state_fails_closed(
+    tmp_path: Path, changes: dict[str, object]
+):
+    path = tmp_path / "invalid-dashboard-attestation.json"
+    path.write_text(json.dumps(_dashboard_spend_control(**changes)))
+    with pytest.raises(
+        ControlledShadowAuthorizationPackageError,
+        match="BLOCKED_SPEND_CONTROL",
+    ):
+        _load_spend_control_evidence(path, now=NOW)
+
+
+def test_dashboard_quota_claims_are_ignored_and_live_headers_remain_authoritative(
+    tmp_path: Path,
+):
+    path = tmp_path / "dashboard-with-untrusted-quota.json"
+    path.write_text(
+        json.dumps(
+            _dashboard_spend_control(
+                remaining_datapoints=999_999,
+                quota_used_datapoints=0,
+                headers={"X-Datapoints-Remaining": "999999"},
+            )
+        )
+    )
+    spend_control = _load_spend_control_evidence(path, now=NOW)
+    assert spend_control["overage_exposure"] == "none"
+    assert "remaining_datapoints" not in spend_control
+    assert "quota_used_datapoints" not in spend_control
+    assert "headers" not in spend_control
+
+    proof = execute_therundown_quota_proof(
+        _request(),
+        api_key="test-secret",
+        http_client=_FakeProofClient(_response()),
+        now=NOW,
+    )
+    assert proof.remaining_datapoints == 275
+    assert proof.billed_datapoints == 55
+
+
+def test_dashboard_attestation_only_gates_spend_control_in_guarded_proof(
+    tmp_path: Path, monkeypatch
+):
+    inputs = _guarded_inputs(tmp_path, monkeypatch)
+    dashboard_path = tmp_path / "dashboard-spend-control.json"
+    dashboard_path.write_text(json.dumps(_dashboard_spend_control()))
+    inputs["spend_path"] = dashboard_path
+    output_path = tmp_path / "dashboard-proof.json"
+    summary = _run_guarded(inputs, output_path, _FakeProofClient(_response()))
+
+    assert summary["spend_control_evidence_kind"] == ("operator_dashboard_attestation")
+    assert summary["remaining_datapoints"] == 275
+    output = json.loads(output_path.read_text())
+    spend_control = output["spend_control"]
+    assert spend_control["evidence_kind"] == "operator_dashboard_attestation"
+    assert spend_control["daily_datapoint_limit"] == 20_000
+    assert spend_control["monthly_datapoint_limit"] == 200_000
+    assert "remaining_datapoints" not in spend_control
 
 
 def test_spend_control_rejects_paid_or_stale_evidence(tmp_path: Path):

@@ -117,6 +117,8 @@ QUOTA_PROOF_COMMAND = (
 )
 DEFAULT_THERUNDOWN_CREDENTIAL_PATH = Path.home() / "sportsbrain" / ".env"
 SPEND_CONTROL_EVIDENCE_MAXIMUM_AGE_SECONDS = 86_400
+SPEND_CONTROL_DASHBOARD_SCHEMA_VERSION = "top5-spend-control-dashboard-attestation-v1"
+SPEND_CONTROL_DASHBOARD_EVIDENCE_KIND = "operator_dashboard_attestation"
 QUOTA_PROOF_CONSUMPTION_SCHEMA_VERSION = "top5-therundown-quota-proof-consumption-v1"
 B2_SHADOW_TIMING_KICKOFF_TOLERANCE_SECONDS = 60
 B2_SHADOW_TIMING_MINIMUM_LEAD_SECONDS = 0
@@ -811,6 +813,15 @@ def _load_spend_control_evidence(
 
     try:
         raw = _read_json_file(path_value, "spend-control evidence")
+        if (
+            raw.get("schema_version") == SPEND_CONTROL_DASHBOARD_SCHEMA_VERSION
+            and raw.get("evidence_kind") != SPEND_CONTROL_DASHBOARD_EVIDENCE_KIND
+        ):
+            raise ControlledShadowAuthorizationPackageError(
+                "TOP5_B4_QUOTA_PROOF — BLOCKED_SPEND_CONTROL: dashboard evidence kind is invalid"
+            )
+        if raw.get("evidence_kind") == SPEND_CONTROL_DASHBOARD_EVIDENCE_KIND:
+            return _load_dashboard_spend_control_evidence(raw, now=now)
         headers_raw = raw.get("headers", raw)
         headers = {
             str(key).casefold(): str(value).strip()
@@ -855,6 +866,7 @@ def _load_spend_control_evidence(
             safe["date"] = headers["date"]
         return {
             "provider": CANONICAL_CANDIDATE_PROVIDER,
+            "evidence_kind": "provider_response_headers",
             "observed_at": observed,
             "account_tier": "free",
             "overage_exposure": "none",
@@ -875,6 +887,90 @@ def _load_spend_control_evidence(
         raise ControlledShadowAuthorizationPackageError(
             "TOP5_B4_QUOTA_PROOF — BLOCKED_SPEND_CONTROL: " + str(exc)
         ) from exc
+
+
+def _load_dashboard_spend_control_evidence(
+    raw: Mapping[str, object],
+    *,
+    now: datetime,
+) -> dict[str, object]:
+    """Normalize an operator assertion without turning it into quota evidence."""
+
+    if raw.get("schema_version") != SPEND_CONTROL_DASHBOARD_SCHEMA_VERSION:
+        raise ControlledShadowAuthorizationPackageError(
+            "TOP5_B4_QUOTA_PROOF — BLOCKED_SPEND_CONTROL: dashboard attestation schema is unsupported"
+        )
+    if raw.get("provider") != CANONICAL_CANDIDATE_PROVIDER:
+        raise ControlledShadowAuthorizationPackageError(
+            "TOP5_B4_QUOTA_PROOF — BLOCKED_SPEND_CONTROL: dashboard provider mismatch"
+        )
+    if raw.get("account_tier") != "free":
+        raise ControlledShadowAuthorizationPackageError(
+            "TOP5_B4_QUOTA_PROOF — BLOCKED_SPEND_CONTROL: dashboard account tier is not free"
+        )
+    plan_price = raw.get("plan_price_usd")
+    if isinstance(plan_price, bool) or plan_price != 0:
+        raise ControlledShadowAuthorizationPackageError(
+            "TOP5_B4_QUOTA_PROOF — BLOCKED_SPEND_CONTROL: dashboard plan is not zero-cost"
+        )
+    if raw.get("paid_overage_enabled") is not False:
+        raise ControlledShadowAuthorizationPackageError(
+            "TOP5_B4_QUOTA_PROOF — BLOCKED_SPEND_CONTROL: dashboard paid overage is enabled"
+        )
+    for name, expected in (
+        ("daily_datapoint_limit", 20_000),
+        ("monthly_datapoint_limit", 200_000),
+        ("rate_limit_requests_per_second", 1),
+    ):
+        value = raw.get(name)
+        if isinstance(value, bool) or value != expected:
+            raise ControlledShadowAuthorizationPackageError(
+                f"TOP5_B4_QUOTA_PROOF — BLOCKED_SPEND_CONTROL: dashboard {name} is invalid"
+            )
+    if raw.get("hard_cap_behavior") != "http_429":
+        raise ControlledShadowAuthorizationPackageError(
+            "TOP5_B4_QUOTA_PROOF — BLOCKED_SPEND_CONTROL: dashboard hard-cap behavior is invalid"
+        )
+    attestation_identity = raw.get("attestation_identity")
+    if not isinstance(attestation_identity, str) or not attestation_identity.strip():
+        raise ControlledShadowAuthorizationPackageError(
+            "TOP5_B4_QUOTA_PROOF — BLOCKED_SPEND_CONTROL: dashboard attestation identity is missing"
+        )
+    observed = _utc(
+        _timestamp(raw.get("observed_at"), "dashboard observed_at"),
+        "dashboard observed_at",
+    )
+    current = _utc(now, "spend-control validation now")
+    if observed > current:
+        raise ControlledShadowAuthorizationPackageError(
+            "TOP5_B4_QUOTA_PROOF — BLOCKED_SPEND_CONTROL: dashboard observation is future-dated"
+        )
+    if (
+        current - observed
+    ).total_seconds() > SPEND_CONTROL_EVIDENCE_MAXIMUM_AGE_SECONDS:
+        raise ControlledShadowAuthorizationPackageError(
+            "TOP5_B4_QUOTA_PROOF — BLOCKED_SPEND_CONTROL: dashboard attestation is stale"
+        )
+
+    normalized = {
+        "schema_version": SPEND_CONTROL_DASHBOARD_SCHEMA_VERSION,
+        "evidence_kind": SPEND_CONTROL_DASHBOARD_EVIDENCE_KIND,
+        "provider": CANONICAL_CANDIDATE_PROVIDER,
+        "observed_at": observed,
+        "account_tier": "free",
+        "plan_price_usd": 0,
+        "paid_overage_enabled": False,
+        "daily_datapoint_limit": 20_000,
+        "monthly_datapoint_limit": 200_000,
+        "rate_limit_requests_per_second": 1,
+        "hard_cap_behavior": "http_429",
+        "attestation_identity": attestation_identity.strip(),
+    }
+    return {
+        **normalized,
+        "overage_exposure": "none",
+        "digest": _digest(normalized),
+    }
 
 
 def _build_quota_proof_request(
@@ -930,6 +1026,26 @@ def _write_quota_proof(
         raise ControlledShadowAuthorizationPackageError(
             "TOP5_B4_QUOTA_PROOF — second quota proof output is not allowed"
         )
+    spend_control_payload = {
+        "provider": spend_control["provider"],
+        "evidence_kind": spend_control["evidence_kind"],
+        "account_tier": spend_control["account_tier"],
+        "overage_exposure": spend_control["overage_exposure"],
+        "observed_at": spend_control["observed_at"],
+        "digest": spend_control["digest"],
+    }
+    if spend_control["evidence_kind"] == SPEND_CONTROL_DASHBOARD_EVIDENCE_KIND:
+        for name in (
+            "schema_version",
+            "plan_price_usd",
+            "paid_overage_enabled",
+            "daily_datapoint_limit",
+            "monthly_datapoint_limit",
+            "rate_limit_requests_per_second",
+            "hard_cap_behavior",
+            "attestation_identity",
+        ):
+            spend_control_payload[name] = spend_control[name]
     payload = {
         "schema_version": "top5-therundown-quota-proof-package-v1",
         "execution_phase": "quota_proof",
@@ -954,13 +1070,7 @@ def _write_quota_proof(
             "request_count": request.request_count,
             "retry_count": request.retry_count,
         },
-        "spend_control": {
-            "provider": spend_control["provider"],
-            "account_tier": spend_control["account_tier"],
-            "overage_exposure": spend_control["overage_exposure"],
-            "observed_at": spend_control["observed_at"],
-            "digest": spend_control["digest"],
-        },
+        "spend_control": spend_control_payload,
         "safety": {
             "five_league_requests": 0,
             "receipt_issued": False,
@@ -1075,6 +1185,7 @@ def run_guarded_quota_proof(
         "response_digest": evidence.response_digest,
         "request_shape_digest": evidence.request_shape_digest,
         "spend_control_digest": spend_control["digest"],
+        "spend_control_evidence_kind": spend_control["evidence_kind"],
         "five_league_requests": 0,
         "next_step": "STOP_FOR_NEW_CEO_AUTHORIZATION",
         "safety": {
