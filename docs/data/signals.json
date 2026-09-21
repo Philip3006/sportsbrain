@@ -1,1058 +1,791 @@
 {
+  "updated": "2026-09-21T15:43:17Z",
+  "tennis": [],
   "schedule": [
     {
       "sport": "tennis",
-      "home": "Sanchez Izquierdo Nikolas",
-      "away": "Monteiro Thiago",
-      "kickoff": "2026-09-20T13:29:00Z",
-      "tour": "atp",
-      "tournament": "Szczecin challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.68,
-      "odds_away": 2.1,
-      "source": "tennisexplorer",
-      "sport_key": "te:szczecin-challenger_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
-      "event_status": "AWAITING_START",
+      "home": "Vivian Wolff",
+      "away": "Oleksandra Oliynykova",
+      "kickoff": "2026-09-22T03:00:00Z",
+      "tour": "wta",
+      "tournament": "Wta Singapore Open",
+      "category": "wta250",
+      "surface": "unknown",
+      "best_of": 3,
+      "odds_home": 0.0,
+      "odds_away": 0.0,
+      "odds_source": "the_odds_api",
+      "is_display_only": true,
+      "sport_key": "tennis_wta_singapore_open",
+      "scheduled_start_initial": "2026-09-22T03:00:00Z",
+      "scheduled_start_current": "2026-09-22T03:00:00Z",
+      "schedule_updated_at": "2026-09-21T15:43:17Z",
+      "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
+      "status_updated_at": "2026-09-21T15:43:17Z"
     },
     {
       "sport": "tennis",
-      "home": "Sharipov Marat (2002)",
-      "away": "Kotov Pavel",
-      "kickoff": "2026-09-20T13:29:00Z",
-      "tour": "atp",
-      "tournament": "Guangzhou 2 challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.82,
-      "odds_away": 1.9,
-      "source": "tennisexplorer",
-      "sport_key": "te:guangzhou-2-challenger_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
-      "event_status": "AWAITING_START",
+      "home": "Alycia Parks",
+      "away": "Mei Yamaguchi",
+      "kickoff": "2026-09-22T03:10:00Z",
+      "tour": "wta",
+      "tournament": "Wta Singapore Open",
+      "category": "wta250",
+      "surface": "unknown",
+      "best_of": 3,
+      "odds_home": 0.0,
+      "odds_away": 0.0,
+      "odds_source": "the_odds_api",
+      "is_display_only": true,
+      "sport_key": "tennis_wta_singapore_open",
+      "scheduled_start_initial": "2026-09-22T03:10:00Z",
+      "scheduled_start_current": "2026-09-22T03:10:00Z",
+      "schedule_updated_at": "2026-09-21T15:43:17Z",
+      "event_status": "UPCOMING",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
+      "status_updated_at": "2026-09-21T15:43:17Z"
     },
     {
       "sport": "tennis",
-      "home": "Mmoh Michael",
-      "away": "Wolf Jeffrey John",
-      "kickoff": "2026-09-20T13:29:00Z",
+      "home": "Tatiana Prozorova",
+      "away": "Sofia Costoulas",
+      "kickoff": "2026-09-22T05:30:00Z",
+      "tour": "wta",
+      "tournament": "Wta Singapore Open",
+      "category": "wta250",
+      "surface": "unknown",
+      "best_of": 3,
+      "odds_home": 0.0,
+      "odds_away": 0.0,
+      "odds_source": "the_odds_api",
+      "is_display_only": true,
+      "sport_key": "tennis_wta_singapore_open",
+      "scheduled_start_initial": "2026-09-22T05:30:00Z",
+      "scheduled_start_current": "2026-09-22T05:30:00Z",
+      "schedule_updated_at": "2026-09-21T15:43:17Z",
+      "event_status": "UPCOMING",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-21T15:43:17Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Donna Vekic",
+      "away": "Xinyu Wang",
+      "kickoff": "2026-09-22T05:40:00Z",
+      "tour": "wta",
+      "tournament": "Wta Singapore Open",
+      "category": "wta250",
+      "surface": "unknown",
+      "best_of": 3,
+      "odds_home": 0.0,
+      "odds_away": 0.0,
+      "odds_source": "the_odds_api",
+      "is_display_only": true,
+      "sport_key": "tennis_wta_singapore_open",
+      "scheduled_start_initial": "2026-09-22T05:40:00Z",
+      "scheduled_start_current": "2026-09-22T05:40:00Z",
+      "schedule_updated_at": "2026-09-21T15:43:17Z",
+      "event_status": "UPCOMING",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-21T15:43:17Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Barbora Krejcikova",
+      "away": "Anna-Lena Friedsam",
+      "kickoff": "2026-09-22T10:30:00Z",
+      "tour": "wta",
+      "tournament": "Wta Singapore Open",
+      "category": "wta250",
+      "surface": "unknown",
+      "best_of": 3,
+      "odds_home": 0.0,
+      "odds_away": 0.0,
+      "odds_source": "the_odds_api",
+      "is_display_only": true,
+      "sport_key": "tennis_wta_singapore_open",
+      "scheduled_start_initial": "2026-09-22T10:30:00Z",
+      "scheduled_start_current": "2026-09-22T10:30:00Z",
+      "schedule_updated_at": "2026-09-21T15:43:17Z",
+      "event_status": "UPCOMING",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-21T15:43:17Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Maria Sakkari",
+      "away": "Linda Fruhvirtova",
+      "kickoff": "2026-09-22T11:40:00Z",
+      "tour": "wta",
+      "tournament": "Wta Singapore Open",
+      "category": "wta250",
+      "surface": "unknown",
+      "best_of": 3,
+      "odds_home": 0.0,
+      "odds_away": 0.0,
+      "odds_source": "the_odds_api",
+      "is_display_only": true,
+      "sport_key": "tennis_wta_singapore_open",
+      "scheduled_start_initial": "2026-09-22T11:40:00Z",
+      "scheduled_start_current": "2026-09-22T11:40:00Z",
+      "schedule_updated_at": "2026-09-21T15:43:17Z",
+      "event_status": "UPCOMING",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-21T15:43:17Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Blanch Darwin",
+      "away": "Mmoh Michael",
+      "kickoff": "2026-09-21T15:42:00Z",
       "tour": "atp",
       "tournament": "Tiburon challenger",
       "category": "",
       "surface": "",
       "best_of": 0,
-      "odds_home": 2.2,
-      "odds_away": 1.6,
+      "odds_home": 2.07,
+      "odds_away": 1.68,
       "source": "tennisexplorer",
       "sport_key": "te:tiburon-challenger_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
+      "scheduled_start_initial": "2026-09-21T15:42:00Z",
+      "scheduled_start_current": "2026-09-21T15:42:00Z",
+      "schedule_updated_at": "2026-09-21T15:43:17Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
+      "status_updated_at": "2026-09-21T15:43:17Z"
     },
     {
       "sport": "tennis",
-      "home": "Mayot Harold",
-      "away": "Gueymard Wayenburg Sascha",
-      "kickoff": "2026-09-20T13:29:00Z",
+      "home": "Goffin David",
+      "away": "Lajal Mark",
+      "kickoff": "2026-09-21T15:42:00Z",
       "tour": "atp",
-      "tournament": "Rennes challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.65,
-      "odds_away": 2.14,
-      "source": "tennisexplorer",
-      "sport_key": "te:rennes-challenger_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Caniato Carlo Alberto",
-      "away": "Moro Canas Alejandro",
-      "kickoff": "2026-09-20T13:29:00Z",
-      "tour": "atp",
-      "tournament": "Biella challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.56,
-      "odds_away": 2.27,
-      "source": "tennisexplorer",
-      "sport_key": "te:biella-challenger_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Simakin Ilia",
-      "away": "Pacheco Mendez Rodrigo",
-      "kickoff": "2026-09-20T13:29:00Z",
-      "tour": "atp",
-      "tournament": "Phan Thiet 4 challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.66,
-      "odds_away": 2.13,
-      "source": "tennisexplorer",
-      "sport_key": "te:phan-thiet-4-challenger_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Kachmazov Alibek",
-      "away": "Chung Yunseong",
-      "kickoff": "2026-09-20T13:29:00Z",
-      "tour": "atp",
-      "tournament": "Davis Cup",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.57,
-      "odds_away": 2.21,
-      "source": "tennisexplorer",
-      "sport_key": "te:davis-cup_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Schoen Patrick",
-      "away": "Tabacco Fausto",
-      "kickoff": "2026-09-20T13:29:00Z",
-      "tour": "atp",
-      "tournament": "Davis Cup",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.5,
-      "odds_away": 2.28,
-      "source": "tennisexplorer",
-      "sport_key": "te:davis-cup_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Topo Marko",
-      "away": "Juhas Kristijan",
-      "kickoff": "2026-09-20T13:29:00Z",
-      "tour": "atp",
-      "tournament": "Davis Cup",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.05,
-      "odds_away": 1.65,
-      "source": "tennisexplorer",
-      "sport_key": "te:davis-cup_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Banerjee Samir",
-      "away": "McHugh Aidan",
-      "kickoff": "2026-09-20T13:29:00Z",
-      "tour": "atp",
-      "tournament": "Davis Cup",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.49,
-      "odds_away": 2.3,
-      "source": "tennisexplorer",
-      "sport_key": "te:davis-cup_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Jubb Paul",
-      "away": "Bertimon Charles",
-      "kickoff": "2026-09-20T13:29:00Z",
-      "tour": "atp",
-      "tournament": "Davis Cup",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.08,
-      "odds_away": 6.25,
-      "source": "tennisexplorer",
-      "sport_key": "te:davis-cup_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Rapagnetta Daniele",
-      "away": "Marino Pietro",
-      "kickoff": "2026-09-20T13:29:00Z",
-      "tour": "atp",
-      "tournament": "Davis Cup",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.42,
-      "odds_away": 2.5,
-      "source": "tennisexplorer",
-      "sport_key": "te:davis-cup_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Popko Dmitry",
-      "away": "Bessonov Dmitry",
-      "kickoff": "2026-09-20T13:29:00Z",
-      "tour": "atp",
-      "tournament": "Davis Cup",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.37,
-      "odds_away": 2.66,
-      "source": "tennisexplorer",
-      "sport_key": "te:davis-cup_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Willwerth Benjamin",
-      "away": "Rahmani Kasra",
-      "kickoff": "2026-09-20T13:29:00Z",
-      "tour": "atp",
-      "tournament": "Davis Cup",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.0,
-      "odds_away": 1.71,
-      "source": "tennisexplorer",
-      "sport_key": "te:davis-cup_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Saraiva Dos Santos Paulo Andre",
-      "away": "Zanellato Nicolas",
-      "kickoff": "2026-09-20T13:29:00Z",
-      "tour": "atp",
-      "tournament": "Davis Cup",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.47,
-      "odds_away": 2.35,
-      "source": "tennisexplorer",
-      "sport_key": "te:davis-cup_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Descotte Matias Franco",
-      "away": "De La Fuente Santiago",
-      "kickoff": "2026-09-20T13:29:00Z",
-      "tour": "atp",
-      "tournament": "Buenos Aires challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 6.5,
-      "odds_away": 1.08,
-      "source": "tennisexplorer",
-      "sport_key": "te:buenos-aires-challenger_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Fernandez Bruno",
-      "away": "Pagani Dante",
-      "kickoff": "2026-09-20T13:29:00Z",
-      "tour": "atp",
-      "tournament": "Buenos Aires challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.37,
-      "odds_away": 2.83,
-      "source": "tennisexplorer",
-      "sport_key": "te:buenos-aires-challenger_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Garcia Longo Nicolas",
-      "away": "Farjat Tomas",
-      "kickoff": "2026-09-20T13:29:00Z",
-      "tour": "atp",
-      "tournament": "Buenos Aires challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.4,
-      "odds_away": 1.48,
-      "source": "tennisexplorer",
-      "sport_key": "te:buenos-aires-challenger_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Aboian Valerio",
-      "away": "Cundom Julian",
-      "kickoff": "2026-09-20T13:29:00Z",
-      "tour": "atp",
-      "tournament": "Buenos Aires challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.4,
-      "odds_away": 2.75,
-      "source": "tennisexplorer",
-      "sport_key": "te:buenos-aires-challenger_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Ross Jackson",
-      "away": "Martinez Tomás",
-      "kickoff": "2026-09-20T13:29:00Z",
-      "tour": "atp",
-      "tournament": "Buenos Aires challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 6.5,
-      "odds_away": 1.08,
-      "source": "tennisexplorer",
-      "sport_key": "te:buenos-aires-challenger_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Aguilar Cardozo Federico",
-      "away": "Dickerson Ryan",
-      "kickoff": "2026-09-20T13:29:00Z",
-      "tour": "atp",
-      "tournament": "Buenos Aires challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.65,
-      "odds_away": 2.1,
-      "source": "tennisexplorer",
-      "sport_key": "te:buenos-aires-challenger_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Cigarran Thiago",
-      "away": "Pesino Santiago",
-      "kickoff": "2026-09-20T13:29:00Z",
-      "tour": "atp",
-      "tournament": "Buenos Aires challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.16,
-      "odds_away": 4.62,
-      "source": "tennisexplorer",
-      "sport_key": "te:buenos-aires-challenger_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Rodriguez Taverna Santiago",
-      "away": "Bruna Nicolas",
-      "kickoff": "2026-09-20T13:29:00Z",
-      "tour": "atp",
-      "tournament": "Buenos Aires challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.39,
-      "odds_away": 2.74,
-      "source": "tennisexplorer",
-      "sport_key": "te:buenos-aires-challenger_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Rodriguez Lorenzo Joaquin",
-      "away": "Meneo Tadeo",
-      "kickoff": "2026-09-20T13:29:00Z",
-      "tour": "atp",
-      "tournament": "Buenos Aires challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.25,
-      "odds_away": 3.54,
-      "source": "tennisexplorer",
-      "sport_key": "te:buenos-aires-challenger_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Tenti Fermin",
-      "away": "Kestelboim Mariano",
-      "kickoff": "2026-09-20T13:29:00Z",
-      "tour": "atp",
-      "tournament": "Buenos Aires challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 3.77,
-      "odds_away": 1.23,
-      "source": "tennisexplorer",
-      "sport_key": "te:buenos-aires-challenger_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Aguilar Cardozo Joaquin",
-      "away": "Del Pino Mateo",
-      "kickoff": "2026-09-20T13:29:00Z",
-      "tour": "atp",
-      "tournament": "Buenos Aires challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.05,
-      "odds_away": 8.5,
-      "source": "tennisexplorer",
-      "sport_key": "te:buenos-aires-challenger_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Monferrer Ezequiel",
-      "away": "Malla Bastian",
-      "kickoff": "2026-09-20T13:29:00Z",
-      "tour": "atp",
-      "tournament": "Buenos Aires challenger",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 6.27,
-      "odds_away": 1.1,
-      "source": "tennisexplorer",
-      "sport_key": "te:buenos-aires-challenger_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Varillas Juan Pablo",
-      "away": "Escurra Isnardi Hernando Jose",
-      "kickoff": "2026-09-20T13:29:00Z",
-      "tour": "atp",
-      "tournament": "Davis Cup",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.25,
-      "odds_away": 3.46,
-      "source": "tennisexplorer",
-      "sport_key": "te:davis-cup_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Shimabukuro Sho",
-      "away": "Shepp Anton",
-      "kickoff": "2026-09-20T13:29:00Z",
-      "tour": "atp",
-      "tournament": "Davis Cup",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.3,
-      "odds_away": 3.4,
-      "source": "tennisexplorer",
-      "sport_key": "te:davis-cup_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "De Minaur Alex",
-      "away": "Majchrzak Kamil",
-      "kickoff": "2026-09-20T13:29:00Z",
-      "tour": "atp",
-      "tournament": "Davis Cup",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.4,
-      "odds_away": 2.75,
-      "source": "tennisexplorer",
-      "sport_key": "te:davis-cup_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Tseng Chun Hsin",
-      "away": "Wallin Olle",
-      "kickoff": "2026-09-20T13:29:00Z",
-      "tour": "atp",
-      "tournament": "Davis Cup",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.45,
-      "odds_away": 2.62,
-      "source": "tennisexplorer",
-      "sport_key": "te:davis-cup_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Kravchenko Georgii",
-      "away": "Efstathiou Menelaos",
-      "kickoff": "2026-09-20T13:29:00Z",
-      "tour": "atp",
-      "tournament": "Davis Cup",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.58,
-      "odds_away": 2.23,
-      "source": "tennisexplorer",
-      "sport_key": "te:davis-cup_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Tsitsipas Stefanos",
-      "away": "Molcan Alex",
-      "kickoff": "2026-09-20T13:29:00Z",
-      "tour": "atp",
-      "tournament": "Davis Cup",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 2.02,
-      "odds_away": 1.67,
-      "source": "tennisexplorer",
-      "sport_key": "te:davis-cup_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Zverev Alexander",
-      "away": "Prizmic Dino",
-      "kickoff": "2026-09-20T13:29:00Z",
-      "tour": "atp",
-      "tournament": "Davis Cup",
-      "category": "",
-      "surface": "",
-      "best_of": 0,
-      "odds_home": 1.42,
-      "odds_away": 2.7,
-      "source": "tennisexplorer",
-      "sport_key": "te:davis-cup_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
-      "event_status": "AWAITING_START",
-      "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
-    },
-    {
-      "sport": "tennis",
-      "home": "Altmaier Daniel",
-      "away": "Dodig Matej",
-      "kickoff": "2026-09-20T13:29:00Z",
-      "tour": "atp",
-      "tournament": "Davis Cup",
+      "tournament": "St. Tropez challenger",
       "category": "",
       "surface": "",
       "best_of": 0,
       "odds_home": 2.2,
       "odds_away": 1.59,
       "source": "tennisexplorer",
-      "sport_key": "te:davis-cup_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
+      "sport_key": "te:st-tropez-challenger_atp",
+      "scheduled_start_initial": "2026-09-21T15:42:00Z",
+      "scheduled_start_current": "2026-09-21T15:42:00Z",
+      "schedule_updated_at": "2026-09-21T15:43:17Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
+      "status_updated_at": "2026-09-21T15:43:17Z"
     },
     {
       "sport": "tennis",
-      "home": "Kecmanovic Miomir",
-      "away": "Gaubas Vilius",
-      "kickoff": "2026-09-20T13:29:00Z",
+      "home": "Guerrieri Andrea",
+      "away": "Maestrelli Francesco",
+      "kickoff": "2026-09-21T15:42:00Z",
       "tour": "atp",
-      "tournament": "Davis Cup",
+      "tournament": "St. Tropez challenger",
       "category": "",
       "surface": "",
       "best_of": 0,
-      "odds_home": 1.3,
-      "odds_away": 3.3,
+      "odds_home": 2.12,
+      "odds_away": 1.66,
       "source": "tennisexplorer",
-      "sport_key": "te:davis-cup_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
+      "sport_key": "te:st-tropez-challenger_atp",
+      "scheduled_start_initial": "2026-09-21T15:42:00Z",
+      "scheduled_start_current": "2026-09-21T15:42:00Z",
+      "schedule_updated_at": "2026-09-21T15:43:17Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
+      "status_updated_at": "2026-09-21T15:43:17Z"
     },
     {
       "sport": "tennis",
-      "home": "Gombos Norbert",
-      "away": "Sakellaridis Stefanos",
-      "kickoff": "2026-09-20T13:29:00Z",
+      "home": "Villanueva Gonzalo",
+      "away": "Justo Guido Ivan",
+      "kickoff": "2026-09-21T15:42:00Z",
       "tour": "atp",
-      "tournament": "Davis Cup",
+      "tournament": "Buenos Aires challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.62,
+      "odds_away": 2.16,
+      "source": "tennisexplorer",
+      "sport_key": "te:buenos-aires-challenger_atp",
+      "scheduled_start_initial": "2026-09-21T15:42:00Z",
+      "scheduled_start_current": "2026-09-21T15:42:00Z",
+      "schedule_updated_at": "2026-09-21T15:43:17Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-21T15:43:17Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Dinev Dinko",
+      "away": "Dietrich Dylan",
+      "kickoff": "2026-09-21T15:42:00Z",
+      "tour": "atp",
+      "tournament": "San Diego 2 challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.75,
+      "odds_away": 1.4,
+      "source": "tennisexplorer",
+      "sport_key": "te:san-diego-2-challenger_atp",
+      "scheduled_start_initial": "2026-09-21T15:42:00Z",
+      "scheduled_start_current": "2026-09-21T15:42:00Z",
+      "schedule_updated_at": "2026-09-21T15:43:17Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-21T15:43:17Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Shick Braden",
+      "away": "Maloney Patrick (2000)",
+      "kickoff": "2026-09-21T15:42:00Z",
+      "tour": "atp",
+      "tournament": "San Diego 2 challenger",
       "category": "",
       "surface": "",
       "best_of": 0,
       "odds_home": 1.61,
-      "odds_away": 2.2,
+      "odds_away": 2.19,
       "source": "tennisexplorer",
-      "sport_key": "te:davis-cup_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
+      "sport_key": "te:san-diego-2-challenger_atp",
+      "scheduled_start_initial": "2026-09-21T15:42:00Z",
+      "scheduled_start_current": "2026-09-21T15:42:00Z",
+      "schedule_updated_at": "2026-09-21T15:43:17Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
+      "status_updated_at": "2026-09-21T15:43:17Z"
     },
     {
       "sport": "tennis",
-      "home": "Medjedovic Hamad",
-      "away": "Butvilas Edas",
-      "kickoff": "2026-09-20T13:29:00Z",
+      "home": "Blanch Dali",
+      "away": "Kopp Sandro",
+      "kickoff": "2026-09-21T15:42:00Z",
       "tour": "atp",
-      "tournament": "Davis Cup",
+      "tournament": "Genoa 2 challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.2,
+      "odds_away": 1.6,
+      "source": "tennisexplorer",
+      "sport_key": "te:genoa-2-challenger_atp",
+      "scheduled_start_initial": "2026-09-21T15:42:00Z",
+      "scheduled_start_current": "2026-09-21T15:42:00Z",
+      "schedule_updated_at": "2026-09-21T15:43:17Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-21T15:43:17Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Brancaccio Raul",
+      "away": "Romano Filippo",
+      "kickoff": "2026-09-21T15:42:00Z",
+      "tour": "atp",
+      "tournament": "Genoa 2 challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.1,
+      "odds_away": 1.67,
+      "source": "tennisexplorer",
+      "sport_key": "te:genoa-2-challenger_atp",
+      "scheduled_start_initial": "2026-09-21T15:42:00Z",
+      "scheduled_start_current": "2026-09-21T15:42:00Z",
+      "schedule_updated_at": "2026-09-21T15:43:17Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-21T15:43:17Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Arnaboldi Federico",
+      "away": "Broska Florian",
+      "kickoff": "2026-09-21T15:42:00Z",
+      "tour": "atp",
+      "tournament": "Genoa 2 challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.04,
+      "odds_away": 1.71,
+      "source": "tennisexplorer",
+      "sport_key": "te:genoa-2-challenger_atp",
+      "scheduled_start_initial": "2026-09-21T15:42:00Z",
+      "scheduled_start_current": "2026-09-21T15:42:00Z",
+      "schedule_updated_at": "2026-09-21T15:43:17Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-21T15:43:17Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Martin Manzano Juan Cruz",
+      "away": "Pieri Samuele",
+      "kickoff": "2026-09-21T15:42:00Z",
+      "tour": "atp",
+      "tournament": "Genoa 2 challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.73,
+      "odds_away": 2.04,
+      "source": "tennisexplorer",
+      "sport_key": "te:genoa-2-challenger_atp",
+      "scheduled_start_initial": "2026-09-21T15:42:00Z",
+      "scheduled_start_current": "2026-09-21T15:42:00Z",
+      "schedule_updated_at": "2026-09-21T15:43:17Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-21T15:43:17Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Roca Batalla Oriol",
+      "away": "Dedura-Palomero Diego",
+      "kickoff": "2026-09-21T15:42:00Z",
+      "tour": "atp",
+      "tournament": "Plovdiv 4 challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.2,
+      "odds_away": 1.57,
+      "source": "tennisexplorer",
+      "sport_key": "te:plovdiv-4-challenger_atp",
+      "scheduled_start_initial": "2026-09-21T15:42:00Z",
+      "scheduled_start_current": "2026-09-21T15:42:00Z",
+      "schedule_updated_at": "2026-09-21T15:43:17Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-21T15:43:17Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Hassan Benjamin",
+      "away": "Martin Tiffon Pol",
+      "kickoff": "2026-09-21T15:42:00Z",
+      "tour": "atp",
+      "tournament": "Plovdiv 4 challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.15,
+      "odds_away": 1.67,
+      "source": "tennisexplorer",
+      "sport_key": "te:plovdiv-4-challenger_atp",
+      "scheduled_start_initial": "2026-09-21T15:42:00Z",
+      "scheduled_start_current": "2026-09-21T15:42:00Z",
+      "schedule_updated_at": "2026-09-21T15:43:17Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-21T15:43:17Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Alcala Gurri Max",
+      "away": "Coulibaly Eliakim",
+      "kickoff": "2026-09-21T15:42:00Z",
+      "tour": "atp",
+      "tournament": "Plovdiv 4 challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.9,
+      "odds_away": 1.35,
+      "source": "tennisexplorer",
+      "sport_key": "te:plovdiv-4-challenger_atp",
+      "scheduled_start_initial": "2026-09-21T15:42:00Z",
+      "scheduled_start_current": "2026-09-21T15:42:00Z",
+      "schedule_updated_at": "2026-09-21T15:43:17Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-21T15:43:17Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Hemery Calvin",
+      "away": "Galan Daniel Elahi",
+      "kickoff": "2026-09-21T15:42:00Z",
+      "tour": "atp",
+      "tournament": "Plovdiv 4 challenger",
       "category": "",
       "surface": "",
       "best_of": 0,
       "odds_home": 1.6,
       "odds_away": 2.2,
       "source": "tennisexplorer",
-      "sport_key": "te:davis-cup_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
+      "sport_key": "te:plovdiv-4-challenger_atp",
+      "scheduled_start_initial": "2026-09-21T15:42:00Z",
+      "scheduled_start_current": "2026-09-21T15:42:00Z",
+      "schedule_updated_at": "2026-09-21T15:43:17Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
+      "status_updated_at": "2026-09-21T15:43:17Z"
     },
     {
       "sport": "tennis",
-      "home": "Samuel Toby",
-      "away": "Guillen Meza Alvaro",
-      "kickoff": "2026-09-20T13:29:00Z",
+      "home": "De Marchi Andrea (2007)",
+      "away": "Cocola Sebastiano",
+      "kickoff": "2026-09-21T15:42:00Z",
       "tour": "atp",
-      "tournament": "Davis Cup",
+      "tournament": "Chengdu",
       "category": "",
       "surface": "",
       "best_of": 0,
-      "odds_home": 1.22,
-      "odds_away": 4.0,
+      "odds_home": 1.29,
+      "odds_away": 3.25,
       "source": "tennisexplorer",
-      "sport_key": "te:davis-cup_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
+      "sport_key": "te:chengdu_atp",
+      "scheduled_start_initial": "2026-09-21T15:42:00Z",
+      "scheduled_start_current": "2026-09-21T15:42:00Z",
+      "schedule_updated_at": "2026-09-21T15:43:17Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
+      "status_updated_at": "2026-09-21T15:43:17Z"
     },
     {
       "sport": "tennis",
-      "home": "Phillips Daniel",
-      "away": "Hernandez Serrano Juan Alejandro",
-      "kickoff": "2026-09-20T13:29:00Z",
+      "home": "Vanshelboim Eric",
+      "away": "Bracci Valerio",
+      "kickoff": "2026-09-21T15:42:00Z",
       "tour": "atp",
-      "tournament": "Davis Cup",
+      "tournament": "Chengdu",
       "category": "",
       "surface": "",
       "best_of": 0,
-      "odds_home": 3.97,
-      "odds_away": 1.23,
+      "odds_home": 1.4,
+      "odds_away": 2.6,
       "source": "tennisexplorer",
-      "sport_key": "te:davis-cup_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
+      "sport_key": "te:chengdu_atp",
+      "scheduled_start_initial": "2026-09-21T15:42:00Z",
+      "scheduled_start_current": "2026-09-21T15:42:00Z",
+      "schedule_updated_at": "2026-09-21T15:43:17Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
+      "status_updated_at": "2026-09-21T15:43:17Z"
     },
     {
       "sport": "tennis",
-      "home": "Dlimi Yassine",
-      "away": "Abua Canice",
-      "kickoff": "2026-09-20T13:29:00Z",
+      "home": "Carboni Lorenzo",
+      "away": "Baragiola Mordini Tobia Costanzo",
+      "kickoff": "2026-09-21T15:42:00Z",
       "tour": "atp",
-      "tournament": "Davis Cup",
+      "tournament": "Chengdu",
       "category": "",
       "surface": "",
       "best_of": 0,
-      "odds_home": 1.02,
-      "odds_away": 13.0,
+      "odds_home": 1.2,
+      "odds_away": 4.05,
       "source": "tennisexplorer",
-      "sport_key": "te:davis-cup_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
+      "sport_key": "te:chengdu_atp",
+      "scheduled_start_initial": "2026-09-21T15:42:00Z",
+      "scheduled_start_current": "2026-09-21T15:42:00Z",
+      "schedule_updated_at": "2026-09-21T15:43:17Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
+      "status_updated_at": "2026-09-21T15:43:17Z"
     },
     {
       "sport": "tennis",
-      "home": "Cerundolo Francisco",
-      "away": "Alkaya Mert",
-      "kickoff": "2026-09-20T13:29:00Z",
+      "home": "Johns Garrett",
+      "away": "McCormick Tristan",
+      "kickoff": "2026-09-21T15:42:00Z",
       "tour": "atp",
-      "tournament": "Davis Cup",
+      "tournament": "Chengdu",
       "category": "",
       "surface": "",
       "best_of": 0,
-      "odds_home": 1.26,
-      "odds_away": 3.37,
+      "odds_home": 1.6,
+      "odds_away": 2.2,
       "source": "tennisexplorer",
-      "sport_key": "te:davis-cup_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
+      "sport_key": "te:chengdu_atp",
+      "scheduled_start_initial": "2026-09-21T15:42:00Z",
+      "scheduled_start_current": "2026-09-21T15:42:00Z",
+      "schedule_updated_at": "2026-09-21T15:43:17Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
+      "status_updated_at": "2026-09-21T15:43:17Z"
     },
     {
       "sport": "tennis",
-      "home": "Mallory Richard",
-      "away": "Magadan Alan",
-      "kickoff": "2026-09-20T13:29:00Z",
+      "home": "Bernet Henry",
+      "away": "Frydrych Viktor",
+      "kickoff": "2026-09-21T15:42:00Z",
       "tour": "atp",
-      "tournament": "Davis Cup",
+      "tournament": "Chengdu",
       "category": "",
       "surface": "",
       "best_of": 0,
-      "odds_home": 11.0,
-      "odds_away": 1.03,
+      "odds_home": 1.03,
+      "odds_away": 9.38,
       "source": "tennisexplorer",
-      "sport_key": "te:davis-cup_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
+      "sport_key": "te:chengdu_atp",
+      "scheduled_start_initial": "2026-09-21T15:42:00Z",
+      "scheduled_start_current": "2026-09-21T15:42:00Z",
+      "schedule_updated_at": "2026-09-21T15:43:17Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
+      "status_updated_at": "2026-09-21T15:43:17Z"
     },
     {
       "sport": "tennis",
-      "home": "Tirante Thiago Agustin",
-      "away": "Erel Yanki",
-      "kickoff": "2026-09-20T13:29:00Z",
+      "home": "Vasa Iiro",
+      "away": "Nanobashvili Saba George",
+      "kickoff": "2026-09-21T15:42:00Z",
       "tour": "atp",
-      "tournament": "Davis Cup",
+      "tournament": "Chengdu",
       "category": "",
       "surface": "",
       "best_of": 0,
-      "odds_home": 1.7,
-      "odds_away": 2.05,
+      "odds_home": 1.55,
+      "odds_away": 2.2,
       "source": "tennisexplorer",
-      "sport_key": "te:davis-cup_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
+      "sport_key": "te:chengdu_atp",
+      "scheduled_start_initial": "2026-09-21T15:42:00Z",
+      "scheduled_start_current": "2026-09-21T15:42:00Z",
+      "schedule_updated_at": "2026-09-21T15:43:17Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
+      "status_updated_at": "2026-09-21T15:43:17Z"
     },
     {
       "sport": "tennis",
-      "home": "Tabilo Alejandro",
-      "away": "Jodar Rafael",
-      "kickoff": "2026-09-20T13:29:00Z",
+      "home": "Rejchtman Vinciguerra William",
+      "away": "Simonsson Jan",
+      "kickoff": "2026-09-21T15:42:00Z",
       "tour": "atp",
-      "tournament": "Davis Cup",
+      "tournament": "Chengdu",
       "category": "",
       "surface": "",
       "best_of": 0,
-      "odds_home": 1.5,
-      "odds_away": 2.38,
+      "odds_home": 2.01,
+      "odds_away": 1.67,
       "source": "tennisexplorer",
-      "sport_key": "te:davis-cup_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
+      "sport_key": "te:chengdu_atp",
+      "scheduled_start_initial": "2026-09-21T15:42:00Z",
+      "scheduled_start_current": "2026-09-21T15:42:00Z",
+      "schedule_updated_at": "2026-09-21T15:43:17Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
+      "status_updated_at": "2026-09-21T15:43:17Z"
     },
     {
       "sport": "tennis",
-      "home": "Garin Cristian",
-      "away": "Merida Aguilar Daniel",
-      "kickoff": "2026-09-20T13:29:00Z",
+      "home": "Sigsgaard Christian",
+      "away": "Ryden Victor",
+      "kickoff": "2026-09-21T15:42:00Z",
       "tour": "atp",
-      "tournament": "Davis Cup",
+      "tournament": "Chengdu",
       "category": "",
       "surface": "",
       "best_of": 0,
-      "odds_home": 2.25,
-      "odds_away": 1.58,
+      "odds_home": 1.59,
+      "odds_away": 2.17,
       "source": "tennisexplorer",
-      "sport_key": "te:davis-cup_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
+      "sport_key": "te:chengdu_atp",
+      "scheduled_start_initial": "2026-09-21T15:42:00Z",
+      "scheduled_start_current": "2026-09-21T15:42:00Z",
+      "schedule_updated_at": "2026-09-21T15:43:17Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
+      "status_updated_at": "2026-09-21T15:43:17Z"
     },
     {
       "sport": "tennis",
-      "home": "Cruz César",
-      "away": "Borges Nuno",
-      "kickoff": "2026-09-20T13:29:00Z",
+      "home": "Malla Bastian",
+      "away": "Monferrer Ezequiel",
+      "kickoff": "2026-09-21T15:43:00Z",
       "tour": "atp",
-      "tournament": "Davis Cup",
+      "tournament": "Buenos Aires challenger",
       "category": "",
       "surface": "",
       "best_of": 0,
-      "odds_home": 1.77,
-      "odds_away": 1.89,
+      "odds_home": 1.1,
+      "odds_away": 6.25,
       "source": "tennisexplorer",
-      "sport_key": "te:davis-cup_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
+      "sport_key": "te:buenos-aires-challenger_atp",
+      "scheduled_start_initial": "2026-09-21T15:43:00Z",
+      "scheduled_start_current": "2026-09-21T15:43:00Z",
+      "schedule_updated_at": "2026-09-21T15:43:17Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
+      "status_updated_at": "2026-09-21T15:43:17Z"
     },
     {
       "sport": "tennis",
-      "home": "Duran Diego (2004)",
-      "away": "Faria Jaime",
-      "kickoff": "2026-09-20T13:29:00Z",
+      "home": "Aguilar Cardozo Joaquin",
+      "away": "Del Pino Mateo",
+      "kickoff": "2026-09-21T15:43:00Z",
       "tour": "atp",
-      "tournament": "Davis Cup",
+      "tournament": "Buenos Aires challenger",
       "category": "",
       "surface": "",
       "best_of": 0,
-      "odds_home": 1.73,
-      "odds_away": 1.96,
+      "odds_home": 1.29,
+      "odds_away": 3.2,
       "source": "tennisexplorer",
-      "sport_key": "te:davis-cup_atp",
-      "scheduled_start_initial": "2026-09-20T13:29:00Z",
-      "scheduled_start_current": "2026-09-20T13:29:00Z",
-      "schedule_updated_at": "2026-09-20T13:29:55Z",
+      "sport_key": "te:buenos-aires-challenger_atp",
+      "scheduled_start_initial": "2026-09-21T15:43:00Z",
+      "scheduled_start_current": "2026-09-21T15:43:00Z",
+      "schedule_updated_at": "2026-09-21T15:43:17Z",
       "event_status": "AWAITING_START",
       "status_source": "sportsbrain_schedule",
-      "status_updated_at": "2026-09-20T13:29:55Z"
+      "status_updated_at": "2026-09-21T15:43:17Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Tenti Fermin",
+      "away": "Kestelboim Mariano",
+      "kickoff": "2026-09-21T15:43:00Z",
+      "tour": "atp",
+      "tournament": "Buenos Aires challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 2.33,
+      "odds_away": 1.52,
+      "source": "tennisexplorer",
+      "sport_key": "te:buenos-aires-challenger_atp",
+      "scheduled_start_initial": "2026-09-21T15:43:00Z",
+      "scheduled_start_current": "2026-09-21T15:43:00Z",
+      "schedule_updated_at": "2026-09-21T15:43:17Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-21T15:43:17Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Rodriguez Taverna Santiago",
+      "away": "Bruna Nicolas",
+      "kickoff": "2026-09-21T15:43:00Z",
+      "tour": "atp",
+      "tournament": "Buenos Aires challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.46,
+      "odds_away": 2.53,
+      "source": "tennisexplorer",
+      "sport_key": "te:buenos-aires-challenger_atp",
+      "scheduled_start_initial": "2026-09-21T15:43:00Z",
+      "scheduled_start_current": "2026-09-21T15:43:00Z",
+      "schedule_updated_at": "2026-09-21T15:43:17Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-21T15:43:17Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Cigarran Thiago",
+      "away": "Martinez Tomás",
+      "kickoff": "2026-09-21T15:43:00Z",
+      "tour": "atp",
+      "tournament": "Buenos Aires challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.48,
+      "odds_away": 2.5,
+      "source": "tennisexplorer",
+      "sport_key": "te:buenos-aires-challenger_atp",
+      "scheduled_start_initial": "2026-09-21T15:43:00Z",
+      "scheduled_start_current": "2026-09-21T15:43:00Z",
+      "schedule_updated_at": "2026-09-21T15:43:17Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-21T15:43:17Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Rodriguez Lorenzo Joaquin",
+      "away": "Meneo Tadeo",
+      "kickoff": "2026-09-21T15:43:00Z",
+      "tour": "atp",
+      "tournament": "Buenos Aires challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.4,
+      "odds_away": 2.75,
+      "source": "tennisexplorer",
+      "sport_key": "te:buenos-aires-challenger_atp",
+      "scheduled_start_initial": "2026-09-21T15:43:00Z",
+      "scheduled_start_current": "2026-09-21T15:43:00Z",
+      "schedule_updated_at": "2026-09-21T15:43:17Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-21T15:43:17Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Aguilar Cardozo Federico",
+      "away": "Dickerson Ryan",
+      "kickoff": "2026-09-21T15:43:00Z",
+      "tour": "atp",
+      "tournament": "Buenos Aires challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.64,
+      "odds_away": 2.1,
+      "source": "tennisexplorer",
+      "sport_key": "te:buenos-aires-challenger_atp",
+      "scheduled_start_initial": "2026-09-21T15:43:00Z",
+      "scheduled_start_current": "2026-09-21T15:43:00Z",
+      "schedule_updated_at": "2026-09-21T15:43:17Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-21T15:43:17Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Aboian Valerio",
+      "away": "Descotte Matias Franco",
+      "kickoff": "2026-09-21T15:43:00Z",
+      "tour": "atp",
+      "tournament": "Buenos Aires challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.54,
+      "odds_away": 2.33,
+      "source": "tennisexplorer",
+      "sport_key": "te:buenos-aires-challenger_atp",
+      "scheduled_start_initial": "2026-09-21T15:43:00Z",
+      "scheduled_start_current": "2026-09-21T15:43:00Z",
+      "schedule_updated_at": "2026-09-21T15:43:17Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-21T15:43:17Z"
+    },
+    {
+      "sport": "tennis",
+      "home": "Fernandez Bruno",
+      "away": "Farjat Tomas",
+      "kickoff": "2026-09-21T15:43:00Z",
+      "tour": "atp",
+      "tournament": "Buenos Aires challenger",
+      "category": "",
+      "surface": "",
+      "best_of": 0,
+      "odds_home": 1.49,
+      "odds_away": 2.42,
+      "source": "tennisexplorer",
+      "sport_key": "te:buenos-aires-challenger_atp",
+      "scheduled_start_initial": "2026-09-21T15:43:00Z",
+      "scheduled_start_current": "2026-09-21T15:43:00Z",
+      "schedule_updated_at": "2026-09-21T15:43:17Z",
+      "event_status": "AWAITING_START",
+      "status_source": "sportsbrain_schedule",
+      "status_updated_at": "2026-09-21T15:43:17Z"
     }
   ],
-  "tennis": [],
-  "top_elo": [
-    {
-      "name": "Sinner J.",
-      "rating": 1677
-    },
-    {
-      "name": "Fritz T.",
-      "rating": 1665
-    },
-    {
-      "name": "Alcaraz C.",
-      "rating": 1646
-    },
-    {
-      "name": "Noskova L.",
-      "rating": 1642
-    },
-    {
-      "name": "Djokovic N.",
-      "rating": 1642
-    },
-    {
-      "name": "Zverev A.",
-      "rating": 1625
-    },
-    {
-      "name": "Keys M.",
-      "rating": 1623
-    },
-    {
-      "name": "De Minaur A.",
-      "rating": 1597
-    },
-    {
-      "name": "Pegula J.",
-      "rating": 1596
-    },
-    {
-      "name": "Sabalenka A.",
-      "rating": 1594
-    }
-  ],
-  "updated": "2026-09-21T12:01:05Z",
   "odds_history": {
     "Alexei Popyrin vs Roman Andres Burruchaga": [
       {
@@ -27231,10 +26964,134 @@
       }
     ]
   },
-  "football": [],
+  "wm_results": [
+    {
+      "match_id": "fb30113e43d113f1ace48b8563ba1ee9",
+      "home": "Spain",
+      "away": "Argentina",
+      "home_score": 1,
+      "away_score": 0,
+      "commence_time": "2026-07-19T19:05:00Z"
+    }
+  ],
   "build_info": {
-    "sha": "baff708",
+    "sha": "2f6ce50",
     "date": "2026-09-21"
+  },
+  "football": [],
+  "model_tips": {
+    "France vs England": {
+      "p_home": 0.522,
+      "p_draw": 0.326,
+      "p_away": 0.152,
+      "xg_home": 1.78,
+      "xg_away": 0.95,
+      "p_btts_yes": 0.557,
+      "p_btts_no": 0.443,
+      "p_over25": 0.514,
+      "p_under25": 0.486,
+      "top_scorers_home": [
+        {
+          "name": "Jules Koundé",
+          "p": 0.741
+        },
+        {
+          "name": "Bradley Barcola",
+          "p": 0.574
+        },
+        {
+          "name": "Ousmane Dembélé",
+          "p": 0.528
+        }
+      ],
+      "top_scorers_away": [
+        {
+          "name": "Ivan Toney",
+          "p": 0.451
+        },
+        {
+          "name": "Harry Kane",
+          "p": 0.447
+        },
+        {
+          "name": "Jude Bellingham",
+          "p": 0.371
+        }
+      ],
+      "top_scores": [
+        {
+          "h": 1,
+          "a": 1,
+          "p": 15.7
+        },
+        {
+          "h": 0,
+          "a": 0,
+          "p": 11.2
+        },
+        {
+          "h": 2,
+          "a": 0,
+          "p": 10.3
+        }
+      ]
+    },
+    "Spain vs Argentina": {
+      "p_home": 0.629,
+      "p_draw": 0.305,
+      "p_away": 0.066,
+      "xg_home": 1.74,
+      "xg_away": 0.53,
+      "p_btts_yes": 0.378,
+      "p_btts_no": 0.622,
+      "p_over25": 0.394,
+      "p_under25": 0.606,
+      "top_scorers_home": [
+        {
+          "name": "Lamine Yamal",
+          "p": 0.29
+        },
+        {
+          "name": "Fabián Ruiz",
+          "p": 0.251
+        },
+        {
+          "name": "Mikel Oyarzabal",
+          "p": 0.233
+        }
+      ],
+      "top_scorers_away": [
+        {
+          "name": "Nicolás Otamendi",
+          "p": 0.642
+        },
+        {
+          "name": "Nicolás González",
+          "p": 0.502
+        },
+        {
+          "name": "Lautaro Martínez",
+          "p": 0.481
+        }
+      ],
+      "top_scores": [
+        {
+          "h": 2,
+          "a": 0,
+          "p": 15.7
+        },
+        {
+          "h": 0,
+          "a": 0,
+          "p": 14.5
+        },
+        {
+          "h": 1,
+          "a": 0,
+          "p": 14.0
+        }
+      ]
+    }
   },
   "all_odds": {
     "Alexei Popyrin vs Roman Andres Burruchaga": {
@@ -30288,16 +30145,6 @@
       "away": 4.31
     }
   },
-  "wm_results": [
-    {
-      "match_id": "fb30113e43d113f1ace48b8563ba1ee9",
-      "home": "Spain",
-      "away": "Argentina",
-      "home_score": 1,
-      "away_score": 0,
-      "commence_time": "2026-07-19T19:05:00Z"
-    }
-  ],
   "model_evals": {
     "Danilov Savriyan vs Zhang William": {
       "p_a": 50.0,
@@ -30746,12 +30593,6 @@
       "odds_a": 1.57,
       "odds_b": 2.24
     },
-    "Soto Matias vs Kopp Sandro": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Tulln challenger",
-      "odds_a": 2.42,
-      "odds_b": 1.5
-    },
     "Ayeni Alafia vs Overbeck Carl Emil": {
       "status": "UNSUPPORTED_TOURNAMENT",
       "reason": "Turnier nicht im Portfolio: Istanbul challenger",
@@ -31016,18 +30857,6 @@
       "odds_a": 2.07,
       "odds_b": 1.68
     },
-    "Blanch Darwin vs Kozlov Stefan": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Tiburon challenger",
-      "odds_a": 1.62,
-      "odds_b": 2.14
-    },
-    "Barton Hynek vs Brancaccio Raul": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Szczecin challenger",
-      "odds_a": 1.65,
-      "odds_b": 2.1
-    },
     "Cecchinato Marco vs Squire Henri": {
       "status": "UNSUPPORTED_TOURNAMENT",
       "reason": "Turnier nicht im Portfolio: Szczecin challenger",
@@ -31075,12 +30904,6 @@
       "reason": "Turnier nicht im Portfolio: Guangzhou 2 challenger",
       "odds_a": 1.56,
       "odds_b": 2.25
-    },
-    "Bobichon Matisse vs Coulibaly Eliakim": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Rennes challenger",
-      "odds_a": 2.04,
-      "odds_b": 1.69
     },
     "Gojo Borna vs Masur Daniel": {
       "status": "UNSUPPORTED_TOURNAMENT",
@@ -31334,18 +31157,6 @@
       "odds_a": 1.61,
       "odds_b": 2.2
     },
-    "Pieri Samuele vs Piraino Gabriele": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Biella challenger",
-      "odds_a": 2.13,
-      "odds_b": 1.6
-    },
-    "Martin Manzano Juan Cruz vs Basile Pierluigi": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Biella challenger",
-      "odds_a": 2.44,
-      "odds_b": 1.49
-    },
     "Agwi Michael vs Silva Joao Dinis": {
       "status": "UNSUPPORTED_TOURNAMENT",
       "reason": "Turnier nicht im Portfolio: Guadalajara 2 WTA",
@@ -31357,12 +31168,6 @@
       "reason": "Turnier nicht im Portfolio: Guadalajara 2 WTA",
       "odds_a": 1.66,
       "odds_b": 2.1
-    },
-    "Massard Loann vs Vasa Iiro": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Guadalajara 2 WTA",
-      "odds_a": 1.6,
-      "odds_b": 2.2
     },
     "Clerc Damien vs Dalmasso Guillaume": {
       "status": "UNSUPPORTED_TOURNAMENT",
@@ -31394,12 +31199,6 @@
       "odds_a": 1.53,
       "odds_b": 2.3
     },
-    "Rejchtman Vinciguerra William vs Grandvincent Sacha": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Guadalajara 2 WTA",
-      "odds_a": 1.29,
-      "odds_b": 3.3
-    },
     "Batsabaken Yannis vs Fomba Luc": {
       "status": "UNSUPPORTED_TOURNAMENT",
       "reason": "Turnier nicht im Portfolio: Guadalajara 2 WTA",
@@ -31423,12 +31222,6 @@
       "reason": "Turnier nicht im Portfolio: Szczecin challenger",
       "odds_a": 1.7,
       "odds_b": 2.06
-    },
-    "Galan Daniel Elahi vs Diaz Acosta Facundo": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Szczecin challenger",
-      "odds_a": 2.4,
-      "odds_b": 1.5
     },
     "Forti Francesco vs Cadenasso Gianluca": {
       "status": "UNSUPPORTED_TOURNAMENT",
@@ -31466,12 +31259,6 @@
       "odds_a": 2.08,
       "odds_b": 1.65
     },
-    "Dedura-Palomero Diego vs Feldbausch Kilian": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Szczecin challenger",
-      "odds_a": 2.04,
-      "odds_b": 1.72
-    },
     "Gentzsch Tom vs Krumich Martin": {
       "status": "UNSUPPORTED_TOURNAMENT",
       "reason": "Turnier nicht im Portfolio: Szczecin challenger",
@@ -31489,12 +31276,6 @@
       "reason": "Turnier nicht im Portfolio: Guangzhou 2 challenger",
       "odds_a": 2.12,
       "odds_b": 1.65
-    },
-    "Maestrelli Francesco vs Nagel Arthur": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Rennes challenger",
-      "odds_a": 2.34,
-      "odds_b": 1.52
     },
     "Ribecai Michele vs Droguet Titouan": {
       "status": "UNSUPPORTED_TOURNAMENT",
@@ -31531,12 +31312,6 @@
       "reason": "Turnier nicht im Portfolio: Davis Cup",
       "odds_a": 1.04,
       "odds_b": 9.0
-    },
-    "Roca Batalla Oriol vs Napolitano Stefano": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Biella challenger",
-      "odds_a": 1.67,
-      "odds_b": 2.09
     },
     "Dong Zhenxiong vs Shearer Matthew": {
       "status": "UNSUPPORTED_TOURNAMENT",
@@ -31580,12 +31355,6 @@
       "odds_a": 2.75,
       "odds_b": 1.4
     },
-    "Vanshelboim Eric vs Bieldiugin Tymur": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Davis Cup",
-      "odds_a": 1.15,
-      "odds_b": 4.75
-    },
     "Deckers Alec vs Verwerft Lars Goran": {
       "status": "UNSUPPORTED_TOURNAMENT",
       "reason": "Turnier nicht im Portfolio: Davis Cup",
@@ -31604,12 +31373,6 @@
       "odds_a": 1.67,
       "odds_b": 2.08
     },
-    "De Marchi Andrea (2007) vs Serafini Marcello": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Davis Cup",
-      "odds_a": 1.69,
-      "odds_b": 2.06
-    },
     "Maxted Lui vs Marques Goncalo": {
       "status": "UNSUPPORTED_TOURNAMENT",
       "reason": "Turnier nicht im Portfolio: Davis Cup",
@@ -31621,18 +31384,6 @@
       "reason": "Turnier nicht im Portfolio: Davis Cup",
       "odds_a": 1.32,
       "odds_b": 3.1
-    },
-    "Noce Gabriele Maria vs Johns Garrett": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Davis Cup",
-      "odds_a": 3.55,
-      "odds_b": 1.25
-    },
-    "Baragiola Mordini Tobia Costanzo vs Weis Alexander": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Davis Cup",
-      "odds_a": 2.6,
-      "odds_b": 1.44
     },
     "Pietri Benjamin vs Rocha Francisco": {
       "status": "UNSUPPORTED_TOURNAMENT",
@@ -31964,12 +31715,6 @@
       "odds_a": 1.36,
       "odds_b": 2.75
     },
-    "Frydrych Viktor vs Dal Zilio Brian": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Davis Cup",
-      "odds_a": 1.15,
-      "odds_b": 5.75
-    },
     "Domingos Daniel vs Picard Mathys": {
       "status": "UNSUPPORTED_TOURNAMENT",
       "reason": "Turnier nicht im Portfolio: Davis Cup",
@@ -32060,12 +31805,6 @@
       "odds_a": 1.14,
       "odds_b": 5.0
     },
-    "Cocola Sebastiano vs Parizzia Nicolas": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Davis Cup",
-      "odds_a": 2.1,
-      "odds_b": 1.65
-    },
     "Tabacco Giorgio vs Basing Max": {
       "status": "UNSUPPORTED_TOURNAMENT",
       "reason": "Turnier nicht im Portfolio: Davis Cup",
@@ -32101,12 +31840,6 @@
       "reason": "Turnier nicht im Portfolio: Guangzhou 2 challenger",
       "odds_a": 1.82,
       "odds_b": 1.9
-    },
-    "Mmoh Michael vs Wolf Jeffrey John": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Tiburon challenger",
-      "odds_a": 2.2,
-      "odds_b": 1.6
     },
     "Mayot Harold vs Gueymard Wayenburg Sascha": {
       "status": "UNSUPPORTED_TOURNAMENT",
@@ -32180,77 +31913,35 @@
       "odds_a": 1.47,
       "odds_b": 2.35
     },
-    "Descotte Matias Franco vs De La Fuente Santiago": {
+    "Aguilar Cardozo Federico vs Dickerson Ryan": {
       "status": "UNSUPPORTED_TOURNAMENT",
       "reason": "Turnier nicht im Portfolio: Buenos Aires challenger",
-      "odds_a": 6.5,
-      "odds_b": 1.08
+      "odds_a": 1.64,
+      "odds_b": 2.1
     },
-    "Fernandez Bruno vs Pagani Dante": {
+    "Rodriguez Taverna Santiago vs Bruna Nicolas": {
       "status": "UNSUPPORTED_TOURNAMENT",
       "reason": "Turnier nicht im Portfolio: Buenos Aires challenger",
-      "odds_a": 1.37,
-      "odds_b": 2.83
+      "odds_a": 1.46,
+      "odds_b": 2.53
     },
-    "Garcia Longo Nicolas vs Farjat Tomas": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Buenos Aires challenger",
-      "odds_a": 2.4,
-      "odds_b": 1.48
-    },
-    "Aboian Valerio vs Cundom Julian": {
+    "Rodriguez Lorenzo Joaquin vs Meneo Tadeo": {
       "status": "UNSUPPORTED_TOURNAMENT",
       "reason": "Turnier nicht im Portfolio: Buenos Aires challenger",
       "odds_a": 1.4,
       "odds_b": 2.75
     },
-    "Ross Jackson vs Martinez Tomás": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Buenos Aires challenger",
-      "odds_a": 6.5,
-      "odds_b": 1.08
-    },
-    "Aguilar Cardozo Federico vs Dickerson Ryan": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Buenos Aires challenger",
-      "odds_a": 1.65,
-      "odds_b": 2.1
-    },
-    "Cigarran Thiago vs Pesino Santiago": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Buenos Aires challenger",
-      "odds_a": 1.16,
-      "odds_b": 4.62
-    },
-    "Rodriguez Taverna Santiago vs Bruna Nicolas": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Buenos Aires challenger",
-      "odds_a": 1.39,
-      "odds_b": 2.74
-    },
-    "Rodriguez Lorenzo Joaquin vs Meneo Tadeo": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Buenos Aires challenger",
-      "odds_a": 1.25,
-      "odds_b": 3.54
-    },
     "Tenti Fermin vs Kestelboim Mariano": {
       "status": "UNSUPPORTED_TOURNAMENT",
       "reason": "Turnier nicht im Portfolio: Buenos Aires challenger",
-      "odds_a": 3.77,
-      "odds_b": 1.23
+      "odds_a": 2.33,
+      "odds_b": 1.52
     },
     "Aguilar Cardozo Joaquin vs Del Pino Mateo": {
       "status": "UNSUPPORTED_TOURNAMENT",
       "reason": "Turnier nicht im Portfolio: Buenos Aires challenger",
-      "odds_a": 1.05,
-      "odds_b": 8.5
-    },
-    "Monferrer Ezequiel vs Malla Bastian": {
-      "status": "UNSUPPORTED_TOURNAMENT",
-      "reason": "Turnier nicht im Portfolio: Buenos Aires challenger",
-      "odds_a": 6.27,
-      "odds_b": 1.1
+      "odds_a": 1.29,
+      "odds_b": 3.2
     },
     "Varillas Juan Pablo vs Escurra Isnardi Hernando Jose": {
       "status": "UNSUPPORTED_TOURNAMENT",
@@ -32377,127 +32068,247 @@
       "reason": "Turnier nicht im Portfolio: Davis Cup",
       "odds_a": 1.73,
       "odds_b": 1.96
-    }
-  },
-  "model_tips": {
-    "France vs England": {
-      "p_home": 0.522,
-      "p_draw": 0.326,
-      "p_away": 0.152,
-      "xg_home": 1.78,
-      "xg_away": 0.95,
-      "p_btts_yes": 0.557,
-      "p_btts_no": 0.443,
-      "p_over25": 0.514,
-      "p_under25": 0.486,
-      "top_scorers_home": [
-        {
-          "name": "Jules Koundé",
-          "p": 0.741
-        },
-        {
-          "name": "Bradley Barcola",
-          "p": 0.574
-        },
-        {
-          "name": "Ousmane Dembélé",
-          "p": 0.528
-        }
-      ],
-      "top_scorers_away": [
-        {
-          "name": "Ivan Toney",
-          "p": 0.451
-        },
-        {
-          "name": "Harry Kane",
-          "p": 0.447
-        },
-        {
-          "name": "Jude Bellingham",
-          "p": 0.371
-        }
-      ],
-      "top_scores": [
-        {
-          "h": 1,
-          "a": 1,
-          "p": 15.7
-        },
-        {
-          "h": 0,
-          "a": 0,
-          "p": 11.2
-        },
-        {
-          "h": 2,
-          "a": 0,
-          "p": 10.3
-        }
-      ]
     },
-    "Spain vs Argentina": {
-      "p_home": 0.629,
-      "p_draw": 0.305,
-      "p_away": 0.066,
-      "xg_home": 1.74,
-      "xg_away": 0.53,
-      "p_btts_yes": 0.378,
-      "p_btts_no": 0.622,
-      "p_over25": 0.394,
-      "p_under25": 0.606,
-      "top_scorers_home": [
-        {
-          "name": "Lamine Yamal",
-          "p": 0.29
-        },
-        {
-          "name": "Fabián Ruiz",
-          "p": 0.251
-        },
-        {
-          "name": "Mikel Oyarzabal",
-          "p": 0.233
-        }
-      ],
-      "top_scorers_away": [
-        {
-          "name": "Nicolás Otamendi",
-          "p": 0.642
-        },
-        {
-          "name": "Nicolás González",
-          "p": 0.502
-        },
-        {
-          "name": "Lautaro Martínez",
-          "p": 0.481
-        }
-      ],
-      "top_scores": [
-        {
-          "h": 2,
-          "a": 0,
-          "p": 15.7
-        },
-        {
-          "h": 0,
-          "a": 0,
-          "p": 14.5
-        },
-        {
-          "h": 1,
-          "a": 0,
-          "p": 14.0
-        }
-      ]
+    "Vivian Wolff vs Oleksandra Oliynykova": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil: Vivian Wolff, Oleksandra Oliynykova",
+      "odds_a": 0.0,
+      "odds_b": 0.0
+    },
+    "Alycia Parks vs Mei Yamaguchi": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil: Alycia Parks, Mei Yamaguchi",
+      "odds_a": 0.0,
+      "odds_b": 0.0
+    },
+    "Tatiana Prozorova vs Sofia Costoulas": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil: Tatiana Prozorova, Sofia Costoulas",
+      "odds_a": 0.0,
+      "odds_b": 0.0
+    },
+    "Donna Vekic vs Xinyu Wang": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil: Donna Vekic, Xinyu Wang",
+      "odds_a": 0.0,
+      "odds_b": 0.0
+    },
+    "Barbora Krejcikova vs Anna-Lena Friedsam": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil: Barbora Krejcikova, Anna-Lena Friedsam",
+      "odds_a": 0.0,
+      "odds_b": 0.0
+    },
+    "Maria Sakkari vs Linda Fruhvirtova": {
+      "status": "UNKNOWN_PLAYER",
+      "reason": "Kein Elo-Profil: Maria Sakkari, Linda Fruhvirtova",
+      "odds_a": 0.0,
+      "odds_b": 0.0
+    },
+    "Blanch Darwin vs Mmoh Michael": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Tiburon challenger",
+      "odds_a": 2.07,
+      "odds_b": 1.68
+    },
+    "Goffin David vs Lajal Mark": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: St. Tropez challenger",
+      "odds_a": 2.2,
+      "odds_b": 1.59
+    },
+    "Guerrieri Andrea vs Maestrelli Francesco": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: St. Tropez challenger",
+      "odds_a": 2.12,
+      "odds_b": 1.66
+    },
+    "Villanueva Gonzalo vs Justo Guido Ivan": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Buenos Aires challenger",
+      "odds_a": 1.62,
+      "odds_b": 2.16
+    },
+    "Dinev Dinko vs Dietrich Dylan": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: San Diego 2 challenger",
+      "odds_a": 2.75,
+      "odds_b": 1.4
+    },
+    "Shick Braden vs Maloney Patrick (2000)": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: San Diego 2 challenger",
+      "odds_a": 1.61,
+      "odds_b": 2.19
+    },
+    "Blanch Dali vs Kopp Sandro": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Genoa 2 challenger",
+      "odds_a": 2.2,
+      "odds_b": 1.6
+    },
+    "Brancaccio Raul vs Romano Filippo": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Genoa 2 challenger",
+      "odds_a": 2.1,
+      "odds_b": 1.67
+    },
+    "Arnaboldi Federico vs Broska Florian": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Genoa 2 challenger",
+      "odds_a": 2.04,
+      "odds_b": 1.71
+    },
+    "Martin Manzano Juan Cruz vs Pieri Samuele": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Genoa 2 challenger",
+      "odds_a": 1.73,
+      "odds_b": 2.04
+    },
+    "Roca Batalla Oriol vs Dedura-Palomero Diego": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Plovdiv 4 challenger",
+      "odds_a": 2.2,
+      "odds_b": 1.57
+    },
+    "Hassan Benjamin vs Martin Tiffon Pol": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Plovdiv 4 challenger",
+      "odds_a": 2.15,
+      "odds_b": 1.67
+    },
+    "Alcala Gurri Max vs Coulibaly Eliakim": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Plovdiv 4 challenger",
+      "odds_a": 2.9,
+      "odds_b": 1.35
+    },
+    "Hemery Calvin vs Galan Daniel Elahi": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Plovdiv 4 challenger",
+      "odds_a": 1.6,
+      "odds_b": 2.2
+    },
+    "De Marchi Andrea (2007) vs Cocola Sebastiano": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Chengdu",
+      "odds_a": 1.29,
+      "odds_b": 3.25
+    },
+    "Vanshelboim Eric vs Bracci Valerio": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Chengdu",
+      "odds_a": 1.4,
+      "odds_b": 2.6
+    },
+    "Carboni Lorenzo vs Baragiola Mordini Tobia Costanzo": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Chengdu",
+      "odds_a": 1.2,
+      "odds_b": 4.05
+    },
+    "Johns Garrett vs McCormick Tristan": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Chengdu",
+      "odds_a": 1.6,
+      "odds_b": 2.2
+    },
+    "Bernet Henry vs Frydrych Viktor": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Chengdu",
+      "odds_a": 1.03,
+      "odds_b": 9.38
+    },
+    "Vasa Iiro vs Nanobashvili Saba George": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Chengdu",
+      "odds_a": 1.55,
+      "odds_b": 2.2
+    },
+    "Rejchtman Vinciguerra William vs Simonsson Jan": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Chengdu",
+      "odds_a": 2.01,
+      "odds_b": 1.67
+    },
+    "Sigsgaard Christian vs Ryden Victor": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Chengdu",
+      "odds_a": 1.59,
+      "odds_b": 2.17
+    },
+    "Malla Bastian vs Monferrer Ezequiel": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Buenos Aires challenger",
+      "odds_a": 1.1,
+      "odds_b": 6.25
+    },
+    "Cigarran Thiago vs Martinez Tomás": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Buenos Aires challenger",
+      "odds_a": 1.48,
+      "odds_b": 2.5
+    },
+    "Aboian Valerio vs Descotte Matias Franco": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Buenos Aires challenger",
+      "odds_a": 1.54,
+      "odds_b": 2.33
+    },
+    "Fernandez Bruno vs Farjat Tomas": {
+      "status": "UNSUPPORTED_TOURNAMENT",
+      "reason": "Turnier nicht im Portfolio: Buenos Aires challenger",
+      "odds_a": 1.49,
+      "odds_b": 2.42
     }
   },
+  "top_elo": [
+    {
+      "name": "Sinner J.",
+      "rating": 1677
+    },
+    {
+      "name": "Fritz T.",
+      "rating": 1665
+    },
+    {
+      "name": "Alcaraz C.",
+      "rating": 1646
+    },
+    {
+      "name": "Noskova L.",
+      "rating": 1642
+    },
+    {
+      "name": "Djokovic N.",
+      "rating": 1642
+    },
+    {
+      "name": "Zverev A.",
+      "rating": 1625
+    },
+    {
+      "name": "Keys M.",
+      "rating": 1623
+    },
+    {
+      "name": "De Minaur A.",
+      "rating": 1597
+    },
+    {
+      "name": "Pegula J.",
+      "rating": 1596
+    },
+    {
+      "name": "Sabalenka A.",
+      "rating": 1594
+    }
+  ],
   "meta": {
     "stale_odds": false
   },
   "tennis_stats": {
-    "updated": "2026-09-21T12:01:05Z",
+    "updated": "2026-09-21T15:43:17Z",
     "active_tournaments": [
       {
         "slug": "tennis_wta_singapore_open",
