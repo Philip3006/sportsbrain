@@ -9,13 +9,19 @@ authority, or activate any production path.
 
 from __future__ import annotations
 
+import fcntl
 import json
+import os
+import pwd
 import re
+import tempfile
 from collections.abc import Callable, Mapping, Sequence
+from contextlib import contextmanager
 from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from hashlib import sha256
 from math import isfinite
+from pathlib import Path
 from typing import Protocol
 
 from src.football.odds.therundown import (
@@ -54,6 +60,16 @@ DISCOVERY_EVIDENCE_SCHEMA_VERSION = (
 )
 DISCOVERY_LEAGUE_ORDER = ("EPL", "BL1", "LL", "SA", "L1")
 DISCOVERY_KICKOFF_TOLERANCE_SECONDS = 60
+DISCOVERY_MINIMUM_COMBINED_HEADROOM = 550
+DISCOVERY_QUOTA_PROOF_MAX_AGE_SECONDS = 300
+B4_QUOTA_PROOF_SCHEMA_VERSION = "top5-therundown-b4-quota-proof-v1"
+DISCOVERY_CONSUMPTION_SCHEMA_VERSION = (
+    "top5-therundown-provider-event-discovery-consumption-v1"
+)
+B4_QUOTA_PROOF_RELATIVE_PATH = "football/top5/therundown_b4_quota_proof.json"
+DISCOVERY_CONSUMPTION_RELATIVE_PATH = (
+    "football/top5/therundown_event_discovery_consumption.json"
+)
 _SHA_RE = re.compile(r"^[0-9a-fA-F]{40,64}$")
 _PREMATCH_STATUSES = frozenset(
     {
@@ -85,6 +101,37 @@ class EventDiscoveryContractError(ValueError):
 
 class EventDiscoveryExecutionBlocked(EventDiscoveryContractError):
     """Fail-closed refusal during the bounded discovery stage."""
+
+
+def _operator_runtime_state_path(relative_path: str) -> Path:
+    try:
+        account_home = Path(pwd.getpwuid(os.getuid()).pw_dir)
+    except (KeyError, OSError) as exc:
+        raise EventDiscoveryExecutionBlocked(
+            "operator runtime-state account is unavailable"
+        ) from exc
+    if not account_home.is_absolute():
+        raise EventDiscoveryExecutionBlocked("operator runtime-state path is invalid")
+    return (
+        account_home
+        / "Library"
+        / "Application Support"
+        / "SportsBrain"
+        / "runtime-state"
+        / relative_path
+    )
+
+
+def b4_quota_proof_state_path() -> Path:
+    """Return the canonical operator-owned B4 quota-proof artifact path."""
+
+    return _operator_runtime_state_path(B4_QUOTA_PROOF_RELATIVE_PATH)
+
+
+def discovery_authorization_consumption_state_path() -> Path:
+    """Return the canonical operator-owned discovery replay state path."""
+
+    return _operator_runtime_state_path(DISCOVERY_CONSUMPTION_RELATIVE_PATH)
 
 
 def _text(value: object, name: str) -> str:
@@ -133,6 +180,149 @@ def _digest(value: object) -> str:
             _canonical(value), sort_keys=True, separators=(",", ":"), allow_nan=False
         ).encode("utf-8")
     ).hexdigest()
+
+
+@dataclass(frozen=True)
+class TheRundownB4QuotaProofV1:
+    """Canonical, external B4 proof required before discovery request one."""
+
+    quota_proof_id: str
+    quota_proof_authorization_id: str
+    provider: str
+    account_scope: str
+    remaining_datapoints: int
+    observed_at: datetime
+    finished_at: datetime
+    quota_reset_at: datetime
+    response_digest: str
+    provenance_source: str
+    evidence_digest: str
+    schema_version: str = B4_QUOTA_PROOF_SCHEMA_VERSION
+
+    def _payload_without_digest(self) -> dict[str, object]:
+        return {
+            "schema_version": self.schema_version,
+            "quota_proof_id": self.quota_proof_id,
+            "quota_proof_authorization_id": self.quota_proof_authorization_id,
+            "provider": self.provider,
+            "account_scope": self.account_scope,
+            "remaining_datapoints": self.remaining_datapoints,
+            "observed_at": _utc_datetime(
+                self.observed_at, "quota observed_at"
+            ).isoformat(),
+            "finished_at": _utc_datetime(
+                self.finished_at, "quota finished_at"
+            ).isoformat(),
+            "quota_reset_at": _utc_datetime(
+                self.quota_reset_at, "quota reset_at"
+            ).isoformat(),
+            "response_digest": self.response_digest,
+            "provenance_source": self.provenance_source,
+        }
+
+    @property
+    def computed_evidence_digest(self) -> str:
+        return _digest(self._payload_without_digest())
+
+    def validate(
+        self,
+        *,
+        now: datetime,
+        maximum_age_seconds: int = DISCOVERY_QUOTA_PROOF_MAX_AGE_SECONDS,
+    ) -> None:
+        if self.schema_version != B4_QUOTA_PROOF_SCHEMA_VERSION:
+            raise EventDiscoveryContractError("unsupported B4 quota-proof schema")
+        for name, value in (
+            ("quota_proof_id", self.quota_proof_id),
+            ("quota_proof_authorization_id", self.quota_proof_authorization_id),
+            ("account_scope", self.account_scope),
+            ("provenance_source", self.provenance_source),
+        ):
+            _text(value, name)
+        if self.provider != THERUNDOWN_PROVIDER_NAME:
+            raise EventDiscoveryExecutionBlocked("B4 quota proof provider is invalid")
+        if (
+            not isinstance(self.remaining_datapoints, int)
+            or isinstance(self.remaining_datapoints, bool)
+            or self.remaining_datapoints < DISCOVERY_MINIMUM_COMBINED_HEADROOM
+        ):
+            raise EventDiscoveryExecutionBlocked(
+                "TOP5_PROVIDER_EVENT_ID_DISCOVERY — INSUFFICIENT_COMBINED_HEADROOM"
+            )
+        _sha(self.response_digest, "quota proof response_digest")
+        _sha(self.evidence_digest, "quota proof evidence_digest")
+        observed = _utc_datetime(self.observed_at, "quota observed_at")
+        finished = _utc_datetime(self.finished_at, "quota finished_at")
+        reset = _utc_datetime(self.quota_reset_at, "quota reset_at")
+        current = _utc_datetime(now, "quota proof validation now")
+        if observed > finished:
+            raise EventDiscoveryContractError("quota proof timestamps are not ordered")
+        if finished > current:
+            raise EventDiscoveryExecutionBlocked("quota proof is from the future")
+        if (current - finished).total_seconds() > maximum_age_seconds:
+            raise EventDiscoveryExecutionBlocked("quota proof is stale")
+        if reset <= current or reset <= finished:
+            raise EventDiscoveryExecutionBlocked(
+                "quota proof rate-limit reset period is no longer valid"
+            )
+        if self.evidence_digest.lower() != self.computed_evidence_digest:
+            raise EventDiscoveryContractError("quota proof evidence digest mismatch")
+
+    def as_payload(self) -> dict[str, object]:
+        self.validate(now=self.finished_at, maximum_age_seconds=2**31 - 1)
+        return {
+            **self._payload_without_digest(),
+            "evidence_digest": self.evidence_digest,
+        }
+
+    @classmethod
+    def from_payload(cls, raw: object) -> TheRundownB4QuotaProofV1:
+        if not isinstance(raw, Mapping):
+            raise EventDiscoveryContractError("B4 quota proof must be an object")
+
+        def timestamp(name: str) -> datetime:
+            try:
+                return datetime.fromisoformat(
+                    str(raw.get(name, "")).replace("Z", "+00:00")
+                )
+            except (TypeError, ValueError) as exc:
+                raise EventDiscoveryContractError(
+                    f"quota proof {name} is invalid"
+                ) from exc
+
+        return cls(
+            quota_proof_id=str(raw.get("quota_proof_id", "")),
+            quota_proof_authorization_id=str(
+                raw.get("quota_proof_authorization_id", "")
+            ),
+            provider=str(raw.get("provider", "")),
+            account_scope=str(raw.get("account_scope", "")),
+            remaining_datapoints=raw.get("remaining_datapoints", 0),  # type: ignore[arg-type]
+            observed_at=timestamp("observed_at"),
+            finished_at=timestamp("finished_at"),
+            quota_reset_at=timestamp("quota_reset_at"),
+            response_digest=str(raw.get("response_digest", "")),
+            provenance_source=str(raw.get("provenance_source", "")),
+            evidence_digest=str(raw.get("evidence_digest", "")),
+            schema_version=str(raw.get("schema_version", "")),
+        )
+
+    @classmethod
+    def load_canonical(cls, *, now: datetime) -> TheRundownB4QuotaProofV1:
+        path = b4_quota_proof_state_path()
+        if not path.is_file() or path.is_symlink():
+            raise EventDiscoveryExecutionBlocked(
+                "canonical B4 quota proof is unavailable"
+            )
+        try:
+            raw = json.loads(path.read_text())
+        except (OSError, json.JSONDecodeError) as exc:
+            raise EventDiscoveryExecutionBlocked(
+                "canonical B4 quota proof is invalid"
+            ) from exc
+        proof = cls.from_payload(raw)
+        proof.validate(now=now)
+        return proof
 
 
 def _team_key(value: object) -> str:
@@ -257,6 +447,15 @@ class TheRundownEventDiscoveryAuthorizationV1:
     adapter_version: str
     adapter_source_sha: str
     request_shape_digest: str
+    quota_proof_id: str
+    quota_proof_authorization_id: str
+    quota_proof_evidence_digest: str
+    quota_proof_response_digest: str
+    quota_proof_account_scope: str
+    quota_proof_remaining_datapoints: int
+    quota_proof_observed_at: datetime
+    quota_proof_finished_at: datetime
+    quota_proof_reset_at: datetime
     issued_at: datetime
     expires_at: datetime
     maximum_request_count: int = TOP5_CONTROLLED_SHADOW_REQUEST_COUNT
@@ -286,6 +485,21 @@ class TheRundownEventDiscoveryAuthorizationV1:
             "adapter_version": self.adapter_version,
             "adapter_source_sha": self.adapter_source_sha,
             "request_shape_digest": self.request_shape_digest,
+            "quota_proof_id": self.quota_proof_id,
+            "quota_proof_authorization_id": self.quota_proof_authorization_id,
+            "quota_proof_evidence_digest": self.quota_proof_evidence_digest,
+            "quota_proof_response_digest": self.quota_proof_response_digest,
+            "quota_proof_account_scope": self.quota_proof_account_scope,
+            "quota_proof_remaining_datapoints": self.quota_proof_remaining_datapoints,
+            "quota_proof_observed_at": _utc_datetime(
+                self.quota_proof_observed_at, "quota_proof_observed_at"
+            ).isoformat(),
+            "quota_proof_finished_at": _utc_datetime(
+                self.quota_proof_finished_at, "quota_proof_finished_at"
+            ).isoformat(),
+            "quota_proof_reset_at": _utc_datetime(
+                self.quota_proof_reset_at, "quota_proof_reset_at"
+            ).isoformat(),
             "issued_at": _utc_datetime(self.issued_at, "issued_at").isoformat(),
             "expires_at": _utc_datetime(self.expires_at, "expires_at").isoformat(),
             "maximum_request_count": self.maximum_request_count,
@@ -331,6 +545,26 @@ class TheRundownEventDiscoveryAuthorizationV1:
         _text(self.adapter_version, "adapter_version")
         _sha(self.adapter_source_sha, "adapter_source_sha")
         _sha(self.request_shape_digest, "request_shape_digest")
+        for name, value in (
+            ("quota_proof_id", self.quota_proof_id),
+            ("quota_proof_authorization_id", self.quota_proof_authorization_id),
+            ("quota_proof_account_scope", self.quota_proof_account_scope),
+        ):
+            _text(value, name)
+        _sha(self.quota_proof_evidence_digest, "quota_proof_evidence_digest")
+        _sha(self.quota_proof_response_digest, "quota_proof_response_digest")
+        if (
+            not isinstance(self.quota_proof_remaining_datapoints, int)
+            or isinstance(self.quota_proof_remaining_datapoints, bool)
+            or self.quota_proof_remaining_datapoints
+            < DISCOVERY_MINIMUM_COMBINED_HEADROOM
+        ):
+            raise EventDiscoveryExecutionBlocked(
+                "discovery quota-proof binding is below 550 datapoints"
+            )
+        _utc_datetime(self.quota_proof_observed_at, "quota_proof_observed_at")
+        _utc_datetime(self.quota_proof_finished_at, "quota_proof_finished_at")
+        _utc_datetime(self.quota_proof_reset_at, "quota_proof_reset_at")
         expected_shape_digest = _digest(
             [_provider_shape(target) for target in self.targets]
         )
@@ -389,10 +623,222 @@ class TheRundownEventDiscoveryAuthorizationV1:
             "authorization_digest": self.authorization_digest,
         }
 
+    def validate_against_quota_proof(
+        self, proof: TheRundownB4QuotaProofV1, *, now: datetime
+    ) -> None:
+        self.validate(now=now)
+        proof.validate(now=now)
+        for name, actual, expected in (
+            ("quota_proof_id", self.quota_proof_id, proof.quota_proof_id),
+            (
+                "quota_proof_authorization_id",
+                self.quota_proof_authorization_id,
+                proof.quota_proof_authorization_id,
+            ),
+            (
+                "quota_proof_evidence_digest",
+                self.quota_proof_evidence_digest.lower(),
+                proof.evidence_digest.lower(),
+            ),
+            (
+                "quota_proof_response_digest",
+                self.quota_proof_response_digest.lower(),
+                proof.response_digest.lower(),
+            ),
+            (
+                "quota_proof_account_scope",
+                self.quota_proof_account_scope,
+                proof.account_scope,
+            ),
+            (
+                "quota_proof_remaining_datapoints",
+                self.quota_proof_remaining_datapoints,
+                proof.remaining_datapoints,
+            ),
+            (
+                "quota_proof_observed_at",
+                _utc_datetime(self.quota_proof_observed_at, "quota_proof_observed_at"),
+                _utc_datetime(proof.observed_at, "proof observed_at"),
+            ),
+            (
+                "quota_proof_finished_at",
+                _utc_datetime(self.quota_proof_finished_at, "quota_proof_finished_at"),
+                _utc_datetime(proof.finished_at, "proof finished_at"),
+            ),
+            (
+                "quota_proof_reset_at",
+                _utc_datetime(self.quota_proof_reset_at, "quota_proof_reset_at"),
+                _utc_datetime(proof.quota_reset_at, "proof reset_at"),
+            ),
+        ):
+            if actual != expected:
+                raise EventDiscoveryExecutionBlocked(
+                    f"discovery quota-proof binding mismatch: {name}"
+                )
+
     def request_shape(self) -> dict[str, object]:
         self.validate(now=self.issued_at)
         payload = [_provider_shape(target) for target in self.targets]
         return {"requests": payload}
+
+
+class TheRundownDiscoveryAuthorizationConsumptionStore:
+    """Canonical operator-owned durable one-shot discovery consumption state."""
+
+    _SCHEMA = DISCOVERY_CONSUMPTION_SCHEMA_VERSION
+
+    def __init__(self) -> None:
+        self.state_path = discovery_authorization_consumption_state_path()
+        self.lock_path = self.state_path.with_name(self.state_path.name + ".lock")
+
+    @contextmanager
+    def _locked(self):
+        self.state_path.parent.mkdir(parents=True, exist_ok=True)
+        os.chmod(self.state_path.parent, 0o700)
+        if self.lock_path.is_symlink():
+            raise EventDiscoveryExecutionBlocked(
+                "discovery consumption lock is a symlink"
+            )
+        with self.lock_path.open("a+") as lock:
+            os.chmod(self.lock_path, 0o600)
+            fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+            try:
+                yield
+            finally:
+                fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
+
+    @staticmethod
+    def _validate_record(record: object) -> None:
+        if not isinstance(record, Mapping):
+            raise EventDiscoveryExecutionBlocked(
+                "discovery consumption record is invalid"
+            )
+        expected = {
+            "discovery_authorization_id",
+            "authorization_digest",
+            "quota_proof_evidence_digest",
+            "consumed_at",
+        }
+        if set(record) != expected:
+            raise EventDiscoveryExecutionBlocked(
+                "discovery consumption record shape is invalid"
+            )
+        _text(record.get("discovery_authorization_id"), "consumption authorization id")
+        _sha(record.get("authorization_digest"), "consumption authorization digest")
+        _sha(
+            record.get("quota_proof_evidence_digest"),
+            "consumption quota-proof evidence digest",
+        )
+        _utc_datetime(record.get("consumed_at"), "consumption timestamp")
+
+    def _read_state(self) -> list[dict[str, object]]:
+        if not self.state_path.exists():
+            return []
+        if self.state_path.is_symlink() or not self.state_path.is_file():
+            raise EventDiscoveryExecutionBlocked(
+                "discovery consumption state is unavailable"
+            )
+        try:
+            value = json.loads(self.state_path.read_text())
+        except (OSError, json.JSONDecodeError) as exc:
+            raise EventDiscoveryExecutionBlocked(
+                "discovery consumption state is invalid"
+            ) from exc
+        if not isinstance(value, Mapping):
+            raise EventDiscoveryExecutionBlocked(
+                "discovery consumption state must be an object"
+            )
+        expected = {"schema", "records", "state_digest"}
+        if set(value) != expected or value.get("schema") != self._SCHEMA:
+            raise EventDiscoveryExecutionBlocked(
+                "discovery consumption state shape is invalid"
+            )
+        records = value.get("records")
+        if not isinstance(records, list):
+            raise EventDiscoveryExecutionBlocked(
+                "discovery consumption records are invalid"
+            )
+        for record in records:
+            self._validate_record(record)
+        if len(
+            {str(record.get("discovery_authorization_id")) for record in records}
+        ) != len(records):
+            raise EventDiscoveryExecutionBlocked(
+                "discovery consumption state has duplicate authorization identities"
+            )
+        state_digest = value.get("state_digest")
+        _sha(state_digest, "discovery consumption state digest")
+        if state_digest.lower() != self._state_digest(records):
+            raise EventDiscoveryExecutionBlocked(
+                "discovery consumption state digest mismatch"
+            )
+        return [dict(record) for record in records]
+
+    def _state_digest(self, records: Sequence[Mapping[str, object]]) -> str:
+        return _digest({"schema": self._SCHEMA, "records": list(records)})
+
+    def _write_state(self, records: Sequence[Mapping[str, object]]) -> None:
+        payload = {
+            "schema": self._SCHEMA,
+            "records": [dict(record) for record in records],
+            "state_digest": self._state_digest(records),
+        }
+        fd, temporary_name = tempfile.mkstemp(
+            prefix=f".{self.state_path.name}.", dir=self.state_path.parent
+        )
+        temporary = Path(temporary_name)
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as handle:
+                json.dump(payload, handle, sort_keys=True, separators=(",", ":"))
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.chmod(temporary, 0o600)
+            os.replace(temporary, self.state_path)
+            os.chmod(self.state_path, 0o600)
+        finally:
+            temporary.unlink(missing_ok=True)
+
+    def consume(
+        self,
+        authorization: TheRundownEventDiscoveryAuthorizationV1,
+        *,
+        now: datetime,
+    ) -> None:
+        authorization_id = _text(
+            authorization.discovery_authorization_id,
+            "discovery authorization id",
+        )
+        authorization_digest = _sha(
+            authorization.authorization_digest,
+            "discovery authorization digest",
+        )
+        quota_digest = _sha(
+            authorization.quota_proof_evidence_digest,
+            "discovery quota-proof evidence digest",
+        )
+        with self._locked():
+            records = self._read_state()
+            for record in records:
+                if record["discovery_authorization_id"] == authorization_id:
+                    if (
+                        record["authorization_digest"] == authorization_digest
+                        and record["quota_proof_evidence_digest"] == quota_digest
+                    ):
+                        raise EventDiscoveryExecutionBlocked(
+                            "discovery authorization has already been consumed"
+                        )
+                    raise EventDiscoveryExecutionBlocked(
+                        "discovery authorization identity was modified after consumption"
+                    )
+            records.append(
+                {
+                    "discovery_authorization_id": authorization_id,
+                    "authorization_digest": authorization_digest,
+                    "quota_proof_evidence_digest": quota_digest,
+                    "consumed_at": _utc_datetime(now, "consumption now").isoformat(),
+                }
+            )
+            self._write_state(records)
 
 
 @dataclass(frozen=True)
@@ -745,6 +1191,9 @@ def discover_five_league_events(
 
     now = _utc_datetime(now, "discovery now")
     authorization.validate(now=now)
+    quota_proof = TheRundownB4QuotaProofV1.load_canonical(now=now)
+    authorization.validate_against_quota_proof(quota_proof, now=now)
+    TheRundownDiscoveryAuthorizationConsumptionStore().consume(authorization, now=now)
     wait = pacer or (lambda _seconds: None)
     artifacts: list[TheRundownEventDiscoveryEvidenceV1] = []
     datapoints_total = 0
@@ -947,18 +1396,25 @@ def materialize_prebound_network_configuration(
 
 
 __all__ = [
+    "B4_QUOTA_PROOF_SCHEMA_VERSION",
     "DISCOVERY_AUTHORIZATION_SCHEMA_VERSION",
+    "DISCOVERY_CONSUMPTION_SCHEMA_VERSION",
     "DISCOVERY_EVIDENCE_SCHEMA_VERSION",
+    "DISCOVERY_MINIMUM_COMBINED_HEADROOM",
     "DISCOVERY_SCHEMA_VERSION",
     "EventDiscoveryContractError",
     "EventDiscoveryExecutionBlocked",
+    "TheRundownB4QuotaProofV1",
+    "TheRundownDiscoveryAuthorizationConsumptionStore",
     "TheRundownEventDiscoveryAuthorizationV1",
     "TheRundownEventDiscoveryEvidenceV1",
     "TheRundownEventDiscoveryRequestV1",
     "TheRundownEventDiscoveryResponseV1",
     "TheRundownEventDiscoveryTargetV1",
     "TheRundownEventDiscoveryTransport",
+    "b4_quota_proof_state_path",
     "discover_five_league_events",
+    "discovery_authorization_consumption_state_path",
     "discovery_request_shape_digest",
     "materialize_prebound_network_configuration",
 ]

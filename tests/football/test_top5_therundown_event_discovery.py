@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+import json
+import sys
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 import pytest
 
@@ -17,11 +21,14 @@ from src.football.top5_therundown_event_discovery import (
     DISCOVERY_LEAGUE_ORDER,
     EventDiscoveryContractError,
     EventDiscoveryExecutionBlocked,
+    TheRundownB4QuotaProofV1,
     TheRundownEventDiscoveryAuthorizationV1,
     TheRundownEventDiscoveryResponseV1,
     TheRundownEventDiscoveryTargetV1,
     _validated_datapoint_total,
+    b4_quota_proof_state_path,
     discover_five_league_events,
+    discovery_authorization_consumption_state_path,
     discovery_request_shape_digest,
     materialize_prebound_network_configuration,
 )
@@ -37,6 +44,29 @@ LEAGUE_NAMES = {
     "SA": "Serie A",
     "L1": "Ligue 1",
 }
+
+
+@pytest.fixture(autouse=True)
+def _canonical_test_state(monkeypatch, tmp_path: Path):
+    proof_path = tmp_path / "b4-quota-proof.json"
+    consumption_path = tmp_path / "discovery-consumption.json"
+    monkeypatch.setattr(
+        "src.football.top5_therundown_event_discovery.b4_quota_proof_state_path",
+        lambda: proof_path,
+    )
+    monkeypatch.setattr(
+        sys.modules[__name__], "b4_quota_proof_state_path", lambda: proof_path
+    )
+    monkeypatch.setattr(
+        "src.football.top5_therundown_event_discovery.discovery_authorization_consumption_state_path",
+        lambda: consumption_path,
+    )
+    monkeypatch.setattr(
+        sys.modules[__name__],
+        "discovery_authorization_consumption_state_path",
+        lambda: consumption_path,
+    )
+    return proof_path, consumption_path
 
 
 def _target(league: str, index: int) -> TheRundownEventDiscoveryTargetV1:
@@ -56,7 +86,37 @@ def _target(league: str, index: int) -> TheRundownEventDiscoveryTargetV1:
     )
 
 
+def _install_proof(
+    *,
+    remaining_datapoints: int = 550,
+    finished_at: datetime = NOW - timedelta(minutes=1),
+    quota_reset_at: datetime = NOW + timedelta(hours=1),
+    response_digest: str = "b" * 64,
+) -> TheRundownB4QuotaProofV1:
+    proof = TheRundownB4QuotaProofV1(
+        quota_proof_id="b4-quota-proof-20260921",
+        quota_proof_authorization_id="ceo-quota-proof-20260921",
+        provider=THERUNDOWN_PROVIDER_NAME,
+        account_scope="therundown-account-test",
+        remaining_datapoints=remaining_datapoints,
+        observed_at=finished_at - timedelta(seconds=5),
+        finished_at=finished_at,
+        quota_reset_at=quota_reset_at,
+        response_digest=response_digest,
+        provenance_source="b4-quota-proof-test",
+        evidence_digest="0" * 64,
+    )
+    payload = {
+        **proof._payload_without_digest(),
+        "evidence_digest": proof.computed_evidence_digest,
+    }
+    b4_quota_proof_state_path().parent.mkdir(parents=True, exist_ok=True)
+    b4_quota_proof_state_path().write_text(json.dumps(payload))
+    return replace(proof, evidence_digest=proof.computed_evidence_digest)
+
+
 def _authorization() -> TheRundownEventDiscoveryAuthorizationV1:
+    proof = _install_proof()
     targets = tuple(
         _target(league, index) for index, league in enumerate(DISCOVERY_LEAGUE_ORDER)
     )
@@ -68,6 +128,15 @@ def _authorization() -> TheRundownEventDiscoveryAuthorizationV1:
         adapter_version="therundown-v2-experimental:2",
         adapter_source_sha="a" * 40,
         request_shape_digest=discovery_request_shape_digest(targets),
+        quota_proof_id=proof.quota_proof_id,
+        quota_proof_authorization_id=proof.quota_proof_authorization_id,
+        quota_proof_evidence_digest=proof.evidence_digest,
+        quota_proof_response_digest=proof.response_digest,
+        quota_proof_account_scope=proof.account_scope,
+        quota_proof_remaining_datapoints=proof.remaining_datapoints,
+        quota_proof_observed_at=proof.observed_at,
+        quota_proof_finished_at=proof.finished_at,
+        quota_proof_reset_at=proof.quota_reset_at,
         issued_at=NOW - timedelta(minutes=5),
         expires_at=NOW + timedelta(hours=1),
     )
@@ -385,3 +454,181 @@ def test_discovery_cannot_enable_the_strict_network_configuration():
         materialize_prebound_network_configuration(
             authorization, evidence, enabled=True
         )
+
+
+@pytest.mark.parametrize("remaining", [549, 275])
+def test_insufficient_canonical_quota_proof_blocks_before_request(remaining):
+    authorization = _authorization()
+    _install_proof(remaining_datapoints=remaining)
+    transport = FakeDiscoveryTransport([])
+
+    with pytest.raises(
+        EventDiscoveryExecutionBlocked,
+        match="INSUFFICIENT_COMBINED_HEADROOM",
+    ):
+        discover_five_league_events(authorization, transport=transport, now=NOW)
+    assert transport.calls == []
+
+
+def test_missing_canonical_quota_proof_blocks_before_request():
+    authorization = _authorization()
+    b4_quota_proof_state_path().unlink()
+    transport = FakeDiscoveryTransport([])
+
+    with pytest.raises(EventDiscoveryExecutionBlocked, match="unavailable"):
+        discover_five_league_events(authorization, transport=transport, now=NOW)
+    assert transport.calls == []
+
+
+def test_stale_or_reset_expired_quota_proof_blocks_before_request():
+    authorization = _authorization()
+    _install_proof(finished_at=NOW - timedelta(seconds=301))
+    transport = FakeDiscoveryTransport([])
+    with pytest.raises(EventDiscoveryExecutionBlocked, match="stale"):
+        discover_five_league_events(authorization, transport=transport, now=NOW)
+    assert transport.calls == []
+
+    authorization = _authorization()
+    _install_proof(quota_reset_at=NOW)
+    transport = FakeDiscoveryTransport([])
+    with pytest.raises(EventDiscoveryExecutionBlocked, match="reset period"):
+        discover_five_league_events(authorization, transport=transport, now=NOW)
+    assert transport.calls == []
+
+
+def test_altered_quota_proof_digests_and_binding_fail_before_request():
+    authorization = _authorization()
+    _install_proof(response_digest="c" * 64)
+    transport = FakeDiscoveryTransport([])
+    with pytest.raises(EventDiscoveryExecutionBlocked, match="binding mismatch"):
+        discover_five_league_events(authorization, transport=transport, now=NOW)
+    assert transport.calls == []
+
+    authorization = _authorization()
+    proof = _install_proof()
+    payload = proof.as_payload()
+    payload["evidence_digest"] = "f" * 64
+    b4_quota_proof_state_path().write_text(json.dumps(payload))
+    transport = FakeDiscoveryTransport([])
+    with pytest.raises(EventDiscoveryContractError, match="digest mismatch"):
+        discover_five_league_events(authorization, transport=transport, now=NOW)
+    assert transport.calls == []
+
+
+def test_caller_quota_remaining_cannot_override_canonical_proof():
+    authorization = _authorization()
+    caller_claim = replace(authorization, quota_proof_remaining_datapoints=275)
+    transport = FakeDiscoveryTransport([])
+
+    with pytest.raises(EventDiscoveryExecutionBlocked):
+        discover_five_league_events(caller_claim, transport=transport, now=NOW)
+    assert transport.calls == []
+
+
+def test_quota_proof_bindings_are_part_of_authorization_digest():
+    authorization = _authorization()
+    altered = replace(authorization, quota_proof_response_digest="c" * 64)
+    assert altered.authorization_digest != authorization.authorization_digest
+
+
+def test_authorization_is_consumed_before_request_and_replay_is_blocked():
+    authorization = _authorization()
+    transport = FakeDiscoveryTransport(
+        [_response(target) for target in authorization.targets]
+    )
+    discover_five_league_events(authorization, transport=transport, now=NOW)
+    assert len(transport.calls) == 5
+
+    replay_transport = FakeDiscoveryTransport([])
+    with pytest.raises(EventDiscoveryExecutionBlocked, match="already been consumed"):
+        discover_five_league_events(authorization, transport=replay_transport, now=NOW)
+    assert replay_transport.calls == []
+
+
+def test_modified_authorization_cannot_reuse_consumed_identity():
+    authorization = _authorization()
+    transport = FakeDiscoveryTransport(
+        [_response(target) for target in authorization.targets]
+    )
+    discover_five_league_events(authorization, transport=transport, now=NOW)
+
+    proof = _install_proof(response_digest="c" * 64)
+    modified = replace(
+        authorization,
+        quota_proof_response_digest=proof.response_digest,
+        quota_proof_evidence_digest=proof.evidence_digest,
+    )
+    replay_transport = FakeDiscoveryTransport([])
+    with pytest.raises(
+        EventDiscoveryExecutionBlocked, match="modified after consumption"
+    ):
+        discover_five_league_events(modified, transport=replay_transport, now=NOW)
+    assert replay_transport.calls == []
+
+
+@pytest.mark.parametrize("failure_index", [1, 3])
+def test_transport_failure_after_request_one_or_three_keeps_consumption_marker(
+    failure_index,
+):
+    authorization = _authorization()
+    responses: list[TheRundownEventDiscoveryResponseV1 | Exception] = [
+        _response(target) for target in authorization.targets
+    ]
+    responses[failure_index] = EventDiscoveryExecutionBlocked("transport failure")
+    transport = FakeDiscoveryTransport(responses)
+
+    with pytest.raises(EventDiscoveryExecutionBlocked, match="transport failure"):
+        discover_five_league_events(authorization, transport=transport, now=NOW)
+    assert len(transport.calls) == failure_index + 1
+
+    replay_transport = FakeDiscoveryTransport([])
+    with pytest.raises(EventDiscoveryExecutionBlocked, match="already been consumed"):
+        discover_five_league_events(authorization, transport=replay_transport, now=NOW)
+    assert replay_transport.calls == []
+
+
+def test_concurrent_replay_has_at_most_one_five_request_batch():
+    authorization = _authorization()
+    transports = [
+        FakeDiscoveryTransport([_response(target) for target in authorization.targets])
+        for _ in range(2)
+    ]
+
+    def invoke(transport):
+        try:
+            discover_five_league_events(authorization, transport=transport, now=NOW)
+        except EventDiscoveryExecutionBlocked:
+            return "blocked"
+        return "completed"
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        results = list(executor.map(invoke, transports))
+    assert sorted(results) == ["blocked", "completed"]
+    assert sum(len(transport.calls) for transport in transports) == 5
+
+
+def test_tampered_consumption_state_cannot_be_overwritten_or_replayed():
+    authorization = _authorization()
+    transport = FakeDiscoveryTransport(
+        [_response(target) for target in authorization.targets]
+    )
+    discover_five_league_events(authorization, transport=transport, now=NOW)
+    state = json.loads(discovery_authorization_consumption_state_path().read_text())
+    state["records"] = []
+    discovery_authorization_consumption_state_path().write_text(json.dumps(state))
+
+    replay_transport = FakeDiscoveryTransport([])
+    with pytest.raises(EventDiscoveryExecutionBlocked, match="digest mismatch"):
+        discover_five_league_events(authorization, transport=replay_transport, now=NOW)
+    assert replay_transport.calls == []
+
+
+def test_discovery_has_no_caller_selected_output_or_authority_path():
+    authorization = _authorization()
+    transport = FakeDiscoveryTransport(
+        [_response(target) for target in authorization.targets]
+    )
+    evidence = discover_five_league_events(authorization, transport=transport, now=NOW)
+    assert discovery_authorization_consumption_state_path().is_file()
+    assert all(item.provider_authority is False for item in evidence)
+    assert all(item.qualification_eligible is False for item in evidence)
