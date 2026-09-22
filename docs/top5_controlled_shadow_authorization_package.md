@@ -179,7 +179,7 @@ target evidence. It does not load the five-league package, five target list,
 or later `TheRundownNetworkAuthorizationV1`. It verifies the target source
 digest and event ID, the proof authorization digest/window, the bounded
 request shape, and the spend gate before reading the credential. The existing
-reviewed HTTP client is then called exactly once. Before credential access, an
+reviewed requests HTTP client is then called exactly once. Before credential access, an
 exclusive consumption marker is created in the canonical external operator
 runtime-state store, keyed by the proof authorization ID and bound to its
 authorization digest. This marker is independent of `--output`; changing the

@@ -8,10 +8,8 @@ import ssl
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
-from io import BytesIO
 from pathlib import Path
-from typing import ClassVar
-from urllib.error import HTTPError, URLError
+from urllib.error import URLError
 
 import pytest
 
@@ -34,6 +32,7 @@ from src.football.top5_therundown_network_shadow import (
     TheRundownQuotaProofAuthorizationV1,
     TheRundownQuotaProofEvidenceV1,
     TheRundownQuotaProofRequestV1,
+    TheRundownRequestsHttpClientV1,
     TheRundownUrlLibHttpClientV1,
     execute_therundown_quota_proof,
 )
@@ -55,28 +54,17 @@ class _FakeProofClient:
         return self.response
 
 
-class _CountingBody(BytesIO):
-    def __init__(self, payload: bytes):
-        super().__init__(payload)
-        self.read_count = 0
-
-    def read(self, *args, **kwargs):  # type: ignore[no-untyped-def]
-        self.read_count += 1
-        return super().read(*args, **kwargs)
-
-
-class _FakeUrlLibResponse:
-    status = 200
-    headers: ClassVar[dict[str, str]] = {"Content-Type": "application/json"}
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *args):  # type: ignore[no-untyped-def]
-        return False
-
-    def read(self):
-        return b'{"ok":true}'
+class _FakeRequestsResponse:
+    def __init__(
+        self,
+        *,
+        status_code: int = 200,
+        content: bytes = b'{"ok":true}',
+        headers: dict[str, str] | None = None,
+    ):
+        self.status_code = status_code
+        self.content = content
+        self.headers = headers or {"Content-Type": "application/json"}
 
 
 def _request(**changes: object) -> TheRundownQuotaProofRequestV1:
@@ -716,31 +704,28 @@ def test_http_status_failure_precedes_body_validation(status: int):
     assert len(client.calls) == 1
 
 
-def test_urllib_http_error_preserves_safe_status_headers_and_json(monkeypatch):
-    body = _CountingBody(b'{"error":"rate limited"}')
-    error = HTTPError(
-        "https://therundown.io/api/v2/events/event-ll-001",
-        429,
-        "rate limited",
-        {
-            "Content-Type": "application/json; charset=utf-8",
-            "X-Datapoints": "55",
-            "X-Datapoints-Remaining": "275",
-            "X-Tier": "free",
-            "Authorization": "Bearer test-secret",
-        },
-        body,
+def test_requests_http_error_preserves_safe_status_headers_and_json(monkeypatch):
+    body = b'{"error":"rate limited"}'
+    response_headers = {
+        "Content-Type": "application/json; charset=utf-8",
+        "X-Datapoints": "55",
+        "X-Datapoints-Remaining": "275",
+        "X-Tier": "free",
+        "Authorization": "Bearer test-secret",
+    }
+    monkeypatch.setattr(
+        network_shadow.requests,
+        "request",
+        lambda **kwargs: _FakeRequestsResponse(
+            status_code=429,
+            content=body,
+            headers=response_headers,
+        ),
     )
-
-    def raise_http_error(*args, **kwargs):  # type: ignore[no-untyped-def]
-        raise error
-
-    monkeypatch.setattr(network_shadow, "urlopen", raise_http_error)
-    response = TheRundownUrlLibHttpClientV1().execute(
+    response = TheRundownRequestsHttpClientV1().execute(
         _request().as_http_request("test-secret")
     )
 
-    assert body.read_count == 1
     assert response.status_code == 429
     assert response.payload == {"error": "rate limited"}
     assert response.headers == {
@@ -757,83 +742,94 @@ def test_urllib_http_error_preserves_safe_status_headers_and_json(monkeypatch):
     assert response.error_detail == "HTTPError"
 
 
-def test_urllib_client_uses_verified_certifi_context_and_preserves_request(
+def test_requests_client_uses_verified_certifi_bundle_and_preserves_request(
     monkeypatch,
 ):
     captured: dict[str, object] = {}
 
-    def fake_urlopen(request, *, timeout, context):  # type: ignore[no-untyped-def]
-        captured.update(request=request, timeout=timeout, context=context)
-        return _FakeUrlLibResponse()
+    def fake_request(**kwargs):  # type: ignore[no-untyped-def]
+        captured.update(kwargs)
+        return _FakeRequestsResponse()
 
-    monkeypatch.setattr(network_shadow, "urlopen", fake_urlopen)
+    monkeypatch.setattr(network_shadow.requests, "request", fake_request)
     request = _request().as_http_request("test-secret-never-written")
-    response = TheRundownUrlLibHttpClientV1().execute(request)
+    response = TheRundownRequestsHttpClientV1().execute(request)
 
-    sent = captured["request"]
-    assert sent.full_url == (
-        f"{request.endpoint}?{network_shadow.urlencode(dict(request.query))}"
-    )
-    assert sent.get_method() == "GET"
-    assert sent.get_header("X-therundown-key") == "test-secret-never-written"
+    assert captured["method"] == "GET"
+    assert captured["url"] == request.endpoint
+    assert captured["params"] == dict(request.query)
+    assert captured["headers"] == dict(request.headers)
     assert captured["timeout"] == request.timeout_seconds
-    context = captured["context"]
-    assert isinstance(context, ssl.SSLContext)
-    assert context.verify_mode == ssl.CERT_REQUIRED
-    assert context.check_hostname is True
+    assert captured["verify"] == network_shadow.certifi.where()
+    assert captured["allow_redirects"] is False
     assert response.status_code == 200
+    assert "User-Agent" not in captured["headers"]
+    assert isinstance(TheRundownUrlLibHttpClientV1(), TheRundownRequestsHttpClientV1)
 
 
-def test_verified_context_loads_the_explicit_certifi_bundle(monkeypatch):
-    real_create_default_context = ssl.create_default_context
-    captured: dict[str, str] = {}
+def test_requests_client_does_not_follow_redirect_or_retry(monkeypatch):
+    calls = []
 
-    def capture_context(*, cafile):  # type: ignore[no-untyped-def]
-        captured["cafile"] = cafile
-        return real_create_default_context(cafile=cafile)
+    def fake_request(**kwargs):  # type: ignore[no-untyped-def]
+        calls.append(kwargs)
+        return _FakeRequestsResponse(
+            status_code=302,
+            content=b"",
+            headers={"Location": "https://other.example/"},
+        )
 
-    monkeypatch.setattr(network_shadow.ssl, "create_default_context", capture_context)
-    context = TheRundownUrlLibHttpClientV1._verified_ssl_context()
-
-    assert captured["cafile"] == network_shadow.certifi.where()
-    assert context.verify_mode == ssl.CERT_REQUIRED
-    assert context.check_hostname is True
-
-
-def test_urllib_client_rejects_an_unverified_production_context(monkeypatch):
-    unverified = ssl._create_unverified_context()
-    monkeypatch.setattr(
-        network_shadow.ssl,
-        "create_default_context",
-        lambda *, cafile: unverified,
-    )
-    with pytest.raises(
-        NetworkShadowContractError,
-        match="must require certificates and hostname checks",
-    ):
-        TheRundownUrlLibHttpClientV1._verified_ssl_context()
-
-
-def test_http_error_non_json_preserves_safe_digest_without_raw_body(monkeypatch):
-    raw_body = b"upstream failure: test-secret"
-    body = _CountingBody(raw_body)
-    error = HTTPError(
-        "https://therundown.io/api/v2/events/event-ll-001",
-        503,
-        "unavailable",
-        {"Content-Type": "text/plain", "X-Rate-Limit": "1"},
-        body,
-    )
-
-    def raise_http_error(*args, **kwargs):  # type: ignore[no-untyped-def]
-        raise error
-
-    monkeypatch.setattr(network_shadow, "urlopen", raise_http_error)
-    response = TheRundownUrlLibHttpClientV1().execute(
+    monkeypatch.setattr(network_shadow.requests, "request", fake_request)
+    response = TheRundownRequestsHttpClientV1().execute(
         _request().as_http_request("test-secret")
     )
 
-    assert body.read_count == 1
+    assert response.status_code == 302
+    assert response.error_detail == "HTTPError"
+    assert len(calls) == 1
+    assert calls[0]["allow_redirects"] is False
+
+
+def test_requests_transport_failure_keeps_safe_proxy_diagnostic(monkeypatch):
+    error = network_shadow.requests.exceptions.ProxyError(
+        "https://user:password@proxy.example/tunnel"
+    )
+    monkeypatch.setattr(
+        network_shadow.requests,
+        "request",
+        lambda **kwargs: (_ for _ in ()).throw(error),
+    )
+
+    response = TheRundownRequestsHttpClientV1().execute(
+        _request().as_http_request("test-secret")
+    )
+
+    assert response.status_code is None
+    assert response.error_detail == "ProxyError"
+    assert response.transport_reason_class == "ProxyError"
+    assert response.transport_reason_category == "proxy"
+    serialized = json.dumps(response.safe_failure_diagnostic("transport_failure"))
+    assert "user:password" not in serialized
+    assert "proxy.example" not in serialized
+    assert "test-secret" not in serialized
+
+
+def test_requests_http_error_non_json_preserves_safe_digest_without_raw_body(
+    monkeypatch,
+):
+    raw_body = b"upstream failure: test-secret"
+    monkeypatch.setattr(
+        network_shadow.requests,
+        "request",
+        lambda **kwargs: _FakeRequestsResponse(
+            status_code=503,
+            content=raw_body,
+            headers={"Content-Type": "text/plain", "X-Rate-Limit": "1"},
+        ),
+    )
+    response = TheRundownRequestsHttpClientV1().execute(
+        _request().as_http_request("test-secret")
+    )
+
     assert response.status_code == 503
     assert response.payload is None
     assert response.content_type == "text/plain"

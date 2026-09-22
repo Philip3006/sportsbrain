@@ -26,11 +26,10 @@ from hashlib import sha256
 from math import isfinite
 from types import MappingProxyType
 from typing import Protocol
-from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode
-from urllib.request import Request, urlopen
+from urllib.error import URLError
 
 import certifi
+import requests
 
 from src.football.odds.therundown import (
     THERUNDOWN_ADAPTER_VERSION,
@@ -134,6 +133,12 @@ def _transport_failure_metadata(exc: BaseException) -> dict[str, object]:
     elif isinstance(root, ConnectionRefusedError):
         category = "tcp_refused"
     elif isinstance(root, (TimeoutError, socket.timeout)):
+        category = "timeout"
+    elif isinstance(exc, requests.exceptions.SSLError):
+        category = "tls_certificate"
+    elif isinstance(exc, requests.exceptions.ProxyError):
+        category = "proxy"
+    elif isinstance(exc, requests.exceptions.Timeout):
         category = "timeout"
     elif isinstance(exc, URLError) and (
         "proxy" in class_name or "proxy" in reason_text or "tunnel" in reason_text
@@ -2315,59 +2320,48 @@ class TheRundownCanonicalPayloadAdapterV1:
         return decoded
 
 
-class TheRundownUrlLibHttpClientV1:
-    """Concrete HTTP client; only called by an explicitly live-enabled run."""
+class TheRundownRequestsHttpClientV1:
+    """Concrete requests client; only called by an explicitly live-enabled run."""
 
     @staticmethod
-    def _verified_ssl_context() -> ssl.SSLContext:
-        """Build the reviewed certificate-validating context for TheRundown."""
+    def _certifi_ca_bundle() -> str:
+        """Return the reviewed certificate bundle used by requests."""
 
-        context = ssl.create_default_context(cafile=certifi.where())
-        if context.verify_mode != ssl.CERT_REQUIRED or not context.check_hostname:
+        bundle = certifi.where()
+        if not isinstance(bundle, str) or not bundle:
             raise NetworkShadowContractError(
-                "TheRundown TLS context must require certificates and hostname checks"
+                "TheRundown certifi CA bundle is unavailable"
             )
-        return context
+        return bundle
 
     def execute(
         self, request: TheRundownNetworkHttpRequestV1
     ) -> TheRundownNetworkHttpResponseV1:
         request.validate()
         started = datetime.now(timezone.utc)
-        url = request.endpoint
-        if request.query:
-            url = f"{url}?{urlencode(dict(request.query))}"
-        http_request = Request(
-            url, headers=dict(request.headers), method=request.method
-        )
         try:
-            with urlopen(
-                http_request,
+            response = requests.request(
+                method=request.method,
+                url=request.endpoint,
+                params=dict(request.query),
+                headers=dict(request.headers),
                 timeout=request.timeout_seconds,
-                context=self._verified_ssl_context(),
-            ) as response:
-                body = response.read()
-                status_code = int(response.status)
-                headers = {
-                    str(key): str(value) for key, value in response.headers.items()
-                }
-        except HTTPError as exc:
-            finished = datetime.now(timezone.utc)
-            try:
-                body = exc.read()
-            except Exception:  # noqa: BLE001 - diagnostic boundary stays fail-closed
-                body = b""
+                verify=self._certifi_ca_bundle(),
+                allow_redirects=False,
+            )
+            body = bytes(response.content)
+            status_code = int(response.status_code)
             raw_headers = {
-                str(key): str(value) for key, value in (exc.headers or {}).items()
+                str(key): str(value) for key, value in response.headers.items()
             }
-            payload = _decode_json_body(body)
+            finished = datetime.now(timezone.utc)
             return TheRundownNetworkHttpResponseV1(
-                status_code=int(exc.code),
-                payload=payload,
+                status_code=status_code,
+                payload=_decode_json_body(body),
                 headers=_safe_quota_proof_headers(raw_headers),
                 started_at=started,
                 finished_at=finished,
-                error_detail="HTTPError",
+                error_detail="HTTPError" if status_code >= 300 else None,
                 content_type=_content_type(raw_headers),
                 body_length=len(body),
                 body_digest=sha256(body).hexdigest(),
@@ -2385,18 +2379,10 @@ class TheRundownUrlLibHttpClientV1:
                 error_detail=type(exc).__name__,
                 **transport,
             )
-        finished = datetime.now(timezone.utc)
-        payload = _decode_json_body(body)
-        return TheRundownNetworkHttpResponseV1(
-            status_code=status_code,
-            payload=payload,
-            headers=headers,
-            started_at=started,
-            finished_at=finished,
-            content_type=_content_type(headers),
-            body_length=len(body),
-            body_digest=sha256(body).hexdigest(),
-        )
+
+
+class TheRundownUrlLibHttpClientV1(TheRundownRequestsHttpClientV1):
+    """Compatibility name for callers of the pre-requests transport."""
 
 
 def execute_therundown_quota_proof(
@@ -2410,7 +2396,7 @@ def execute_therundown_quota_proof(
 
     request.validate()
     _text(api_key, "TheRundown API credential")
-    client = http_client or TheRundownUrlLibHttpClientV1()
+    client = http_client or TheRundownRequestsHttpClientV1()
     try:
         response = client.execute(request.as_http_request(api_key))
     except Exception as exc:
@@ -2515,7 +2501,7 @@ class TheRundownHttpNetworkTransportV1(TheRundownCanaryNetworkTransport):
         self.endpoint = _text(endpoint, "endpoint")
         self.api_key = api_key
         self.adapter = adapter
-        self.http_client = http_client or TheRundownUrlLibHttpClientV1()
+        self.http_client = http_client or TheRundownRequestsHttpClientV1()
         self.clock = clock or (lambda: datetime.now(timezone.utc))
         self.calls: list[TheRundownNetworkRequestV1] = []
 
@@ -3385,6 +3371,7 @@ __all__ = [
     "TheRundownQuotaProofEvidenceV1",
     "TheRundownQuotaProofRequestV1",
     "TheRundownReplayTransportV1",
+    "TheRundownRequestsHttpClientV1",
     "TheRundownUrlLibHttpClientV1",
     "execute_therundown_quota_proof",
 ]
