@@ -10,6 +10,7 @@ from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
 from pathlib import Path
+from typing import ClassVar
 from urllib.error import HTTPError, URLError
 
 import pytest
@@ -62,6 +63,20 @@ class _CountingBody(BytesIO):
     def read(self, *args, **kwargs):  # type: ignore[no-untyped-def]
         self.read_count += 1
         return super().read(*args, **kwargs)
+
+
+class _FakeUrlLibResponse:
+    status = 200
+    headers: ClassVar[dict[str, str]] = {"Content-Type": "application/json"}
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):  # type: ignore[no-untyped-def]
+        return False
+
+    def read(self):
+        return b'{"ok":true}'
 
 
 def _request(**changes: object) -> TheRundownQuotaProofRequestV1:
@@ -740,6 +755,63 @@ def test_urllib_http_error_preserves_safe_status_headers_and_json(monkeypatch):
         == network_shadow.sha256(b'{"error":"rate limited"}').hexdigest()
     )
     assert response.error_detail == "HTTPError"
+
+
+def test_urllib_client_uses_verified_certifi_context_and_preserves_request(
+    monkeypatch,
+):
+    captured: dict[str, object] = {}
+
+    def fake_urlopen(request, *, timeout, context):  # type: ignore[no-untyped-def]
+        captured.update(request=request, timeout=timeout, context=context)
+        return _FakeUrlLibResponse()
+
+    monkeypatch.setattr(network_shadow, "urlopen", fake_urlopen)
+    request = _request().as_http_request("test-secret-never-written")
+    response = TheRundownUrlLibHttpClientV1().execute(request)
+
+    sent = captured["request"]
+    assert sent.full_url == (
+        f"{request.endpoint}?{network_shadow.urlencode(dict(request.query))}"
+    )
+    assert sent.get_method() == "GET"
+    assert sent.get_header("X-therundown-key") == "test-secret-never-written"
+    assert captured["timeout"] == request.timeout_seconds
+    context = captured["context"]
+    assert isinstance(context, ssl.SSLContext)
+    assert context.verify_mode == ssl.CERT_REQUIRED
+    assert context.check_hostname is True
+    assert response.status_code == 200
+
+
+def test_verified_context_loads_the_explicit_certifi_bundle(monkeypatch):
+    real_create_default_context = ssl.create_default_context
+    captured: dict[str, str] = {}
+
+    def capture_context(*, cafile):  # type: ignore[no-untyped-def]
+        captured["cafile"] = cafile
+        return real_create_default_context(cafile=cafile)
+
+    monkeypatch.setattr(network_shadow.ssl, "create_default_context", capture_context)
+    context = TheRundownUrlLibHttpClientV1._verified_ssl_context()
+
+    assert captured["cafile"] == network_shadow.certifi.where()
+    assert context.verify_mode == ssl.CERT_REQUIRED
+    assert context.check_hostname is True
+
+
+def test_urllib_client_rejects_an_unverified_production_context(monkeypatch):
+    unverified = ssl._create_unverified_context()
+    monkeypatch.setattr(
+        network_shadow.ssl,
+        "create_default_context",
+        lambda *, cafile: unverified,
+    )
+    with pytest.raises(
+        NetworkShadowContractError,
+        match="must require certificates and hostname checks",
+    ):
+        TheRundownUrlLibHttpClientV1._verified_ssl_context()
 
 
 def test_http_error_non_json_preserves_safe_digest_without_raw_body(monkeypatch):

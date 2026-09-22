@@ -30,6 +30,8 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
+import certifi
+
 from src.football.odds.therundown import (
     THERUNDOWN_ADAPTER_VERSION,
     THERUNDOWN_BASE_URL,
@@ -2316,6 +2318,17 @@ class TheRundownCanonicalPayloadAdapterV1:
 class TheRundownUrlLibHttpClientV1:
     """Concrete HTTP client; only called by an explicitly live-enabled run."""
 
+    @staticmethod
+    def _verified_ssl_context() -> ssl.SSLContext:
+        """Build the reviewed certificate-validating context for TheRundown."""
+
+        context = ssl.create_default_context(cafile=certifi.where())
+        if context.verify_mode != ssl.CERT_REQUIRED or not context.check_hostname:
+            raise NetworkShadowContractError(
+                "TheRundown TLS context must require certificates and hostname checks"
+            )
+        return context
+
     def execute(
         self, request: TheRundownNetworkHttpRequestV1
     ) -> TheRundownNetworkHttpResponseV1:
@@ -2328,7 +2341,11 @@ class TheRundownUrlLibHttpClientV1:
             url, headers=dict(request.headers), method=request.method
         )
         try:
-            with urlopen(http_request, timeout=request.timeout_seconds) as response:
+            with urlopen(
+                http_request,
+                timeout=request.timeout_seconds,
+                context=self._verified_ssl_context(),
+            ) as response:
                 body = response.read()
                 status_code = int(response.status)
                 headers = {
