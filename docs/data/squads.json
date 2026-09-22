@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-21",
+  "updated": "2026-09-22",
   "teams": {
     "Algeria": {
       "source": "wikipedia",
@@ -12,7 +12,8 @@
         "Ramy Bensebaini",
         "Youcef Atal",
         "Oussama Benbot",
-        "Ibrahim Maza"
+        "Ibrahim Maza",
+        "Nabil Bentaleb"
       ],
       "players": [
         {
@@ -108,7 +109,7 @@
         {
           "name": "Nabil Bentaleb",
           "pos": "MID",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Adil Boulbina",
@@ -2274,7 +2275,9 @@
         "Tino Livramento",
         "Reece James",
         "Jordan Henderson",
-        "John Stones"
+        "John Stones",
+        "Declan Rice",
+        "Kobbie Mainoo"
       ],
       "players": [
         {
@@ -2295,7 +2298,7 @@
         {
           "name": "Declan Rice",
           "pos": "MID",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "John Stones",
@@ -2355,7 +2358,7 @@
         {
           "name": "Kobbie Mainoo",
           "pos": "MID",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Morgan Rogers",
@@ -3276,7 +3279,8 @@
       "suspended": [
         "Clément Akpa",
         "Sébastien Haller",
-        "Guéla Doué"
+        "Guéla Doué",
+        "Odilon Kossounou"
       ],
       "players": [
         {
@@ -3312,7 +3316,7 @@
         {
           "name": "Odilon Kossounou",
           "pos": "DEF",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Franck Kessié",
