@@ -812,6 +812,22 @@ class TheRundownExperimentalAdapter:
             )
         return tuple(fresh)
 
+    def event_identity(
+        self,
+        event: Mapping[str, object],
+        fixture: Fixture,
+        *,
+        timing_policy: CascadeTimingPolicy,
+    ) -> str:
+        """Classify one dated-snapshot event against an authorized fixture.
+
+        Discovery uses the same reviewed league/team/kickoff and pre-match
+        identity rules as odds normalization, before an event ID is allowed
+        into the later pre-bound execution authorization.
+        """
+
+        return self._event_identity(event, fixture, timing_policy=timing_policy)
+
     def fetch(
         self,
         fixture: Fixture,
