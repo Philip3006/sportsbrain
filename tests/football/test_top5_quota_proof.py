@@ -191,6 +191,7 @@ def test_valid_proof_is_one_bounded_request_and_not_a_league_capture():
         api_key="test-secret-never-written",
         http_client=client,
         now=NOW,
+        clock=lambda: NOW,
     )
 
     assert len(client.calls) == 1
@@ -206,6 +207,42 @@ def test_valid_proof_is_one_bounded_request_and_not_a_league_capture():
     assert evidence.retry_count == 0
     assert evidence.no_retry is True
     assert evidence.as_payload()["execution_phase"] == "quota_proof"
+
+
+def test_explicit_preflight_now_does_not_become_post_response_now():
+    wall_clock_before = datetime.now(UTC)
+    preflight_now = wall_clock_before - timedelta(seconds=2)
+    response_started = wall_clock_before - timedelta(seconds=1, microseconds=500_000)
+    response_finished = wall_clock_before - timedelta(seconds=1)
+    snapshot_date = preflight_now.date()
+    request = _request(
+        snapshot_date=snapshot_date,
+        endpoint=(
+            f"https://therundown.io/api/v2/sports/3/events/{snapshot_date.isoformat()}"
+        ),
+    )
+    response = _response(
+        headers={
+            **_response().headers,
+            "X-Datapoints-Reset": (
+                wall_clock_before.date() + timedelta(days=2)
+            ).isoformat()
+            + "T00:00:00Z",
+        },
+        started_at=response_started,
+        finished_at=response_finished,
+    )
+
+    evidence = execute_therundown_quota_proof(
+        request,
+        api_key="test-secret",
+        http_client=_FakeProofClient(response),
+        now=preflight_now,
+        clock=None,
+    )
+
+    assert preflight_now < response_started <= response_finished
+    assert evidence.response_finished_at == response_finished
 
 
 def test_guarded_proof_validates_against_post_response_clock(
@@ -334,7 +371,11 @@ def test_observed_dated_snapshot_cost_of_56_is_accepted():
     client = _FakeProofClient(response)
 
     evidence = execute_therundown_quota_proof(
-        _request(), api_key="test-secret", http_client=client, now=NOW
+        _request(),
+        api_key="test-secret",
+        http_client=client,
+        now=NOW,
+        clock=lambda: NOW,
     )
 
     assert evidence.billed_datapoints == 56
@@ -355,6 +396,7 @@ def test_proof_only_authorization_does_not_require_five_league_scope():
         api_key="test-secret",
         http_client=client,
         now=NOW,
+        clock=lambda: NOW,
     )
     assert evidence.authorization_id == authorization.proof_authorization_id
     assert evidence.snapshot_date == NOW.date()
@@ -586,6 +628,7 @@ def test_no_provider_event_or_prior_capture_is_required_for_new_proof():
         api_key="test-secret",
         http_client=_FakeProofClient(_response()),
         now=NOW,
+        clock=lambda: NOW,
     )
     assert evidence.snapshot_date == NOW.date()
 
@@ -594,7 +637,11 @@ def test_empty_dated_snapshot_fails_closed_without_quota_claims():
     client = _FakeProofClient(_response(payload={"events": []}))
     with pytest.raises(NetworkShadowExecutionBlocked, match="no events"):
         execute_therundown_quota_proof(
-            _request(), api_key="test-secret", http_client=client, now=NOW
+            _request(),
+            api_key="test-secret",
+            http_client=client,
+            now=NOW,
+            clock=lambda: NOW,
         )
     assert len(client.calls) == 1
 
@@ -696,7 +743,11 @@ def test_malformed_or_over_budget_provider_evidence_fails_closed(changes, match)
     client = _FakeProofClient(_response(**changes))
     with pytest.raises(NetworkShadowExecutionBlocked, match=match):
         execute_therundown_quota_proof(
-            _request(), api_key="test-secret", http_client=client, now=NOW
+            _request(),
+            api_key="test-secret",
+            http_client=client,
+            now=NOW,
+            clock=lambda: NOW,
         )
     assert len(client.calls) == 1
 
@@ -710,7 +761,11 @@ def test_missing_body_http_failure_and_transport_failure_never_retry():
         client = _FakeProofClient(response, error)
         with pytest.raises(NetworkShadowExecutionBlocked):
             execute_therundown_quota_proof(
-                _request(), api_key="test-secret", http_client=client, now=NOW
+                _request(),
+                api_key="test-secret",
+                http_client=client,
+                now=NOW,
+                clock=lambda: NOW,
             )
         assert len(client.calls) == 1
 
@@ -754,6 +809,7 @@ def test_urllib_transport_reason_is_normalized_without_exception_text(
             api_key="test-secret-never-written",
             http_client=client,
             now=NOW,
+            clock=lambda: NOW,
         )
 
     diagnostic = raised.value.diagnostic
@@ -810,6 +866,7 @@ def test_http_status_failure_precedes_body_validation(status: int):
             api_key="test-secret",
             http_client=client,
             now=NOW,
+            clock=lambda: NOW,
         )
     assert len(client.calls) == 1
 
@@ -963,6 +1020,7 @@ def test_http_200_malformed_body_reports_body_failure():
             api_key="test-secret",
             http_client=client,
             now=NOW,
+            clock=lambda: NOW,
         )
 
 
@@ -982,6 +1040,7 @@ def test_http_200_valid_body_reaches_quota_header_validation():
             api_key="test-secret",
             http_client=client,
             now=NOW,
+            clock=lambda: NOW,
         )
 
 
@@ -1054,6 +1113,7 @@ def test_stale_response_wrong_request_shape_and_provider_mismatch_fail_closed():
             api_key="test-secret",
             http_client=_FakeProofClient(stale),
             now=NOW,
+            clock=lambda: NOW,
         )
 
     with pytest.raises(NetworkShadowExecutionBlocked, match="request-shape"):
@@ -1062,6 +1122,7 @@ def test_stale_response_wrong_request_shape_and_provider_mismatch_fail_closed():
             api_key="test-secret",
             http_client=_FakeProofClient(_response()),
             now=NOW,
+            clock=lambda: NOW,
         )
 
     with pytest.raises(NetworkShadowExecutionBlocked, match="provider"):
@@ -1070,6 +1131,7 @@ def test_stale_response_wrong_request_shape_and_provider_mismatch_fail_closed():
             api_key="test-secret",
             http_client=_FakeProofClient(_response()),
             now=NOW,
+            clock=lambda: NOW,
         )
 
 
@@ -1080,6 +1142,7 @@ def test_proof_reload_keeps_digest_and_cannot_be_a_receipt():
         api_key="test-secret",
         http_client=_FakeProofClient(_response()),
         now=NOW,
+        clock=lambda: NOW,
     )
     reloaded = TheRundownQuotaProofEvidenceV1.from_payload(evidence.as_payload())
     reloaded.validate(request=request, now=NOW)
@@ -1100,6 +1163,7 @@ def test_payload_quota_claims_do_not_override_provider_headers():
         api_key="test-secret",
         http_client=_FakeProofClient(response),
         now=NOW,
+        clock=lambda: NOW,
     )
     assert evidence.remaining_datapoints == 275
     assert evidence.billed_datapoints == 55
@@ -1112,6 +1176,7 @@ def test_second_proof_output_is_rejected(tmp_path: Path):
         api_key="test-secret",
         http_client=_FakeProofClient(_response()),
         now=NOW,
+        clock=lambda: NOW,
     )
     output = tmp_path / "quota-proof.json"
     spend_control = {
@@ -1250,6 +1315,7 @@ def test_dashboard_quota_claims_are_ignored_and_live_headers_remain_authoritativ
         api_key="test-secret",
         http_client=_FakeProofClient(_response()),
         now=NOW,
+        clock=lambda: NOW,
     )
     assert proof.remaining_datapoints == 275
     assert proof.billed_datapoints == 55

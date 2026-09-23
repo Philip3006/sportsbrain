@@ -1691,9 +1691,10 @@ class TheRundownQuotaProofEvidenceV1:
         *,
         request: TheRundownQuotaProofRequestV1,
         now: datetime,
+        request_now: datetime | None = None,
         require_provider_delay: bool = False,
     ) -> None:
-        request.validate(now=now)
+        request.validate(now=request_now or now)
         if self.schema_version != QUOTA_PROOF_SCHEMA_VERSION:
             raise NetworkShadowContractError("unsupported quota proof schema")
         if self.execution_phase != "quota_proof":
@@ -1856,8 +1857,9 @@ class TheRundownQuotaProofEvidenceV1:
         *,
         api_key: str,
         now: datetime,
+        request_now: datetime | None = None,
     ) -> TheRundownQuotaProofEvidenceV1:
-        request.validate(now=now)
+        request.validate(now=request_now or now)
         response.validate()
         if (
             response.timed_out
@@ -1937,7 +1939,7 @@ class TheRundownQuotaProofEvidenceV1:
             status_code=response.status_code,
         )
         evidence = replace(evidence, evidence_digest=evidence.computed_evidence_digest)
-        evidence.validate(request=request, now=now)
+        evidence.validate(request=request, now=now, request_now=request_now)
         return evidence
 
     @classmethod
@@ -2463,14 +2465,15 @@ def execute_therundown_quota_proof(
     ``clock`` when deterministic control is required.
     """
 
-    request.validate(now=now)
+    preflight_now = _utc(now or datetime.now(timezone.utc), "quota proof preflight now")
+    request.validate(now=preflight_now)
     _text(api_key, "TheRundown API credential")
     client = http_client or TheRundownRequestsHttpClientV1()
     try:
-        response = client.execute(request.as_http_request(api_key, now=now))
+        response = client.execute(request.as_http_request(api_key, now=preflight_now))
     except Exception as exc:
         diagnostic_now = _utc(
-            now or datetime.now(timezone.utc), "quota proof transport diagnostic now"
+            preflight_now, "quota proof transport diagnostic now"
         ).isoformat()
         transport = _transport_failure_metadata(exc)
         raise NetworkShadowExecutionBlocked(
@@ -2490,7 +2493,7 @@ def execute_therundown_quota_proof(
         ) from exc
     try:
         response_validation_now = _utc(
-            clock() if clock is not None else (now or datetime.now(timezone.utc)),
+            clock() if clock is not None else datetime.now(timezone.utc),
             "quota proof response validation now",
         )
         return TheRundownQuotaProofEvidenceV1.from_http_response(
@@ -2498,6 +2501,7 @@ def execute_therundown_quota_proof(
             response,
             api_key=api_key,
             now=response_validation_now,
+            request_now=preflight_now,
         )
     except NetworkShadowExecutionBlocked as exc:
         if exc.diagnostic is not None:
