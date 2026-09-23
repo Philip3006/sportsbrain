@@ -81,7 +81,13 @@ TOP5_CONTROLLED_SHADOW_DATAPOINT_BUDGET = (
 TOP5_CONTROLLED_SHADOW_QUOTA_BUDGET = float(TOP5_CONTROLLED_SHADOW_DATAPOINT_BUDGET)
 TOP5_CONTROLLED_SHADOW_MINIMUM_INTERVAL_SECONDS = 1.1
 QUOTA_PROOF_MAX_REQUEST_COUNT = 1
-QUOTA_PROOF_MAX_DATAPOINTS = THERUNDOWN_OBSERVED_DATAPOINTS_PER_REQUEST
+# The dated-snapshot proof request was observed to bill 56 datapoints in the
+# authorized real response. Keep this independent from the five-league
+# Discovery request-cost assumption above, which remains 55.
+THERUNDOWN_DATED_SNAPSHOT_QUOTA_PROOF_DATAPOINTS_PER_REQUEST = 56
+QUOTA_PROOF_MAX_DATAPOINTS = (
+    THERUNDOWN_DATED_SNAPSHOT_QUOTA_PROOF_DATAPOINTS_PER_REQUEST
+)
 QUOTA_PROOF_MINIMUM_REMAINING_DATAPOINTS = TOP5_CONTROLLED_SHADOW_DATAPOINT_BUDGET
 QUOTA_PROOF_MAXIMUM_AGE_SECONDS = 300
 QUOTA_PROOF_SPORT_ID = 3
@@ -1375,7 +1381,7 @@ class TheRundownQuotaProofAuthorizationV1:
             )
         if self.maximum_datapoints != QUOTA_PROOF_MAX_DATAPOINTS:
             raise NetworkShadowExecutionBlocked(
-                "proof authorization datapoint cap must be exactly 55"
+                "proof authorization datapoint cap must be exactly 56"
             )
         if self.retry_count != 0:
             raise NetworkShadowExecutionBlocked(
@@ -1570,7 +1576,7 @@ class TheRundownQuotaProofRequestV1:
             )
         if self.maximum_datapoints != QUOTA_PROOF_MAX_DATAPOINTS:
             raise NetworkShadowExecutionBlocked(
-                "quota proof datapoint cap must be exactly 55"
+                "quota proof datapoint cap must be exactly 56"
             )
         if self.request_count != QUOTA_PROOF_MAX_REQUEST_COUNT:
             raise NetworkShadowExecutionBlocked(
@@ -3397,6 +3403,7 @@ __all__ = [
     "QUOTA_PROOF_MAX_REQUEST_COUNT",
     "QUOTA_PROOF_MINIMUM_REMAINING_DATAPOINTS",
     "QUOTA_PROOF_SCHEMA_VERSION",
+    "THERUNDOWN_DATED_SNAPSHOT_QUOTA_PROOF_DATAPOINTS_PER_REQUEST",
     "THERUNDOWN_OBSERVED_DATAPOINTS_PER_REQUEST",
     "TOP5_CONTROLLED_SHADOW_DATAPOINT_BUDGET",
     "TOP5_CONTROLLED_SHADOW_MINIMUM_INTERVAL_SECONDS",
