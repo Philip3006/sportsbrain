@@ -25,6 +25,15 @@ from src.football.champions_league_model import (
     canonical_team_identity,
     champions_league_config,
 )
+from src.football.champions_league_runtime import (
+    CHAMPIONS_LEAGUE_CODE as RUNTIME_CHAMPIONS_LEAGUE_CODE,
+)
+from src.football.champions_league_runtime import (
+    CHAMPIONS_LEAGUE_PROVIDER as RUNTIME_CHAMPIONS_LEAGUE_PROVIDER,
+)
+from src.football.champions_league_runtime import (
+    CHAMPIONS_LEAGUE_SPORT_KEY as RUNTIME_CHAMPIONS_LEAGUE_SPORT_KEY,
+)
 from src.football.production_contracts import (
     ActivationMode,
     MarketSnapshot,
@@ -39,7 +48,7 @@ SIGNAL_TIME = SignalTimeContract(60, 180, 900)
 
 def _fixture(**overrides: object) -> ChampionsLeagueFixture:
     values: dict[str, object] = {
-        "fixture_key": "ucl:event-001",
+        "fixture_key": "UCL:event-001",
         "provider_event_id": "event-001",
         "home_team_id": "home-001",
         "away_team_id": "away-001",
@@ -80,7 +89,7 @@ def _snapshot(
     *, kind: MarketSnapshotKind = MarketSnapshotKind.SIGNAL_TIME, **overrides: object
 ) -> MarketSnapshot:
     values: dict[str, object] = {
-        "fixture_key": "ucl:event-001",
+        "fixture_key": "UCL:event-001",
         "captured_at": NOW - timedelta(minutes=2),
         "kind": kind,
         "source": CHAMPIONS_LEAGUE_PROVIDER,
@@ -98,7 +107,7 @@ def _result():
 
 
 def test_canonical_identity_and_disabled_config_are_explicit() -> None:
-    assert canonical_fixture_key("event-001") == "ucl:event-001"
+    assert canonical_fixture_key("event-001") == "UCL:event-001"
     assert canonical_team_identity(" Home-City. ") == "home city"
     config = champions_league_config()
     config.assert_disabled()
@@ -107,9 +116,15 @@ def test_canonical_identity_and_disabled_config_are_explicit() -> None:
     assert CHAMPIONS_LEAGUE_SPORT_KEY not in LEAGUE_REGISTRY
 
 
+def test_model_identity_matches_merged_runtime_identity() -> None:
+    assert CHAMPIONS_LEAGUE_CODE == RUNTIME_CHAMPIONS_LEAGUE_CODE
+    assert CHAMPIONS_LEAGUE_SPORT_KEY == RUNTIME_CHAMPIONS_LEAGUE_SPORT_KEY
+    assert CHAMPIONS_LEAGUE_PROVIDER == RUNTIME_CHAMPIONS_LEAGUE_PROVIDER
+
+
 def test_fixture_requires_provider_bound_identity_and_distinct_teams() -> None:
     with pytest.raises(ChampionsLeagueContractError, match="fixture key"):
-        replace(_fixture(), fixture_key="ucl:other-event").validate()
+        replace(_fixture(), fixture_key="UCL:other-event").validate()
     with pytest.raises(ChampionsLeagueContractError, match="team IDs"):
         replace(_fixture(), away_team_id="home-001").validate()
     with pytest.raises(ChampionsLeagueContractError, match="not a canonical"):

@@ -32,7 +32,7 @@ from src.football.production_contracts import (
     _utc,
 )
 
-CHAMPIONS_LEAGUE_CODE = "ucl"
+CHAMPIONS_LEAGUE_CODE = "UCL"
 CHAMPIONS_LEAGUE_NAME = "UEFA Champions League"
 CHAMPIONS_LEAGUE_SPORT_KEY = "soccer_uefa_champs_league"
 CHAMPIONS_LEAGUE_PROVIDER = "the_odds_api"
