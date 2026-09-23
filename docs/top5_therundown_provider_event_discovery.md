@@ -16,18 +16,24 @@ receipt, provider-authority, activation, publication, ledger, or spend
 authority.
 
 Before request one, the authorization is joined to the unmodified B4 quota
-proof package emitted by the controlled-shadow quota-proof path. The outer
+proof package emitted by the dated-snapshot quota-proof path. The outer
 package must be `top5-therundown-quota-proof-package-v1` with
 `execution_phase=quota_proof`; its nested `proof` must be
-`top5-therundown-quota-proof-v1`. The nested proof binds `proof_id`,
-`authorization_id`, provider/account scope, `remaining_datapoints`,
-`response_finished_at`, `quota_reset_at`, `response_digest`,
-`evidence_digest`, request shape, billing headers, and zero-retry/one-request
-metadata. It must be fresh, unaltered, reset-valid, and report at least 550
-remaining datapoints: 275 for the bounded discovery batch plus 275 headroom.
-The caller cannot supply a flat alias or override the remaining quota value;
-any missing, stale, altered, or insufficient real package stops before
-transport.
+`top5-therundown-quota-proof-v1`. The nested proof is an account-headroom
+proof for the exact B4 snapshot request (`sport_id=3`, current or next UTC
+date, `market_ids=1`, `affiliate_ids=19`); it does not require or accept a
+historical league capture, Getafe/Málaga evidence, `provider_event_id`, or a
+legacy proof-target digest. The request and proof must bind the same snapshot
+date, endpoint, query, adapter source, `proof_id`, `authorization_id`,
+`response_digest`, and `evidence_digest`.
+
+The proof also binds provider/account scope, `remaining_datapoints`,
+`response_finished_at`, `quota_reset_at`, billing headers, and
+zero-retry/one-request metadata. It must be fresh, unaltered, reset-valid,
+and report at least 550 remaining datapoints: 275 for the bounded discovery
+batch plus 275 headroom. The caller cannot supply a flat alias, translate an
+old event proof, or override the remaining quota value; any missing, stale,
+altered, historical, or insufficient real package stops before transport.
 
 `discover_five_league_events()` uses the adapter's existing strict league,
 participant, kickoff, event-state, and pre-match identity classifier. It

@@ -4,7 +4,7 @@ import json
 import sys
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -24,6 +24,7 @@ from src.football.top5_therundown_event_discovery import (
     B4_QUOTA_PROOF_MAX_DATAPOINTS,
     B4_QUOTA_PROOF_PACKAGE_SCHEMA_VERSION,
     B4_QUOTA_PROOF_SCHEMA_VERSION,
+    B4_QUOTA_PROOF_SPORT_ID,
     DISCOVERY_LEAGUE_ORDER,
     EventDiscoveryContractError,
     EventDiscoveryExecutionBlocked,
@@ -103,22 +104,26 @@ def _payload_digest(value: object) -> str:
 def _install_proof(
     *,
     remaining_datapoints: int = 550,
+    snapshot_date: date | None = None,
     finished_at: datetime = NOW - timedelta(minutes=1),
     quota_reset_at: datetime = NOW + timedelta(hours=1),
     response_digest: str = "b" * 64,
 ) -> TheRundownB4QuotaProofV1 | None:
     proof_id = "b4-quota-proof-20260921"
     authorization_id = "ceo-quota-proof-20260921"
-    provider_event_id = "proof-event-20260921"
+    if snapshot_date is None:
+        snapshot_date = NOW.date()
     authorization_package_digest = "a" * 64
     configuration_digest = "c" * 64
-    proof_target_source_digest = "f" * 64
     response_started_at = finished_at - timedelta(seconds=1)
     quota_used_datapoints = 1000 - remaining_datapoints
     request_shape_digest = _payload_digest(
         {
             "method": "GET",
-            "endpoint": f"{THERUNDOWN_BASE_URL}/events/{provider_event_id}",
+            "endpoint": (
+                f"{THERUNDOWN_BASE_URL}/sports/{B4_QUOTA_PROOF_SPORT_ID}/events/"
+                f"{snapshot_date.isoformat()}"
+            ),
             "query": {
                 "affiliate_ids": ",".join(B4_QUOTA_PROOF_AFFILIATE_IDS),
                 "hide_closed": "true",
@@ -132,6 +137,8 @@ def _install_proof(
         "execution_phase": B4_QUOTA_PROOF_EXECUTION_PHASE,
         "proof_id": proof_id,
         "provider": THERUNDOWN_PROVIDER_NAME,
+        "sport_id": B4_QUOTA_PROOF_SPORT_ID,
+        "snapshot_date": snapshot_date.isoformat(),
         "account_scope": "therundown-account-test",
         "authorization_package_digest": authorization_package_digest,
         "configuration_digest": configuration_digest,
@@ -165,7 +172,6 @@ def _install_proof(
         "request_count": 1,
         "retry_count": 0,
         "no_retry": True,
-        "proof_target_source_digest": proof_target_source_digest,
     }
     proof_payload["evidence_digest"] = _payload_digest(proof_payload)
     package = {
@@ -175,7 +181,8 @@ def _install_proof(
         "request": {
             "proof_id": proof_id,
             "provider": THERUNDOWN_PROVIDER_NAME,
-            "provider_event_id": provider_event_id,
+            "sport_id": B4_QUOTA_PROOF_SPORT_ID,
+            "snapshot_date": snapshot_date.isoformat(),
             "authorization_package_digest": authorization_package_digest,
             "configuration_digest": configuration_digest,
             "authorization_id": authorization_id,
@@ -184,7 +191,10 @@ def _install_proof(
             "ceo_authorization_identity": "ceo-proof-20260921",
             "adapter_version": "therundown-v2-experimental:2",
             "adapter_source_sha": "a" * 40,
-            "endpoint": f"{THERUNDOWN_BASE_URL}/events/{provider_event_id}",
+            "endpoint": (
+                f"{THERUNDOWN_BASE_URL}/sports/{B4_QUOTA_PROOF_SPORT_ID}/events/"
+                f"{snapshot_date.isoformat()}"
+            ),
             "query": {
                 "affiliate_ids": ",".join(B4_QUOTA_PROOF_AFFILIATE_IDS),
                 "hide_closed": "true",
@@ -192,7 +202,6 @@ def _install_proof(
                 "market_ids": "1",
             },
             "request_shape_digest": request_shape_digest,
-            "proof_target_source_digest": proof_target_source_digest,
             "maximum_datapoints": B4_QUOTA_PROOF_MAX_DATAPOINTS,
             "request_count": 1,
             "retry_count": 0,
@@ -242,6 +251,8 @@ def _authorization() -> TheRundownEventDiscoveryAuthorizationV1:
         quota_proof_response_digest=proof.response_digest,
         quota_proof_account_scope=proof.account_scope,
         quota_proof_remaining_datapoints=proof.remaining_datapoints,
+        quota_proof_sport_id=proof.sport_id,
+        quota_proof_snapshot_date=proof.snapshot_date,
         quota_proof_observed_at=proof.response_started_at,
         quota_proof_finished_at=proof.response_finished_at,
         quota_proof_reset_at=proof.quota_reset_at,
@@ -593,6 +604,8 @@ def test_unmodified_pr144_package_shape_loads_directly():
     proof = TheRundownB4QuotaProofV1.load_canonical(now=NOW)
     assert proof.proof_id == "b4-quota-proof-20260921"
     assert proof.authorization_id == "ceo-quota-proof-20260921"
+    assert proof.sport_id == B4_QUOTA_PROOF_SPORT_ID
+    assert proof.snapshot_date == NOW.date()
     assert proof.remaining_datapoints == 550
     assert proof.response_digest == "b" * 64
     assert len(proof.evidence_digest) == 64
@@ -635,6 +648,28 @@ def test_pr144_response_digest_tamper_fails_against_direct_nested_binding():
     transport = FakeDiscoveryTransport([])
 
     with pytest.raises(EventDiscoveryExecutionBlocked, match="binding mismatch"):
+        discover_five_league_events(authorization, transport=transport, now=NOW)
+    assert transport.calls == []
+
+
+def test_dated_snapshot_binding_rejects_historical_proof_before_transport():
+    authorization = _authorization()
+    _install_proof(snapshot_date=NOW.date() - timedelta(days=1))
+    transport = FakeDiscoveryTransport([])
+
+    with pytest.raises(EventDiscoveryExecutionBlocked, match="historical"):
+        discover_five_league_events(authorization, transport=transport, now=NOW)
+    assert transport.calls == []
+
+
+def test_retired_event_bound_proof_shape_is_not_accepted():
+    authorization = _authorization()
+    package = json.loads(b4_quota_proof_state_path().read_text())
+    package["proof"]["provider_event_id"] = "legacy-event-id"
+    b4_quota_proof_state_path().write_text(json.dumps(package))
+    transport = FakeDiscoveryTransport([])
+
+    with pytest.raises(EventDiscoveryContractError, match="B4 nested proof shape"):
         discover_five_league_events(authorization, transport=transport, now=NOW)
     assert transport.calls == []
 

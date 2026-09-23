@@ -18,7 +18,7 @@ import tempfile
 from collections.abc import Callable, Mapping, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass, replace
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from hashlib import sha256
 from math import isfinite
 from pathlib import Path
@@ -66,7 +66,10 @@ B4_QUOTA_PROOF_PACKAGE_SCHEMA_VERSION = "top5-therundown-quota-proof-package-v1"
 B4_QUOTA_PROOF_SCHEMA_VERSION = "top5-therundown-quota-proof-v1"
 B4_QUOTA_PROOF_EXECUTION_PHASE = "quota_proof"
 B4_QUOTA_PROOF_MAX_DATAPOINTS = THERUNDOWN_OBSERVED_DATAPOINTS_PER_REQUEST
-B4_QUOTA_PROOF_AFFILIATE_IDS = ("19", "22", "23")
+B4_QUOTA_PROOF_SPORT_ID = 3
+B4_QUOTA_PROOF_MARKET_IDS = ("1",)
+B4_QUOTA_PROOF_AFFILIATE_IDS = ("19",)
+B4_QUOTA_PROOF_SNAPSHOT_MAX_OFFSET_DAYS = 1
 DISCOVERY_CONSUMPTION_SCHEMA_VERSION = (
     "top5-therundown-provider-event-discovery-consumption-v1"
 )
@@ -193,6 +196,8 @@ class TheRundownB4QuotaProofV1:
     proof_id: str
     authorization_id: str
     provider: str
+    sport_id: int
+    snapshot_date: date
     account_scope: str
     remaining_datapoints: int
     response_started_at: datetime
@@ -284,6 +289,8 @@ class TheRundownB4QuotaProofV1:
             "execution_phase",
             "proof_id",
             "provider",
+            "sport_id",
+            "snapshot_date",
             "account_scope",
             "authorization_package_digest",
             "configuration_digest",
@@ -308,7 +315,6 @@ class TheRundownB4QuotaProofV1:
             "request_count",
             "retry_count",
             "no_retry",
-            "proof_target_source_digest",
         }
         if set(proof) != proof_keys:
             raise EventDiscoveryContractError(
@@ -324,6 +330,19 @@ class TheRundownB4QuotaProofV1:
             )
         if proof.get("provider") != THERUNDOWN_PROVIDER_NAME:
             raise EventDiscoveryExecutionBlocked("B4 quota proof provider is invalid")
+        if proof.get("sport_id") != B4_QUOTA_PROOF_SPORT_ID:
+            raise EventDiscoveryExecutionBlocked("B4 quota proof sport is invalid")
+        snapshot_raw = proof.get("snapshot_date")
+        if not isinstance(snapshot_raw, str):
+            raise EventDiscoveryContractError(
+                "quota proof snapshot_date must be YYYY-MM-DD"
+            )
+        try:
+            snapshot_date = date.fromisoformat(snapshot_raw)
+        except ValueError as exc:
+            raise EventDiscoveryContractError(
+                "quota proof snapshot_date must be YYYY-MM-DD"
+            ) from exc
         for name in (
             "proof_id",
             "account_scope",
@@ -342,9 +361,6 @@ class TheRundownB4QuotaProofV1:
             "evidence_digest",
         ):
             _sha(proof.get(name), f"quota proof {name}")
-        target_digest = proof.get("proof_target_source_digest")
-        if target_digest:
-            _sha(target_digest, "quota proof proof_target_source_digest")
         for name in (
             "request_started_at",
             "response_finished_at",
@@ -355,6 +371,13 @@ class TheRundownB4QuotaProofV1:
         finished = cls._timestamp(proof, "response_finished_at")
         reset = cls._timestamp(proof, "quota_reset_at")
         current = _utc_datetime(now, "quota proof validation now")
+        current_date = current.date()
+        if snapshot_date < current_date or snapshot_date > current_date + timedelta(
+            days=B4_QUOTA_PROOF_SNAPSHOT_MAX_OFFSET_DAYS
+        ):
+            raise EventDiscoveryExecutionBlocked(
+                "quota proof snapshot date is historical or outside the bounded window"
+            )
         if finished < started or finished > current:
             raise EventDiscoveryExecutionBlocked(
                 "quota proof response timestamps are invalid"
@@ -474,7 +497,8 @@ class TheRundownB4QuotaProofV1:
         request_keys = {
             "proof_id",
             "provider",
-            "provider_event_id",
+            "sport_id",
+            "snapshot_date",
             "authorization_package_digest",
             "configuration_digest",
             "authorization_id",
@@ -486,7 +510,6 @@ class TheRundownB4QuotaProofV1:
             "endpoint",
             "query",
             "request_shape_digest",
-            "proof_target_source_digest",
             "maximum_datapoints",
             "request_count",
             "retry_count",
@@ -497,7 +520,6 @@ class TheRundownB4QuotaProofV1:
             )
         for name in (
             "proof_id",
-            "provider_event_id",
             "authorization_package_digest",
             "configuration_digest",
             "authorization_id",
@@ -520,6 +542,12 @@ class TheRundownB4QuotaProofV1:
             raise EventDiscoveryExecutionBlocked(
                 "quota proof request provider is invalid"
             )
+        if request.get("sport_id") != B4_QUOTA_PROOF_SPORT_ID:
+            raise EventDiscoveryExecutionBlocked("quota proof request sport is invalid")
+        if request.get("snapshot_date") != snapshot_date.isoformat():
+            raise EventDiscoveryExecutionBlocked(
+                "quota proof request snapshot date does not match evidence"
+            )
         for name in (
             "proof_id",
             "provider",
@@ -530,21 +558,21 @@ class TheRundownB4QuotaProofV1:
             "qualification_session_id",
             "ceo_authorization_identity",
             "request_shape_digest",
-            "proof_target_source_digest",
         ):
             if request.get(name) != proof.get(name):
                 raise EventDiscoveryExecutionBlocked(
                     f"quota proof request binding mismatch: {name}"
                 )
         if request.get("endpoint") != (
-            f"{THERUNDOWN_BASE_URL}/events/{request['provider_event_id']}"
+            f"{THERUNDOWN_BASE_URL}/sports/{B4_QUOTA_PROOF_SPORT_ID}/events/"
+            f"{snapshot_date.isoformat()}"
         ):
             raise EventDiscoveryExecutionBlocked("quota proof endpoint is invalid")
         expected_query = {
             "affiliate_ids": ",".join(B4_QUOTA_PROOF_AFFILIATE_IDS),
             "hide_closed": "true",
             "main_line": "true",
-            "market_ids": "1",
+            "market_ids": ",".join(B4_QUOTA_PROOF_MARKET_IDS),
         }
         if request.get("query") != expected_query:
             raise EventDiscoveryExecutionBlocked("quota proof request query is invalid")
@@ -574,6 +602,8 @@ class TheRundownB4QuotaProofV1:
             proof_id=proof["proof_id"],
             authorization_id=proof["authorization_id"],
             provider=proof["provider"],
+            sport_id=proof["sport_id"],
+            snapshot_date=date.fromisoformat(proof["snapshot_date"]),
             account_scope=proof["account_scope"],
             remaining_datapoints=proof["remaining_datapoints"],
             response_started_at=cls._timestamp(proof, "request_started_at"),
@@ -598,6 +628,12 @@ class TheRundownB4QuotaProofV1:
             _text(value, name)
         if self.provider != THERUNDOWN_PROVIDER_NAME:
             raise EventDiscoveryExecutionBlocked("B4 quota proof provider is invalid")
+        if self.sport_id != B4_QUOTA_PROOF_SPORT_ID:
+            raise EventDiscoveryExecutionBlocked("B4 quota proof sport is invalid")
+        if not isinstance(self.snapshot_date, date) or isinstance(
+            self.snapshot_date, datetime
+        ):
+            raise EventDiscoveryContractError("quota proof snapshot_date is invalid")
         if (
             not isinstance(self.remaining_datapoints, int)
             or isinstance(self.remaining_datapoints, bool)
@@ -616,6 +652,14 @@ class TheRundownB4QuotaProofV1:
         )
         reset = _utc_datetime(self.quota_reset_at, "quota reset_at")
         current = _utc_datetime(now, "quota proof validation now")
+        if (
+            self.snapshot_date < current.date()
+            or self.snapshot_date
+            > current.date() + timedelta(days=B4_QUOTA_PROOF_SNAPSHOT_MAX_OFFSET_DAYS)
+        ):
+            raise EventDiscoveryExecutionBlocked(
+                "quota proof snapshot date is historical or outside the bounded window"
+            )
         if started > finished:
             raise EventDiscoveryContractError("quota proof timestamps are not ordered")
         if finished > current:
@@ -771,6 +815,8 @@ class TheRundownEventDiscoveryAuthorizationV1:
     quota_proof_response_digest: str
     quota_proof_account_scope: str
     quota_proof_remaining_datapoints: int
+    quota_proof_sport_id: int
+    quota_proof_snapshot_date: date
     quota_proof_observed_at: datetime
     quota_proof_finished_at: datetime
     quota_proof_reset_at: datetime
@@ -809,6 +855,8 @@ class TheRundownEventDiscoveryAuthorizationV1:
             "quota_proof_response_digest": self.quota_proof_response_digest,
             "quota_proof_account_scope": self.quota_proof_account_scope,
             "quota_proof_remaining_datapoints": self.quota_proof_remaining_datapoints,
+            "quota_proof_sport_id": self.quota_proof_sport_id,
+            "quota_proof_snapshot_date": self.quota_proof_snapshot_date.isoformat(),
             "quota_proof_observed_at": _utc_datetime(
                 self.quota_proof_observed_at, "quota_proof_observed_at"
             ).isoformat(),
@@ -879,6 +927,16 @@ class TheRundownEventDiscoveryAuthorizationV1:
         ):
             raise EventDiscoveryExecutionBlocked(
                 "discovery quota-proof binding is below 550 datapoints"
+            )
+        if self.quota_proof_sport_id != B4_QUOTA_PROOF_SPORT_ID:
+            raise EventDiscoveryExecutionBlocked(
+                "discovery quota-proof sport binding is invalid"
+            )
+        if not isinstance(self.quota_proof_snapshot_date, date) or isinstance(
+            self.quota_proof_snapshot_date, datetime
+        ):
+            raise EventDiscoveryContractError(
+                "discovery quota-proof snapshot date is invalid"
             )
         _utc_datetime(self.quota_proof_observed_at, "quota_proof_observed_at")
         _utc_datetime(self.quota_proof_finished_at, "quota_proof_finished_at")
@@ -972,6 +1030,16 @@ class TheRundownEventDiscoveryAuthorizationV1:
                 "quota_proof_remaining_datapoints",
                 self.quota_proof_remaining_datapoints,
                 proof.remaining_datapoints,
+            ),
+            (
+                "quota_proof_sport_id",
+                self.quota_proof_sport_id,
+                proof.sport_id,
+            ),
+            (
+                "quota_proof_snapshot_date",
+                self.quota_proof_snapshot_date,
+                proof.snapshot_date,
             ),
             (
                 "quota_proof_observed_at",
@@ -1716,9 +1784,12 @@ def materialize_prebound_network_configuration(
 __all__ = [
     "B4_QUOTA_PROOF_AFFILIATE_IDS",
     "B4_QUOTA_PROOF_EXECUTION_PHASE",
+    "B4_QUOTA_PROOF_MARKET_IDS",
     "B4_QUOTA_PROOF_MAX_DATAPOINTS",
     "B4_QUOTA_PROOF_PACKAGE_SCHEMA_VERSION",
     "B4_QUOTA_PROOF_SCHEMA_VERSION",
+    "B4_QUOTA_PROOF_SNAPSHOT_MAX_OFFSET_DAYS",
+    "B4_QUOTA_PROOF_SPORT_ID",
     "DISCOVERY_AUTHORIZATION_SCHEMA_VERSION",
     "DISCOVERY_CONSUMPTION_SCHEMA_VERSION",
     "DISCOVERY_EVIDENCE_SCHEMA_VERSION",
