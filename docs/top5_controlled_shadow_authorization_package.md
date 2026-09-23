@@ -64,13 +64,15 @@ response headers.
 
 The quota proof has its own `TheRundownQuotaProofAuthorizationV1`; it does not
 consume or validate the later five-league authorization package. The proof
-authorization binds exactly one provider event, its deterministic request-shape
-digest, the CEO proof-authorization identity, issue/expiry, adapter source,
-55-datapoint maximum, and zero retries. It contains explicit false capability
-flags for five-league execution, provider authority, activation, publication,
-and betting. The selected event must be present in a trusted local original
-capture artifact and its canonical source digest must match the proof
-authorization before the credential is read.
+authorization binds one exact current-or-next-UTC-date snapshot request:
+provider `therundown_experimental`, `sport_id=3` (MLB), `market_ids=1`,
+`affiliate_ids=19`, `main_line=true`, and `hide_closed=true`. Its deterministic
+request-shape digest, CEO proof-authorization identity, issue/expiry window,
+adapter source, 55-datapoint maximum, and zero retries are all validated before
+the credential is read. Historical event IDs, LL captures, replay bodies, and
+source-event digests are not inputs to this account-wide headroom proof. The
+authorization contains explicit false capability flags for five-league
+execution, provider authority, activation, publication, and betting.
 
 ## Post-run reconciliation
 
@@ -154,7 +156,6 @@ after its one response:
 python -m src.football.top5_controlled_shadow_authorization_package \
   --execute-quota-proof \
   --proof-authorization /operator-only/top5/quota-proof-authorization.json \
-  --proof-target-evidence /private/tmp/top5-b1-laliga-final-evidence.json \
   --spend-control-evidence /operator-only/top5/provider-tier-evidence.json \
   --credential-file /operator-only/top5/therundown.env \
   --output /operator-only/top5/top5-quota-proof.json

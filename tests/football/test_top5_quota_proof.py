@@ -18,8 +18,6 @@ import src.football.top5_therundown_network_shadow as network_shadow
 from src.football.odds.therundown import THERUNDOWN_PROVIDER_NAME
 from src.football.top5_controlled_shadow_authorization_package import (
     ControlledShadowAuthorizationPackageError,
-    _digest,
-    _load_quota_proof_target_evidence,
     _load_spend_control_evidence,
     _quota_proof_consumption_marker_path,
     _write_quota_proof,
@@ -71,7 +69,8 @@ def _request(**changes: object) -> TheRundownQuotaProofRequestV1:
     request = TheRundownQuotaProofRequestV1(
         proof_id="quota-proof:test-run-001",
         provider=THERUNDOWN_PROVIDER_NAME,
-        provider_event_id="event-ll-001",
+        sport_id=3,
+        snapshot_date=NOW.date(),
         authorization_package_digest="a" * 64,
         configuration_digest="b" * 64,
         authorization_id="CEO-TOP5-TEST-001",
@@ -80,9 +79,9 @@ def _request(**changes: object) -> TheRundownQuotaProofRequestV1:
         ceo_authorization_identity="ceo:test",
         adapter_version="therundown-adapter-v1",
         adapter_source_sha="c" * 64,
-        endpoint="https://therundown.io/api/v2/events/event-ll-001",
+        endpoint=f"https://therundown.io/api/v2/sports/3/events/{NOW.date().isoformat()}",
         query={
-            "affiliate_ids": "19,22,23",
+            "affiliate_ids": "19",
             "hide_closed": "true",
             "main_line": "true",
             "market_ids": "1",
@@ -107,7 +106,7 @@ def _response(**changes: object) -> TheRundownNetworkHttpResponseV1:
     }
     values: dict[str, object] = {
         "status_code": 200,
-        "payload": {"event": "provider-response"},
+        "payload": {"events": [{"event_id": "snapshot-event-001"}]},
         "headers": headers,
         "started_at": NOW - timedelta(seconds=1),
         "finished_at": NOW,
@@ -118,18 +117,19 @@ def _response(**changes: object) -> TheRundownNetworkHttpResponseV1:
 
 def _proof_authorization(
     *,
-    provider_event_id: str = "event-ll-001",
-    target_source_digest: str = "d" * 64,
+    snapshot_date=None,
     **changes: object,
 ) -> TheRundownQuotaProofAuthorizationV1:
-    request = _request(provider_event_id=provider_event_id)
+    if snapshot_date is None:
+        snapshot_date = NOW.date()
+    request = _request(snapshot_date=snapshot_date)
     authorization = TheRundownQuotaProofAuthorizationV1(
         proof_authorization_id="CEO-TOP5-QUOTA-PROOF-001",
         ceo_proof_authorization_identity="ceo:quota-proof",
         proof_id="quota-proof:authorized-001",
         provider=THERUNDOWN_PROVIDER_NAME,
-        provider_event_id=provider_event_id,
-        proof_target_source_digest=target_source_digest,
+        sport_id=3,
+        snapshot_date=snapshot_date,
         request_shape_digest=request.request_shape_digest,
         adapter_version="therundown-adapter-v1",
         adapter_source_sha="c" * 64,
@@ -145,42 +145,9 @@ def _proof_authorization(
 
 
 def _guarded_inputs(tmp_path: Path, monkeypatch):
-    """Build a deterministic local target and redirect only canonical state in tests."""
+    """Build only dated-snapshot authorization and spend-control inputs."""
 
-    provider_event_id = "event-ll-001"
-    body_path = tmp_path / "source-event.json"
-    body_path.write_text(json.dumps({"events": [{"event_id": provider_event_id}]}))
-    headers_path = tmp_path / "source-headers.json"
-    headers_path.write_text(json.dumps({"X-Datapoints": "55"}))
-    raw = {
-        "schema_version": "top5-b1-laliga-final-evidence-v1",
-        "evidence_kind": "REAL_OBSERVED",
-        "canonical_b1_evidence_bundle": {
-            "capture_status": "CAPTURED",
-            "raw_response_digest": "a" * 64,
-        },
-        "original_network_capture": {
-            "provider": "therundown_experimental",
-            "league": "LL",
-            "network_evidence_is_original": True,
-            "raw_response_digest": "a" * 64,
-        },
-        "repaired_normalization": {
-            "provider_event_id": provider_event_id,
-            "captured_at": NOW.isoformat(),
-            "raw_response_digest": "a" * 64,
-        },
-        "replay": {
-            "source_event_body": str(body_path),
-            "source_event_headers": str(headers_path),
-        },
-    }
-    target_path = tmp_path / "target-evidence.json"
-    target_path.write_text(json.dumps(raw))
-    authorization = _proof_authorization(
-        provider_event_id=provider_event_id,
-        target_source_digest=_digest(raw),
-    )
+    authorization = _proof_authorization()
     authorization_path = tmp_path / "proof-authorization.json"
     authorization_path.write_text(
         json.dumps({"authorization": authorization.as_payload()})
@@ -209,7 +176,6 @@ def _guarded_inputs(tmp_path: Path, monkeypatch):
         lambda: tmp_path / "canonical-consumption-store",
     )
     return {
-        "target_path": target_path,
         "authorization": authorization,
         "authorization_path": authorization_path,
         "spend_path": spend_path,
@@ -228,7 +194,9 @@ def test_valid_proof_is_one_bounded_request_and_not_a_league_capture():
     )
 
     assert len(client.calls) == 1
-    assert client.calls[0].endpoint.endswith("/events/event-ll-001")
+    assert client.calls[0].endpoint.endswith(
+        f"/sports/3/events/{NOW.date().isoformat()}"
+    )
     assert client.calls[0].query == dict(request.query)
     assert client.calls[0].headers["X-TheRundown-Key"] == "test-secret-never-written"
     assert evidence.execution_phase == "quota_proof"
@@ -243,7 +211,9 @@ def test_valid_proof_is_one_bounded_request_and_not_a_league_capture():
 def test_proof_only_authorization_does_not_require_five_league_scope():
     authorization = _proof_authorization()
     authorization.validate(now=NOW)
-    request = authorization.request_for_proof(proof_configuration_digest="e" * 64)
+    request = authorization.request_for_proof(
+        proof_configuration_digest="e" * 64, now=NOW
+    )
     client = _FakeProofClient(_response())
     evidence = execute_therundown_quota_proof(
         request,
@@ -252,7 +222,7 @@ def test_proof_only_authorization_does_not_require_five_league_scope():
         now=NOW,
     )
     assert evidence.authorization_id == authorization.proof_authorization_id
-    assert evidence.proof_target_source_digest == "d" * 64
+    assert evidence.snapshot_date == NOW.date()
     assert len(client.calls) == 1
 
 
@@ -287,42 +257,16 @@ def test_proof_authorization_digest_and_expiry_fail_closed():
         ).validate(now=NOW)
 
 
-def test_known_local_real_event_is_deterministically_bound_without_discovery():
-    path = Path("/private/tmp/top5-b1-laliga-final-evidence.json")
-    if not path.exists():
-        pytest.skip("trusted local B1 evidence is not available")
-    raw = json.loads(path.read_text())
-    target = raw["repaired_normalization"]["provider_event_id"]
-    authorization = _proof_authorization(
-        provider_event_id=target,
-        target_source_digest=_digest(raw),
-    )
-    selected = _load_quota_proof_target_evidence(
-        path,
-        authorization=authorization,
-    )
-    assert selected["provider_event_id"] == target
-    assert selected["league"] == "LL"
-    assert selected["source_digest"] == _digest(raw)
-
-
 def test_guarded_proof_uses_proof_authorization_without_five_league_package(
     tmp_path: Path,
     monkeypatch,
 ):
-    target_path = Path("/private/tmp/top5-b1-laliga-final-evidence.json")
-    if not target_path.exists():
-        pytest.skip("trusted local B1 evidence is not available")
     monkeypatch.setattr(
         b4_package,
         "quota_proof_consumption_state_path",
         lambda: tmp_path / "canonical-consumption-store",
     )
-    raw = json.loads(target_path.read_text())
-    authorization = _proof_authorization(
-        provider_event_id=raw["repaired_normalization"]["provider_event_id"],
-        target_source_digest=_digest(raw),
-    )
+    authorization = _proof_authorization()
     authorization_path = tmp_path / "proof-authorization.json"
     authorization_path.write_text(
         json.dumps({"authorization": authorization.as_payload()})
@@ -350,7 +294,6 @@ def test_guarded_proof_uses_proof_authorization_without_five_league_package(
 
     summary = run_guarded_quota_proof(
         authorization_path,
-        target_path,
         spend_control_evidence_path=spend_path,
         credential_file=credential_path,
         output_path=output_path,
@@ -360,7 +303,8 @@ def test_guarded_proof_uses_proof_authorization_without_five_league_package(
 
     assert summary["status"] == "TOP5_B4_QUOTA_PROOF — QUOTA_CONFIRMED"
     assert summary["proof_authorization_id"] == authorization.proof_authorization_id
-    assert summary["selected_proof_target"] == authorization.provider_event_id
+    assert summary["sport_id"] == authorization.sport_id
+    assert summary["snapshot_date"] == authorization.snapshot_date.isoformat()
     assert summary["five_league_requests"] == 0
     assert len(client.calls) == 1
     output = json.loads(output_path.read_text())
@@ -375,7 +319,6 @@ def _run_guarded(
 ):
     return run_guarded_quota_proof(
         inputs["authorization_path"],
-        inputs["target_path"],
         spend_control_evidence_path=inputs["spend_path"],
         credential_file=inputs["credential_path"],
         output_path=output_path,
@@ -437,8 +380,6 @@ def test_same_proof_authorization_id_with_modified_digest_is_rejected(
 
     modified = _proof_authorization(
         proof_authorization_id=inputs["authorization"].proof_authorization_id,
-        provider_event_id=inputs["authorization"].provider_event_id,
-        target_source_digest=inputs["authorization"].proof_target_source_digest,
         proof_id="quota-proof:modified-material",
     )
     inputs["authorization_path"].write_text(
@@ -467,26 +408,60 @@ def test_same_digest_with_inconsistent_authorization_id_fails_before_consumption
     assert not (tmp_path / "canonical-consumption-store").exists()
 
 
-def test_invalid_target_evidence_does_not_consume_authorization(
-    tmp_path: Path, monkeypatch
-):
-    inputs = _guarded_inputs(tmp_path, monkeypatch)
-    valid_raw = json.loads(inputs["target_path"].read_text())
-    invalid_raw = json.loads(inputs["target_path"].read_text())
-    invalid_raw["repaired_normalization"]["provider_event_id"] = "wrong-event"
-    inputs["target_path"].write_text(json.dumps(invalid_raw))
-    invalid_client = _FakeProofClient(_response())
-    with pytest.raises(
-        ControlledShadowAuthorizationPackageError,
-        match="target event binding mismatch",
-    ):
-        _run_guarded(inputs, tmp_path / "invalid.json", invalid_client)
-    assert invalid_client.calls == []
+def test_historical_snapshot_is_rejected_before_credential_read(tmp_path: Path):
+    authorization = _proof_authorization(snapshot_date=(NOW - timedelta(days=1)).date())
+    with pytest.raises(NetworkShadowExecutionBlocked, match="current or next"):
+        authorization.validate(now=NOW)
+    assert not (tmp_path / "credential.env").exists()
 
-    inputs["target_path"].write_text(json.dumps(valid_raw))
-    valid_client = _FakeProofClient(_response())
-    _run_guarded(inputs, tmp_path / "valid.json", valid_client)
-    assert len(valid_client.calls) == 1
+
+def test_snapshot_becoming_historical_before_execution_is_rejected():
+    authorization = _proof_authorization(snapshot_date=NOW.date())
+    with pytest.raises(NetworkShadowExecutionBlocked, match="outside"):
+        authorization.validate(now=NOW + timedelta(days=1))
+
+
+def test_snapshot_authorization_and_request_date_are_exactly_bound():
+    authorization = _proof_authorization()
+    request = authorization.request_for_proof(
+        proof_configuration_digest="e" * 64, now=NOW
+    )
+    assert request.sport_id == 3
+    assert request.snapshot_date == NOW.date()
+    assert request.endpoint.endswith(f"/sports/3/events/{NOW.date().isoformat()}")
+    with pytest.raises(NetworkShadowExecutionBlocked, match="endpoint"):
+        replace(request, snapshot_date=NOW.date() + timedelta(days=1)).validate(now=NOW)
+
+
+def test_historical_event_artifact_and_legacy_authorization_cannot_satisfy_new_contract():
+    for suffix in ("004", "005", "006", "007"):
+        legacy = _proof_authorization(
+            proof_authorization_id=f"CEO-TOP5-B4-QUOTA-PROOF-20260921-{suffix}"
+        ).as_payload()
+        legacy["schema_version"] = "top5-therundown-quota-proof-authorization-v1"
+        with pytest.raises(NetworkShadowContractError, match="unsupported"):
+            TheRundownQuotaProofAuthorizationV1.from_payload(legacy).validate(now=NOW)
+
+
+def test_no_provider_event_or_prior_capture_is_required_for_new_proof():
+    request = _request()
+    assert "provider_event_id" not in request.__dict__
+    evidence = execute_therundown_quota_proof(
+        request,
+        api_key="test-secret",
+        http_client=_FakeProofClient(_response()),
+        now=NOW,
+    )
+    assert evidence.snapshot_date == NOW.date()
+
+
+def test_empty_dated_snapshot_fails_closed_without_quota_claims():
+    client = _FakeProofClient(_response(payload={"events": []}))
+    with pytest.raises(NetworkShadowExecutionBlocked, match="no events"):
+        execute_therundown_quota_proof(
+            _request(), api_key="test-secret", http_client=client, now=NOW
+        )
+    assert len(client.calls) == 1
 
 
 def test_spend_control_failure_does_not_consume_authorization(
@@ -723,7 +698,7 @@ def test_requests_http_error_preserves_safe_status_headers_and_json(monkeypatch)
         ),
     )
     response = TheRundownRequestsHttpClientV1().execute(
-        _request().as_http_request("test-secret")
+        _request().as_http_request("test-secret", now=NOW)
     )
 
     assert response.status_code == 429
@@ -752,7 +727,7 @@ def test_requests_client_uses_verified_certifi_bundle_and_preserves_request(
         return _FakeRequestsResponse()
 
     monkeypatch.setattr(network_shadow.requests, "request", fake_request)
-    request = _request().as_http_request("test-secret-never-written")
+    request = _request().as_http_request("test-secret-never-written", now=NOW)
     response = TheRundownRequestsHttpClientV1().execute(request)
 
     assert captured["method"] == "GET"
@@ -780,7 +755,7 @@ def test_requests_client_does_not_follow_redirect_or_retry(monkeypatch):
 
     monkeypatch.setattr(network_shadow.requests, "request", fake_request)
     response = TheRundownRequestsHttpClientV1().execute(
-        _request().as_http_request("test-secret")
+        _request().as_http_request("test-secret", now=NOW)
     )
 
     assert response.status_code == 302
@@ -800,7 +775,7 @@ def test_requests_transport_failure_keeps_safe_proxy_diagnostic(monkeypatch):
     )
 
     response = TheRundownRequestsHttpClientV1().execute(
-        _request().as_http_request("test-secret")
+        _request().as_http_request("test-secret", now=NOW)
     )
 
     assert response.status_code is None
@@ -827,7 +802,7 @@ def test_requests_http_error_non_json_preserves_safe_digest_without_raw_body(
         ),
     )
     response = TheRundownRequestsHttpClientV1().execute(
-        _request().as_http_request("test-secret")
+        _request().as_http_request("test-secret", now=NOW)
     )
 
     assert response.status_code == 503
@@ -859,7 +834,7 @@ def test_http_200_malformed_body_reports_body_failure():
 def test_http_200_valid_body_reaches_quota_header_validation():
     client = _FakeProofClient(
         _response(
-            payload={"ok": True},
+            payload={"events": [{"event_id": "snapshot-event-001"}]},
             headers={"X-Tier": "free"},
         )
     )
@@ -980,6 +955,7 @@ def test_proof_reload_keeps_digest_and_cannot_be_a_receipt():
 def test_payload_quota_claims_do_not_override_provider_headers():
     response = _response(
         payload={
+            "events": [{"event_id": "snapshot-event-001"}],
             "caller_claimed_remaining": 999_999,
             "caller_claimed_billed": 1,
         }
