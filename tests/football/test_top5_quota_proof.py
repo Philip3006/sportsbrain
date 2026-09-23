@@ -208,6 +208,119 @@ def test_valid_proof_is_one_bounded_request_and_not_a_league_capture():
     assert evidence.as_payload()["execution_phase"] == "quota_proof"
 
 
+def test_guarded_proof_validates_against_post_response_clock(
+    tmp_path: Path, monkeypatch
+):
+    inputs = _guarded_inputs(tmp_path, monkeypatch)
+    preflight_now = NOW
+    response_started = preflight_now + timedelta(seconds=1)
+    response_finished = preflight_now + timedelta(seconds=2)
+    post_response_validation_now = preflight_now + timedelta(seconds=3)
+    clock_values = iter((preflight_now, post_response_validation_now))
+    response = _response(
+        started_at=response_started,
+        finished_at=response_finished,
+    )
+
+    summary = run_guarded_quota_proof(
+        inputs["authorization_path"],
+        spend_control_evidence_path=inputs["spend_path"],
+        credential_file=inputs["credential_path"],
+        output_path=tmp_path / "clocked-proof.json",
+        clock=lambda: next(clock_values),
+        http_client=_FakeProofClient(response),
+    )
+
+    assert summary["status"] == "TOP5_B4_QUOTA_PROOF — QUOTA_CONFIRMED"
+    assert response_started <= response_finished <= post_response_validation_now
+
+
+def test_response_after_post_response_validation_clock_fails_closed():
+    preflight_now = NOW
+    post_response_validation_now = preflight_now + timedelta(seconds=3)
+    response = _response(
+        started_at=preflight_now + timedelta(seconds=1),
+        finished_at=post_response_validation_now + timedelta(seconds=1),
+    )
+    client = _FakeProofClient(response)
+
+    with pytest.raises(NetworkShadowExecutionBlocked, match="timestamps"):
+        execute_therundown_quota_proof(
+            _request(),
+            api_key="test-secret",
+            http_client=client,
+            now=preflight_now,
+            clock=lambda: post_response_validation_now,
+        )
+
+    assert len(client.calls) == 1
+
+
+def test_stale_response_fails_closed_against_post_response_clock():
+    response = _response(
+        started_at=NOW - timedelta(seconds=302),
+        finished_at=NOW - timedelta(seconds=301),
+    )
+
+    with pytest.raises(NetworkShadowExecutionBlocked, match="stale"):
+        execute_therundown_quota_proof(
+            _request(),
+            api_key="test-secret",
+            http_client=_FakeProofClient(response),
+            now=NOW,
+            clock=lambda: NOW,
+        )
+
+
+def test_b4_accepts_observed_response_without_optional_delay_header():
+    headers = {
+        **_response().headers,
+        "X-Datapoints": "56",
+        "X-Datapoints-Used": "112",
+        "X-Datapoints-Remaining": "19888",
+        "X-Datapoints-Limit": "20000",
+    }
+    headers.pop("X-Data-Delay-Seconds")
+    evidence = execute_therundown_quota_proof(
+        _request(),
+        api_key="test-secret",
+        http_client=_FakeProofClient(_response(headers=headers)),
+        now=NOW,
+        clock=lambda: NOW,
+    )
+
+    assert evidence.billed_datapoints == 56
+    assert evidence.quota_used_datapoints == 112
+    assert evidence.remaining_datapoints == 19888
+    assert "x-data-delay-seconds" not in evidence.raw_header_evidence
+    with pytest.raises(NetworkShadowExecutionBlocked, match="incomplete"):
+        evidence.validate(
+            request=_request(),
+            now=NOW,
+            require_provider_delay=True,
+        )
+
+
+def test_zero_delay_header_is_evidence_only_not_authority():
+    headers = {**_response().headers, "X-Data-Delay-Seconds": "0"}
+    authorization = _proof_authorization()
+    evidence = execute_therundown_quota_proof(
+        _request(),
+        api_key="test-secret",
+        http_client=_FakeProofClient(_response(headers=headers)),
+        now=NOW,
+        clock=lambda: NOW,
+    )
+
+    authorization.validate(now=NOW)
+    evidence.validate(request=_request(), now=NOW, require_provider_delay=True)
+    assert authorization.five_league_execution_authorized is False
+    assert authorization.provider_authority_granted is False
+    assert authorization.activation_authorized is False
+    assert authorization.publication_authorized is False
+    assert authorization.betting_authorized is False
+
+
 def test_observed_dated_snapshot_cost_of_56_is_accepted():
     response = _response(
         headers={
