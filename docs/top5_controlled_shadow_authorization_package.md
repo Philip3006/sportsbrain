@@ -69,9 +69,9 @@ provider `therundown_experimental`, `sport_id=3` (MLB), `market_ids=1`,
 `affiliate_ids=19`, `main_line=true`, and `hide_closed=true`. Its deterministic
 request-shape digest, CEO proof-authorization identity, issue/expiry window,
 adapter source, 55-datapoint maximum, and zero retries are all validated before
-the credential is read. Historical event IDs, LL captures, replay bodies, and
-source-event digests are not inputs to this account-wide headroom proof. The
-authorization contains explicit false capability flags for five-league
+the credential is read. Event-level selection and prior capture artifacts are
+not inputs to this account-wide headroom proof. The authorization contains
+explicit false capability flags for five-league
 execution, provider authority, activation, publication, and betting.
 
 ## Post-run reconciliation
@@ -175,21 +175,21 @@ python -m src.football.top5_controlled_shadow_authorization_package \
   --output /operator-only/top5/top5-b2-five-league-shadow-package.json
 ```
 
-The proof command consumes only the proof authorization and the selected local
-target evidence. It does not load the five-league package, five target list,
-or later `TheRundownNetworkAuthorizationV1`. It verifies the target source
-digest and event ID, the proof authorization digest/window, the bounded
-request shape, and the spend gate before reading the credential. The existing
-reviewed requests HTTP client is then called exactly once. Before credential access, an
-exclusive consumption marker is created in the canonical external operator
-runtime-state store, keyed by the proof authorization ID and bound to its
-authorization digest. This marker is independent of `--output`; changing the
-output path or caller directory cannot authorize another request. The marker
-is retained after transport, output, or process failure, so there is no retry
-or second proof. Its metadata contains no credential. Its provider response,
-not any caller-provided number, supplies billed and remaining datapoints. The
-five-league path remains separately gated and the proof is never counted as a
-capture or receipt input.
+The proof command consumes only the dated-snapshot authorization and spend
+control evidence. It does not load the five-league package, five-league target
+list, or later `TheRundownNetworkAuthorizationV1`. It verifies the exact
+provider/sport/date/query shape, authorization digest/window, and spend gate
+before reading the credential. The reviewed requests HTTP client is then
+called exactly once. Before credential access, an exclusive consumption marker
+is created in the canonical external operator runtime-state store, keyed by
+the proof authorization ID and bound to its authorization digest, sport, date,
+and request-shape digest. This marker is independent of `--output`; changing
+the output path or caller directory cannot authorize another request. The
+marker is retained after transport, output, or process failure, so there is no
+retry or second proof. Its metadata contains no credential. Its provider
+response, not any caller-provided number, supplies billed and remaining
+datapoints. The five-league path remains separately gated and the proof is
+never counted as a capture or receipt input.
 
 `--credential-file` must be an absolute, non-symlink, operator-only file with
 no group/world permissions and an existing `THERUNDOWN_API_KEY=` entry. The

@@ -876,55 +876,6 @@ def _load_dashboard_spend_control_evidence(
     }
 
 
-def _build_quota_proof_request(
-    package: ControlledShadowAuthorizationPackageV1,
-    configuration: TheRundownNetworkConfigurationV1,
-    authorization: TheRundownNetworkAuthorizationV1,
-    *,
-    snapshot_date: str,
-) -> TheRundownQuotaProofRequestV1:
-    if tuple(target.league for target in configuration.targets) != TOP5_LEAGUE_ORDER:
-        raise ControlledShadowAuthorizationPackageError(
-            "quota proof requires the exact five-league configuration"
-        )
-    try:
-        snapshot = datetime.fromisoformat(snapshot_date).date()
-    except ValueError as exc:
-        raise ControlledShadowAuthorizationPackageError(
-            "quota proof snapshot_date must be an exact UTC date"
-        ) from exc
-    request = TheRundownQuotaProofRequestV1(
-        proof_id="quota-proof:"
-        + _digest(
-            {
-                "authorization_id": authorization.authorization_id,
-                "package_digest": package.package_digest,
-                "snapshot_date": snapshot_date,
-            }
-        )[:32],
-        provider=CANONICAL_CANDIDATE_PROVIDER,
-        sport_id=3,
-        snapshot_date=snapshot,
-        authorization_package_digest=package.package_digest,
-        configuration_digest=configuration.configuration_digest,
-        authorization_id=authorization.authorization_id,
-        controlled_shadow_run_id=authorization.controlled_shadow_run_id,
-        qualification_session_id=authorization.qualification_session_id,
-        ceo_authorization_identity=authorization.ceo_authorization_identity,
-        adapter_version=configuration.adapter_version,
-        adapter_source_sha=configuration.adapter_source_sha,
-        endpoint=f"{THERUNDOWN_BASE_URL}/sports/3/events/{snapshot_date}",
-        query={
-            "affiliate_ids": "19",
-            "hide_closed": "true",
-            "main_line": "true",
-            "market_ids": "1",
-        },
-        request_shape_digest="0" * 64,
-    )
-    return replace(request, request_shape_digest=request.computed_request_shape_digest)
-
-
 def _write_quota_proof(
     path_value: object,
     *,
