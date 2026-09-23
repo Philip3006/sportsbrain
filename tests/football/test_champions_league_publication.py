@@ -8,9 +8,14 @@ from datetime import datetime, timezone
 import pytest
 
 from src.football.champions_league_publication import (
+    CL_CANONICAL_LEAGUE,
     ChampionsLeaguePublicationError,
+    canonical_cl_league,
+    is_cl_league,
     validate_champions_league_publication,
 )
+from src.football.champions_league_runtime import CHAMPIONS_LEAGUE_CODE
+from src.notifications.public_serializer import serialize_public_product
 
 NOW = datetime(2026, 9, 23, 12, 10, tzinfo=timezone.utc)
 _DIGESTS = {
@@ -24,7 +29,7 @@ _DIGESTS = {
 def _record(market: str) -> dict[str, object]:
     return {
         "sport": "football",
-        "league": "ucl",
+        "league": CHAMPIONS_LEAGUE_CODE,
         "fixture_key": "ucl:fixture:001",
         "match": "Home FC vs Away FC",
         "home": "Home FC",
@@ -63,7 +68,7 @@ def _product() -> dict[str, object]:
         "champions_league_release": {
             "schema_version": "champions-league-publication-v1",
             "competition": "UEFA Champions League",
-            "league_code": "ucl",
+            "league_code": CHAMPIONS_LEAGUE_CODE,
             "generation_id": "ucl-generation-001",
             "activation_state": "SHADOW",
             "publication_status": "UNPUBLISHED",
@@ -81,7 +86,8 @@ def _product() -> dict[str, object]:
             "football_releases": [
                 {
                     "schema_version": "football-release-health-v1",
-                    "league": "ucl",
+                    "league": CHAMPIONS_LEAGUE_CODE,
+                    "model_identity": "cl-model-v1",
                     "publication_status": "UNPUBLISHED",
                     "stale_artifact": False,
                     "missing_result_count": 1,
@@ -111,12 +117,44 @@ def test_valid_cl_product_requires_three_markets_and_full_provenance() -> None:
 
     assert facts == {
         "schema_version": "champions-league-publication-v1",
-        "league_code": "ucl",
+        "league_code": CHAMPIONS_LEAGUE_CODE,
         "prediction_count": 1,
         "fixture_count": 1,
         "publication_enabled": False,
         "publication_status": "UNPUBLISHED",
     }
+
+
+def test_publication_identity_matches_runtime_and_aliases_normalize() -> None:
+    assert CL_CANONICAL_LEAGUE == CHAMPIONS_LEAGUE_CODE == "UCL"
+    for alias in (
+        "ucl",
+        "UCL",
+        "champions_league",
+        "uefa_champs_league",
+        "soccer_uefa_champs_league",
+    ):
+        assert is_cl_league(alias)
+        assert canonical_cl_league(alias) == CHAMPIONS_LEAGUE_CODE
+
+
+def test_alias_normalization_preserves_disabled_no_bet_authority() -> None:
+    product = deepcopy(_product())
+    product["champions_league_release"]["league_code"] = "champions_league"
+    for record in product["football"]:
+        record["league"] = "uefa_champs_league"
+    product["health"]["football_releases"][0]["league"] = "soccer_uefa_champs_league"
+
+    public = serialize_public_product(product)
+
+    assert public["champions_league_release"]["league_code"] == CHAMPIONS_LEAGUE_CODE
+    assert {record["league"] for record in public["football"]} == {
+        CHAMPIONS_LEAGUE_CODE
+    }
+    assert public["health"]["football_releases"][0]["league"] == CHAMPIONS_LEAGUE_CODE
+    assert public["champions_league_release"]["activation_state"] == "SHADOW"
+    assert public["champions_league_release"]["publication_enabled"] is False
+    assert public["champions_league_release"]["no_bet"] is True
 
 
 @pytest.mark.parametrize(

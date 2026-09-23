@@ -31,6 +31,7 @@ import {
   validateCanonicalIdentity,
 } from './contract.js';
 import {
+  CL_CANONICAL_LEAGUE,
   CL_LEAGUE_CODES,
   projectChampionsLeagueRelease,
   validateChampionsLeaguePublicProduct,
@@ -573,6 +574,14 @@ export function serializePublicProduct(snapshot) {
   }
   if ('champions_league_release' in pub) {
     pub.champions_league_release = projectChampionsLeagueRelease(pub.champions_league_release);
+  }
+  if (Array.isArray(pub.football)) {
+    pub.football = pub.football.map((record) =>
+      record && typeof record === 'object' &&
+      CL_LEAGUE_CODES.has(String(record.league || '').trim().toLowerCase())
+        ? { ...record, league: CL_CANONICAL_LEAGUE }
+        : record
+    );
   }
   if ('top5_release' in pub) pub.top5_release = _publicTop5Release(pub.top5_release);
   _validateTop5PublicRecords(pub.football, pub.top5_release);

@@ -14,7 +14,7 @@ allowlisted top-level object:
   "champions_league_release": {
     "schema_version": "champions-league-publication-v1",
     "competition": "UEFA Champions League",
-    "league_code": "ucl",
+    "league_code": "UCL",
     "generation_id": "...",
     "activation_state": "SHADOW",
     "publication_status": "UNPUBLISHED",
@@ -38,7 +38,8 @@ allowlisted top-level object:
 Each CL prediction is represented by exactly three football records for one
 `prediction_id` and `fixture_key`: `home`, `draw`, and `away`. Accepted league
 aliases are `ucl`, `champions_league`, `uefa_champs_league`, and
-`soccer_uefa_champs_league`; release metadata is canonicalized to `ucl`.
+`soccer_uefa_champs_league`; release metadata and emitted record identities
+are canonicalized to `UCL`, the runtime `CHAMPIONS_LEAGUE_CODE`.
 
 Every record must carry football identity, kickoff, model identity, state,
 result/settlement status, and a complete `provenance` object containing:

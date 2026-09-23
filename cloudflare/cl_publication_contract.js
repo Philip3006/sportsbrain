@@ -2,7 +2,7 @@
 // This deliberately does not select providers, call providers, activate data,
 // or write KV state. It mirrors the Python CL publication boundary.
 
-export const CL_CANONICAL_LEAGUE = 'ucl';
+export const CL_CANONICAL_LEAGUE = 'UCL';
 export const CL_COMPETITION_NAME = 'UEFA Champions League';
 export const CL_LEAGUE_CODES = new Set([
   'ucl', 'champions_league', 'uefa_champs_league', 'soccer_uefa_champs_league',

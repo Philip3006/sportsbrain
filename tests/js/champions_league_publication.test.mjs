@@ -16,7 +16,7 @@ const DIGESTS = {
   evidence_digest: 'd'.repeat(64),
 };
 
-function record(market, league = 'ucl') {
+function record(market, league = 'UCL') {
   return {
     sport: 'football',
     league,
@@ -58,7 +58,7 @@ function payload() {
     champions_league_release: {
       schema_version: 'champions-league-publication-v1',
       competition: 'UEFA Champions League',
-      league_code: 'ucl',
+      league_code: 'UCL',
       generation_id: 'ucl-offline-generation-001',
       activation_state: 'SHADOW',
       publication_status: 'UNPUBLISHED',
@@ -75,7 +75,7 @@ function payload() {
     health: {
       football_releases: [{
         schema_version: 'football-release-health-v1',
-        league: 'ucl',
+        league: 'UCL',
         publication_status: 'UNPUBLISHED',
         stale_artifact: false,
         missing_result_count: 1,
@@ -96,13 +96,13 @@ function payload() {
 describe('Champions League public publication contract', () => {
   test('Worker public serializer accepts the complete offline CL envelope', () => {
     const result = worker.serializePublicProduct(payload());
-    assert.equal(result.champions_league_release.league_code, 'ucl');
+    assert.equal(result.champions_league_release.league_code, 'UCL');
     assert.equal(result.football.length, 3);
     assert.deepEqual(
       contract.validateChampionsLeaguePublicProduct(result, { requireHealth: true }),
       {
         schema_version: 'champions-league-publication-v1',
-        league_code: 'ucl',
+        league_code: 'UCL',
         prediction_count: 1,
         fixture_count: 1,
         publication_enabled: false,
@@ -135,8 +135,11 @@ describe('Champions League public publication contract', () => {
     const aliased = payload();
     aliased.football = aliased.football.map((item) => ({ ...item, league: 'champions_league' }));
     const result = worker.serializePublicProduct(aliased);
-    assert.equal(result.champions_league_release.league_code, 'ucl');
-    assert.equal(result.football[0].league, 'champions_league');
+    assert.equal(result.champions_league_release.league_code, 'UCL');
+    assert.equal(result.football[0].league, 'UCL');
+    assert.equal(result.champions_league_release.activation_state, 'SHADOW');
+    assert.equal(result.champions_league_release.publication_enabled, false);
+    assert.equal(result.champions_league_release.no_bet, true);
   });
 
   test('published stale records are rejected by the freshness gate', () => {

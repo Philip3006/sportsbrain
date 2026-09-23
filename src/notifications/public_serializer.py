@@ -22,6 +22,8 @@ from math import isfinite
 from typing import Any
 
 from src.football.champions_league_publication import (
+    CL_CANONICAL_LEAGUE,
+    is_cl_league,
     project_cl_release,
     validate_champions_league_publication,
 )
@@ -150,8 +152,7 @@ def _normalize_top5_league_codes(value: object) -> list[str]:
             "top5_release league_codes must be a list"
         )
     normalized = [
-        code.strip().upper() if isinstance(code, str) else ""
-        for code in value
+        code.strip().upper() if isinstance(code, str) else "" for code in value
     ]
     if (
         len(normalized) != len(_TOP5_LEAGUES)
@@ -388,9 +389,7 @@ def _public_top5_release(value: object) -> dict[str, object]:
                 raise PublicFootballCompatibilityError(
                     "top5_release evidence_digests must be an object"
                 )
-            result[key] = {
-                str(league): str(digest) for league, digest in item.items()
-            }
+            result[key] = {str(league): str(digest) for league, digest in item.items()}
         elif isinstance(item, (str, int, float, bool)) or item is None:
             result[key] = item
         else:
@@ -416,10 +415,11 @@ def _public_top5_release(value: object) -> dict[str, object]:
         raise PublicFootballCompatibilityError(
             "top5_release must be bound to CONTROLLED activation"
         )
-    if result["publication_status"] != "PUBLISHED" or result["publication_enabled"] is not True:
-        raise PublicFootballCompatibilityError(
-            "top5_release is not published"
-        )
+    if (
+        result["publication_status"] != "PUBLISHED"
+        or result["publication_enabled"] is not True
+    ):
+        raise PublicFootballCompatibilityError("top5_release is not published")
     if result["no_bet"] is not True:
         raise PublicFootballCompatibilityError("top5_release must remain no-bet")
     if not result["league_codes"]:
@@ -531,6 +531,8 @@ def map_prediction_to_public_football_signals(
         _first_value(artifact, record, provenance, keys=("league_code", "league")),
         "league",
     )
+    if is_cl_league(league):
+        league = CL_CANONICAL_LEAGUE
     fixture_key = _required_text(
         _first_value(artifact, record, fixture, keys=("fixture_key", "fixture_id")),
         "fixture_key",
@@ -563,12 +565,16 @@ def map_prediction_to_public_football_signals(
     synthetic = _validate_synthetic_boundary(
         record, provenance, state, artifact, health
     )
-    evidence_kind = str(
-        _first_value(
-            record, provenance, artifact, health, keys=("evidence_kind", "marker")
+    evidence_kind = (
+        str(
+            _first_value(
+                record, provenance, artifact, health, keys=("evidence_kind", "marker")
+            )
+            or ""
         )
-        or ""
-    ).strip().upper()
+        .strip()
+        .upper()
+    )
 
     fixture_key_text = fixture_key
     home = (
@@ -745,7 +751,9 @@ def map_prediction_to_public_football_signals(
         )
         or "",
         "evidence_digest": _optional_text(
-            _first_value(record, artifact, provenance, health, keys=("evidence_digest",))
+            _first_value(
+                record, artifact, provenance, health, keys=("evidence_digest",)
+            )
         )
         or "",
         "controlled_shadow_run_id": _optional_text(
@@ -829,6 +837,8 @@ def build_public_football_release_health(
         _first_value(record, provenance, keys=("league", "league_code")),
         "health league",
     )
+    if is_cl_league(league):
+        league = CL_CANONICAL_LEAGUE
     model_identity = _required_text(
         _first_value(record, provenance, keys=("model_identity", "model_adapter_id")),
         "health model_identity",
@@ -989,6 +999,18 @@ def serialize_public_product(snapshot: dict | None) -> dict:
             pub[key] = snapshot[key]
     if "football" in pub:
         pub["football"] = serialize_public_football_records(pub["football"])
+        if isinstance(pub["football"], Sequence) and not isinstance(
+            pub["football"], (str, bytes)
+        ):
+            pub["football"] = [
+                (
+                    {**record, "league": CL_CANONICAL_LEAGUE}
+                    if isinstance(record, Mapping)
+                    and is_cl_league(record.get("league"))
+                    else record
+                )
+                for record in pub["football"]
+            ]
     if "top5_release" in pub:
         pub["top5_release"] = _public_top5_release(pub["top5_release"])
     _validate_top5_public_records(pub.get("football"), pub.get("top5_release"))
@@ -1016,13 +1038,7 @@ def serialize_public_product(snapshot: dict | None) -> dict:
     ):
         has_cl_publication_data = has_cl_publication_data or any(
             isinstance(record, Mapping)
-            and str(record.get("league", "")).strip().lower()
-            in {
-                "ucl",
-                "champions_league",
-                "uefa_champs_league",
-                "soccer_uefa_champs_league",
-            }
+            and is_cl_league(record.get("league"))
             and ("provenance" in record or "prediction_id" in record)
             for record in pub["football"]
         )

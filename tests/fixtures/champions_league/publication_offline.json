@@ -3,7 +3,7 @@
   "champions_league_release": {
     "schema_version": "champions-league-publication-v1",
     "competition": "UEFA Champions League",
-    "league_code": "ucl",
+    "league_code": "UCL",
     "generation_id": "ucl-offline-generation-001",
     "activation_state": "SHADOW",
     "publication_status": "UNPUBLISHED",
@@ -22,7 +22,7 @@
   "football": [
     {
       "sport": "football",
-      "league": "ucl",
+      "league": "UCL",
       "fixture_key": "ucl:offline:fixture-001",
       "match": "Offline Home FC vs Offline Away FC",
       "home": "Offline Home FC",
@@ -62,7 +62,7 @@
     },
     {
       "sport": "football",
-      "league": "ucl",
+      "league": "UCL",
       "fixture_key": "ucl:offline:fixture-001",
       "match": "Offline Home FC vs Offline Away FC",
       "home": "Offline Home FC",
@@ -102,7 +102,7 @@
     },
     {
       "sport": "football",
-      "league": "ucl",
+      "league": "UCL",
       "fixture_key": "ucl:offline:fixture-001",
       "match": "Offline Home FC vs Offline Away FC",
       "home": "Offline Home FC",
@@ -145,7 +145,7 @@
     "football_releases": [
       {
         "schema_version": "football-release-health-v1",
-        "league": "ucl",
+        "league": "UCL",
         "model_identity": "cl-model-v1",
         "model_version": "cl-model-v1.0.0",
         "run_id": "ucl-offline-run-001",

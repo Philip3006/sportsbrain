@@ -29,7 +29,7 @@ def test_offline_snapshot_passes_full_cl_acceptance() -> None:
 
     assert result["status"] == "CL_PUBLICATION_ACCEPTANCE_READY"
     assert result["schema_version"] == "champions-league-publication-v1"
-    assert result["league_code"] == "ucl"
+    assert result["league_code"] == "UCL"
     assert result["prediction_count"] == 1
     assert result["fixture_count"] == 1
     assert result["publication_status"] == "UNPUBLISHED"

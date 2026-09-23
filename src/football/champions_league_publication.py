@@ -12,7 +12,9 @@ from collections.abc import Mapping, Sequence
 from datetime import datetime, timezone
 from math import isfinite
 
-CL_CANONICAL_LEAGUE = "ucl"
+from src.football.champions_league_runtime import CHAMPIONS_LEAGUE_CODE
+
+CL_CANONICAL_LEAGUE = CHAMPIONS_LEAGUE_CODE
 CL_COMPETITION_NAME = "UEFA Champions League"
 CL_LEAGUE_CODES = frozenset(
     {"ucl", "champions_league", "uefa_champs_league", "soccer_uefa_champs_league"}
