@@ -34,6 +34,13 @@ from src.football.champions_league_runtime import (
 from src.football.champions_league_runtime import (
     CHAMPIONS_LEAGUE_SPORT_KEY as RUNTIME_CHAMPIONS_LEAGUE_SPORT_KEY,
 )
+from src.football.champions_league_runtime import (
+    ChampionsLeagueResult,
+    ChampionsLeagueRunBundle,
+    ChampionsLeagueRuntimeConfig,
+    ChampionsLeagueRuntimeError,
+    ChampionsLeagueSettlement,
+)
 from src.football.production_contracts import (
     ActivationMode,
     MarketSnapshot,
@@ -120,6 +127,36 @@ def test_model_identity_matches_merged_runtime_identity() -> None:
     assert CHAMPIONS_LEAGUE_CODE == RUNTIME_CHAMPIONS_LEAGUE_CODE
     assert CHAMPIONS_LEAGUE_SPORT_KEY == RUNTIME_CHAMPIONS_LEAGUE_SPORT_KEY
     assert CHAMPIONS_LEAGUE_PROVIDER == RUNTIME_CHAMPIONS_LEAGUE_PROVIDER
+
+
+def test_offline_model_output_remains_blocked_by_unbound_runtime_gate() -> None:
+    result = _result()
+    runtime_result = ChampionsLeagueResult(
+        result_id="offline-result-001",
+        fixture_key=result.prediction.fixture_key,
+        home_score=0,
+        away_score=0,
+        observed_at=KICKOFF + timedelta(minutes=1),
+        source="offline-fixture",
+    )
+    bundle = ChampionsLeagueRunBundle(
+        run_id="offline-cl-run-001",
+        fixtures=(result.model_input.fixture,),
+        snapshots=(result.model_input.signal_snapshot,),
+        predictions=(result.prediction,),
+        signals=(result.signal,),
+        results=(runtime_result,),
+        settlements=(
+            ChampionsLeagueSettlement(
+                fixture_key=result.prediction.fixture_key,
+                result_id=runtime_result.result_id,
+                status="settled",
+                settled_at=KICKOFF + timedelta(minutes=2),
+            ),
+        ),
+    )
+    with pytest.raises(ChampionsLeagueRuntimeError, match="model binding"):
+        bundle.validate(ChampionsLeagueRuntimeConfig(), now=NOW)
 
 
 def test_fixture_requires_provider_bound_identity_and_distinct_teams() -> None:
