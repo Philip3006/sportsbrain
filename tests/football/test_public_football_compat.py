@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 
+from src.football.champions_league_runtime import CHAMPIONS_LEAGUE_CODE
 from src.notifications.public_serializer import (
     PublicFootballCompatibilityError,
     build_public_football_release_health,
@@ -19,7 +20,7 @@ def _synthetic_cl_record(**overrides: object) -> dict[str, object]:
         "prediction_artifact": {
             "prediction_id": "ucl-prediction-001",
             "fixture_key": "ucl:2026:fixture-001",
-            "league_code": "ucl",
+            "league_code": CHAMPIONS_LEAGUE_CODE,
             "model_adapter_id": "cl-model-v1",
             "model_version": "cl-model-v1.0.0",
             "generated_at": "2026-09-16T12:00:00Z",
@@ -34,9 +35,12 @@ def _synthetic_cl_record(**overrides: object) -> dict[str, object]:
         },
         "provenance": {
             "source": "synthetic-fixture",
+            "provider": "synthetic-fixture",
             "source_sha": "a" * 64,
             "research_sha": "b" * 64,
             "model_artifact_hash": "c" * 64,
+            "captured_at": "2026-09-16T12:00:00Z",
+            "evidence_digest": "d" * 64,
             "evidence_kind": "SYNTHETIC",
         },
         "health": {
@@ -57,7 +61,7 @@ def test_synthetic_cl_maps_to_existing_public_football_shape() -> None:
     records = map_prediction_to_public_football_signals(_synthetic_cl_record())
 
     assert len(records) == 3
-    assert {record["league"] for record in records} == {"ucl"}
+    assert {record["league"] for record in records} == {CHAMPIONS_LEAGUE_CODE}
     assert {record["market"] for record in records} == {"home", "draw", "away"}
     for record in records:
         assert record["sport"] == "football"
@@ -77,6 +81,15 @@ def test_synthetic_cl_maps_to_existing_public_football_shape() -> None:
         assert record["stale_state"] == "FRESH"
 
 
+def test_cl_alias_is_normalized_to_runtime_identity() -> None:
+    record = _synthetic_cl_record()
+    record["prediction_artifact"]["league_code"] = "champions_league"
+
+    records = map_prediction_to_public_football_signals(record)
+
+    assert {item["league"] for item in records} == {CHAMPIONS_LEAGUE_CODE}
+
+
 def test_serializer_normalizes_marked_prediction_and_health_without_new_api() -> None:
     public = serialize_public_product(
         {
@@ -85,7 +98,7 @@ def test_serializer_normalizes_marked_prediction_and_health_without_new_api() ->
                 "overall": "ok",
                 "football_releases": [
                     {
-                        "league": "ucl",
+                        "league": CHAMPIONS_LEAGUE_CODE,
                         "model_identity": "cl-model-v1",
                         "model_version": "cl-model-v1.0.0",
                         "run_id": "synthetic-run-001",
@@ -96,19 +109,45 @@ def test_serializer_normalizes_marked_prediction_and_health_without_new_api() ->
                         "settlement_status": "PENDING",
                         "source_age_seconds": 42,
                         "source": "synthetic-fixture",
+                        "provider": "synthetic-fixture",
+                        "source_sha": "a" * 64,
                         "rollback_state": "DISABLED",
                         "activation_state": "SHADOW",
                         "no_bet": True,
                         "publication_enabled": False,
+                        "observed_at": "2026-09-16T12:00:00Z",
                     }
                 ],
+            },
+            "champions_league_release": {
+                "schema_version": "champions-league-publication-v1",
+                "competition": "UEFA Champions League",
+                "league_code": "ucl",
+                "generation_id": "ucl-generation-001",
+                "activation_state": "SHADOW",
+                "publication_status": "UNPUBLISHED",
+                "publication_enabled": False,
+                "provider_authority": "synthetic-fixture",
+                "result_authority": "synthetic-results",
+                "source_sha": "a" * 64,
+                "research_sha": "b" * 64,
+                "model_artifact_hash": "c" * 64,
+                "prediction_count": 1,
+                "fixture_count": 1,
+                "generated_at": "2026-09-16T12:00:00Z",
+                "stale_after_seconds": 7200,
+                "no_bet": True,
             },
         }
     )
 
     assert len(public["football"]) == 3
+    assert {record["league"] for record in public["football"]} == {
+        CHAMPIONS_LEAGUE_CODE
+    }
+    assert public["champions_league_release"]["league_code"] == CHAMPIONS_LEAGUE_CODE
     health = public["health"]["football_releases"][0]
-    assert health["league"] == "ucl"
+    assert health["league"] == CHAMPIONS_LEAGUE_CODE
     assert health["model_identity"] == "cl-model-v1"
     assert health["prediction_count"] == 3
     assert health["publication_status"] == "UNPUBLISHED"
@@ -182,7 +221,7 @@ def test_synthetic_release_health_cannot_be_published() -> None:
         build_public_football_release_health(
             {
                 "synthetic": True,
-                "league": "ucl",
+                "league": "UCL",
                 "model_identity": "cl-model-v1",
                 "publication_status": "PUBLISHED",
                 "activation_state": "shadow",
@@ -193,7 +232,7 @@ def test_synthetic_release_health_cannot_be_published() -> None:
 def test_release_health_exposes_required_observability_fields() -> None:
     health = build_public_football_release_health(
         {
-            "league_code": "ucl",
+            "league_code": "UCL",
             "model_identity": "cl-model-v1",
             "run_id": "run-001",
             "prediction_count": 3,
@@ -215,7 +254,7 @@ def test_release_health_exposes_required_observability_fields() -> None:
 
     assert health == {
         "schema_version": "football-release-health-v1",
-        "league": "ucl",
+        "league": "UCL",
         "model_identity": "cl-model-v1",
         "model_version": "",
         "run_id": "run-001",

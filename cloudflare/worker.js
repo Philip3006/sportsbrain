@@ -30,6 +30,12 @@ import {
   resolveCanonicalSignal,
   validateCanonicalIdentity,
 } from './contract.js';
+import {
+  CL_CANONICAL_LEAGUE,
+  CL_LEAGUE_CODES,
+  projectChampionsLeagueRelease,
+  validateChampionsLeaguePublicProduct,
+} from './cl_publication_contract.js';
 
 // P0-A (item K): supported sports for new bets
 const SUPPORTED_SPORTS = new Set(['football', 'tennis', 'basketball']);
@@ -377,7 +383,7 @@ function _signalsKey(user) {
 const _PUBLIC_TOP_LEVEL_KEYS = new Set([
   'updated', 'build_info', 'schedule', 'all_odds', 'model_tips', 'model_evals',
   'football', 'tennis', 'top_elo', 'wm_results', 'odds_history', 'health',
-  'top5_release',
+  'champions_league_release', 'top5_release',
 ]);
 
 const _PUBLIC_TOP5_RELEASE_FIELDS = new Set([
@@ -566,8 +572,31 @@ export function serializePublicProduct(snapshot) {
   for (const key of _PUBLIC_TOP_LEVEL_KEYS) {
     if (key in snapshot) pub[key] = snapshot[key];
   }
+  if ('champions_league_release' in pub) {
+    pub.champions_league_release = projectChampionsLeagueRelease(pub.champions_league_release);
+  }
+  if (Array.isArray(pub.football)) {
+    pub.football = pub.football.map((record) =>
+      record && typeof record === 'object' &&
+      CL_LEAGUE_CODES.has(String(record.league || '').trim().toLowerCase())
+        ? { ...record, league: CL_CANONICAL_LEAGUE }
+        : record
+    );
+  }
   if ('top5_release' in pub) pub.top5_release = _publicTop5Release(pub.top5_release);
   _validateTop5PublicRecords(pub.football, pub.top5_release);
+  const hasChampionsLeaguePublication = 'champions_league_release' in pub ||
+    (Array.isArray(pub.football) && pub.football.some((record) =>
+      record && typeof record === 'object' &&
+      CL_LEAGUE_CODES.has(String(record.league || '').trim().toLowerCase()) &&
+      ('provenance' in record || 'prediction_id' in record)
+    ));
+  if (hasChampionsLeaguePublication) {
+    validateChampionsLeaguePublicProduct(pub, {
+      requireRelease: true,
+      requireHealth: true,
+    });
+  }
   if ('meta' in snapshot) pub.meta = _publicMeta(snapshot.meta);
   if ('tennis_stats' in snapshot) pub.tennis_stats = _publicTennisStats(snapshot.tennis_stats);
   // Fail-closed: throws if any forbidden key survived inside an approved container.
