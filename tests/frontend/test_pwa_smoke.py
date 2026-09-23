@@ -243,6 +243,43 @@ def test_p0a_zero_signals_pwa_usable(page: Page, server_url: str) -> None:
     expect(nav).to_be_visible(timeout=10_000)
 
 
+def test_champions_league_renders_read_only_and_stale_on_mobile(
+    page: Page, server_url: str
+) -> None:
+    """CL cards render through the UCL filter but never expose a bet action."""
+    cl_signal = _canonical_signal(
+        league="ucl",
+        match="Paris FC vs Madrid FC",
+        home="Paris FC",
+        away="Madrid FC",
+        signal_id="cl-shadow-001",
+        signal_status="SHADOW",
+        shadow=True,
+        no_bet=True,
+        no_bet_flag=True,
+        activation_state="SHADOW",
+        publication_status="UNPUBLISHED",
+        result_status="PENDING",
+        settlement_status="PENDING",
+        stale_state="STALE",
+        source="offline-fixture",
+        source_age_seconds=3600,
+    )
+    payload = {**_BASE, "football": [cl_signal]}
+    page.set_viewport_size({"width": 390, "height": 844})
+    _navigate_to_football(page, server_url, payload)
+
+    ucl_filter = page.locator('.filter-chip[data-val="ucl"]')
+    expect(ucl_filter).to_be_visible(timeout=10_000)
+    ucl_filter.click()
+    expect(page.locator(".sig-card")).to_have_count(1)
+    expect(page.locator(".sig-card")).to_contain_text("Paris FC")
+    expect(page.locator(".sig-card .football-compat-meta")).to_contain_text("STALE")
+    assert page.locator(".place-bet-btn").count() == 0
+    assert page.locator(".compact-place-btn").count() == 0
+    assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+
+
 # P0-A Test 7: value modal odds field is locked (readOnly) for canonical signals
 def test_p0a_value_odds_field_is_readonly(page: Page, server_url: str) -> None:
     """P0-A: The odds input is readOnly for value bets — canonical price is authoritative."""

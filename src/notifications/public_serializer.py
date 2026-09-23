@@ -21,6 +21,11 @@ from collections.abc import Mapping, Sequence
 from math import isfinite
 from typing import Any
 
+from src.football.champions_league_publication import (
+    project_cl_release,
+    validate_champions_league_publication,
+)
+
 
 class PublicFootballCompatibilityError(ValueError):
     """Malformed or unsafe league-neutral football publication input."""
@@ -45,6 +50,7 @@ _PUBLIC_TOP_LEVEL_KEYS: frozenset[str] = frozenset(
         "wm_results",
         "odds_history",
         "health",
+        "champions_league_release",
         "top5_release",
     }
 )
@@ -1000,6 +1006,32 @@ def serialize_public_product(snapshot: dict | None) -> dict:
                 for item in public_health["football_releases"]
             ]
         pub["health"] = public_health
+    if "champions_league_release" in pub:
+        pub["champions_league_release"] = project_cl_release(
+            pub["champions_league_release"]
+        )
+    has_cl_publication_data = "champions_league_release" in pub
+    if isinstance(pub.get("football"), Sequence) and not isinstance(
+        pub["football"], (str, bytes)
+    ):
+        has_cl_publication_data = has_cl_publication_data or any(
+            isinstance(record, Mapping)
+            and str(record.get("league", "")).strip().lower()
+            in {
+                "ucl",
+                "champions_league",
+                "uefa_champs_league",
+                "soccer_uefa_champs_league",
+            }
+            and ("provenance" in record or "prediction_id" in record)
+            for record in pub["football"]
+        )
+    if has_cl_publication_data:
+        validate_champions_league_publication(
+            pub,
+            require_release=True,
+            require_health=True,
+        )
     # Reconstruct objects that contain a mix of public and private fields.
     if "meta" in snapshot:
         pub["meta"] = _public_meta(snapshot["meta"])

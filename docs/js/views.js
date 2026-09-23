@@ -494,6 +494,7 @@ function sigCard(s, showMatch) {
   const compatMeta = _footballCompatMetaHtml(s);
   // P0-A: determine if this signal has a canonical identity for value-bet placement
   const _hasCanonicalId = !!(s.signal_id && s.signal_status === 'ACTIVE');
+  const _isChampionsLeague = _FOOTBALL_CL_KEYS.has(String(s.league || '').trim().toLowerCase());
   const _isLegacySignal = !_hasCanonicalId;
   // P0-A (item B): current_odds and current_ev_pct must be actual current values.
   // Scan-time fallbacks are NEVER passed as current values — doing so would destroy
@@ -501,7 +502,7 @@ function sigCard(s, showMatch) {
   const _hasCurrentOdds = s.current_odds != null && Number.isFinite(s.current_odds) && s.current_odds > 1;
   const _hasCurrentEv = s.current_ev_pct != null && Number.isFinite(s.current_ev_pct) && s.current_ev_pct > 0;
   // VALUE actionability requires BOTH canonical identity AND actual current market data.
-  const _isValueActionable = _hasCanonicalId && _hasCurrentOdds && _hasCurrentEv;
+  const _isValueActionable = !_isChampionsLeague && _hasCanonicalId && _hasCurrentOdds && _hasCurrentEv;
   const btnAttrs = [
     `data-match="${esc(s.match)}"`,
     `data-market="${esc(s.market)}"`,
@@ -1212,7 +1213,8 @@ function renderSport(sport) {
       const _cHasCurrentOdds = s.current_odds != null && Number.isFinite(s.current_odds) && s.current_odds > 1;
       const _cHasCurrentEv = s.current_ev_pct != null && Number.isFinite(s.current_ev_pct) && s.current_ev_pct > 0;
       const _cHasCanonical = !!(s.signal_id && s.signal_status === 'ACTIVE');
-      const _cIsValueActionable = _cHasCanonical && _cHasCurrentOdds && _cHasCurrentEv;
+      const _cIsChampionsLeague = _FOOTBALL_CL_KEYS.has(String(s.league || '').trim().toLowerCase());
+      const _cIsValueActionable = !_cIsChampionsLeague && _cHasCanonical && _cHasCurrentOdds && _cHasCurrentEv;
       const btnAttrs = isManual ? '' : [
         `type="button"`,
         `data-match="${esc(s.match)}"`,
