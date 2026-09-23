@@ -36,7 +36,8 @@ Before any five-league request, Path B performs one separately budgeted,
 provider-native quota-proof transaction. It is not one of the five league
 captures and it never continues automatically into league execution. The proof
 uses the narrow event route with one regulation market and the approved free
-affiliate set, accepts at most 55 billed datapoints, permits zero retries, and
+affiliate set, accepts at most 56 billed datapoints for this dated-snapshot
+proof request, permits zero retries, and
 requires fresh, account-bound response headers proving at least 275 remaining
 datapoints. Missing, stale, malformed, contradictory, provider-mismatched,
 under-budget, or over-cap evidence fails closed. The proof output records the
@@ -68,11 +69,16 @@ authorization binds one exact current-or-next-UTC-date snapshot request:
 provider `therundown_experimental`, `sport_id=3` (MLB), `market_ids=1`,
 `affiliate_ids=19`, `main_line=true`, and `hide_closed=true`. Its deterministic
 request-shape digest, CEO proof-authorization identity, issue/expiry window,
-adapter source, 55-datapoint maximum, and zero retries are all validated before
+adapter source, the observed 56-datapoint maximum for this dated-snapshot
+request, and zero retries are all validated before
 the credential is read. Event-level selection and prior capture artifacts are
 not inputs to this account-wide headroom proof. The authorization contains
 explicit false capability flags for five-league
 execution, provider authority, activation, publication, and betting.
+
+The five-league Discovery request-cost assumption remains independently bounded
+at 55 datapoints per request. The observed 56-datapoint value applies only to
+this B4 dated-snapshot proof request; it does not widen Discovery.
 
 ## Post-run reconciliation
 

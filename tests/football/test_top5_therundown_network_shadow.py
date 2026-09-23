@@ -27,6 +27,7 @@ from src.football.top5_controlled_shadow_provider_qualification import (
 )
 from src.football.top5_shadow_provider_redundancy import make_fixture_key
 from src.football.top5_therundown_network_shadow import (
+    THERUNDOWN_DATED_SNAPSHOT_QUOTA_PROOF_DATAPOINTS_PER_REQUEST,
     THERUNDOWN_OBSERVED_DATAPOINTS_PER_REQUEST,
     TOP5_CONTROLLED_SHADOW_DATAPOINT_BUDGET,
     TOP5_CONTROLLED_SHADOW_MINIMUM_INTERVAL_SECONDS,
@@ -367,6 +368,13 @@ def test_observed_provider_billing_units_are_the_run_budget_basis():
     assert THERUNDOWN_OBSERVED_DATAPOINTS_PER_REQUEST == 55
     assert TOP5_CONTROLLED_SHADOW_DATAPOINT_BUDGET == 5 * 55
     assert TOP5_CONTROLLED_SHADOW_QUOTA_BUDGET == 5 * 55
+
+
+def test_dated_snapshot_proof_billing_cap_is_decoupled_from_discovery_cost():
+    assert THERUNDOWN_DATED_SNAPSHOT_QUOTA_PROOF_DATAPOINTS_PER_REQUEST == 56
+    assert THERUNDOWN_DATED_SNAPSHOT_QUOTA_PROOF_DATAPOINTS_PER_REQUEST != (
+        THERUNDOWN_OBSERVED_DATAPOINTS_PER_REQUEST
+    )
 
 
 def test_exact_five_request_billing_budget_is_accepted():

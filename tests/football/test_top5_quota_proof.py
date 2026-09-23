@@ -208,6 +208,28 @@ def test_valid_proof_is_one_bounded_request_and_not_a_league_capture():
     assert evidence.as_payload()["execution_phase"] == "quota_proof"
 
 
+def test_observed_dated_snapshot_cost_of_56_is_accepted():
+    response = _response(
+        headers={
+            **_response().headers,
+            "X-Datapoints": "56",
+            "X-Datapoints-Used": "56",
+            "X-Datapoints-Remaining": "944",
+            "X-Datapoints-Limit": "1000",
+        }
+    )
+    client = _FakeProofClient(response)
+
+    evidence = execute_therundown_quota_proof(
+        _request(), api_key="test-secret", http_client=client, now=NOW
+    )
+
+    assert evidence.billed_datapoints == 56
+    assert evidence.remaining_datapoints == 944
+    assert evidence.request_count == 1
+    assert evidence.retry_count == 0
+
+
 def test_proof_only_authorization_does_not_require_five_league_scope():
     authorization = _proof_authorization()
     authorization.validate(now=NOW)
@@ -552,7 +574,7 @@ def test_concurrent_invocations_can_execute_transport_only_once(
             "contradictory",
         ),
         (
-            {"headers": {**_response().headers, "X-Datapoints": "56"}},
+            {"headers": {**_response().headers, "X-Datapoints": "57"}},
             "per-request cap",
         ),
     ],

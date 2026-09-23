@@ -261,6 +261,12 @@ def _authorization() -> TheRundownEventDiscoveryAuthorizationV1:
     )
 
 
+def test_discovery_request_cost_remains_55_when_b4_proof_cap_is_56():
+    authorization = _authorization()
+    assert B4_QUOTA_PROOF_MAX_DATAPOINTS == 56
+    assert authorization.maximum_datapoints_per_request == 55
+
+
 def _event(
     target: TheRundownEventDiscoveryTargetV1, *, event_id: str | None = None
 ) -> dict[str, object]:
