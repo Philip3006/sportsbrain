@@ -76,6 +76,15 @@ not inputs to this account-wide headroom proof. The authorization contains
 explicit false capability flags for five-league
 execution, provider authority, activation, publication, and betting.
 
+`X-Data-Delay-Seconds` is optional for this B4 dated-snapshot quota/headroom
+proof. When supplied, it is retained and format-validated; when absent, the
+proof records no delay value and does not interpret absence as zero. The proof
+therefore establishes billing, remaining headroom, tier, and request bounds,
+not delta-polling eligibility. Any zero-delay or delta entitlement remains
+forbidden unless a separate contract observes an explicit valid
+`X-Data-Delay-Seconds: 0`; the Discovery gate retains its own stricter delay
+evidence requirement and is otherwise unchanged.
+
 The five-league Discovery request-cost assumption remains independently bounded
 at 55 datapoints per request. The observed 56-datapoint value applies only to
 this B4 dated-snapshot proof request; it does not widen Discovery.

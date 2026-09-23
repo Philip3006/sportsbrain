@@ -1175,7 +1175,8 @@ def run_guarded_quota_proof(
             request,
             api_key=api_key,
             http_client=http_client,
-            now=_utc(clock_fn(), "quota proof response validation now"),
+            now=now,
+            clock=clock_fn,
         )
         artifact_path = _write_quota_proof(
             output,
