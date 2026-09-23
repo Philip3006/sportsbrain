@@ -6,6 +6,7 @@ lightgbm>=4.3
 scikit-learn>=1.4
 shap>=0.45
 requests>=2.31
+certifi>=2024.2.2
 beautifulsoup4>=4.12
 playwright>=1.44
 python-dotenv>=1.0
