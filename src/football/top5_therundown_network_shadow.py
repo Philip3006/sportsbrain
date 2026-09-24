@@ -73,6 +73,9 @@ QUOTA_PROOF_SCHEMA_VERSION = "top5-therundown-quota-proof-v1"
 QUOTA_PROOF_AUTHORIZATION_SCHEMA_VERSION = (
     "top5-therundown-dated-snapshot-quota-proof-authorization-v1"
 )
+QUOTA_PROOF_PURPOSE = "quota_proof"
+SHADOW_HEADROOM_PROOF_PURPOSE = "controlled_shadow_headroom"
+SHADOW_HEADROOM_PROVENANCE_SOURCE = "therundown_shadow_headroom_proof"
 TOP5_CONTROLLED_SHADOW_REQUEST_COUNT = 5
 THERUNDOWN_OBSERVED_DATAPOINTS_PER_REQUEST = 55
 TOP5_CONTROLLED_SHADOW_DATAPOINT_BUDGET = (
@@ -173,7 +176,7 @@ class NetworkShadowRunStatus(str, Enum):
 
 @dataclass(frozen=True)
 class TheRundownQuotaHeadroomEvidenceV1:
-    """Non-billable, caller-supplied quota evidence required before request 1."""
+    """Validated provider-response-derived headroom required before request 1."""
 
     provider: str
     account_scope: str
@@ -188,6 +191,18 @@ class TheRundownQuotaHeadroomEvidenceV1:
     ceo_authorization_identity: str
     evidence_digest: str
     schema_version: str = QUOTA_HEADROOM_SCHEMA_VERSION
+    proof_authorization_id: str = ""
+    proof_authorization_digest: str = ""
+    proof_evidence_digest: str = ""
+    proof_request_shape_digest: str = ""
+    discovery_authorization_id: str = ""
+    discovery_artifact_digest: str = ""
+    proof_billed_datapoints: int = 0
+    proof_status_code: int = 0
+    proof_quota_period: str = ""
+    proof_quota_used_datapoints: int = 0
+    proof_quota_limit_datapoints: int = 0
+    proof_quota_reset_at: datetime | None = None
 
     def _payload_without_digest(self) -> dict[str, object]:
         return {
@@ -203,6 +218,22 @@ class TheRundownQuotaHeadroomEvidenceV1:
             "controlled_shadow_run_id": self.controlled_shadow_run_id,
             "qualification_session_id": self.qualification_session_id,
             "ceo_authorization_identity": self.ceo_authorization_identity,
+            "proof_authorization_id": self.proof_authorization_id,
+            "proof_authorization_digest": self.proof_authorization_digest,
+            "proof_evidence_digest": self.proof_evidence_digest,
+            "proof_request_shape_digest": self.proof_request_shape_digest,
+            "discovery_authorization_id": self.discovery_authorization_id,
+            "discovery_artifact_digest": self.discovery_artifact_digest,
+            "proof_billed_datapoints": self.proof_billed_datapoints,
+            "proof_status_code": self.proof_status_code,
+            "proof_quota_period": self.proof_quota_period,
+            "proof_quota_used_datapoints": self.proof_quota_used_datapoints,
+            "proof_quota_limit_datapoints": self.proof_quota_limit_datapoints,
+            "proof_quota_reset_at": (
+                _utc(self.proof_quota_reset_at, "proof quota reset").isoformat()
+                if self.proof_quota_reset_at is not None
+                else None
+            ),
         }
 
     @property
@@ -290,6 +321,59 @@ class TheRundownQuotaHeadroomEvidenceV1:
                 raise NetworkShadowExecutionBlocked(
                     "authorization is not bound to quota headroom evidence"
                 )
+        if self.provenance_source == SHADOW_HEADROOM_PROVENANCE_SOURCE:
+            for value, name in (
+                (self.proof_authorization_id, "proof_authorization_id"),
+                (self.discovery_authorization_id, "discovery_authorization_id"),
+            ):
+                _text(value, f"quota {name}")
+            for value, name in (
+                (self.proof_authorization_digest, "proof_authorization_digest"),
+                (self.proof_evidence_digest, "proof_evidence_digest"),
+                (self.proof_request_shape_digest, "proof_request_shape_digest"),
+                (self.discovery_artifact_digest, "discovery_artifact_digest"),
+            ):
+                _sha(value, f"quota {name}")
+            if self.proof_billed_datapoints <= 0:
+                raise NetworkShadowExecutionBlocked(
+                    "shadow headroom proof billed datapoints are missing"
+                )
+            if self.proof_billed_datapoints > QUOTA_PROOF_MAX_DATAPOINTS:
+                raise NetworkShadowExecutionBlocked(
+                    "shadow headroom proof billed datapoints exceed the cap"
+                )
+            if not 200 <= self.proof_status_code < 300:
+                raise NetworkShadowExecutionBlocked(
+                    "shadow headroom proof HTTP response is not 2xx"
+                )
+            if self.proof_quota_period != "daily":
+                raise NetworkShadowExecutionBlocked(
+                    "shadow headroom proof must be from the daily quota period"
+                )
+            _nonnegative_int(
+                self.proof_quota_used_datapoints,
+                "proof_quota_used_datapoints",
+            )
+            _positive_int(
+                self.proof_quota_limit_datapoints,
+                "proof_quota_limit_datapoints",
+            )
+            if (
+                self.proof_quota_used_datapoints
+                + self.observed_remaining_datapoints
+                != self.proof_quota_limit_datapoints
+            ):
+                raise NetworkShadowExecutionBlocked(
+                    "shadow headroom proof quota counters do not reconcile"
+                )
+            if self.proof_quota_reset_at is None:
+                raise NetworkShadowExecutionBlocked(
+                    "shadow headroom proof reset boundary is missing"
+                )
+            if _utc(self.proof_quota_reset_at, "proof quota reset") <= observed:
+                raise NetworkShadowExecutionBlocked(
+                    "shadow headroom proof reset boundary is not future-dated"
+                )
 
     def as_payload(self) -> dict[str, object]:
         self.validate(now=self.observed_at, maximum_age_seconds=2**31 - 1)
@@ -310,6 +394,17 @@ class TheRundownQuotaHeadroomEvidenceV1:
             )
         except ValueError as exc:
             raise NetworkShadowContractError("quota observed_at is invalid") from exc
+        proof_reset_raw = raw.get("proof_quota_reset_at")
+        proof_reset = None
+        if proof_reset_raw is not None:
+            try:
+                proof_reset = datetime.fromisoformat(
+                    str(proof_reset_raw).replace("Z", "+00:00")
+                )
+            except ValueError as exc:
+                raise NetworkShadowContractError(
+                    "proof quota reset timestamp is invalid"
+                ) from exc
         return cls(
             provider=str(raw.get("provider", "")),
             account_scope=str(raw.get("account_scope", "")),
@@ -328,6 +423,28 @@ class TheRundownQuotaHeadroomEvidenceV1:
             schema_version=str(
                 raw.get("schema_version", QUOTA_HEADROOM_SCHEMA_VERSION)
             ),
+            proof_authorization_id=str(raw.get("proof_authorization_id", "")),
+            proof_authorization_digest=str(
+                raw.get("proof_authorization_digest", "")
+            ),
+            proof_evidence_digest=str(raw.get("proof_evidence_digest", "")),
+            proof_request_shape_digest=str(
+                raw.get("proof_request_shape_digest", "")
+            ),
+            discovery_authorization_id=str(
+                raw.get("discovery_authorization_id", "")
+            ),
+            discovery_artifact_digest=str(raw.get("discovery_artifact_digest", "")),
+            proof_billed_datapoints=raw.get("proof_billed_datapoints", 0),  # type: ignore[arg-type]
+            proof_status_code=raw.get("proof_status_code", 0),  # type: ignore[arg-type]
+            proof_quota_period=str(raw.get("proof_quota_period", "")),
+            proof_quota_used_datapoints=raw.get(
+                "proof_quota_used_datapoints", 0
+            ),  # type: ignore[arg-type]
+            proof_quota_limit_datapoints=raw.get(
+                "proof_quota_limit_datapoints", 0
+            ),  # type: ignore[arg-type]
+            proof_quota_reset_at=proof_reset,
         )
 
 
@@ -1314,6 +1431,14 @@ class TheRundownQuotaProofAuthorizationV1:
     publication_authorized: bool = False
     betting_authorized: bool = False
     schema_version: str = QUOTA_PROOF_AUTHORIZATION_SCHEMA_VERSION
+    proof_purpose: str = QUOTA_PROOF_PURPOSE
+    shadow_authorization_package_digest: str = ""
+    shadow_authorization_id: str = ""
+    shadow_controlled_shadow_run_id: str = ""
+    shadow_qualification_session_id: str = ""
+    shadow_configuration_digest: str = ""
+    discovery_authorization_id: str = ""
+    discovery_artifact_digest: str = ""
 
     def _payload_without_digest(self) -> dict[str, object]:
         return {
@@ -1341,6 +1466,14 @@ class TheRundownQuotaProofAuthorizationV1:
             "activation_authorized": self.activation_authorized,
             "publication_authorized": self.publication_authorized,
             "betting_authorized": self.betting_authorized,
+            "proof_purpose": self.proof_purpose,
+            "shadow_authorization_package_digest": self.shadow_authorization_package_digest,
+            "shadow_authorization_id": self.shadow_authorization_id,
+            "shadow_controlled_shadow_run_id": self.shadow_controlled_shadow_run_id,
+            "shadow_qualification_session_id": self.shadow_qualification_session_id,
+            "shadow_configuration_digest": self.shadow_configuration_digest,
+            "discovery_authorization_id": self.discovery_authorization_id,
+            "discovery_artifact_digest": self.discovery_artifact_digest,
         }
 
     @property
@@ -1404,6 +1537,36 @@ class TheRundownQuotaProofAuthorizationV1:
             raise NetworkShadowExecutionBlocked(
                 "proof authorization retries must be zero"
             )
+        if self.proof_purpose not in {
+            QUOTA_PROOF_PURPOSE,
+            SHADOW_HEADROOM_PROOF_PURPOSE,
+        }:
+            raise NetworkShadowExecutionBlocked(
+                "proof authorization purpose is unsupported"
+            )
+        if self.proof_purpose == SHADOW_HEADROOM_PROOF_PURPOSE:
+            for value, name in (
+                (
+                    self.shadow_authorization_package_digest,
+                    "shadow_authorization_package_digest",
+                ),
+                (self.shadow_configuration_digest, "shadow_configuration_digest"),
+                (self.discovery_artifact_digest, "discovery_artifact_digest"),
+            ):
+                _sha(value, f"proof authorization {name}")
+            for value, name in (
+                (self.shadow_authorization_id, "shadow_authorization_id"),
+                (
+                    self.shadow_controlled_shadow_run_id,
+                    "shadow_controlled_shadow_run_id",
+                ),
+                (
+                    self.shadow_qualification_session_id,
+                    "shadow_qualification_session_id",
+                ),
+                (self.discovery_authorization_id, "discovery_authorization_id"),
+            ):
+                _text(value, f"proof authorization {name}")
         if any(
             (
                 self.five_league_execution_authorized,
@@ -1479,6 +1642,24 @@ class TheRundownQuotaProofAuthorizationV1:
             schema_version=str(
                 raw.get("schema_version", QUOTA_PROOF_AUTHORIZATION_SCHEMA_VERSION)
             ),
+            proof_purpose=str(raw.get("proof_purpose", QUOTA_PROOF_PURPOSE)),
+            shadow_authorization_package_digest=str(
+                raw.get("shadow_authorization_package_digest", "")
+            ),
+            shadow_authorization_id=str(raw.get("shadow_authorization_id", "")),
+            shadow_controlled_shadow_run_id=str(
+                raw.get("shadow_controlled_shadow_run_id", "")
+            ),
+            shadow_qualification_session_id=str(
+                raw.get("shadow_qualification_session_id", "")
+            ),
+            shadow_configuration_digest=str(
+                raw.get("shadow_configuration_digest", "")
+            ),
+            discovery_authorization_id=str(
+                raw.get("discovery_authorization_id", "")
+            ),
+            discovery_artifact_digest=str(raw.get("discovery_artifact_digest", "")),
         )
 
     def request_for_proof(
@@ -1486,16 +1667,33 @@ class TheRundownQuotaProofAuthorizationV1:
     ) -> TheRundownQuotaProofRequestV1:
         self.validate()
         _sha(proof_configuration_digest, "proof configuration digest")
+        is_shadow_headroom = self.proof_purpose == SHADOW_HEADROOM_PROOF_PURPOSE
+        if is_shadow_headroom and proof_configuration_digest != self.shadow_configuration_digest:
+            raise NetworkShadowExecutionBlocked(
+                "shadow headroom proof configuration binding does not match"
+            )
         request = TheRundownQuotaProofRequestV1(
             proof_id=self.proof_id,
             provider=self.provider,
             sport_id=self.sport_id,
             snapshot_date=self.snapshot_date,
-            authorization_package_digest=self.authorization_digest,
+            authorization_package_digest=(
+                self.shadow_authorization_package_digest
+                if is_shadow_headroom
+                else self.authorization_digest
+            ),
             configuration_digest=proof_configuration_digest,
             authorization_id=self.proof_authorization_id,
-            controlled_shadow_run_id="quota-proof-only",
-            qualification_session_id="quota-proof-only",
+            controlled_shadow_run_id=(
+                self.shadow_controlled_shadow_run_id
+                if is_shadow_headroom
+                else "quota-proof-only"
+            ),
+            qualification_session_id=(
+                self.shadow_qualification_session_id
+                if is_shadow_headroom
+                else "quota-proof-only"
+            ),
             ceo_authorization_identity=self.ceo_proof_authorization_identity,
             adapter_version=self.adapter_version,
             adapter_source_sha=self.adapter_source_sha,

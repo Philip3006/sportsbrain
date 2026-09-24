@@ -71,6 +71,8 @@ from src.football.top5_shadow_provider_redundancy import make_fixture_key
 from src.football.top5_therundown_network_shadow import (
     NETWORK_SHADOW_SCHEMA_VERSION,
     QUOTA_PROOF_AFFILIATE_IDS,
+    SHADOW_HEADROOM_PROOF_PURPOSE,
+    SHADOW_HEADROOM_PROVENANCE_SOURCE,
     NetworkShadowContractError,
     NetworkShadowRunStatus,
     TheRundownCanonicalPayloadAdapterV1,
@@ -98,6 +100,9 @@ AUTHORIZATION_PACKAGE_SCHEMA_VERSION = "top5-controlled-shadow-authorization-pac
 RECONCILIATION_SCHEMA_VERSION = "top5-controlled-shadow-reconciliation-v1"
 QUALIFICATION_ARTIFACT_SCHEMA_VERSION = (
     "top5-controlled-shadow-qualification-artifacts-v1"
+)
+SHADOW_HEADROOM_ARTIFACT_SCHEMA_VERSION = (
+    "top5-therundown-shadow-headroom-evidence-v1"
 )
 FUTURE_EXECUTION_COMMAND = (
     "python -m src.football.top5_controlled_shadow_authorization_package "
@@ -694,6 +699,30 @@ def _load_quota_proof_authorization(
     return authorization
 
 
+def _require_consumed_quota_proof_authorization(
+    authorization: TheRundownQuotaProofAuthorizationV1,
+) -> None:
+    marker_path = _quota_proof_consumption_marker_path(authorization)
+    if not marker_path.exists():
+        raise ControlledShadowAuthorizationPackageError(
+            "dedicated Shadow Headroom Proof authorization has no consumption marker"
+        )
+    marker = _read_quota_proof_consumption_marker(marker_path)
+    for name, expected in (
+        ("proof_authorization_id", authorization.proof_authorization_id),
+        ("authorization_digest", authorization.authorization_digest),
+        ("proof_id", authorization.proof_id),
+        ("provider", authorization.provider),
+        ("sport_id", authorization.sport_id),
+        ("snapshot_date", authorization.snapshot_date.isoformat()),
+        ("request_shape_digest", authorization.request_shape_digest),
+    ):
+        if marker.get(name) != expected:
+            raise ControlledShadowAuthorizationPackageError(
+                f"dedicated Shadow Headroom Proof consumption binding mismatch: {name}"
+            )
+
+
 def _load_quota_headroom(
     path_value: object,
     *,
@@ -702,11 +731,319 @@ def _load_quota_headroom(
     authorization: TheRundownNetworkAuthorizationV1,
     now: datetime,
 ) -> TheRundownQuotaHeadroomEvidenceV1:
-    raise ControlledShadowAuthorizationPackageError(
-        "NO_TRUSTWORTHY_PRE_REQUEST_QUOTA_SOURCE: TheRundown exposes "
-        "quota remaining only in billed response headers; no provider-native "
-        "non-billable account artifact or verifier is configured"
+    raw = _read_json_file(path_value, "quota headroom evidence")
+    if raw.get("schema_version") != SHADOW_HEADROOM_ARTIFACT_SCHEMA_VERSION:
+        raise ControlledShadowAuthorizationPackageError(
+            "TRUSTED_SHADOW_HEADROOM_REQUIRED: only a dedicated validated "
+            "Shadow Headroom Proof artifact is accepted"
+        )
+    if raw.get("execution_phase") != "shadow_headroom":
+        raise ControlledShadowAuthorizationPackageError(
+            "shadow headroom artifact execution phase is invalid"
+        )
+    if raw.get("provenance_source") != SHADOW_HEADROOM_PROVENANCE_SOURCE:
+        raise ControlledShadowAuthorizationPackageError(
+            "shadow headroom provenance is not the dedicated provider proof"
+        )
+    package_source_id = package.configuration_payload.get("discovery_authorization_id")
+    package_source_digest = package.configuration_payload.get("discovery_artifact_digest")
+    if not isinstance(package_source_id, str) or not isinstance(
+        package_source_digest, str
+    ):
+        raise ControlledShadowAuthorizationPackageError(
+            "shadow package is not bound to the successful Discovery artifact"
+        )
+    proof_authorization_payload = _mapping(
+        raw.get("proof_authorization"), "shadow headroom proof authorization"
     )
+    proof_authorization = TheRundownQuotaProofAuthorizationV1.from_payload(
+        proof_authorization_payload
+    )
+    try:
+        proof_authorization.validate(now=now)
+    except NetworkShadowContractError as exc:
+        raise ControlledShadowAuthorizationPackageError(str(exc)) from exc
+    if proof_authorization.proof_purpose != SHADOW_HEADROOM_PROOF_PURPOSE:
+        raise ControlledShadowAuthorizationPackageError(
+            "shadow headroom cannot be derived from a generic or stale quota proof"
+        )
+    _require_consumed_quota_proof_authorization(proof_authorization)
+    if (
+        proof_authorization.shadow_authorization_package_digest
+        != package.package_digest
+        or proof_authorization.shadow_authorization_id
+        != authorization.authorization_id
+        or proof_authorization.shadow_controlled_shadow_run_id
+        != authorization.controlled_shadow_run_id
+        or proof_authorization.shadow_qualification_session_id
+        != authorization.qualification_session_id
+        or proof_authorization.ceo_proof_authorization_identity
+        != authorization.ceo_authorization_identity
+        or proof_authorization.shadow_configuration_digest
+        != authorization.configuration_digest
+        or proof_authorization.discovery_authorization_id != package_source_id
+        or proof_authorization.discovery_artifact_digest != package_source_digest
+    ):
+        raise ControlledShadowAuthorizationPackageError(
+            "shadow headroom proof is not bound to the exact package, run, session, "
+            "CEO identity, or Discovery artifact"
+        )
+
+    proof_payload = _mapping(raw.get("proof"), "shadow headroom proof evidence")
+    proof_evidence = TheRundownQuotaProofEvidenceV1.from_payload(proof_payload)
+    try:
+        proof_request = proof_authorization.request_for_proof(
+            proof_configuration_digest=proof_authorization.shadow_configuration_digest,
+            now=proof_evidence.request_started_at,
+        )
+        proof_evidence.validate(
+            request=proof_request,
+            now=now,
+            request_now=proof_evidence.request_started_at,
+        )
+    except NetworkShadowContractError as exc:
+        raise ControlledShadowAuthorizationPackageError(str(exc)) from exc
+    proof_payload_container = dict(raw)
+    proof_payload_container["safety"] = raw.get("proof_safety")
+    _validate_shadow_headroom_proof_payload(
+        proof_payload_container, proof_authorization, proof_evidence
+    )
+
+    headroom = TheRundownQuotaHeadroomEvidenceV1.from_payload(
+        raw.get("headroom")
+    )
+    try:
+        headroom.validate(
+            expected_package_digest=package.package_digest,
+            expected_authorization=authorization,
+            now=now,
+        )
+    except NetworkShadowContractError as exc:
+        raise ControlledShadowAuthorizationPackageError(str(exc)) from exc
+    _validate_shadow_headroom_bindings(
+        headroom,
+        proof_authorization=proof_authorization,
+        proof_evidence=proof_evidence,
+        package=package,
+    )
+    return headroom
+
+
+def _validate_shadow_headroom_proof_payload(
+    raw: Mapping[str, object],
+    proof_authorization: TheRundownQuotaProofAuthorizationV1,
+    proof_evidence: TheRundownQuotaProofEvidenceV1,
+) -> None:
+    """Require the proof package to be the exact output of the proof runner."""
+
+    request_payload = _mapping(raw.get("request"), "shadow headroom proof request")
+    expected_request = proof_authorization.request_for_proof(
+        proof_configuration_digest=proof_authorization.shadow_configuration_digest,
+        now=proof_evidence.request_started_at,
+    )
+    expected_values = {
+        "proof_id": expected_request.proof_id,
+        "provider": expected_request.provider,
+        "sport_id": expected_request.sport_id,
+        "snapshot_date": expected_request.snapshot_date.isoformat(),
+        "authorization_package_digest": expected_request.authorization_package_digest,
+        "configuration_digest": expected_request.configuration_digest,
+        "authorization_id": expected_request.authorization_id,
+        "controlled_shadow_run_id": expected_request.controlled_shadow_run_id,
+        "qualification_session_id": expected_request.qualification_session_id,
+        "ceo_authorization_identity": expected_request.ceo_authorization_identity,
+        "request_shape_digest": expected_request.request_shape_digest,
+        "maximum_datapoints": expected_request.maximum_datapoints,
+        "request_count": expected_request.request_count,
+        "retry_count": expected_request.retry_count,
+    }
+    for name, expected in expected_values.items():
+        if request_payload.get(name) != expected:
+            raise ControlledShadowAuthorizationPackageError(
+                f"shadow headroom proof request binding mismatch: {name}"
+            )
+    if request_payload.get("query") != dict(expected_request.query):
+        raise ControlledShadowAuthorizationPackageError(
+            "shadow headroom proof query is outside the reviewed shape"
+        )
+    if raw.get("safety") != {
+        "activation": False,
+        "authority_changed": False,
+        "betting": False,
+        "five_league_requests": 0,
+        "monetary_spend_authorized": False,
+        "publication": False,
+        "receipt_issued": False,
+    }:
+        raise ControlledShadowAuthorizationPackageError(
+            "shadow headroom proof safety envelope is unsafe"
+        )
+
+
+def _validate_shadow_headroom_bindings(
+    headroom: TheRundownQuotaHeadroomEvidenceV1,
+    *,
+    proof_authorization: TheRundownQuotaProofAuthorizationV1,
+    proof_evidence: TheRundownQuotaProofEvidenceV1,
+    package: ControlledShadowAuthorizationPackageV1,
+) -> None:
+    expected = {
+        "proof_authorization_id": proof_authorization.proof_authorization_id,
+        "proof_authorization_digest": proof_authorization.authorization_digest,
+        "proof_evidence_digest": proof_evidence.evidence_digest,
+        "proof_request_shape_digest": proof_evidence.request_shape_digest,
+        "discovery_authorization_id": proof_authorization.discovery_authorization_id,
+        "discovery_artifact_digest": proof_authorization.discovery_artifact_digest,
+        "authorization_package_digest": package.package_digest,
+        "observed_remaining_datapoints": proof_evidence.remaining_datapoints,
+        "proof_billed_datapoints": proof_evidence.billed_datapoints,
+        "proof_status_code": proof_evidence.status_code,
+        "proof_quota_period": proof_evidence.quota_period,
+        "proof_quota_used_datapoints": proof_evidence.quota_used_datapoints,
+        "proof_quota_limit_datapoints": proof_evidence.quota_limit_datapoints,
+        "proof_quota_reset_at": proof_evidence.quota_reset_at,
+        "observed_at": proof_evidence.response_finished_at,
+        "account_scope": proof_evidence.account_scope,
+        "provenance_digest": proof_evidence.evidence_digest,
+    }
+    for name, expected_value in expected.items():
+        actual = getattr(headroom, name)
+        if isinstance(expected_value, datetime):
+            if _utc(actual, name) != _utc(expected_value, name):
+                raise ControlledShadowAuthorizationPackageError(
+                    f"shadow headroom binding mismatch: {name}"
+                )
+        elif actual != expected_value:
+            raise ControlledShadowAuthorizationPackageError(
+                f"shadow headroom binding mismatch: {name}"
+            )
+
+
+def materialize_shadow_headroom_evidence(
+    proof_authorization_path: object,
+    proof_evidence_path: object,
+    *,
+    output_path: object,
+    clock: Any = None,
+) -> dict[str, object]:
+    """Convert one validated dedicated proof response into trusted headroom."""
+
+    clock_fn = clock or (lambda: datetime.now(timezone.utc))
+    now = _utc(clock_fn(), "shadow headroom materialization now")
+    proof_authorization = _load_quota_proof_authorization(
+        proof_authorization_path,
+        now=now,
+    )
+    if proof_authorization.proof_purpose != SHADOW_HEADROOM_PROOF_PURPOSE:
+        raise ControlledShadowAuthorizationPackageError(
+            "only a dedicated Shadow Headroom Proof can create trusted headroom"
+        )
+    _require_consumed_quota_proof_authorization(proof_authorization)
+    proof_package = _read_json_file(proof_evidence_path, "quota proof output")
+    if proof_package.get("schema_version") != "top5-therundown-quota-proof-package-v1":
+        raise ControlledShadowAuthorizationPackageError(
+            "shadow headroom source is not a quota proof package"
+        )
+    if proof_package.get("execution_phase") != "quota_proof":
+        raise ControlledShadowAuthorizationPackageError(
+            "shadow headroom source proof execution phase is invalid"
+        )
+    proof_evidence = TheRundownQuotaProofEvidenceV1.from_payload(
+        proof_package.get("proof")
+    )
+    try:
+        proof_request = proof_authorization.request_for_proof(
+            proof_configuration_digest=proof_authorization.shadow_configuration_digest,
+            now=proof_evidence.request_started_at,
+        )
+        proof_evidence.validate(
+            request=proof_request,
+            now=now,
+            request_now=proof_evidence.request_started_at,
+        )
+    except NetworkShadowContractError as exc:
+        raise ControlledShadowAuthorizationPackageError(str(exc)) from exc
+    _validate_shadow_headroom_proof_payload(
+        proof_package, proof_authorization, proof_evidence
+    )
+    headroom = TheRundownQuotaHeadroomEvidenceV1(
+        provider=proof_evidence.provider,
+        account_scope=proof_evidence.account_scope,
+        observed_remaining_datapoints=proof_evidence.remaining_datapoints,
+        observed_at=proof_evidence.response_finished_at,
+        provenance_source=SHADOW_HEADROOM_PROVENANCE_SOURCE,
+        provenance_digest=proof_evidence.evidence_digest,
+        authorization_package_digest=proof_authorization.shadow_authorization_package_digest,
+        authorization_id=proof_authorization.shadow_authorization_id,
+        controlled_shadow_run_id=proof_authorization.shadow_controlled_shadow_run_id,
+        qualification_session_id=proof_authorization.shadow_qualification_session_id,
+        ceo_authorization_identity=proof_authorization.ceo_proof_authorization_identity,
+        evidence_digest="0" * 64,
+        proof_authorization_id=proof_authorization.proof_authorization_id,
+        proof_authorization_digest=proof_authorization.authorization_digest,
+        proof_evidence_digest=proof_evidence.evidence_digest,
+        proof_request_shape_digest=proof_evidence.request_shape_digest,
+        discovery_authorization_id=proof_authorization.discovery_authorization_id,
+        discovery_artifact_digest=proof_authorization.discovery_artifact_digest,
+        proof_billed_datapoints=proof_evidence.billed_datapoints,
+        proof_status_code=proof_evidence.status_code,
+        proof_quota_period=proof_evidence.quota_period,
+        proof_quota_used_datapoints=proof_evidence.quota_used_datapoints,
+        proof_quota_limit_datapoints=proof_evidence.quota_limit_datapoints,
+        proof_quota_reset_at=proof_evidence.quota_reset_at,
+    )
+    headroom = replace(headroom, evidence_digest=headroom.computed_evidence_digest)
+    headroom.validate(now=now)
+    output = _absolute_path(output_path, "shadow headroom output")
+    if output.exists():
+        raise ControlledShadowAuthorizationPackageError(
+            "shadow headroom output already exists; refusing overwrite"
+        )
+    payload = {
+        "schema_version": SHADOW_HEADROOM_ARTIFACT_SCHEMA_VERSION,
+        "execution_phase": "shadow_headroom",
+        "provenance_source": SHADOW_HEADROOM_PROVENANCE_SOURCE,
+        "proof_authorization": proof_authorization.as_payload(),
+        "proof": proof_evidence.as_payload(),
+        "request": dict(proof_package.get("request", {})),
+        "proof_safety": proof_package.get("safety"),
+        "headroom": headroom.as_payload(),
+        "safety": {
+            "network_calls": 0,
+            "receipt_issued": False,
+            "authority_changed": False,
+            "activation": False,
+            "publication": False,
+            "betting": False,
+            "monetary_spend_authorized": False,
+        },
+    }
+    try:
+        atomic_write_json(
+            output,
+            _jsonable(payload),
+            indent=2,
+            ensure_ascii=False,
+            sort_keys=True,
+        )
+        output.chmod(0o600)
+    except OSError as exc:
+        raise ControlledShadowAuthorizationPackageError(
+            "shadow headroom output could not be written"
+        ) from exc
+    return {
+        "status": "SHADOW_HEADROOM_CONFIRMED",
+        "artifact_path": str(output),
+        "headroom_evidence_digest": headroom.evidence_digest,
+        "proof_authorization_id": proof_authorization.proof_authorization_id,
+        "proof_billed_datapoints": proof_evidence.billed_datapoints,
+        "proof_remaining_datapoints": proof_evidence.remaining_datapoints,
+        "proof_evidence_digest": proof_evidence.evidence_digest,
+        "authorization_package_digest": headroom.authorization_package_digest,
+        "controlled_shadow_run_id": headroom.controlled_shadow_run_id,
+        "qualification_session_id": headroom.qualification_session_id,
+        "safety": payload["safety"],
+    }
 
 
 def _load_spend_control_evidence(
@@ -1159,15 +1496,18 @@ def run_guarded_quota_proof(
         raise ControlledShadowAuthorizationPackageError(
             "TOP5_B4_QUOTA_PROOF — second quota proof output is not allowed"
         )
-    proof_configuration_digest = _digest(
-        {
-            "schema_version": "top5-therundown-quota-proof-configuration-v1",
-            "proof_authorization_digest": proof_authorization.authorization_digest,
-            "request_shape_digest": proof_authorization.request_shape_digest,
-            "sport_id": proof_authorization.sport_id,
-            "snapshot_date": proof_authorization.snapshot_date.isoformat(),
-        }
-    )
+    if proof_authorization.proof_purpose == SHADOW_HEADROOM_PROOF_PURPOSE:
+        proof_configuration_digest = proof_authorization.shadow_configuration_digest
+    else:
+        proof_configuration_digest = _digest(
+            {
+                "schema_version": "top5-therundown-quota-proof-configuration-v1",
+                "proof_authorization_digest": proof_authorization.authorization_digest,
+                "request_shape_digest": proof_authorization.request_shape_digest,
+                "sport_id": proof_authorization.sport_id,
+                "snapshot_date": proof_authorization.snapshot_date.isoformat(),
+            }
+        )
     request = proof_authorization.request_for_proof(
         proof_configuration_digest=proof_configuration_digest,
         now=now,
@@ -1757,6 +2097,23 @@ class ControlledShadowAuthorizationPackageV1:
             raise ControlledShadowAuthorizationPackageError(
                 "authorization package provider identity is not canonical"
             )
+        discovery_authorization_id = configuration.get("discovery_authorization_id")
+        discovery_artifact_digest = configuration.get("discovery_artifact_digest")
+        if (discovery_authorization_id is None) != (
+            discovery_artifact_digest is None
+        ):
+            raise ControlledShadowAuthorizationPackageError(
+                "authorization package Discovery binding is incomplete"
+            )
+        if discovery_authorization_id is not None:
+            if not isinstance(discovery_authorization_id, str) or not discovery_authorization_id.strip():
+                raise ControlledShadowAuthorizationPackageError(
+                    "authorization package Discovery authorization binding is invalid"
+                )
+            _digest_value(
+                discovery_artifact_digest,
+                "authorization package Discovery artifact digest",
+            )
         required = {
             "ceo_authorization_identity",
             "authorization_id",
@@ -1811,6 +2168,9 @@ class ControlledShadowAuthorizationPackageV1:
 
 def prepare_authorization_package(
     configuration: TheRundownNetworkConfigurationV1,
+    *,
+    discovery_authorization_id: str | None = None,
+    discovery_artifact_digest: str | None = None,
 ) -> ControlledShadowAuthorizationPackageV1:
     """Prepare a disabled template without creating any authority."""
 
@@ -1819,6 +2179,19 @@ def prepare_authorization_package(
     if configuration.enabled is not False:
         raise ControlledShadowAuthorizationPackageError(
             "package preparation requires a disabled configuration"
+        )
+    if (discovery_authorization_id is None) != (discovery_artifact_digest is None):
+        raise ControlledShadowAuthorizationPackageError(
+            "Discovery authorization and artifact bindings must be supplied together"
+        )
+    if discovery_authorization_id is not None:
+        if not discovery_authorization_id.strip():
+            raise ControlledShadowAuthorizationPackageError(
+                "Discovery authorization binding is empty"
+            )
+        _digest_value(
+            discovery_artifact_digest,
+            "Discovery artifact digest",
         )
     scope = _scope_payload(configuration)
     configuration_payload = {
@@ -1841,6 +2214,9 @@ def prepare_authorization_package(
         "monetary_spend_authorized": False,
         "configuration_digest": configuration.configuration_digest,
     }
+    if discovery_authorization_id is not None:
+        configuration_payload["discovery_authorization_id"] = discovery_authorization_id
+        configuration_payload["discovery_artifact_digest"] = discovery_artifact_digest
     authorization_template = {
         "schema_version": NETWORK_SHADOW_SCHEMA_VERSION,
         "authorization_id": None,
@@ -2878,9 +3254,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     mode.add_argument("--preflight", action="store_true")
     mode.add_argument("--execute-network", action="store_true")
     mode.add_argument("--execute-quota-proof", action="store_true")
+    mode.add_argument("--materialize-shadow-headroom", action="store_true")
     parser.add_argument("--package", type=Path)
     parser.add_argument("--authorization", type=Path)
     parser.add_argument("--proof-authorization", type=Path)
+    parser.add_argument("--proof-evidence", type=Path)
     parser.add_argument("--quota-headroom", type=Path)
     parser.add_argument("--spend-control-evidence", type=Path)
     parser.add_argument(
@@ -2893,7 +3271,20 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--endpoint", default=THERUNDOWN_BASE_URL)
     args = parser.parse_args(argv)
     try:
-        if args.execute_quota_proof:
+        if args.materialize_shadow_headroom:
+            if args.proof_authorization is None or args.proof_evidence is None:
+                parser.error(
+                    "--proof-authorization and --proof-evidence are required "
+                    "with --materialize-shadow-headroom"
+                )
+            if args.output is None:
+                parser.error("--output is required with --materialize-shadow-headroom")
+            summary = materialize_shadow_headroom_evidence(
+                args.proof_authorization,
+                args.proof_evidence,
+                output_path=args.output,
+            )
+        elif args.execute_quota_proof:
             if args.output is None:
                 parser.error("--output is required with --execute-quota-proof")
             if args.proof_authorization is None:
@@ -2959,11 +3350,14 @@ __all__ = [
     "FUTURE_EXECUTION_COMMAND",
     "QUOTA_PROOF_COMMAND",
     "RECONCILIATION_SCHEMA_VERSION",
+    "SHADOW_HEADROOM_ARTIFACT_SCHEMA_VERSION",
+    "SHADOW_HEADROOM_PROVENANCE_SOURCE",
     "TOP5_LEAGUE_ORDER",
     "ControlledShadowAuthorizationPackageError",
     "ControlledShadowAuthorizationPackageV1",
     "FiveLeagueReconciliationV1",
     "QualificationReadyArtifactsV1",
+    "materialize_shadow_headroom_evidence",
     "prepare_authorization_package",
     "reconcile_controlled_shadow_run",
     "reconcile_controlled_shadow_run_with_b1_ll_artifact",

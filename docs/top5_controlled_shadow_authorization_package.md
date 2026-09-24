@@ -32,27 +32,29 @@ The generated package is inert: network execution, receipt issuance, active
 provider authority, scheduler registration, publication, activation, betting,
 and monetary spend are all false.
 
-Before any five-league request, Path B performs one separately budgeted,
-provider-native quota-proof transaction. It is not one of the five league
-captures and it never continues automatically into league execution. The proof
-uses the narrow event route with one regulation market and the approved free
-affiliate set, accepts at most 56 billed datapoints for this dated-snapshot
-proof request, permits zero retries, and
-requires fresh, account-bound response headers proving at least 275 remaining
-datapoints. Missing, stale, malformed, contradictory, provider-mismatched,
-under-budget, or over-cap evidence fails closed. The proof output records the
-provider request/response timestamps, safe billing/rate/tier headers, request
-shape digest, response digest, credential fingerprint, authorization/package
-bindings, and `execution_phase=quota_proof`.
+Before any five-league request, the post-Discovery path performs one
+separately authorized Shadow Headroom Proof transaction. It is not one of the
+five league captures. The proof uses the narrow event route with one
+regulation market and the approved free affiliate set, accepts at most 56
+billed datapoints, permits zero retries, and requires fresh, account-bound
+response headers proving at least 275 remaining datapoints. Missing, stale,
+malformed, contradictory, provider-mismatched, under-budget, or over-cap
+evidence fails closed. Only a proof authorization whose purpose is
+`controlled_shadow_headroom` can be transformed into trusted headroom; the
+prior Discovery proof and generic quota proofs are rejected. The resulting
+artifact records provider provenance, billing/rate/tier headers, request-shape
+and response digests, credential binding, package/run/session/CEO bindings,
+and `provenance_source=therundown_shadow_headroom_proof`.
 
 The spend gate is separate from quota headroom. Before the proof request, the
 operator must provide recent provider evidence showing the hard-capped Free
 tier (`x-tier=free`, daily 20,000 limit, and the one-request rate limit). This
 gate is used only to rule out paid overage; it cannot supply or assert current
 remaining quota. If paid overage cannot be bounded, the command stops with
-`TOP5_B4_QUOTA_PROOF — BLOCKED_SPEND_CONTROL`. If the proof succeeds, B4 stops
-with `TOP5_B4_QUOTA_PROOF — QUOTA_CONFIRMED`; no five-league request, receipt,
-authority, activation, publication, betting, or production mutation follows.
+`TOP5_B4_QUOTA_PROOF — BLOCKED_SPEND_CONTROL`. If the proof succeeds, B4
+materializes the trusted headroom artifact and runs the zero-network preflight.
+Only a green preflight can admit the five-league shadow; no receipt, authority,
+activation, publication, betting, or production mutation follows automatically.
 
 Spend control may also use the separately typed
 `top5-spend-control-dashboard-attestation-v1` operator evidence. It records
@@ -177,8 +179,21 @@ python -m src.football.top5_controlled_shadow_authorization_package \
 ```
 
 The old explicit `--execute-network` path remains the five-league path and
-still requires a separately validated `TheRundownQuotaHeadroomEvidenceV1`
-artifact. It is not automatically fed by a quota proof:
+still requires the deterministically materialized, separately validated
+`TheRundownQuotaHeadroomEvidenceV1` artifact. A generic quota proof is not
+automatically accepted as headroom. Materialize it only through the guarded
+bridge:
+
+```text
+python -m src.football.top5_controlled_shadow_authorization_package \
+  --materialize-shadow-headroom \
+  --proof-authorization /operator-only/top5/shadow-headroom-proof-authorization.json \
+  --proof-evidence /operator-only/top5/shadow-headroom-proof.json \
+  --output /operator-only/top5/shadow-headroom-evidence.json
+```
+
+Then run the five-league path with the exact package, CEO authorization, and
+headroom artifact:
 
 ```text
 python -m src.football.top5_controlled_shadow_authorization_package \

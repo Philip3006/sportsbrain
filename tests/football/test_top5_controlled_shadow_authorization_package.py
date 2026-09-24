@@ -9,6 +9,8 @@ from pathlib import Path
 
 import pytest
 
+import src.football.top5_controlled_shadow_authorization_package as b4_package
+import src.football.top5_therundown_network_shadow as network_shadow
 from src.football.odds.therundown import THERUNDOWN_ADAPTER_VERSION
 from src.football.odds.therundown_la_liga_capture import (
     validate_same_run_ll_capture,
@@ -17,8 +19,11 @@ from src.football.provider_cascade.contracts import QuotaSnapshot
 from src.football.top5_controlled_shadow_authorization_package import (
     CANONICAL_CANDIDATE_PROVIDER,
     FUTURE_EXECUTION_COMMAND,
+    SHADOW_HEADROOM_ARTIFACT_SCHEMA_VERSION,
+    SHADOW_HEADROOM_PROVENANCE_SOURCE,
     TOP5_LEAGUE_ORDER,
     ControlledShadowAuthorizationPackageError,
+    materialize_shadow_headroom_evidence,
     prepare_authorization_package,
     reconcile_controlled_shadow_run,
     reconcile_controlled_shadow_run_with_b1_ll_artifact,
@@ -30,6 +35,7 @@ from src.football.top5_controlled_shadow_provider_qualification import (
 )
 from src.football.top5_shadow_provider_redundancy import make_fixture_key
 from src.football.top5_therundown_network_shadow import (
+    SHADOW_HEADROOM_PROOF_PURPOSE,
     NetworkShadowRunStatus,
     TheRundownCanonicalPayloadAdapterV1,
     TheRundownNetworkHttpResponseV1,
@@ -37,6 +43,7 @@ from src.football.top5_therundown_network_shadow import (
     TheRundownNetworkRequestScopeV1,
     TheRundownNetworkShadowExecutorV1,
     TheRundownQuotaHeadroomEvidenceV1,
+    TheRundownQuotaProofAuthorizationV1,
     TheRundownReplayTransportV1,
 )
 from tests.football.test_top5_therundown_network_shadow import (
@@ -875,6 +882,155 @@ def _cli_input_files(tmp_path: Path):
     )
 
 
+def _dedicated_headroom_files(tmp_path: Path, monkeypatch):
+    _, configuration, authorization = _network_run()
+    disabled = replace(configuration, enabled=False, configuration_digest="")
+    disabled = replace(
+        disabled, configuration_digest=disabled.computed_configuration_digest
+    )
+    discovery_id = "CEO-TOP5-B4-PROVIDER-NATIVE-DISCOVERY-TEST"
+    discovery_digest = "d" * 64
+    package = prepare_authorization_package(
+        disabled,
+        discovery_authorization_id=discovery_id,
+        discovery_artifact_digest=discovery_digest,
+    )
+    proof_request_shape_digest = network_shadow._quota_proof_request_shape_digest(
+        sport_id=3,
+        snapshot_date=NOW.date(),
+    )
+    proof_authorization = TheRundownQuotaProofAuthorizationV1(
+        proof_authorization_id="CEO-TOP5-B4-SHADOW-HEADROOM-PROOF-TEST",
+        ceo_proof_authorization_identity=authorization.ceo_authorization_identity,
+        proof_id="quota-proof:shadow-headroom-test",
+        provider=authorization.provider,
+        sport_id=3,
+        snapshot_date=NOW.date(),
+        request_shape_digest=proof_request_shape_digest,
+        adapter_version=configuration.adapter_version,
+        adapter_source_sha=configuration.adapter_source_sha,
+        issued_at=NOW - timedelta(minutes=1),
+        expires_at=NOW + timedelta(minutes=5),
+        authorization_digest="0" * 64,
+        proof_purpose=SHADOW_HEADROOM_PROOF_PURPOSE,
+        shadow_authorization_package_digest=package.package_digest,
+        shadow_authorization_id=authorization.authorization_id,
+        shadow_controlled_shadow_run_id=authorization.controlled_shadow_run_id,
+        shadow_qualification_session_id=authorization.qualification_session_id,
+        shadow_configuration_digest=authorization.configuration_digest,
+        discovery_authorization_id=discovery_id,
+        discovery_artifact_digest=discovery_digest,
+    )
+    proof_authorization = replace(
+        proof_authorization,
+        authorization_digest=proof_authorization.computed_authorization_digest,
+    )
+    proof_authorization_path = tmp_path / "shadow-headroom-proof-authorization.json"
+    proof_authorization_path.write_text(
+        json.dumps({"authorization": proof_authorization.as_payload()}),
+        encoding="utf-8",
+    )
+    spend_path = tmp_path / "spend-control.json"
+    spend_path.write_text(
+        json.dumps(
+            {
+                "provider": authorization.provider,
+                "observed_at": (NOW - timedelta(seconds=30)).isoformat(),
+                "headers": {
+                    "x-tier": "free",
+                    "x-datapoints-period": "daily",
+                    "x-datapoints-limit": "20000",
+                    "x-rate-limit": "1",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    credential_path = tmp_path / "therundown.env"
+    credential_path.write_text(
+        "THERUNDOWN_API_KEY=offline-test-secret\n", encoding="utf-8"
+    )
+    credential_path.chmod(0o600)
+
+    class _HeadroomProofClient:
+        def __init__(self):
+            self.calls = []
+
+        def execute(self, request):
+            self.calls.append(request)
+            return TheRundownNetworkHttpResponseV1(
+                status_code=200,
+                payload={"events": [{"event_id": "headroom-proof-event"}]},
+                headers={
+                    "X-Datapoints": "56",
+                    "X-Datapoints-Used": "56",
+                    "X-Datapoints-Remaining": "1000",
+                    "X-Datapoints-Limit": "1056",
+                    "X-Datapoints-Period": "daily",
+                    "X-Datapoints-Reset": "2026-09-19T00:00:00Z",
+                    "X-Tier": "free",
+                    "X-Rate-Limit": "1",
+                    "X-Data-Delay-Seconds": "300",
+                },
+                started_at=NOW - timedelta(seconds=1),
+                finished_at=NOW,
+            )
+
+    monkeypatch.setattr(
+        b4_package,
+        "quota_proof_consumption_state_path",
+        lambda: tmp_path / "canonical-consumption-store",
+    )
+    proof_output = tmp_path / "shadow-headroom-proof.json"
+    proof_client = _HeadroomProofClient()
+    proof_summary = b4_package.run_guarded_quota_proof(
+        proof_authorization_path,
+        spend_control_evidence_path=spend_path,
+        credential_file=credential_path,
+        output_path=proof_output,
+        clock=lambda: NOW,
+        http_client=proof_client,
+    )
+    headroom_path = tmp_path / "shadow-headroom-evidence.json"
+    headroom_summary = materialize_shadow_headroom_evidence(
+        proof_authorization_path,
+        proof_output,
+        output_path=headroom_path,
+        clock=lambda: NOW,
+    )
+    authorization = replace(
+        authorization,
+        quota_headroom_evidence_digest=headroom_summary[
+            "headroom_evidence_digest"
+        ],
+    )
+    package_path = tmp_path / "authorization-package.json"
+    package_path.write_text(json.dumps(package.as_payload()), encoding="utf-8")
+    authorization_path = tmp_path / "ceo-authorization.json"
+    authorization_path.write_text(
+        json.dumps(
+            {
+                "package_digest": package.package_digest,
+                "authorization": authorization.as_payload(),
+            }
+        ),
+        encoding="utf-8",
+    )
+    return {
+        "package_path": package_path,
+        "authorization_path": authorization_path,
+        "headroom_path": headroom_path,
+        "credential_path": credential_path,
+        "proof_authorization_path": proof_authorization_path,
+        "proof_output": proof_output,
+        "proof_summary": proof_summary,
+        "proof_client": proof_client,
+        "headroom_summary": headroom_summary,
+        "package": package,
+        "authorization": authorization,
+    }
+
+
 def _guarded_cli_run(tmp_path: Path, response_factory, *, output_name="result.json"):
     package_path, authorization_path, quota_path, credential_path, _, _, _ = (
         _cli_input_files(tmp_path)
@@ -900,13 +1056,93 @@ def test_guarded_cli_preflight_blocks_without_trusted_quota_source(tmp_path):
     )
     with pytest.raises(
         ControlledShadowAuthorizationPackageError,
-        match="NO_TRUSTWORTHY_PRE_REQUEST_QUOTA_SOURCE",
+        match="TRUSTED_SHADOW_HEADROOM_REQUIRED",
     ):
         run_guarded_network_preflight(
             package_path,
             authorization_path,
             quota_headroom_path=quota_path,
             credential_file=credential_path,
+            clock=lambda: NOW,
+        )
+
+
+def test_dedicated_shadow_headroom_proof_materializes_and_preflight_stays_network_free(
+    tmp_path, monkeypatch
+):
+    inputs = _dedicated_headroom_files(tmp_path, monkeypatch)
+    assert inputs["proof_summary"]["billed_datapoints"] == 56
+    assert inputs["proof_summary"]["remaining_datapoints"] == 1000
+    assert len(inputs["proof_client"].calls) == 1
+    assert inputs["proof_client"].calls[0].query["affiliate_ids"] == "19"
+    assert inputs["headroom_summary"]["proof_billed_datapoints"] == 56
+    assert inputs["headroom_summary"]["proof_remaining_datapoints"] == 1000
+    headroom = json.loads(inputs["headroom_path"].read_text())
+    assert headroom["schema_version"] == SHADOW_HEADROOM_ARTIFACT_SCHEMA_VERSION
+    assert headroom["provenance_source"] == SHADOW_HEADROOM_PROVENANCE_SOURCE
+    assert headroom["proof"]["raw_header_evidence"]["x-tier"] == "free"
+    assert headroom["proof"]["raw_header_evidence"]["x-datapoints-period"] == (
+        "daily"
+    )
+    preflight = run_guarded_network_preflight(
+        inputs["package_path"],
+        inputs["authorization_path"],
+        quota_headroom_path=inputs["headroom_path"],
+        credential_file=inputs["credential_path"],
+        clock=lambda: NOW,
+    )
+    assert preflight["status"] == "DRY_RUN_READY"
+    assert preflight["network_calls"] == 0
+    assert preflight["observed_remaining_datapoints"] == 1000
+
+
+def test_old_generic_proof_cannot_materialize_shadow_headroom(tmp_path, monkeypatch):
+    inputs = _dedicated_headroom_files(tmp_path, monkeypatch)
+    payload = json.loads(inputs["proof_authorization_path"].read_text())
+    payload["authorization"]["proof_purpose"] = "quota_proof"
+    payload["authorization"]["authorization_digest"] = "0" * 64
+    inputs["proof_authorization_path"].write_text(json.dumps(payload))
+    with pytest.raises(ControlledShadowAuthorizationPackageError):
+        materialize_shadow_headroom_evidence(
+            inputs["proof_authorization_path"],
+            inputs["proof_output"],
+            output_path=tmp_path / "rejected-headroom.json",
+            clock=lambda: NOW,
+        )
+
+
+def test_stale_or_arbitrary_headroom_artifact_is_rejected_before_network(
+    tmp_path, monkeypatch
+):
+    package_path, authorization_path, quota_path, credential_path, _, _, _ = (
+        _cli_input_files(tmp_path)
+    )
+    with pytest.raises(
+        ControlledShadowAuthorizationPackageError,
+        match="TRUSTED_SHADOW_HEADROOM_REQUIRED",
+    ):
+        run_guarded_network_preflight(
+            package_path,
+            authorization_path,
+            quota_headroom_path=quota_path,
+            credential_file=credential_path,
+            clock=lambda: NOW,
+        )
+
+
+def test_shadow_headroom_binding_mutation_fails_closed_before_network(
+    tmp_path, monkeypatch
+):
+    inputs = _dedicated_headroom_files(tmp_path, monkeypatch)
+    payload = json.loads(inputs["headroom_path"].read_text())
+    payload["headroom"]["authorization_id"] = "other-shadow-authorization"
+    inputs["headroom_path"].write_text(json.dumps(payload))
+    with pytest.raises(ControlledShadowAuthorizationPackageError):
+        run_guarded_network_preflight(
+            inputs["package_path"],
+            inputs["authorization_path"],
+            quota_headroom_path=inputs["headroom_path"],
+            credential_file=inputs["credential_path"],
             clock=lambda: NOW,
         )
 
@@ -965,7 +1201,7 @@ def test_guarded_real_path_rejects_self_authored_quota_provenance(tmp_path):
     transport = _NetworkStubTransport(lambda request: pytest.fail("network called"))
     with pytest.raises(
         ControlledShadowAuthorizationPackageError,
-        match="NO_TRUSTWORTHY_PRE_REQUEST_QUOTA_SOURCE",
+        match="TRUSTED_SHADOW_HEADROOM_REQUIRED",
     ):
         run_guarded_network_execution(
             package_path,
@@ -1059,7 +1295,7 @@ def test_guarded_cli_credential_missing_or_unsafe_fails_before_request(tmp_path)
     missing = tmp_path / "missing.env"
     with pytest.raises(
         ControlledShadowAuthorizationPackageError,
-        match="NO_TRUSTWORTHY_PRE_REQUEST_QUOTA_SOURCE",
+        match="TRUSTED_SHADOW_HEADROOM_REQUIRED",
     ):
         run_guarded_network_preflight(
             package_path,
@@ -1074,7 +1310,7 @@ def test_guarded_cli_credential_missing_or_unsafe_fails_before_request(tmp_path)
     unsafe.chmod(0o644)
     with pytest.raises(
         ControlledShadowAuthorizationPackageError,
-        match="NO_TRUSTWORTHY_PRE_REQUEST_QUOTA_SOURCE",
+        match="TRUSTED_SHADOW_HEADROOM_REQUIRED",
     ):
         run_guarded_network_preflight(
             package_path,
@@ -1178,7 +1414,7 @@ def test_guarded_cli_real_execution_stays_blocked_without_trusted_quota_source(
     )
     with pytest.raises(
         ControlledShadowAuthorizationPackageError,
-        match="NO_TRUSTWORTHY_PRE_REQUEST_QUOTA_SOURCE",
+        match="TRUSTED_SHADOW_HEADROOM_REQUIRED",
     ):
         run_guarded_network_execution(
             package_path,
