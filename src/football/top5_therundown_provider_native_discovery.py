@@ -33,6 +33,7 @@ from src.football.odds.therundown import (
 from src.football.production_contracts import Fixture
 from src.football.top5_shadow_provider_redundancy import make_fixture_key
 from src.football.top5_therundown_event_discovery import (
+    B4_QUOTA_PROOF_AFFILIATE_IDS,
     B4_QUOTA_PROOF_SPORT_ID,
     DISCOVERY_LEAGUE_ORDER,
     EventDiscoveryContractError,
@@ -382,6 +383,7 @@ def _request_shape_payload(search_start_date: date) -> list[dict[str, object]]:
                 f"{(search_start_date + timedelta(days=offset)).isoformat()}"
             ),
             "query": {
+                "affiliate_ids": ",".join(B4_QUOTA_PROOF_AFFILIATE_IDS),
                 "market_ids": str(THERUNDOWN_MONEYLINE_MARKET_ID),
                 "main_line": "true",
                 "hide_closed": "true",
@@ -683,6 +685,7 @@ class TheRundownProviderNativeDiscoveryRequestV1:
     @property
     def query(self) -> dict[str, str]:
         return {
+            "affiliate_ids": ",".join(B4_QUOTA_PROOF_AFFILIATE_IDS),
             "market_ids": str(THERUNDOWN_MONEYLINE_MARKET_ID),
             "main_line": "true",
             "hide_closed": "true",

@@ -27,6 +27,7 @@ from src.football.top5_controlled_shadow_provider_qualification import (
 )
 from src.football.top5_shadow_provider_redundancy import make_fixture_key
 from src.football.top5_therundown_network_shadow import (
+    QUOTA_PROOF_AFFILIATE_IDS,
     THERUNDOWN_DATED_SNAPSHOT_QUOTA_PROOF_DATAPOINTS_PER_REQUEST,
     THERUNDOWN_OBSERVED_DATAPOINTS_PER_REQUEST,
     TOP5_CONTROLLED_SHADOW_DATAPOINT_BUDGET,
@@ -750,3 +751,20 @@ def test_network_request_contract_has_no_retry_and_exact_scope_binding():
     assert request.request_identity == "request-EPL"
     assert request.sequence == 0
     assert request.market_type == MARKET_PREMATCH_1X2
+    http_request = TheRundownCanonicalPayloadAdapterV1().build_request(
+        request,
+        endpoint="https://therundown.example/events",
+        api_key="injected-test-only",
+    )
+    assert http_request.query["affiliate_ids"] == ",".join(
+        QUOTA_PROOF_AFFILIATE_IDS
+    )
+    assert configuration.provider_affiliate_ids == QUOTA_PROOF_AFFILIATE_IDS
+    assert configuration.as_payload()["provider_affiliate_ids"] == ["19"]
+    assert authorization.as_payload()["provider_affiliate_ids"] == ["19"]
+
+
+def test_network_shadow_rejects_alternate_provider_affiliate_scope():
+    configuration = _configuration(provider_affiliate_ids=("3",))
+    with pytest.raises(NetworkShadowExecutionBlocked, match="affiliate scope"):
+        configuration.validate()

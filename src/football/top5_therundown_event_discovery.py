@@ -114,6 +114,15 @@ class EventDiscoveryContractError(ValueError):
 class EventDiscoveryExecutionBlocked(EventDiscoveryContractError):
     """Fail-closed refusal during the bounded discovery stage."""
 
+    def __init__(
+        self,
+        message: str,
+        *,
+        diagnostic: Mapping[str, object] | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.diagnostic = dict(diagnostic) if diagnostic is not None else None
+
 
 def _operator_runtime_state_path(relative_path: str) -> Path:
     try:
@@ -1801,7 +1810,17 @@ def _billing(response: TheRundownEventDiscoveryResponseV1) -> tuple[int, int]:
             "discovery quota counters do not reconcile"
         )
     if datapoints > THERUNDOWN_OBSERVED_DATAPOINTS_PER_REQUEST:
-        raise EventDiscoveryExecutionBlocked("discovery request datapoint cap exceeded")
+        raise EventDiscoveryExecutionBlocked(
+            "discovery request datapoint cap exceeded",
+            diagnostic={
+                "diagnostic_kind": "rejected_observed_x_datapoints",
+                "evidence_status": "rejected_observed",
+                "header": "x-datapoints",
+                "raw_provider_value": lowered["x-datapoints"],
+                "authorized_cap": THERUNDOWN_OBSERVED_DATAPOINTS_PER_REQUEST,
+                "accepted_as_billing": False,
+            },
+        )
     return datapoints, remaining
 
 
