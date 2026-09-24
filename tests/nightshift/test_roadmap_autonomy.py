@@ -96,6 +96,7 @@ def test_top5_finalization_wave_is_explicit_and_bounded(tmp_path: Path) -> None:
         "builder-2",
         "builder-3",
         "builder-4",
+        "terminal-5",
     )
     assert dispatcher.roadmap.by_id("top5-final-b2-preflight").dependency_item_ids == (
         "top5-final-b4-dossier",

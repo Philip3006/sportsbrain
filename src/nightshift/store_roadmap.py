@@ -183,7 +183,7 @@ class StoreRoadmapMixin:
         *,
         reason: str,
         signature: str,
-        actor: str = "builder-5",
+        actor: str = "nightshift-dispatcher",
         now: datetime | None = None,
     ) -> bool:
         """Persist a deterministic skip without emitting a busy-loop write."""
@@ -221,7 +221,7 @@ class StoreRoadmapMixin:
             return True
 
     def release_eligible_blocked(
-        self, *, now: datetime | None = None, actor: str = "builder-5"
+        self, *, now: datetime | None = None, actor: str = "nightshift-dispatcher"
     ) -> list[str]:
         """Release only dependency/debug parking; policy blocks remain closed."""
 

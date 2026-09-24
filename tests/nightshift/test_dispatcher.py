@@ -107,7 +107,7 @@ def _spec(
     )
 
 
-def test_default_governance_registers_only_builders_one_to_four(tmp_path: Path) -> None:
+def test_default_governance_registers_terminal_pool_and_separate_dispatcher(tmp_path: Path) -> None:
     dispatcher = _dispatcher(tmp_path)
 
     assert dispatcher.registry.builder_ids == (
@@ -115,12 +115,13 @@ def test_default_governance_registers_only_builders_one_to_four(tmp_path: Path) 
         "builder-2",
         "builder-3",
         "builder-4",
+        "terminal-5",
     )
     assert all(
         template.builder_id != "builder-5"
         for template in dispatcher.templates.templates
     )
-    assert dispatcher.status()["dispatcher_id"] == "builder-5"
+    assert dispatcher.status()["dispatcher_id"] == "nightshift-dispatcher"
 
 
 @pytest.mark.parametrize(
@@ -234,29 +235,15 @@ def test_code_change_template_is_pending_until_approved(tmp_path: Path) -> None:
     assert approved.state is TaskState.QUEUED
 
 
-def test_builder_five_is_never_a_worker_or_execution_target(tmp_path: Path) -> None:
+def test_dispatcher_is_not_a_terminal_worker_and_terminal_five_is_available(tmp_path: Path) -> None:
     dispatcher = _dispatcher(tmp_path)
+    task = dispatcher.submit(_spec("terminal-5"))
+    assert task.execution_worker == "terminal-5"
+    assert dispatcher.claim_next("terminal-5") is not None
     with pytest.raises(DispatcherRecursionError):
-        dispatcher.submit(_spec("builder-5"))
+        dispatcher.claim_next("nightshift-dispatcher")
     with pytest.raises(DispatcherRecursionError):
-        dispatcher.claim_next("builder-5")
-    with pytest.raises(DispatcherRecursionError):
-        BuilderRegistry.from_mapping(
-            {
-                "version": 1,
-                "dispatcher": {"builder_id": "builder-5", "can_be_worker": False},
-                "builders": [
-                    {
-                        "builder_id": "builder-5",
-                        "display_name": "recursive",
-                        "role": "invalid",
-                        "repo_allowlist": ["Philip3006/sportsbrain"],
-                        "branch_prefix": "nightshift/builder-5/",
-                        "task_types": ["invalid"],
-                    }
-                ],
-            }
-        )
+        dispatcher.registry.assert_worker_target("nightshift-dispatcher")
 
 
 def test_unknown_builder_is_not_inferred_from_task_type(tmp_path: Path) -> None:

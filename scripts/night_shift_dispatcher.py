@@ -1,4 +1,4 @@
-"""Operator CLI for the governed Builder 5 Night Shift dispatcher.
+"""Operator CLI for the governed Night Shift dispatcher control plane.
 
 The CLI manages queue state only. Worker code is injected through the Python
 API so arbitrary shell commands cannot be smuggled into a queue operation.

@@ -24,6 +24,7 @@ from .errors import (
     InvalidTaskError,
     SafetyViolation,
     TaskNotFoundError,
+    UnknownBuilderError,
 )
 from .models import (
     DISPATCHER_ID,
@@ -39,7 +40,7 @@ from .policy import SafetyPolicy
 from .recovery import DeliveryVerificationError, verify_github_pull_request
 from .registry import BuilderRegistry
 from .roadmap import RoadmapRegistry
-from .status import operator_snapshot
+from .status import operator_snapshot, task_summary
 from .store import DispatcherStore
 from .task_states import DEPENDENCY_SATISFIED_STATES
 from .templates import TemplateRegistry
@@ -197,15 +198,19 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
         if blocked_reason is None:
             self.policy.validate(task, definition)
         if task.builder_id != definition.builder_id:
-            task = replace(task, builder_id=definition.builder_id)
+            task = replace(
+                task,
+                builder_id=definition.builder_id,
+                execution_worker=definition.builder_id,
+            )
         if task.template_id is not None:
             template = self.templates.resolve(task.template_id)
             if (
-                template.builder_id != task.builder_id
-                or template.task_type != task.task_type
+                template.task_type != task.task_type
+                or (template.app_owner and template.app_owner != task.app_owner)
             ):
                 raise InvalidTaskError(
-                    "template does not match the explicit task builder/type"
+                    "template does not match the explicit APP owner/type"
                 )
         self._validate_dependencies(task)
         existing = (
@@ -256,6 +261,11 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
         roadmap_item_id: str | None = None,
         debug_budget: int = 0,
         repeated_failure_limit: int = 2,
+        execution_worker: str | None = None,
+        app_owner: str | None = None,
+        required_capabilities: tuple[str, ...] | None = None,
+        authority_requirements: tuple[str, ...] | None = None,
+        verification_matrix_version: str | None = None,
     ) -> TaskRecord:
         template = self.templates.resolve(template_id)
         return self.submit(
@@ -281,6 +291,11 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
                 roadmap_item_id=roadmap_item_id,
                 debug_budget=debug_budget,
                 repeated_failure_limit=repeated_failure_limit,
+                execution_worker=execution_worker,
+                app_owner=app_owner,
+                required_capabilities=required_capabilities,
+                authority_requirements=authority_requirements,
+                verification_matrix_version=verification_matrix_version,
             )
         )
 
@@ -629,6 +644,35 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
             actor=self.dispatcher_id,
             now=self.clock(),
         )
+    def _select_execution_worker(self, item: Any) -> str | None:
+        """Choose free terminal capacity from the reviewed worker pool."""
+
+        template = self.templates.resolve(item.template_id)
+        active = {
+            record.terminal_worker_id
+            for record in self.store.list_tasks(limit=1000)
+            if record.lease_active
+        }
+        preferred = [item.builder_id, *self.registry.builder_ids]
+        seen: set[str] = set()
+        for candidate in preferred:
+            if candidate in seen:
+                continue
+            seen.add(candidate)
+            try:
+                definition = self.registry.assert_worker_target(candidate)
+            except (UnknownBuilderError, SafetyViolation):
+                continue
+            if definition.builder_id in active:
+                continue
+            if template.task_type not in definition.task_types and template.task_type not in definition.delegated_task_types:
+                continue
+            if not set(template.required_capabilities).issubset(definition.capabilities):
+                continue
+            if template.risk_class not in definition.allowed_risk_classes:
+                continue
+            return definition.builder_id
+        return None
 
     def select_next_roadmap_task(
         self, *, builder_id: str | None = None
@@ -658,6 +702,8 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
             ):
                 continue
             if builder_id is not None and item.builder_id != builder_id:
+                # ``builder_id`` is a compatibility filter for callers that
+                # still pin a worker.  The pool path below is capability based.
                 continue
             if row.get("task_id"):
                 existing = self.store.get(row["task_id"])
@@ -714,16 +760,26 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
                         item, "soft_backpressure_preference_for_safe_work"
                     )
         item, row, _ = candidates[selected_index]
-        definition = self.registry.assert_worker_target(item.builder_id)
+        selected_worker = builder_id or self._select_execution_worker(item)
+        if selected_worker is None:
+            self._record_roadmap_skip(item, "no_free_capable_terminal_worker")
+            return None
+        definition = self.registry.assert_worker_target(selected_worker)
         task = self.submit_template(
                 item.template_id,
                 branch=f"{definition.branch_prefix}{item.item_id}",
                 payload=item.payload,
-                requested_by="builder-5-roadmap",
+                requested_by="nightshift-dispatcher:roadmap",
                 idempotency_key=item.idempotency_key,
                 priority=item.priority,
                 debug_budget=item.debug_budget,
                 repeated_failure_limit=item.repeated_failure_limit,
+                execution_worker=selected_worker,
+                app_owner=(
+                    getattr(item, "app_owner", None)
+                    or self.templates.resolve(item.template_id).app_owner
+                    or f"APP_B{item.builder_id.rsplit('-', 1)[-1]}"
+                ),
                 allowed_paths=tuple(getattr(item, "governed_paths", ())),
                 resource_locks=tuple(getattr(item, "resource_locks", ())),
                 roadmap_item_id=item.item_id,
@@ -797,6 +853,64 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
         if isinstance(limit, bool) or not 1 <= limit <= 100:
             raise SafetyViolation("autonomous sessions must be bounded to 100 cycles")
         return self.run_autonomous_cycle(builder_id, executor, max_tasks=limit)
+
+    def run_worker_pool(
+        self,
+        executors: Mapping[str, WorkerExecutor] | WorkerExecutor,
+        *,
+        max_tasks: int = 100,
+    ) -> list[TaskRecord]:
+        """Continuously dispatch eligible work to free terminal capacity.
+
+        The dispatcher, rather than a human or a fixed Builder number, chooses
+        the next capable worker.  Executors are injected adapters; this method
+        never grants APP authority or starts an external provider by itself.
+        """
+
+        if isinstance(max_tasks, bool) or not 1 <= max_tasks <= 1000:
+            raise SafetyViolation("max_tasks must be between 1 and 1000")
+        completed: list[TaskRecord] = []
+        for _ in range(max_tasks):
+            task = self.select_next_roadmap_task()
+            if task is not None:
+                worker = task.terminal_worker_id
+                result = self.run_once(
+                    worker, self._pool_executor(executors, worker)
+                )
+            else:
+                result = None
+                for worker in self.registry.builder_ids:
+                    candidate = self.run_once(
+                        worker, self._pool_executor(executors, worker)
+                    )
+                    if candidate is not None:
+                        result = candidate
+                        break
+                if result is None:
+                    break
+            if result is None:
+                break
+            completed.append(result)
+            self._refresh_roadmap()
+        return completed
+
+    @staticmethod
+    def _pool_executor(
+        executors: Mapping[str, WorkerExecutor] | WorkerExecutor,
+        worker: str,
+    ) -> WorkerExecutor:
+        if not isinstance(executors, Mapping):
+            return executors
+        executor = executors.get(worker) or executors.get("default")
+        if executor is None:
+            raise SafetyViolation(
+                f"no executor adapter registered for terminal worker {worker}"
+            )
+        return executor
+
+    # Explicit alias for integrations that call the control-plane operation by
+    # its scheduling name.
+    dispatch_worker_pool = run_worker_pool
 
     def status(self) -> dict[str, Any]:
         result = self.store.stats()
@@ -875,6 +989,53 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
             paused=result["paused"],
             draining=result["draining"],
         )
+        active_states = {
+            TaskState.CLAIMED,
+            TaskState.RUNNING,
+            TaskState.VERIFYING,
+            TaskState.DELIVERY_RECONCILING,
+        }
+        app_workstreams = {}
+        for app_owner in ("APP_B1", "APP_B2", "APP_B3", "APP_B4", "APP_B5"):
+            owned = [record for record in records if record.app_owner == app_owner]
+            app_workstreams[app_owner] = {
+                "status": "active"
+                if any(record.state in active_states for record in owned)
+                else "blocked"
+                if any(record.state in {TaskState.BLOCKED, TaskState.FAILED_SAFE} for record in owned)
+                else "idle",
+                "active_tasks": [task_summary(record) for record in owned if record.state in active_states],
+                "blockers": [
+                    task_summary(record)
+                    for record in owned
+                    if record.state in {TaskState.BLOCKED, TaskState.FAILED_SAFE, TaskState.PAUSED_QUOTA}
+                ],
+                "dependencies": [
+                    record.task_id
+                    for record in owned
+                    if record.state is TaskState.WAITING_DEPENDENCY
+                ],
+                "hard_gates": sorted(
+                    {
+                        requirement
+                        for record in owned
+                        for requirement in record.authority_requirements
+                    }
+                ),
+            }
+        terminal_capacity = {}
+        for definition in self.registry.builders:
+            owned = [record for record in records if record.terminal_worker_id == definition.builder_id]
+            current = next((record for record in owned if record.state in active_states), None)
+            terminal_capacity[definition.builder_id] = {
+                "status": current.state.value.lower() if current else "idle",
+                "current_task": task_summary(current) if current else None,
+                "app_owner": current.app_owner if current else None,
+                "lease": current.lease_expires_at if current else None,
+                "heartbeat": current.updated_at if current else None,
+                "capabilities": list(definition.capabilities),
+                "max_concurrency": definition.max_concurrency,
+            }
         if (
             queue_mode == "CONTINUOUS_AUTONOMOUS"
             and not operator["next_eligible_explicit_task"]
@@ -885,7 +1046,14 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
         result.update(
             {
                 "dispatcher_id": self.dispatcher_id,
+                "dispatcher_health": {
+                    "status": "paused" if result["paused"] else "draining" if result["draining"] else "healthy",
+                    "control_plane_identity": self.dispatcher_id,
+                    "is_terminal_worker": False,
+                },
                 "registered_builders": list(self.registry.builder_ids),
+                "app_workstreams": app_workstreams,
+                "terminal_capacity": terminal_capacity,
                 "registered_templates": [
                     template.template_id for template in self.templates.templates
                 ],

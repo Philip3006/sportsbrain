@@ -1,8 +1,9 @@
 {
   "version": 1,
   "dispatcher": {
-    "builder_id": "builder-5",
-    "display_name": "Builder 5 — Autonomous Development / Night Shift Dispatcher",
+    "builder_id": "nightshift-dispatcher",
+    "dispatcher_id": "nightshift-dispatcher",
+    "display_name": "Night Shift Dispatcher — Control Plane",
     "can_be_worker": false
   },
   "builders": [
@@ -17,7 +18,9 @@
       "allowed_risk_classes": ["read_only", "code_change"],
       "max_concurrency": 1,
       "enabled": true,
-      "aliases": ["b1"]
+      "aliases": ["b1", "terminal-1"],
+      "capabilities": ["python", "pytest", "git", "documentation", "static_analysis", "integration_review", "offline_implementation", "large_regression"],
+      "delegated_task_types": ["independent_qualification", "authority_review", "memory_context_observability", "observability_audit", "provider_cascade_shadow", "provider_health_replay", "test", "regression", "verification", "documentation", "integration_review"]
     },
     {
       "builder_id": "builder-2",
@@ -30,7 +33,9 @@
       "allowed_risk_classes": ["read_only", "code_change"],
       "max_concurrency": 1,
       "enabled": true,
-      "aliases": ["b2"]
+      "aliases": ["b2", "terminal-2"],
+      "capabilities": ["python", "pytest", "git", "documentation", "static_analysis", "integration_review", "offline_implementation", "large_regression"],
+      "delegated_task_types": ["research_shadow_evidence", "evidence_lifecycle_audit", "memory_context_observability", "observability_audit", "provider_cascade_shadow", "provider_health_replay", "test", "regression", "verification", "documentation", "integration_review"]
     },
     {
       "builder_id": "builder-3",
@@ -43,7 +48,9 @@
       "allowed_risk_classes": ["read_only", "code_change"],
       "max_concurrency": 1,
       "enabled": true,
-      "aliases": ["b3"]
+      "aliases": ["b3", "terminal-3"],
+      "capabilities": ["python", "pytest", "git", "documentation", "static_analysis", "integration_review", "offline_implementation", "large_regression"],
+      "delegated_task_types": ["research_shadow_evidence", "evidence_lifecycle_audit", "independent_qualification", "authority_review", "provider_cascade_shadow", "provider_health_replay", "test", "regression", "verification", "documentation", "integration_review"]
     },
     {
       "builder_id": "builder-4",
@@ -56,7 +63,24 @@
       "allowed_risk_classes": ["read_only", "code_change"],
       "max_concurrency": 1,
       "enabled": true,
-      "aliases": ["b4"]
+      "aliases": ["b4", "terminal-4"],
+      "capabilities": ["python", "pytest", "git", "documentation", "static_analysis", "integration_review", "offline_implementation", "large_regression"],
+      "delegated_task_types": ["research_shadow_evidence", "evidence_lifecycle_audit", "independent_qualification", "authority_review", "memory_context_observability", "observability_audit", "test", "regression", "verification", "documentation", "integration_review"]
+    },
+    {
+      "builder_id": "terminal-5",
+      "display_name": "Terminal Builder 5 — General Verification / Integration",
+      "role": "general-verification-integration",
+      "repo_allowlist": ["Philip3006/sportsbrain", "Philip3006/SportsBrainMemory"],
+      "branch_prefix": "nightshift/terminal-5/",
+      "base_branch_allowlist": ["main"],
+      "task_types": ["test", "regression", "verification", "static_analysis", "integration_review", "documentation", "recovery", "reconciliation", "pr_evidence", "ci_repair", "authority_review"],
+      "allowed_risk_classes": ["read_only", "code_change"],
+      "max_concurrency": 1,
+      "enabled": true,
+      "aliases": ["t5"],
+      "capabilities": ["python", "pytest", "javascript", "browser_tests", "git", "documentation", "static_analysis", "integration_review", "large_regression", "offline_implementation"],
+      "delegated_task_types": ["research_shadow_evidence", "evidence_lifecycle_audit", "independent_qualification", "authority_review", "memory_context_observability", "observability_audit", "provider_cascade_shadow", "provider_health_replay", "test", "regression", "verification", "documentation", "recovery", "reconciliation", "pr_evidence", "ci_repair", "integration_review"]
     }
   ]
 }

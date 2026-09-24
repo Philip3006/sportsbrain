@@ -26,6 +26,7 @@ class RoadmapItem:
     builder_id: str
     template_id: str
     payload: Mapping[str, Any]
+    app_owner: str | None = None
     dependency_item_ids: tuple[str, ...] = ()
     priority: int = 0
     debug_budget: int = 0
@@ -54,6 +55,11 @@ class RoadmapItem:
             raise ConfigurationError(
                 f"{item_id}: title, builder_id, and template_id are required"
             )
+        app_owner = raw.get("app_owner")
+        if app_owner is not None and app_owner not in {
+            "APP_B1", "APP_B2", "APP_B3", "APP_B4", "APP_B5"
+        }:
+            raise ConfigurationError(f"{item_id}: app_owner is invalid")
         payload = raw["payload"]
         if not isinstance(payload, Mapping):
             raise ConfigurationError(f"{item_id}: payload must be an object")
@@ -109,6 +115,7 @@ class RoadmapItem:
             item_id=item_id,
             title=raw["title"].strip(),
             builder_id=raw["builder_id"].strip(),
+            app_owner=raw.get("app_owner"),
             template_id=raw["template_id"].strip(),
             payload=dict(payload),
             dependency_item_ids=tuple(dependencies),
@@ -127,6 +134,7 @@ class RoadmapItem:
             "item_id": self.item_id,
             "title": self.title,
             "builder_id": self.builder_id,
+            "app_owner": self.app_owner or _app_owner_for_builder(self.builder_id),
             "template_id": self.template_id,
             "payload": dict(self.payload),
             "dependency_item_ids": list(self.dependency_item_ids),
@@ -151,6 +159,9 @@ class RoadmapItem:
             return f"roadmap:{self.item_id}"
         return f"roadmap:{self.item_id}:generation:{self.generation}"
 
+def _app_owner_for_builder(builder_id: str) -> str:
+    match = re.fullmatch(r"builder-([1-4])", builder_id)
+    return f"APP_B{match.group(1)}" if match else "APP_B5"
 
 class RoadmapRegistry:
     """Read-only registry loaded from a governed roadmap file."""

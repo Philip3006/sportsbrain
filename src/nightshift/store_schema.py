@@ -61,6 +61,7 @@ DDL = """
 CREATE TABLE IF NOT EXISTS dispatcher_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS tasks (
     task_id TEXT PRIMARY KEY, idempotency_key TEXT UNIQUE, builder_id TEXT NOT NULL,
+    app_owner TEXT NOT NULL DEFAULT 'APP_B5', execution_worker TEXT,
     objective TEXT NOT NULL, branch TEXT NOT NULL, repo TEXT NOT NULL,
     task_type TEXT NOT NULL, template_id TEXT, payload_json TEXT NOT NULL,
     risk_class TEXT NOT NULL, requires_approval INTEGER NOT NULL, priority INTEGER NOT NULL,
@@ -83,10 +84,19 @@ CREATE TABLE IF NOT EXISTS tasks (
     debug_attempt_count INTEGER NOT NULL DEFAULT 0,
     last_failure_signature TEXT, failure_repeat_count INTEGER NOT NULL DEFAULT 0,
     repeated_failure_limit INTEGER NOT NULL DEFAULT 2,
+    required_capabilities_json TEXT NOT NULL DEFAULT '[]',
+    authority_requirements_json TEXT NOT NULL DEFAULT '[]',
+    verification_matrix_version TEXT NOT NULL DEFAULT 'nightshift-verification-v1',
     CHECK (requires_approval IN (0, 1)), CHECK (attempt_count >= 0), CHECK (max_attempts >= 1)
 );
 CREATE INDEX IF NOT EXISTS idx_tasks_claim ON tasks (state, available_at, priority DESC, created_at);
 CREATE INDEX IF NOT EXISTS idx_tasks_builder ON tasks (builder_id, state);
+CREATE TABLE IF NOT EXISTS verification_evidence (
+    verification_key TEXT PRIMARY KEY, repo TEXT NOT NULL, target_sha TEXT NOT NULL,
+    matrix_version TEXT NOT NULL, app_owner TEXT NOT NULL,
+    execution_worker TEXT NOT NULL, evidence_json TEXT NOT NULL,
+    created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS audit_events (
     event_id INTEGER PRIMARY KEY AUTOINCREMENT, task_id TEXT, event_type TEXT NOT NULL,
     actor TEXT NOT NULL, created_at TEXT NOT NULL, from_state TEXT, to_state TEXT,

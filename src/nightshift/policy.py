@@ -90,13 +90,22 @@ class SafetyPolicy:
                 "dispatcher identity cannot claim or execute worker tasks"
             )
         if not re.fullmatch(
-            r"builder-[1-9][0-9]*(?::[A-Za-z0-9._-]{1,64})?", worker_id
+            r"(?:builder-[1-4]|terminal-5)(?::[A-Za-z0-9._-]{1,64})?", worker_id
         ):
             raise SafetyViolation(
                 "worker identity is not a safe registered-Builder identifier"
             )
 
     def block_reason(self, task: TaskSpec) -> str | None:
+        restricted_authority = {
+            "APP_B4_REAL_PROVIDER",
+            "APP_B4_REAL_QUOTA",
+            "APP_B4_DISCOVERY",
+            "PROVIDER_AUTHORITY",
+            "PRODUCTION_ACTIVATION",
+        }
+        if restricted_authority.intersection(task.authority_requirements):
+            return "CEO_AUTHORIZATION_REQUIRED: restricted APP/provider authority is not autonomous"
         if (
             task.risk_class is RiskClass.EXTERNAL_SIDE_EFFECT
             and not self.allow_external_side_effects

@@ -11,6 +11,8 @@ def claimed_to_spec(record: TaskRecord) -> TaskSpec:
     return TaskSpec(
         task_id=record.task_id,
         builder_id=record.builder_id,
+        app_owner=record.app_owner,
+        execution_worker=record.terminal_worker_id,
         objective=record.objective,
         branch=record.branch,
         repo=record.repo,
@@ -36,6 +38,9 @@ def claimed_to_spec(record: TaskRecord) -> TaskSpec:
         roadmap_item_id=record.roadmap_item_id,
         debug_budget=record.debug_budget,
         repeated_failure_limit=record.repeated_failure_limit,
+        required_capabilities=record.required_capabilities,
+        authority_requirements=record.authority_requirements,
+        verification_matrix_version=record.verification_matrix_version,
     )
 
 

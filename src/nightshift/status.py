@@ -30,6 +30,10 @@ def task_summary(record: TaskRecord) -> dict[str, Any]:
     return {
         "task_id": record.task_id,
         "builder_id": record.builder_id,
+        "app_owner": record.app_owner,
+        "execution_worker": record.terminal_worker_id,
+        "required_capabilities": list(record.required_capabilities),
+        "authority_requirements": list(record.authority_requirements),
         "state": record.state.value,
         "short_task": record.branch.rstrip("/").rsplit("/", 1)[-1]
         or record.task_id[-16:],

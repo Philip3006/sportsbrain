@@ -42,6 +42,7 @@ from .errors import (
 )
 from .executors import CodexExecutor, FakeExecutor, redact
 from .models import (
+    APP_OWNERS,
     DISPATCHER_ID,
     AuditEvent,
     EventType,
@@ -91,6 +92,7 @@ from .worktree import (
 
 __all__ = [
     "ALLOWED_TRANSITIONS",
+    "APP_OWNERS",
     "DEFAULT_QUOTA_BACKOFF_SECONDS",
     "DISPATCHER_ID",
     "MAX_QUOTA_BACKOFF_SECONDS",

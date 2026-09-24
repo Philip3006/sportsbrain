@@ -70,6 +70,8 @@ class DispatcherStore(
         }
         requires_pr_added = "requires_pr" not in columns
         additions = {
+            "app_owner": "TEXT NOT NULL DEFAULT 'APP_B5'",
+            "execution_worker": "TEXT",
             "allowed_paths_json": "TEXT NOT NULL DEFAULT '[]'",
             "prohibited_paths_json": "TEXT NOT NULL DEFAULT '[]'",
             "resource_locks_json": "TEXT NOT NULL DEFAULT '[]'",
@@ -99,6 +101,9 @@ class DispatcherStore(
             "last_failure_signature": "TEXT",
             "failure_repeat_count": "INTEGER NOT NULL DEFAULT 0",
             "repeated_failure_limit": "INTEGER NOT NULL DEFAULT 2",
+            "required_capabilities_json": "TEXT NOT NULL DEFAULT '[]'",
+            "authority_requirements_json": "TEXT NOT NULL DEFAULT '[]'",
+            "verification_matrix_version": "TEXT NOT NULL DEFAULT 'nightshift-verification-v1'",
         }
         for name, definition in additions.items():
             if name not in columns:
@@ -145,6 +150,24 @@ class DispatcherStore(
             conn.execute(
                 "UPDATE tasks SET requires_pr = 1 WHERE risk_class = 'code_change'"
             )
+        conn.execute(
+            "UPDATE tasks SET execution_worker = builder_id WHERE execution_worker IS NULL"
+        )
+        conn.execute(
+            """UPDATE tasks SET app_owner = CASE builder_id
+                WHEN 'builder-1' THEN 'APP_B1'
+                WHEN 'builder-2' THEN 'APP_B2'
+                WHEN 'builder-3' THEN 'APP_B3'
+                WHEN 'builder-4' THEN 'APP_B4'
+                ELSE COALESCE(NULLIF(app_owner, ''), 'APP_B5') END
+                WHERE app_owner IS NULL OR app_owner = 'APP_B5'"""
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_tasks_app_owner ON tasks (app_owner, state)"
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_tasks_execution_worker ON tasks (execution_worker, state)"
+        )
 
     def _connection(self) -> sqlite3.Connection:
         conn = sqlite3.connect(
@@ -189,6 +212,8 @@ class DispatcherStore(
         return TaskRecord(
             task_id=row["task_id"],
             builder_id=row["builder_id"],
+            app_owner=row["app_owner"] or "APP_B5",
+            execution_worker=row["execution_worker"] or row["builder_id"],
             objective=row["objective"],
             branch=row["branch"],
             repo=row["repo"],
@@ -249,6 +274,14 @@ class DispatcherStore(
             last_failure_signature=row["last_failure_signature"],
             failure_repeat_count=row["failure_repeat_count"] or 0,
             repeated_failure_limit=row["repeated_failure_limit"] or 2,
+            required_capabilities=tuple(
+                json.loads(row["required_capabilities_json"] or "[]")
+            ),
+            authority_requirements=tuple(
+                json.loads(row["authority_requirements_json"] or "[]")
+            ),
+            verification_matrix_version=row["verification_matrix_version"]
+            or "nightshift-verification-v1",
         )
 
     @staticmethod
@@ -271,6 +304,83 @@ class DispatcherStore(
             ).fetchone()
             return self._record(row) if row is not None else None
 
+    @staticmethod
+    def verification_key(repo: str, target_sha: str, matrix_version: str) -> str:
+        """Return the stable exact-SHA verification identity."""
+
+        return f"verification:{repo}:{target_sha}:{matrix_version}"
+
+    def get_verification_evidence(
+        self, *, repo: str, target_sha: str, matrix_version: str
+    ) -> dict[str, Any] | None:
+        key = self.verification_key(repo, target_sha, matrix_version)
+        with self._read() as conn:
+            row = conn.execute(
+                "SELECT evidence_json FROM verification_evidence WHERE verification_key = ?",
+                (key,),
+            ).fetchone()
+            if row is None:
+                return None
+            try:
+                value = json.loads(row["evidence_json"])
+            except (TypeError, ValueError, json.JSONDecodeError):
+                return None
+            return dict(value) if isinstance(value, dict) else None
+
+    def save_verification_evidence(
+        self,
+        *,
+        repo: str,
+        target_sha: str,
+        matrix_version: str,
+        app_owner: str,
+        execution_worker: str,
+        evidence: Mapping[str, Any],
+        now: datetime | None = None,
+    ) -> dict[str, Any]:
+        if not target_sha or not isinstance(target_sha, str):
+            raise SafetyViolation("verification evidence requires an immutable target SHA")
+        evidence_target = evidence.get("target_sha")
+        if evidence_target is not None and str(evidence_target).lower() != target_sha.lower():
+            raise SafetyViolation("verification evidence target SHA does not match its identity")
+        key = self.verification_key(repo, target_sha, matrix_version)
+        timestamp = isoformat(now or utc_now())
+        with self._write() as conn:
+            existing = conn.execute(
+                "SELECT evidence_json FROM verification_evidence WHERE verification_key = ?",
+                (key,),
+            ).fetchone()
+            if existing is not None:
+                return json.loads(existing["evidence_json"])
+            payload = dict(evidence)
+            payload.update(
+                {
+                    "repository": repo,
+                    "target_sha": target_sha,
+                    "matrix_version": matrix_version,
+                    "app_owner": app_owner,
+                    "execution_worker": execution_worker,
+                }
+            )
+            conn.execute(
+                """INSERT INTO verification_evidence (
+                    verification_key, repo, target_sha, matrix_version,
+                    app_owner, execution_worker, evidence_json, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    key,
+                    repo,
+                    target_sha,
+                    matrix_version,
+                    app_owner,
+                    execution_worker,
+                    self._json(payload),
+                    timestamp,
+                    timestamp,
+                ),
+            )
+            return payload
+
     def create(
         self,
         task: TaskSpec,
@@ -284,16 +394,20 @@ class DispatcherStore(
             try:
                 conn.execute(
                     """INSERT INTO tasks (
-                        task_id, idempotency_key, builder_id, objective, branch, repo,
+                        task_id, idempotency_key, builder_id, app_owner, execution_worker,
+                        objective, branch, repo,
                         task_type, template_id, payload_json, risk_class, requires_approval,
                         priority, max_attempts, state, requested_by, parent_task_id,
                         dependency_ids_json, allowed_paths_json, prohibited_paths_json, resource_locks_json,
-                        created_at, updated_at, available_at, last_error
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                        required_capabilities_json, authority_requirements_json,
+                        verification_matrix_version, created_at, updated_at, available_at, last_error
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                     (
                         task.task_id,
                         task.idempotency_key,
                         task.builder_id,
+                        task.app_owner,
+                        task.execution_worker,
                         task.objective,
                         task.branch,
                         task.repo,
@@ -311,6 +425,9 @@ class DispatcherStore(
                         self._json(list(task.allowed_paths)),
                         self._json(list(task.prohibited_paths)),
                         self._json(list(task.resource_locks)),
+                        self._json(list(task.required_capabilities)),
+                        self._json(list(task.authority_requirements)),
+                        task.verification_matrix_version,
                         timestamp,
                         timestamp,
                         timestamp,
@@ -365,9 +482,18 @@ class DispatcherStore(
                 timestamp,
                 None,
                 initial_state.value,
-                {"builder_id": task.builder_id, "reason": initial_error}
+                {
+                    "builder_id": task.builder_id,
+                    "app_owner": task.app_owner,
+                    "execution_worker": task.execution_worker,
+                    "reason": initial_error,
+                }
                 if initial_error
-                else {"builder_id": task.builder_id},
+                else {
+                    "builder_id": task.builder_id,
+                    "app_owner": task.app_owner,
+                    "execution_worker": task.execution_worker,
+                },
             )
             return self._record(self._get_row(conn, task.task_id))
 

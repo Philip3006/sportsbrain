@@ -1,1 +1,1 @@
-"""Tests for the Builder 5 Night Shift dispatcher."""
+"""Tests for the Night Shift control plane and terminal worker pool."""

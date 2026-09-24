@@ -281,13 +281,66 @@ class DeliveryPipeline:
         path = Path(task.worktree_path)
         if not path.is_dir() or not self.worktrees.is_isolated_path(path):
             raise DeliveryError("delivery worktree is not isolated")
-        self.worktrees.verify_scope(_spec(task), path)
-        verification = (
-            task.verification or self.verifier.run(_spec(task), path).as_dict()
+        changed = self.worktrees.verify_scope(_spec(task), path)
+        commit_sha = task.commit_sha
+        if task.requires_pr and not commit_sha:
+            if not changed:
+                raise DeliveryError("code-changing task produced no reviewable change")
+            # Keep the pre-commit safety gate: a lease can expire while an
+            # expensive verifier is running, and must prevent any commit.
+            preverification = self.verifier.run(_spec(task), path).as_dict()
+            if preverification.get("passed") is not True:
+                raise DeliveryError(
+                    f"{preverification.get('failure_class', 'VERIFICATION_FAILED')}: required verification failed"
+                )
+            self._guard(lease_guard)
+            commit_sha = self._commit(task, path, changed, lease_guard=lease_guard)
+            self._guard(lease_guard)
+            self.store.record_commit(
+                task.task_id,
+                worker_id=worker_id,
+                lease_generation=lease_generation,
+                commit_sha=commit_sha,
+                now=self.clock(),
+            )
+            task = self.store.get(task.task_id)
+        target_sha = commit_sha or self._head_sha(path)
+        verification = task.verification
+        if not self._verification_matches(
+            verification,
+            task=task,
+            target_sha=target_sha,
+        ):
+            cached = (
+                self.store.get_verification_evidence(
+                    repo=task.repo,
+                    target_sha=target_sha,
+                    matrix_version=task.verification_matrix_version,
+                )
+                if target_sha
+                else None
+            )
+            verification = cached or self.verifier.run(_spec(task), path).as_dict()
+        verification = self._bind_verification(
+            verification or {}, task=task, target_sha=target_sha
         )
         if not verification.get("passed"):
             raise DeliveryError(
                 f"{verification.get('failure_class', 'VERIFICATION_FAILED')}: required verification failed"
+            )
+        if target_sha and not self.store.get_verification_evidence(
+            repo=task.repo,
+            target_sha=target_sha,
+            matrix_version=task.verification_matrix_version,
+        ):
+            verification = self.store.save_verification_evidence(
+                repo=task.repo,
+                target_sha=target_sha,
+                matrix_version=task.verification_matrix_version,
+                app_owner=task.app_owner,
+                execution_worker=task.terminal_worker_id,
+                evidence=verification,
+                now=self.clock(),
             )
         self._guard(lease_guard)
         self.store.record_verification(
@@ -299,7 +352,6 @@ class DeliveryPipeline:
         )
         task = self.store.get(task.task_id)
         self._guard(lease_guard)
-        changed = self.worktrees.verify_scope(_spec(task), path)
         if not task.requires_pr:
             if changed:
                 raise DeliveryError(
@@ -309,20 +361,6 @@ class DeliveryPipeline:
         commit_sha = task.commit_sha
         if commit_sha:
             self._require_head(path, task.branch, commit_sha)
-        else:
-            if not changed:
-                raise DeliveryError("code-changing task produced no reviewable change")
-            commit_sha = self._commit(task, path, changed, lease_guard=lease_guard)
-            self._guard(lease_guard)
-            self.store.record_commit(
-                task.task_id,
-                worker_id=worker_id,
-                lease_generation=lease_generation,
-                commit_sha=commit_sha,
-                now=self.clock(),
-            )
-            task = self.store.get(task.task_id)
-        self._require_head(path, task.branch, commit_sha)
         remote_sha = self._push(task, path, lease_guard=lease_guard)
         self._guard(lease_guard)
         self.store.record_push(
@@ -361,9 +399,20 @@ class DeliveryPipeline:
             or not url
         ):
             raise DeliveryError("GitHub pull request identity is incomplete")
+        verification = {**verification, "pr_number": number}
+        self._guard(lease_guard)
+        self.store.record_verification(
+            task.task_id,
+            worker_id=worker_id,
+            lease_generation=lease_generation,
+            evidence=verification,
+            now=self.clock(),
+        )
         delivery = {
             "task_id": task.task_id,
             "builder_id": task.builder_id,
+            "app_owner": task.app_owner,
+            "execution_worker": task.terminal_worker_id,
             "branch": task.branch,
             "commit_sha": commit_sha,
             "base_branch": task.base_branch,
@@ -385,6 +434,46 @@ class DeliveryPipeline:
             now=self.clock(),
         )
         return {"verification": verification, "delivery": delivery}
+
+    @staticmethod
+    def _verification_matches(
+        verification: Mapping[str, Any] | None,
+        *,
+        task: TaskRecord,
+        target_sha: str | None,
+    ) -> bool:
+        return bool(
+            isinstance(verification, Mapping)
+            and target_sha
+            and verification.get("passed") is True
+            and str(verification.get("target_sha", "")).lower() == target_sha.lower()
+            and verification.get("repository") == task.repo
+            and verification.get("app_owner") == task.app_owner
+            and verification.get("execution_worker") == task.terminal_worker_id
+            and verification.get("matrix_version") == task.verification_matrix_version
+        )
+
+    @staticmethod
+    def _bind_verification(
+        verification: Mapping[str, Any], *, task: TaskRecord, target_sha: str | None
+    ) -> dict[str, Any]:
+        bound = dict(verification)
+        bound.update(
+            {
+                "repository": task.repo,
+                "target_sha": target_sha,
+                "app_owner": task.app_owner,
+                "execution_worker": task.terminal_worker_id,
+                "matrix_version": task.verification_matrix_version,
+            }
+        )
+        return bound
+
+    def _head_sha(self, path: Path) -> str | None:
+        try:
+            return self._run_path(path, ["rev-parse", "HEAD"], timeout=15).stdout.strip()
+        except DeliveryError:
+            return None
 
     def reconcile(
         self,
@@ -513,19 +602,25 @@ class DeliveryPipeline:
                     raise DeliveryReconciliationError(
                         "reconciliation produced no scoped change"
                     )
-                verification = self.verifier.run(
-                    recovery_spec, recovery_path
-                ).as_dict()
-                if verification.get("passed") is not True:
-                    raise DeliveryReconciliationError(
-                        f"{verification.get('failure_class', 'VERIFICATION_FAILED')}: verification failed after rematerialization"
-                    )
                 recovery_commit = self._commit(
                     replace(current, task_id=recovery_task_id, branch=branch),
                     recovery_path,
                     changed,
                     lease_guard=lease_guard,
                 )
+                verification = self.verifier.run(
+                    recovery_spec,
+                    recovery_path,
+                ).as_dict()
+                verification["target_sha"] = recovery_commit
+                verification["repository"] = current.repo
+                verification["app_owner"] = current.app_owner
+                verification["execution_worker"] = current.terminal_worker_id
+                verification["matrix_version"] = current.verification_matrix_version
+                if verification.get("passed") is not True:
+                    raise DeliveryReconciliationError(
+                        f"{verification.get('failure_class', 'VERIFICATION_FAILED')}: verification failed after rematerialization"
+                    )
                 progress.update(
                     {
                         "recovery_commit_sha": recovery_commit,
@@ -623,6 +718,8 @@ class DeliveryPipeline:
             delivery = {
                 "task_id": current.task_id,
                 "builder_id": current.builder_id,
+                "app_owner": current.app_owner,
+                "execution_worker": current.terminal_worker_id,
                 "branch": branch,
                 "commit_sha": recovery_commit,
                 "base_branch": current.base_branch,
@@ -906,6 +1003,8 @@ def _spec(task: TaskRecord) -> TaskSpec:
     return TaskSpec(
         task_id=task.task_id,
         builder_id=task.builder_id,
+        app_owner=task.app_owner,
+        execution_worker=task.terminal_worker_id,
         objective=task.objective,
         branch=task.branch,
         repo=task.repo,
@@ -931,13 +1030,17 @@ def _spec(task: TaskRecord) -> TaskSpec:
         roadmap_item_id=task.roadmap_item_id,
         debug_budget=task.debug_budget,
         repeated_failure_limit=task.repeated_failure_limit,
+        required_capabilities=task.required_capabilities,
+        authority_requirements=task.authority_requirements,
+        verification_matrix_version=task.verification_matrix_version,
     )
 
 
 def _pr_body(task: TaskRecord, commit_sha: str, verification: Mapping[str, Any]) -> str:
     return (
         f"Night Shift task_id: {task.task_id}\n"
-        f"Builder: {task.builder_id}\n"
+        f"APP owner: {task.app_owner}\n"
+        f"Execution worker: {task.terminal_worker_id}\n"
         f"Commit SHA: {commit_sha}\n"
         f"Base branch: {task.base_branch}\n"
         f"Base SHA: {task.base_sha}\n"

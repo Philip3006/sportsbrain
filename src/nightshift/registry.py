@@ -15,10 +15,15 @@ from pathlib import Path
 from typing import Any
 
 from .errors import ConfigurationError, DispatcherRecursionError, UnknownBuilderError
-from .models import DISPATCHER_ID, RiskClass, TaskSpec
+from .models import APP_OWNERS, DISPATCHER_ID, RiskClass, TaskSpec
 
-_BUILDER_ID_RE = re.compile(r"^builder-[1-9][0-9]*$")
+_BUILDER_ID_RE = re.compile(r"^(?:builder-[1-4]|terminal-5)$")
 _ALIAS_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,63}$")
+
+
+def _owner_for_worker(worker_id: str) -> str:
+    match = re.fullmatch(r"builder-([1-4])", worker_id)
+    return f"APP_B{match.group(1)}" if match else "APP_B5"
 
 
 @dataclass(frozen=True)
@@ -36,6 +41,8 @@ class BuilderDefinition:
     max_concurrency: int = 1
     enabled: bool = True
     aliases: tuple[str, ...] = ()
+    capabilities: tuple[str, ...] = ()
+    delegated_task_types: tuple[str, ...] = ()
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     @classmethod
@@ -118,6 +125,12 @@ class BuilderDefinition:
         metadata = raw.get("metadata", {})
         if not isinstance(metadata, Mapping):
             raise ConfigurationError(f"{builder_id}: metadata must be an object")
+        capabilities = _string_tuple(
+            raw.get("capabilities", ()), f"{builder_id}.capabilities"
+        )
+        delegated_task_types = _string_tuple(
+            raw.get("delegated_task_types", ()), f"{builder_id}.delegated_task_types"
+        )
         return cls(
             builder_id=builder_id,
             display_name=raw["display_name"].strip(),
@@ -130,6 +143,8 @@ class BuilderDefinition:
             max_concurrency=max_concurrency,
             enabled=enabled,
             aliases=aliases,
+            capabilities=capabilities,
+            delegated_task_types=delegated_task_types,
             metadata=dict(metadata),
         )
 
@@ -146,6 +161,8 @@ class BuilderDefinition:
             "max_concurrency": self.max_concurrency,
             "enabled": self.enabled,
             "aliases": list(self.aliases),
+            "capabilities": list(self.capabilities),
+            "delegated_task_types": list(self.delegated_task_types),
             "metadata": dict(self.metadata),
         }
 
@@ -248,7 +265,7 @@ class BuilderRegistry:
         return definition
 
     def assert_worker_target(self, builder_id: str) -> BuilderDefinition:
-        if builder_id == DISPATCHER_ID:
+        if builder_id in {DISPATCHER_ID, "builder-5", "b5"}:
             raise DispatcherRecursionError(
                 "Builder 5 is the dispatcher and cannot be dispatched as a worker"
             )
@@ -257,23 +274,43 @@ class BuilderRegistry:
     def validate_task(
         self, task: TaskSpec, *, enforce_risk: bool = True
     ) -> BuilderDefinition:
-        definition = self.assert_worker_target(task.builder_id)
+        worker_id = task.execution_worker or task.builder_id
+        definition = self.assert_worker_target(worker_id)
         if task.repo not in definition.repo_allowlist:
             raise ConfigurationError(
-                f"{task.builder_id}: repo is not in its explicit allowlist"
+                f"{worker_id}: repo is not in its explicit allowlist"
             )
         if not task.branch.startswith(definition.branch_prefix):
             raise ConfigurationError(
-                f"{task.builder_id}: branch must start with {definition.branch_prefix!r}"
+                f"{worker_id}: branch must start with {definition.branch_prefix!r}"
             )
         if task.base_branch not in definition.base_branch_allowlist:
             raise ConfigurationError(
                 f"{task.builder_id}: base branch is not in its explicit allowlist"
             )
-        if not task.task_type or task.task_type not in definition.task_types:
+        if not task.task_type or (
+            task.task_type not in definition.task_types
+            and task.task_type not in definition.delegated_task_types
+        ):
             raise ConfigurationError(
-                f"{task.builder_id}: task_type is not explicitly authorized"
+                f"{worker_id}: task_type is not explicitly authorized"
+            )
+        if task.app_owner not in APP_OWNERS:
+            raise ConfigurationError(f"{worker_id}: app_owner is not authorized")
+        missing_capabilities = sorted(
+            set(task.required_capabilities) - set(definition.capabilities)
+        )
+        if missing_capabilities:
+            raise ConfigurationError(
+                f"{worker_id}: missing required capabilities {missing_capabilities}"
+            )
+        if (
+            task.app_owner != _owner_for_worker(worker_id)
+            and not task.required_capabilities
+        ):
+            raise ConfigurationError(
+                f"{worker_id}: cross-APP execution requires a capability contract"
             )
         if enforce_risk and task.risk_class not in definition.allowed_risk_classes:
-            raise ConfigurationError(f"{task.builder_id}: risk class is not authorized")
+            raise ConfigurationError(f"{worker_id}: risk class is not authorized")
         return definition
