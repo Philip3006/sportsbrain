@@ -112,7 +112,7 @@
       "task_type": "provider_health_replay",
       "objective_template": "Replay and inspect provider-health evidence for: {scope}",
       "required_payload_keys": ["scope"],
-      "allowed_payload_keys": ["scope", "provider_set", "acceptance_criteria"],
+      "allowed_payload_keys": ["scope", "provider_set", "acceptance_criteria", "required_merged_sha"],
       "risk_class": "read_only",
       "required_capabilities": ["integration_review"],
       "required_tests": ["compileall"],
