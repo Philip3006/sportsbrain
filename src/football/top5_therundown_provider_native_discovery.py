@@ -8,12 +8,16 @@ run.  TheRundown remains candidate-only throughout.
 
 from __future__ import annotations
 
+import fcntl
 import json
+import os
 import time
 import unicodedata
 from collections.abc import Callable, Mapping
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
+from functools import wraps
 from hashlib import sha256
 from typing import Protocol
 
@@ -60,6 +64,15 @@ PROVIDER_NATIVE_MINIMUM_HEADROOM = 3850
 PROVIDER_NATIVE_MINIMUM_INTERVAL_SECONDS = 1.1
 PROVIDER_NATIVE_MAXIMUM_RETRIES = 0
 PROVIDER_NATIVE_SPORT_ID = B4_QUOTA_PROOF_SPORT_ID
+TOP5_REAL_PROVIDER_EXECUTION = "TOP5_REAL_PROVIDER_EXECUTION"
+PROVIDER_NATIVE_BILLING_MODE_PROVIDER = "provider_x_datapoints"
+PROVIDER_NATIVE_BILLING_MODE_CUMULATIVE = "cumulative_quota_delta"
+_PROVIDER_NATIVE_BILLING_MODES = frozenset(
+    {
+        PROVIDER_NATIVE_BILLING_MODE_PROVIDER,
+        PROVIDER_NATIVE_BILLING_MODE_CUMULATIVE,
+    }
+)
 
 
 def _utc(value: datetime, name: str) -> datetime:
@@ -89,6 +102,268 @@ def _digest(value: object) -> str:
     ).hexdigest()
 
 
+@dataclass(frozen=True)
+class _CumulativeQuotaState:
+    used: int
+    remaining: int
+    limit: int
+    period: str
+    reset: datetime
+    tier: str
+
+
+def _lower_headers(headers: Mapping[str, object]) -> dict[str, str]:
+    return {
+        str(key).casefold(): str(value).strip() for key, value in headers.items()
+    }
+
+
+def _header_int(headers: Mapping[str, str], name: str) -> int:
+    try:
+        value = int(headers[name])
+    except (KeyError, ValueError) as exc:
+        raise EventDiscoveryExecutionBlocked(
+            f"missing or invalid cumulative billing header: {name}"
+        ) from exc
+    if value < 0:
+        raise EventDiscoveryExecutionBlocked(
+            f"negative cumulative billing header: {name}"
+        )
+    return value
+
+
+def _header_timestamp(headers: Mapping[str, str], name: str) -> datetime:
+    raw = headers.get(name)
+    if not raw:
+        raise EventDiscoveryExecutionBlocked(
+            f"missing cumulative billing header: {name}"
+        )
+    try:
+        parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise EventDiscoveryExecutionBlocked(
+            f"invalid cumulative billing header: {name}"
+        ) from exc
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        raise EventDiscoveryExecutionBlocked(
+            f"cumulative billing header is not timezone-aware: {name}"
+        )
+    return parsed.astimezone(timezone.utc)
+
+
+def _quota_state_from_headers(
+    headers: Mapping[str, object], *, require_all: bool
+) -> _CumulativeQuotaState | None:
+    lowered = _lower_headers(headers)
+    required = {
+        "x-datapoints-used",
+        "x-datapoints-remaining",
+        "x-datapoints-limit",
+        "x-datapoints-period",
+        "x-datapoints-reset",
+        "x-tier",
+    }
+    present = required.intersection(lowered)
+    if present != required:
+        if require_all:
+            missing = ", ".join(sorted(required - present))
+            raise EventDiscoveryExecutionBlocked(
+                f"missing cumulative billing headers: {missing}"
+            )
+        return None
+    used = _header_int(lowered, "x-datapoints-used")
+    remaining = _header_int(lowered, "x-datapoints-remaining")
+    limit = _header_int(lowered, "x-datapoints-limit")
+    if limit <= 0 or used + remaining != limit:
+        raise EventDiscoveryExecutionBlocked(
+            "cumulative quota counters do not reconcile"
+        )
+    period = lowered["x-datapoints-period"].casefold()
+    if period not in {"daily", "weekly", "monthly"}:
+        raise EventDiscoveryExecutionBlocked(
+            "cumulative quota period is not approved"
+        )
+    tier = lowered["x-tier"].casefold()
+    if tier != "free":
+        raise EventDiscoveryExecutionBlocked("cumulative quota tier is not approved")
+    return _CumulativeQuotaState(
+        used=used,
+        remaining=remaining,
+        limit=limit,
+        period=period,
+        reset=_header_timestamp(lowered, "x-datapoints-reset"),
+        tier=tier,
+    )
+
+
+def _quota_state_from_proof(
+    proof: TheRundownB4QuotaProofV1,
+) -> _CumulativeQuotaState:
+    if (
+        proof.quota_used_datapoints is None
+        or proof.quota_limit_datapoints is None
+        or proof.quota_period is None
+        or proof.quota_tier is None
+    ):
+        raise EventDiscoveryExecutionBlocked(
+            "fresh quota proof has no cumulative billing baseline"
+        )
+    if (
+        not isinstance(proof.quota_used_datapoints, int)
+        or isinstance(proof.quota_used_datapoints, bool)
+        or not isinstance(proof.quota_limit_datapoints, int)
+        or isinstance(proof.quota_limit_datapoints, bool)
+    ):
+        raise EventDiscoveryExecutionBlocked(
+            "fresh quota proof cumulative billing baseline is invalid"
+        )
+    period = proof.quota_period.casefold()
+    tier = proof.quota_tier.casefold()
+    if period not in {"daily", "weekly", "monthly"} or tier != "free":
+        raise EventDiscoveryExecutionBlocked(
+            "fresh quota proof cumulative billing baseline is not approved"
+        )
+    state = _CumulativeQuotaState(
+        used=proof.quota_used_datapoints,
+        remaining=proof.remaining_datapoints,
+        limit=proof.quota_limit_datapoints,
+        period=period,
+        reset=_utc(proof.quota_reset_at, "proof quota reset"),
+        tier=tier,
+    )
+    if state.limit <= 0 or state.used + state.remaining != state.limit:
+        raise EventDiscoveryExecutionBlocked(
+            "fresh quota proof cumulative counters do not reconcile"
+        )
+    if state.reset <= _utc(proof.response_finished_at, "proof response finished"):
+        raise EventDiscoveryExecutionBlocked(
+            "fresh quota proof reset boundary is invalid"
+        )
+    return state
+
+
+def _validate_quota_transition(
+    previous: _CumulativeQuotaState,
+    current: _CumulativeQuotaState,
+    *,
+    response_finished_at: datetime,
+    expected_datapoints: int | None = None,
+) -> int:
+    used_delta = current.used - previous.used
+    remaining_delta = previous.remaining - current.remaining
+    if used_delta < 0 or remaining_delta < 0:
+        raise EventDiscoveryExecutionBlocked(
+            "cumulative quota counters moved backwards"
+        )
+    if used_delta != remaining_delta:
+        raise EventDiscoveryExecutionBlocked(
+            "cumulative quota deltas do not reconcile"
+        )
+    if current.limit != previous.limit:
+        raise EventDiscoveryExecutionBlocked("cumulative quota limit changed")
+    if current.period != previous.period:
+        raise EventDiscoveryExecutionBlocked("cumulative quota period changed")
+    if current.reset != previous.reset:
+        raise EventDiscoveryExecutionBlocked("cumulative quota reset changed")
+    if current.tier != previous.tier or current.tier != "free":
+        raise EventDiscoveryExecutionBlocked("cumulative quota tier changed")
+    if current.used + current.remaining != current.limit:
+        raise EventDiscoveryExecutionBlocked(
+            "cumulative quota counters do not reconcile"
+        )
+    if current.reset <= _utc(response_finished_at, "response finished"):
+        raise EventDiscoveryExecutionBlocked("cumulative quota reset boundary crossed")
+    if used_delta > PROVIDER_NATIVE_MAX_DATAPOINTS_PER_REQUEST:
+        raise EventDiscoveryExecutionBlocked(
+            "cumulative quota inferred request cost exceeds the per-request cap"
+        )
+    if expected_datapoints is not None and used_delta != expected_datapoints:
+        raise EventDiscoveryExecutionBlocked(
+            "provider datapoints disagree with cumulative quota delta"
+        )
+    return used_delta
+
+
+def _billing_with_cumulative_fallback(
+    response: TheRundownEventDiscoveryResponseV1,
+    *,
+    previous_quota_state: _CumulativeQuotaState | None,
+) -> tuple[int, int, str, _CumulativeQuotaState | None]:
+    lowered = _lower_headers(response.headers)
+    if "x-datapoints" in lowered:
+        datapoints, remaining = _billing(response)
+        current_state = _quota_state_from_headers(response.headers, require_all=False)
+        if current_state is not None and previous_quota_state is not None:
+            _validate_quota_transition(
+                previous_quota_state,
+                current_state,
+                response_finished_at=response.finished_at,
+                expected_datapoints=datapoints,
+            )
+            return (
+                datapoints,
+                remaining,
+                PROVIDER_NATIVE_BILLING_MODE_PROVIDER,
+                current_state,
+            )
+        return (
+            datapoints,
+            remaining,
+            PROVIDER_NATIVE_BILLING_MODE_PROVIDER,
+            previous_quota_state,
+        )
+    if previous_quota_state is None:
+        raise EventDiscoveryExecutionBlocked(
+            "cumulative billing fallback requires a fresh quota-proof baseline"
+        )
+    current_state = _quota_state_from_headers(response.headers, require_all=True)
+    assert current_state is not None
+    datapoints = _validate_quota_transition(
+        previous_quota_state,
+        current_state,
+        response_finished_at=response.finished_at,
+    )
+    return (
+        datapoints,
+        current_state.remaining,
+        PROVIDER_NATIVE_BILLING_MODE_CUMULATIVE,
+        current_state,
+    )
+
+
+@contextmanager
+def _real_provider_execution_lock():
+    store = TheRundownDiscoveryAuthorizationConsumptionStore()
+    lock_path = store.lock_path.with_name(f"{TOP5_REAL_PROVIDER_EXECUTION}.lock")
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    os.chmod(lock_path.parent, 0o700)
+    if lock_path.is_symlink():
+        raise EventDiscoveryExecutionBlocked(
+            "real provider execution lock is a symlink"
+        )
+    with lock_path.open("a+") as lock:
+        os.chmod(lock_path, 0o600)
+        try:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as exc:
+            raise EventDiscoveryExecutionBlocked(
+                "real provider execution lock is already held"
+            ) from exc
+        try:
+            yield
+        finally:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
+
+
+def _under_real_provider_execution_lock(function):
+    @wraps(function)
+    def wrapped(*args, **kwargs):
+        with _real_provider_execution_lock():
+            return function(*args, **kwargs)
+
+    return wrapped
+
+
 def _participant_sort_key(value: str) -> str:
     return "".join(
         char
@@ -102,7 +377,8 @@ def _request_shape_payload(search_start_date: date) -> list[dict[str, object]]:
         {
             "method": "GET",
             "endpoint": (
-                f"{THERUNDOWN_BASE_URL}/sports/{PROVIDER_NATIVE_SPORT_ID}/events/"
+                f"{THERUNDOWN_BASE_URL}/sports/"
+                f"{THERUNDOWN_VERIFIED_LEAGUE_SPORT_IDS[league]}/events/"
                 f"{(search_start_date + timedelta(days=offset)).isoformat()}"
             ),
             "query": {
@@ -476,6 +752,7 @@ class TheRundownProviderNativeDiscoveryCaptureV1:
     raw_response_digest: str
     datapoints: int
     remaining_datapoints: int
+    billing_mode: str = PROVIDER_NATIVE_BILLING_MODE_PROVIDER
     retry_count: int = 0
     network_execution: bool = True
     qualification_eligible: bool = False
@@ -515,6 +792,7 @@ class TheRundownProviderNativeDiscoveryCaptureV1:
             "raw_response_digest": self.raw_response_digest,
             "datapoints": self.datapoints,
             "remaining_datapoints": self.remaining_datapoints,
+            "billing_mode": self.billing_mode,
             "retry_count": self.retry_count,
             "network_execution": self.network_execution,
             "qualification_eligible": self.qualification_eligible,
@@ -553,6 +831,8 @@ class TheRundownProviderNativeDiscoveryCaptureV1:
         _sha(self.discovery_authorization_digest, "discovery authorization digest")
         _sha(self.request_shape_digest, "request shape digest")
         _sha(self.raw_response_digest, "raw response digest")
+        if self.billing_mode not in _PROVIDER_NATIVE_BILLING_MODES:
+            raise EventDiscoveryContractError("native capture billing mode is invalid")
         fixture = Fixture(
             fixture_key=self.fixture_key,
             league_code=self.league,
@@ -603,6 +883,8 @@ class TheRundownProviderNativeDiscoveryRunResultV1:
     request_count: int
     datapoint_total: int
     raw_response_digests: tuple[str, ...]
+    billing_modes: tuple[str, ...] = ()
+    billing_datapoints: tuple[int, ...] = ()
 
     def validate(self) -> None:
         self.authorization.validate(now=self.authorization.issued_at)
@@ -643,6 +925,27 @@ class TheRundownProviderNativeDiscoveryRunResultV1:
             raise EventDiscoveryExecutionBlocked(
                 "native result datapoint total is invalid"
             )
+        if self.billing_modes and len(self.billing_modes) != self.request_count:
+            raise EventDiscoveryContractError(
+                "native result billing mode count does not match requests"
+            )
+        if self.billing_datapoints and len(self.billing_datapoints) != self.request_count:
+            raise EventDiscoveryContractError(
+                "native result billing count does not match requests"
+            )
+        if any(mode not in _PROVIDER_NATIVE_BILLING_MODES for mode in self.billing_modes):
+            raise EventDiscoveryContractError("native result billing mode is invalid")
+        if any(
+            datapoints < 0 or datapoints > PROVIDER_NATIVE_MAX_DATAPOINTS_PER_REQUEST
+            for datapoints in self.billing_datapoints
+        ):
+            raise EventDiscoveryExecutionBlocked(
+                "native result billing datapoint is invalid"
+            )
+        if self.billing_datapoints and sum(self.billing_datapoints) != self.datapoint_total:
+            raise EventDiscoveryContractError(
+                "native result billing total does not reconcile"
+            )
         for capture in self.captures:
             capture.validate()
 
@@ -657,6 +960,8 @@ class TheRundownProviderNativeDiscoveryRunResultV1:
                 "request_count": self.request_count,
                 "datapoint_total": self.datapoint_total,
                 "raw_response_digests": list(self.raw_response_digests),
+                "billing_modes": list(self.billing_modes),
+                "billing_datapoints": list(self.billing_datapoints),
             }
         )
 
@@ -671,6 +976,8 @@ class TheRundownProviderNativeDiscoveryRunResultV1:
             "request_count": self.request_count,
             "datapoint_total": self.datapoint_total,
             "raw_response_digests": list(self.raw_response_digests),
+            "billing_modes": list(self.billing_modes),
+            "billing_datapoints": list(self.billing_datapoints),
             "run_digest": self.run_digest,
         }
 
@@ -752,6 +1059,7 @@ def _as_discovery_response(
     )
 
 
+@_under_real_provider_execution_lock
 def discover_five_league_events_provider_native(
     authorization: TheRundownProviderNativeDiscoveryAuthorizationV1,
     *,
@@ -776,9 +1084,20 @@ def discover_five_league_events_provider_native(
     sleep = pacer or time.sleep
     captures: list[TheRundownProviderNativeDiscoveryCaptureV1] = []
     raw_digests: list[str] = []
+    billing_modes: list[str] = []
+    billing_datapoints: list[int] = []
     total_datapoints = 0
     request_count = 0
     last_request_finished: datetime | None = None
+    quota_state: _CumulativeQuotaState | None = None
+    baseline_fields = (
+        proof.quota_used_datapoints,
+        proof.quota_limit_datapoints,
+        proof.quota_period,
+        proof.quota_tier,
+    )
+    if any(value is not None for value in baseline_fields):
+        quota_state = _quota_state_from_proof(proof)
     TheRundownDiscoveryAuthorizationConsumptionStore().consume(
         authorization, now=current
     )
@@ -817,12 +1136,18 @@ def discover_five_league_events_provider_native(
                 )
             discovery_response = _as_discovery_response(response)
             discovery_response.validate()
-            datapoints, remaining = _billing(discovery_response)
+            datapoints, remaining, billing_mode, quota_state = (
+                _billing_with_cumulative_fallback(
+                    discovery_response, previous_quota_state=quota_state
+                )
+            )
             if datapoints > authorization.maximum_datapoints_per_request:
                 raise EventDiscoveryExecutionBlocked(
                     "native discovery request datapoint cap exceeded"
                 )
             total_datapoints += datapoints
+            billing_modes.append(billing_mode)
+            billing_datapoints.append(datapoints)
             if total_datapoints > authorization.maximum_datapoints:
                 raise EventDiscoveryExecutionBlocked(
                     "native discovery cumulative datapoint budget exceeded"
@@ -871,6 +1196,7 @@ def discover_five_league_events_provider_native(
                 raw_response_digest=raw_digests[-1],
                 datapoints=datapoints,
                 remaining_datapoints=remaining,
+                billing_mode=billing_mode,
             )
             capture.validate()
             found = capture
@@ -886,6 +1212,8 @@ def discover_five_league_events_provider_native(
         request_count=request_count,
         datapoint_total=total_datapoints,
         raw_response_digests=tuple(raw_digests),
+        billing_modes=tuple(billing_modes),
+        billing_datapoints=tuple(billing_datapoints),
     )
     result.validate()
     return result
@@ -903,6 +1231,8 @@ class _RequestsNativeDiscoveryTransport:
 
 
 __all__ = [
+    "PROVIDER_NATIVE_BILLING_MODE_CUMULATIVE",
+    "PROVIDER_NATIVE_BILLING_MODE_PROVIDER",
     "PROVIDER_NATIVE_DISCOVERY_AUTHORIZATION_SCHEMA_VERSION",
     "PROVIDER_NATIVE_DISCOVERY_SCHEMA_VERSION",
     "PROVIDER_NATIVE_DISCOVERY_TARGET_SOURCE",
@@ -913,6 +1243,7 @@ __all__ = [
     "PROVIDER_NATIVE_MAX_REQUEST_COUNT",
     "PROVIDER_NATIVE_MINIMUM_HEADROOM",
     "PROVIDER_NATIVE_MINIMUM_INTERVAL_SECONDS",
+    "TOP5_REAL_PROVIDER_EXECUTION",
     "TheRundownProviderNativeDiscoveryAuthorizationV1",
     "TheRundownProviderNativeDiscoveryCaptureV1",
     "TheRundownProviderNativeDiscoveryRequestV1",

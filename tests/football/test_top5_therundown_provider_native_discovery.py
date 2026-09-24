@@ -20,12 +20,16 @@ from src.football.top5_therundown_network_shadow import (
 )
 from src.football.top5_therundown_provider_native_discovery import (
     DISCOVERY_LEAGUE_ORDER,
+    PROVIDER_NATIVE_BILLING_MODE_CUMULATIVE,
+    PROVIDER_NATIVE_BILLING_MODE_PROVIDER,
     PROVIDER_NATIVE_DISCOVERY_TARGET_SOURCE,
     PROVIDER_NATIVE_INDEPENDENT_QUALIFICATION,
     PROVIDER_NATIVE_MAX_DATAPOINTS,
     PROVIDER_NATIVE_MAX_DATES_PER_LEAGUE,
     PROVIDER_NATIVE_MAX_REQUEST_COUNT,
     TheRundownProviderNativeDiscoveryAuthorizationV1,
+    TheRundownProviderNativeDiscoveryRequestV1,
+    _real_provider_execution_lock,
     discover_five_league_events_provider_native,
     provider_native_discovery_request_shape_digest,
 )
@@ -70,11 +74,12 @@ def _proof() -> TheRundownB4QuotaProofV1:
 
 def _authorization(
     *,
-    remaining_datapoints: int = 19952,
+    remaining_datapoints: int | None = None,
     issued_at: datetime = NOW - timedelta(minutes=1),
     expires_at: datetime = NOW + timedelta(hours=1),
+    proof: TheRundownB4QuotaProofV1 | None = None,
 ) -> TheRundownProviderNativeDiscoveryAuthorizationV1:
-    proof = _proof()
+    proof = proof or _proof()
     return TheRundownProviderNativeDiscoveryAuthorizationV1(
         discovery_authorization_id="native-discovery-20260924",
         ceo_discovery_authorization_identity="ceo:top5:native-discovery:20260924",
@@ -88,7 +93,11 @@ def _authorization(
         quota_proof_evidence_digest=proof.evidence_digest,
         quota_proof_response_digest=proof.response_digest,
         quota_proof_account_scope=proof.account_scope,
-        quota_proof_remaining_datapoints=remaining_datapoints,
+        quota_proof_remaining_datapoints=(
+            proof.remaining_datapoints
+            if remaining_datapoints is None
+            else remaining_datapoints
+        ),
         quota_proof_sport_id=proof.sport_id,
         quota_proof_snapshot_date=proof.snapshot_date,
         quota_proof_observed_at=proof.response_started_at,
@@ -147,6 +156,72 @@ def _response(
     )
 
 
+def _proof_with_cumulative_baseline(
+    *, used: int = 100, remaining: int = 19900
+) -> TheRundownB4QuotaProofV1:
+    return TheRundownB4QuotaProofV1(
+        **{
+            **_proof().__dict__,
+            "remaining_datapoints": remaining,
+            "quota_used_datapoints": used,
+            "quota_limit_datapoints": used + remaining,
+            "quota_period": "daily",
+            "quota_tier": "free",
+        }
+    )
+
+
+def _cumulative_response(
+    league: str,
+    *,
+    used: int,
+    remaining: int,
+    include_provider_datapoints: bool = False,
+    datapoints: int = 55,
+    period: str = "daily",
+    reset: datetime = NOW + timedelta(hours=12),
+    tier: str = "free",
+    events: list[dict[str, object]] | None = None,
+) -> TheRundownNetworkHttpResponseV1:
+    response = _response(league, events=events or [_event(league)])
+    headers = {
+        "x-datapoints-used": str(used),
+        "x-datapoints-remaining": str(remaining),
+        "x-datapoints-limit": str(used + remaining),
+        "x-datapoints-period": period,
+        "x-datapoints-reset": reset.isoformat(),
+        "x-tier": tier,
+    }
+    if include_provider_datapoints:
+        headers["x-datapoints"] = str(datapoints)
+    return TheRundownNetworkHttpResponseV1(
+        status_code=200,
+        payload=response.payload,
+        headers=headers,
+        started_at=response.started_at,
+        finished_at=response.finished_at,
+        body_digest=response.body_digest,
+    )
+
+
+def _run_with_cumulative_responses(
+    responses: list[TheRundownNetworkHttpResponseV1],
+    *,
+    proof: TheRundownB4QuotaProofV1 | None = None,
+    authorization: TheRundownProviderNativeDiscoveryAuthorizationV1 | None = None,
+):
+    proof = proof or _proof_with_cumulative_baseline()
+    authorization = authorization or _authorization(proof=proof)
+    return discover_five_league_events_provider_native(
+        authorization,
+        proof=proof,
+        api_key="injected-test-only",
+        transport=FakeNativeTransport(responses),
+        now=NOW,
+        pacer=lambda _: None,
+    )
+
+
 class FakeNativeTransport:
     def __init__(self, responses):
         self.responses = list(responses)
@@ -194,6 +269,34 @@ def test_native_discovery_searches_canonical_order_and_stops_after_first_valid_d
     assert all(
         capture.provider_authority is False and capture.qualification_eligible is False
         for capture in result.captures
+    )
+    assert set(result.billing_modes) == {PROVIDER_NATIVE_BILLING_MODE_PROVIDER}
+
+
+def test_native_request_shape_binds_each_league_to_its_verified_sport_endpoint():
+    authorization = _authorization()
+    expected_sport_ids = {
+        "EPL": 11,
+        "BL1": 13,
+        "LL": 14,
+        "SA": 15,
+        "L1": 12,
+    }
+    for league_index, league in enumerate(DISCOVERY_LEAGUE_ORDER):
+        request = TheRundownProviderNativeDiscoveryRequestV1(
+            authorization=authorization,
+            league=league,
+            snapshot_date=NOW.date(),
+            sequence=league_index,
+            date_offset=0,
+            league_index=league_index,
+        )
+        assert request.endpoint == (
+            f"{THERUNDOWN_BASE_URL}/sports/{expected_sport_ids[league]}"
+            f"/events/{NOW.date().isoformat()}"
+        )
+    assert authorization.request_shape_digest == provider_native_discovery_request_shape_digest(
+        NOW.date()
     )
 
 
@@ -358,3 +461,171 @@ def test_native_request_shape_is_the_reviewed_provider_shape():
         f"{THERUNDOWN_BASE_URL}/sports/{THERUNDOWN_VERIFIED_LEAGUE_SPORT_IDS[league]}"
         for league in DISCOVERY_LEAGUE_ORDER
     )
+
+
+def test_missing_provider_datapoints_uses_cumulative_quota_delta():
+    proof = _proof_with_cumulative_baseline()
+    responses = [
+        _cumulative_response(
+            league,
+            used=155 + index * 55,
+            remaining=19845 - index * 55,
+        )
+        for index, league in enumerate(DISCOVERY_LEAGUE_ORDER)
+    ]
+    result = _run_with_cumulative_responses(responses, proof=proof)
+    assert result.datapoint_total == 275
+    assert result.billing_modes == (
+        PROVIDER_NATIVE_BILLING_MODE_CUMULATIVE,
+    ) * 5
+    assert result.billing_datapoints == (55,) * 5
+    assert all(
+        capture.billing_mode == PROVIDER_NATIVE_BILLING_MODE_CUMULATIVE
+        for capture in result.captures
+    )
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        lambda headers: headers.update(
+            {
+                "x-datapoints-used": "156",
+                "x-datapoints-remaining": "19844",
+            }
+        ),
+        lambda headers: headers.update(
+            {
+                "x-datapoints-used": "101",
+                "x-datapoints-remaining": "19901",
+            }
+        ),
+        lambda headers: headers.update(
+            {
+                "x-datapoints-used": "100",
+                "x-datapoints-remaining": "19900",
+                "x-datapoints-limit": "20001",
+            }
+        ),
+        lambda headers: headers.update({"x-datapoints-period": "weekly"}),
+        lambda headers: headers.update(
+            {"x-datapoints-reset": (NOW + timedelta(hours=13)).isoformat()}
+        ),
+        lambda headers: headers.update({"x-tier": "pro"}),
+    ],
+)
+def test_invalid_cumulative_quota_transitions_fail_closed(mutate):
+    proof = _proof_with_cumulative_baseline()
+    response = _cumulative_response("EPL", used=155, remaining=19845)
+    headers = dict(response.headers)
+    mutate(headers)
+    invalid = TheRundownNetworkHttpResponseV1(
+        status_code=response.status_code,
+        payload=response.payload,
+        headers=headers,
+        started_at=response.started_at,
+        finished_at=response.finished_at,
+        body_digest=response.body_digest,
+    )
+    with pytest.raises(EventDiscoveryExecutionBlocked):
+        _run_with_cumulative_responses([invalid], proof=proof)
+
+
+def test_decreasing_used_and_increasing_remaining_counters_fail_closed():
+    proof = _proof_with_cumulative_baseline()
+    for used, remaining in ((99, 19901), (101, 19901)):
+        response = _cumulative_response("EPL", used=used, remaining=remaining)
+        with pytest.raises(EventDiscoveryExecutionBlocked):
+            _run_with_cumulative_responses([response], proof=proof)
+
+
+def test_inferred_cumulative_delta_above_request_cap_fails_closed():
+    proof = _proof_with_cumulative_baseline()
+    response = _cumulative_response("EPL", used=156, remaining=19844)
+    with pytest.raises(EventDiscoveryExecutionBlocked):
+        _run_with_cumulative_responses([response], proof=proof)
+
+
+def test_missing_cumulative_header_fails_closed_when_provider_datapoints_absent():
+    proof = _proof_with_cumulative_baseline()
+    response = _cumulative_response("EPL", used=155, remaining=19845)
+    headers = dict(response.headers)
+    del headers["x-datapoints-period"]
+    incomplete = TheRundownNetworkHttpResponseV1(
+        status_code=response.status_code,
+        payload=response.payload,
+        headers=headers,
+        started_at=response.started_at,
+        finished_at=response.finished_at,
+        body_digest=response.body_digest,
+    )
+    with pytest.raises(EventDiscoveryExecutionBlocked):
+        _run_with_cumulative_responses([incomplete], proof=proof)
+
+
+def test_provider_datapoints_must_agree_with_cumulative_delta():
+    proof = _proof_with_cumulative_baseline()
+    response = _cumulative_response(
+        "EPL",
+        used=155,
+        remaining=19845,
+        include_provider_datapoints=True,
+        datapoints=54,
+    )
+    with pytest.raises(EventDiscoveryExecutionBlocked):
+        _run_with_cumulative_responses([response], proof=proof)
+
+
+def test_cumulative_fallback_requires_the_exclusive_real_provider_lock():
+    proof = _proof_with_cumulative_baseline()
+    response = _cumulative_response("EPL", used=155, remaining=19845)
+    with _real_provider_execution_lock(), pytest.raises(
+        EventDiscoveryExecutionBlocked, match="lock"
+    ):
+        _run_with_cumulative_responses([response], proof=proof)
+
+
+def test_cumulative_fallback_failure_emits_no_partial_result():
+    proof = _proof_with_cumulative_baseline()
+    first = _cumulative_response("EPL", used=155, remaining=19845)
+    second = _cumulative_response("BL1", used=211, remaining=19844)
+    with pytest.raises(EventDiscoveryExecutionBlocked):
+        _run_with_cumulative_responses([first, second], proof=proof)
+
+
+def test_candidate_provider_remains_non_authoritative_on_cumulative_path():
+    proof = _proof_with_cumulative_baseline()
+    responses = [
+        _cumulative_response(
+            league,
+            used=155 + index * 55,
+            remaining=19845 - index * 55,
+        )
+        for index, league in enumerate(DISCOVERY_LEAGUE_ORDER)
+    ]
+    result = _run_with_cumulative_responses(responses, proof=proof)
+    assert all(
+        not capture.provider_authority
+        and not capture.activation_authorized
+        and not capture.publication_authorized
+        and not capture.ledger_mutated
+        for capture in result.captures
+    )
+
+
+def test_run_result_rejects_cumulative_total_above_bound():
+    proof = _proof_with_cumulative_baseline()
+    result = _run_with_cumulative_responses(
+        [
+            _cumulative_response(
+                league,
+                used=155 + index * 55,
+                remaining=19845 - index * 55,
+            )
+            for index, league in enumerate(DISCOVERY_LEAGUE_ORDER)
+        ],
+        proof=proof,
+    )
+    object.__setattr__(result, "datapoint_total", PROVIDER_NATIVE_MAX_DATAPOINTS + 1)
+    with pytest.raises(EventDiscoveryExecutionBlocked):
+        result.validate()
