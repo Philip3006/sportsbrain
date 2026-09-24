@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -37,6 +38,10 @@ class TaskTemplate:
     verification_commands: tuple[tuple[str, ...], ...] = ()
     max_runtime_seconds: int = DEFAULT_RUNTIME_SECONDS
     requires_pr: bool | None = None
+    app_owner: str | None = None
+    required_capabilities: tuple[str, ...] = ()
+    authority_requirements: tuple[str, ...] = ()
+    verification_matrix_version: str = "nightshift-verification-v1"
 
     @classmethod
     def from_mapping(cls, raw: Mapping[str, Any]) -> TaskTemplate:
@@ -80,6 +85,27 @@ class TaskTemplate:
             "max_runtime_seconds", raw.get("runtime_seconds", DEFAULT_RUNTIME_SECONDS)
         )
         requires_pr = raw.get("requires_pr")
+        app_owner = raw.get("app_owner")
+        if app_owner is not None and (
+            not isinstance(app_owner, str) or app_owner not in {"APP_B1", "APP_B2", "APP_B3", "APP_B4", "APP_B5"}
+        ):
+            raise ConfigurationError(f"{raw['template_id']}: app_owner is invalid")
+        required_capabilities = _keys(
+            raw.get("required_capabilities", ()), "required_capabilities"
+        )
+        authority_requirements = _keys(
+            raw.get("authority_requirements", ()), "authority_requirements"
+        )
+        verification_matrix_version = raw.get(
+            "verification_matrix_version", "nightshift-verification-v1"
+        )
+        if (
+            not isinstance(verification_matrix_version, str)
+            or not verification_matrix_version.strip()
+        ):
+            raise ConfigurationError(
+                f"{raw['template_id']}: verification_matrix_version is invalid"
+            )
         if (
             isinstance(priority, bool)
             or not isinstance(priority, int)
@@ -130,6 +156,10 @@ class TaskTemplate:
             verification_commands=verification_commands,
             max_runtime_seconds=max_runtime_seconds,
             requires_pr=requires_pr,
+            app_owner=app_owner,
+            required_capabilities=required_capabilities,
+            authority_requirements=authority_requirements,
+            verification_matrix_version=verification_matrix_version,
         )
 
     @property
@@ -162,6 +192,11 @@ class TaskTemplate:
         roadmap_item_id: str | None = None,
         debug_budget: int = 0,
         repeated_failure_limit: int = 2,
+        execution_worker: str | None = None,
+        app_owner: str | None = None,
+        required_capabilities: tuple[str, ...] | None = None,
+        authority_requirements: tuple[str, ...] | None = None,
+        verification_matrix_version: str | None = None,
     ) -> TaskSpec:
         data = dict(payload)
         missing = sorted(set(self.required_payload_keys) - set(data))
@@ -182,9 +217,11 @@ class TaskTemplate:
             ) from exc
         # Resolve explicitly here so a template cannot silently target an
         # unregistered or disabled worker. The dispatcher validates again.
-        registry.assert_worker_target(self.builder_id)
+        selected_worker = execution_worker or self.builder_id
+        registry.assert_worker_target(selected_worker)
+        selected_app_owner = app_owner or self.app_owner or _app_owner_for_worker(self.builder_id)
         return TaskSpec(
-            builder_id=self.builder_id,
+            builder_id=selected_worker,
             objective=objective,
             branch=branch,
             task_type=self.task_type,
@@ -217,6 +254,23 @@ class TaskTemplate:
             debug_budget=debug_budget,
             repeated_failure_limit=repeated_failure_limit,
             requested_by=requested_by,
+            app_owner=selected_app_owner,
+            execution_worker=selected_worker,
+            required_capabilities=(
+                self.required_capabilities
+                if required_capabilities is None
+                else required_capabilities
+            ),
+            authority_requirements=(
+                self.authority_requirements
+                if authority_requirements is None
+                else authority_requirements
+            ),
+            verification_matrix_version=(
+                self.verification_matrix_version
+                if verification_matrix_version is None
+                else verification_matrix_version
+            ),
         )
 
     def as_dict(self) -> dict[str, Any]:
@@ -236,6 +290,10 @@ class TaskTemplate:
             ],
             "max_runtime_seconds": self.max_runtime_seconds,
             "requires_pr": self.requires_pr,
+            "app_owner": self.app_owner,
+            "required_capabilities": list(self.required_capabilities),
+            "authority_requirements": list(self.authority_requirements),
+            "verification_matrix_version": self.verification_matrix_version,
         }
 
 
@@ -248,6 +306,13 @@ def _keys(value: Any, field_name: str) -> tuple[str, ...]:
     if len(set(result)) != len(result):
         raise ConfigurationError(f"{field_name} must not contain duplicates")
     return result
+
+
+def _app_owner_for_worker(worker_id: str) -> str:
+    """Legacy template fallback; explicit templates should set app_owner."""
+
+    match = re.fullmatch(r"builder-([1-5])", worker_id)
+    return f"APP_B{match.group(1)}" if match else "APP_B5"
 
 
 class TemplateRegistry:

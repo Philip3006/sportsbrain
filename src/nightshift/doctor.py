@@ -17,6 +17,7 @@ from .registry import BuilderRegistry
 from .roadmap import RoadmapRegistry
 from .status import operator_snapshot
 from .store import DispatcherStore
+from .task_states import TaskState
 from .templates import TemplateRegistry
 from .worktree import (
     RuntimeDirtyPolicy,
@@ -333,22 +334,24 @@ def run_doctor(
             "builder-2",
             "builder-3",
             "builder-4",
+            "terminal-5",
         )
     except (ConfigurationError, OSError) as exc:
         registry_ok = False
         registry_error = type(exc).__name__
     checks.append(
         _check(
-            "worker_registry_builders_1_to_4_only",
+            "worker_registry_terminal_pool_1_to_5",
             registry_ok,
-            "explicit Builders 1-4; Builder 5 is dispatcher-only"
+            "explicit Terminal Builders 1-5; Dispatcher is a separate control plane"
             if registry_ok
             else f"registry unavailable or contains unsupported builders ({registry_error})",
         )
     )
     checks.extend(
         _launchd_worker_checks(
-            registry_ids or ("builder-1", "builder-2", "builder-3", "builder-4")
+            registry_ids
+            or ("builder-1", "builder-2", "builder-3", "builder-4", "terminal-5")
         )
     )
 
@@ -417,6 +420,57 @@ def run_doctor(
                 paused=stats["paused"],
                 draining=stats["draining"],
             )
+            active_states = {
+                TaskState.CLAIMED,
+                TaskState.RUNNING,
+                TaskState.VERIFYING,
+                TaskState.DELIVERY_RECONCILING,
+            }
+            queue_report["dispatcher_health"] = {
+                "status": "paused"
+                if stats["paused"]
+                else "draining"
+                if stats["draining"]
+                else "healthy",
+                "control_plane_identity": "nightshift-dispatcher",
+                "is_terminal_worker": False,
+                "audit_chain_valid": store.verify_audit_chain(),
+            }
+            queue_report["app_workstreams"] = {
+                app_owner: {
+                    "active_tasks": [
+                        record.task_id
+                        for record in records
+                        if record.app_owner == app_owner
+                        and record.state in active_states
+                    ],
+                    "blockers": [
+                        record.task_id
+                        for record in records
+                        if record.app_owner == app_owner
+                        and record.state
+                        in {TaskState.BLOCKED, TaskState.FAILED_SAFE, TaskState.PAUSED_QUOTA}
+                    ],
+                }
+                for app_owner in ("APP_B1", "APP_B2", "APP_B3", "APP_B4", "APP_B5")
+            }
+            queue_report["terminal_capacity"] = {
+                worker_id: {
+                    "status": next(
+                        (
+                            record.state.value.lower()
+                            for record in records
+                            if record.terminal_worker_id == worker_id
+                            and record.state in active_states
+                        ),
+                        "idle",
+                    ),
+                    "capabilities": list(
+                        registry.resolve(worker_id).capabilities
+                    ),
+                }
+                for worker_id in registry_ids
+            }
         except Exception as exc:  # noqa: BLE001 - doctor reports, never raises
             queue_report["error"] = type(exc).__name__
     return {

@@ -1,31 +1,56 @@
-# SportsBrain Night Shift Dispatcher V1
+# SportsBrain Night Shift Dispatcher — Control Plane and Worker Pool
 
-Builder 5 owns the dispatcher. It is a control-plane component, not a worker,
-and it cannot be dispatched recursively. V1 explicitly registers only:
+The Night Shift Dispatcher is an independent control-plane process. It is not
+Terminal Builder 5 and does not own an APP workstream. The execution pool is
+explicitly registered separately:
 
 | Builder | Governed responsibility |
 | --- | --- |
-| Builder 1 | Research / Shadow / Evidence Lifecycle |
-| Builder 2 | Independent Qualification / Authority |
-| Builder 3 | Memory / Context / Observability |
-| Builder 4 | Provider Cascade / Controlled Shadow Infrastructure |
+| Terminal Builder 1 (`builder-1`) | reusable execution capacity; legacy alias `terminal-1` |
+| Terminal Builder 2 (`builder-2`) | reusable execution capacity; legacy alias `terminal-2` |
+| Terminal Builder 3 (`builder-3`) | reusable execution capacity; legacy alias `terminal-3` |
+| Terminal Builder 4 (`builder-4`) | reusable execution capacity; legacy alias `terminal-4` |
+| Terminal Builder 5 (`terminal-5`) | general verification / integration capacity |
 
-Builders 6, 7, and 8 are not registered. The runtime does not claim that they
-exist, and no task template targets them.
+The control-plane identity is `nightshift-dispatcher`. The historical
+`builder-5` spelling remains reserved as a non-worker safety boundary; it is
+never used as Terminal Builder 5 identity.
+
+APP ownership is separate metadata and remains logical:
+
+| APP owner | Responsibility |
+| --- | --- |
+| APP B1 | Final acceptance / acceptance evidence |
+| APP B2 | Runtime / operations / activation readiness |
+| APP B3 | Public delivery / Worker / PWA readiness |
+| APP B4 | Real provider / quota / Discovery / controlled evidence |
+| APP B5 | Integration / launch-control ownership |
 
 ## Boundaries
 
 The dispatcher owns task admission, durable state, leases, retry scheduling,
-approval gates, dependency ordering, and audit history. A worker adapter owns
-the actual Builder implementation and is injected through the Python API.
+approval gates, dependency ordering, capability matching, verification
+scheduling, evidence persistence, recovery, quota pauses, soft backpressure,
+worker utilization, and audit history. A worker adapter owns execution and is
+injected through the Python API.
+
+Every governed task stores `app_owner` and `execution_worker` separately. A
+typical task may be `app_owner=APP_B4` and
+`execution_worker=builder-2`. Terminal worker number never grants APP
+authority.
 
 The dispatcher deliberately does not:
 
 - discover workers from packages, names, branches, prompts, or installed tools;
 - execute arbitrary shell text;
 - merge, deploy, publish, reset, rebase, or delete repository content;
-- modify an active Builder 1–4 branch or pull request;
-- infer a new Builder role from a task or template.
+- modify an active terminal branch or pull request outside its lease;
+- infer APP authority from a terminal worker number.
+
+Terminal workers are selected by explicit task type, capabilities,
+availability, risk class, and resource locks. Long-running tests and
+verification may be assigned to any suitable free terminal worker. The
+worker that discovers a regression does not become APP owner automatically.
 
 The governed delivery gate may commit and push only the unique task branch
 from its isolated worktree, then query or create exactly one pull request for
@@ -39,6 +64,42 @@ handling, and audit chain do not depend on the number of registered workers.
 `StaticBootstrapProvider` is the V1 context seam. `MemoryV4BootstrapProvider`
 is present only as an explicit future seam; this branch does not depend on
 Memory PR #6 and does not copy Memory retrieval logic.
+
+## APP ownership and terminal worker pool
+
+The architecture has three layers:
+
+```text
+APP ownership / authority
+        ↓ metadata and hard gates
+Night Shift Dispatcher (control plane)
+        ↓ leases, capability matching, verification, recovery
+Terminal Builder 1 ... Terminal Builder 5 (execution capacity)
+```
+
+Tasks persist at minimum:
+
+- `app_owner`
+- `execution_worker`
+- `task_type`
+- `required_capabilities`
+- `authority_requirements`
+- `governed_paths`
+- `resource_locks`
+- `risk_class`
+
+APP B4 offline work can therefore be implemented by Terminal Builder 2,
+verified by Terminal Builder 1, and reviewed by Terminal Builder 5 while APP
+B4 remains the owner. Real provider calls, credentials, event-ID acquisition,
+Discovery, quota proof, and controlled real shadow remain behind explicit APP
+B4 authority and CEO gates; a terminal number never inherits them.
+
+Expensive verification is keyed by
+`verification:<repository>:<target_sha>:<matrix_version>`. Valid evidence for
+the exact immutable SHA is reused. Evidence from another SHA, changed test
+matrix, changed verification code, or incomplete execution is not reused.
+Pure test and verification tasks may complete without a commit or PR and do
+not consume active substantive PR backpressure.
 
 ## Task lifecycle
 
@@ -108,12 +169,12 @@ approves, pushes, or deploys.
 
 ## Safety gates
 
-1. Builder target must resolve in `builders.json`; `builder-5` is rejected at
-   registry, submit, claim, and worker-adapter boundaries.
-2. Repository, branch prefix, task type, and risk class must match the
-   target’s explicit allowlists.
+1. The dispatcher control-plane identity cannot claim a terminal lease;
+   `terminal-5` is a normal worker identity.
+2. Repository, branch prefix, task type, capabilities, APP authority
+   requirements, and risk class must match explicit allowlists.
 3. Read-only tasks may be queued directly. Code-changing tasks require
-   approval and use a `nightshift/builder-N/` branch namespace.
+   approval and use a reviewed terminal branch namespace.
 4. External side effects and destructive tasks are disabled in V1.
 5. Queue capacity, payload size, dependency count, attempt count, lease time,
    and worker concurrency are bounded.
@@ -169,9 +230,12 @@ python3 scripts/night_shift_dispatcher.py recover
 python3 scripts/night_shift_dispatcher.py audit --limit 50
 ```
 
-`claim` only leases work. Production worker processes call
-`NightShiftDispatcher.run_autonomous_cycle()` with a reviewed, non-shell
-adapter, send heartbeats for long work, and return an `ExecutionResult`. A
+`claim` only leases work. Worker processes call
+`NightShiftDispatcher.run_worker_pool()` or
+`NightShiftDispatcher.run_autonomous_cycle()` with reviewed, non-shell
+adapters, send heartbeats for long work, and return structured
+`ExecutionResult` evidence. The dispatcher immediately routes the next
+eligible task to the same free capacity or another capable terminal worker. A
 queue record, process exit, or worker prose alone is not success. For every task,
 `required_tests`, structured-argv `verification_commands`, and
 `max_runtime_seconds` are persisted and independently enforced. Code-changing
@@ -207,8 +271,9 @@ pytest -q tests/nightshift
 ruff check src/nightshift tests/nightshift scripts/night_shift_dispatcher.py
 ```
 
-The tests cover each explicitly registered Builder 1–4 template and worker
-path, along with Builder 5 recursion prevention, approval, leases, retry and
+The tests cover the explicit Terminal Builder 1–5 pool and the independent
+dispatcher control plane, APP-owner/worker separation, capability routing,
+exact-SHA verification evidence and deduplication, approval, leases, retry and
 dead-letter behavior, dependency blocking, idempotency, pause, and audit-chain
 integrity. They also cover expected versus unexpected runtime dirtiness,
 control-repository isolation, explicit roadmap selection, bounded debug
@@ -290,7 +355,7 @@ without rerunning the Builder:
 
 ```bash
 python3 scripts/night_shift_dispatcher.py reconcile-delivery-drift TASK_ID \
-  --actor builder-5-reconciler
+  --actor nightshift-dispatcher:reconciler
 ```
 
 `status` and `doctor` expose active reconciliations, attempt count, drift
@@ -330,7 +395,11 @@ Center can never change queue truth. The user-level
 expanded and installed under `~/Library/LaunchAgents` without `sudo`; no
 system LaunchDaemon is used.
 
-`status` and `doctor` include sanitized operator categories for running work,
+`status` and `doctor` include a separate Dispatcher health view, an APP
+workstream view (`APP_B1` through `APP_B5`), and a Terminal capacity view
+(`builder-1` through `builder-4` plus `terminal-5`) with current task, APP
+owner, lease, heartbeat, and capabilities. They also include sanitized
+operator categories for running work,
 dead PIDs, parked timeouts, delivery blockers, CEO review, merge backpressure,
 intentional idle, and the next eligible explicit roadmap item. Status also
 reports the next generation and idle reason for each Builder, active/blocked

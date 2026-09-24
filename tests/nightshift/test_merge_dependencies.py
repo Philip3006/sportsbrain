@@ -199,11 +199,11 @@ def test_merge_backpressure_is_soft_and_does_not_stop_independent_selection(
     assert dispatcher.status()["queue_mode"] == "CONTINUOUS_AUTONOMOUS"
 
 
-def test_builder5_is_not_worker_and_future_builders_are_rejected(tmp_path: Path) -> None:
+def test_dispatcher_identity_is_not_a_worker_and_future_builders_are_rejected(tmp_path: Path) -> None:
     dispatcher, _, _, _ = _fixture(tmp_path)
 
     with pytest.raises(DispatcherRecursionError):
-        dispatcher.claim_next("builder-5")
+        dispatcher.claim_next("nightshift-dispatcher")
     with pytest.raises(UnknownBuilderError):
         dispatcher.claim_next("builder-6")
 

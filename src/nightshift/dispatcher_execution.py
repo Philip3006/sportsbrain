@@ -172,6 +172,20 @@ class DispatcherExecutionMixin:
                 now=self.clock(),
             )
 
+    def claim_next_available(
+        self,
+        *,
+        worker_ids: tuple[str, ...] | None = None,
+    ) -> TaskRecord | None:
+        """Claim the next task from any free terminal worker slot."""
+
+        candidates = worker_ids or self.registry.builder_ids
+        for worker_id in candidates:
+            claimed = self.claim_next(worker_id)
+            if claimed is not None:
+                return claimed
+        return None
+
     def heartbeat(
         self,
         task_id: str,
@@ -365,6 +379,19 @@ class DispatcherExecutionMixin:
         except DeliveryError as exc:
             try:
                 current = self.store.get(record.task_id)
+                if any(
+                    marker in str(exc).upper()
+                    for marker in ("VERIFICATION", "REGRESSION")
+                ):
+                    return self.store.block_delivery(
+                        record.task_id,
+                        worker_id=owner,
+                        lease_generation=generation,
+                        reason=str(exc),
+                        failure_class="VERIFICATION_FAILED",
+                        evidence={"task_id": record.task_id, "verification_failed": True},
+                        now=self.clock(),
+                    )
                 preserved = {
                     "delivery_status": "blocked",
                     "implementation_success": bool(
@@ -535,7 +562,7 @@ class DispatcherExecutionMixin:
                 )
 
     def reconcile_preserved_delivery(
-        self, task_id: str, *, actor: str = "builder-5-reconciler"
+        self, task_id: str, *, actor: str = "nightshift-dispatcher:reconciler"
     ) -> TaskRecord:
         """Resume a preserved delivery-blocked task without rerunning its worker."""
 

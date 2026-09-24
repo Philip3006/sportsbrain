@@ -29,7 +29,11 @@ from .task_validation import (
 
 __all__ = ["AuditEvent", "TaskState", "json_payload", "state_from_value"]
 
-DISPATCHER_ID = "builder-5"
+# The dispatcher is a control-plane process, not one of the five terminal
+# workers.  ``builder-1`` .. ``builder-4`` remain legacy worker identities;
+# Terminal Builder 5 uses the independent ``terminal-5`` identity.
+DISPATCHER_ID = "nightshift-dispatcher"
+APP_OWNERS = ("APP_B1", "APP_B2", "APP_B3", "APP_B4", "APP_B5")
 UTC = timezone.utc
 DEFAULT_RUNTIME_SECONDS = 30 * 60
 HARD_MAX_RUNTIME_SECONDS = 24 * 60 * 60
@@ -153,10 +157,28 @@ class TaskSpec:
     repeated_failure_limit: int = 2
     requested_by: str = "operator"
     task_id: str = field(default_factory=lambda: f"ns-{uuid.uuid4().hex}")
+    # ``builder_id`` is the legacy spelling for the execution worker.  Keep it
+    # in the public envelope while persisting the two identities explicitly.
+    app_owner: str | None = None
+    execution_worker: str | None = None
+    required_capabilities: tuple[str, ...] = ()
+    authority_requirements: tuple[str, ...] = ()
+    verification_matrix_version: str = "nightshift-verification-v1"
 
     def __post_init__(self) -> None:
         if not isinstance(self.builder_id, str) or not self.builder_id.strip():
-            raise InvalidTaskError("builder_id is required")
+            raise InvalidTaskError("builder_id is required for compatibility")
+        execution_worker = self.execution_worker or self.builder_id
+        if not isinstance(execution_worker, str) or not execution_worker.strip():
+            raise InvalidTaskError("execution_worker is required")
+        object.__setattr__(self, "execution_worker", execution_worker.strip())
+        if self.app_owner is None:
+            match = re.fullmatch(r"builder-([1-4])", execution_worker.strip())
+            inferred_owner = f"APP_B{match.group(1)}" if match else "APP_B5"
+            object.__setattr__(self, "app_owner", inferred_owner)
+        if not isinstance(self.app_owner, str) or self.app_owner not in APP_OWNERS:
+            raise InvalidTaskError("app_owner must be one of APP_B1 through APP_B5")
+        object.__setattr__(self, "builder_id", execution_worker.strip())
         if not isinstance(self.objective, str) or not self.objective.strip():
             raise InvalidTaskError("objective is required")
         if len(self.objective) > 4000:
@@ -190,6 +212,8 @@ class TaskSpec:
             not isinstance(self.task_type, str) or len(self.task_type) > 128
         ):
             raise InvalidTaskError("task_type is invalid")
+        if self.task_type:
+            object.__setattr__(self, "task_type", self.task_type.strip().lower())
         try:
             risk = (
                 self.risk_class
@@ -289,6 +313,17 @@ class TaskSpec:
             raise InvalidTaskError("payload exceeds 64 KiB")
         object.__setattr__(self, "payload", normalized_payload)
         object.__setattr__(self, "dependency_ids", dependencies)
+        for name, values in (
+            ("required_capabilities", self.required_capabilities),
+            ("authority_requirements", self.authority_requirements),
+        ):
+            normalized = safe_labels(values, name)
+            object.__setattr__(self, name, normalized)
+        if (
+            not isinstance(self.verification_matrix_version, str)
+            or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:-]{0,63}", self.verification_matrix_version)
+        ):
+            raise InvalidTaskError("verification_matrix_version is invalid")
 
     @property
     def approval_required(self) -> bool:
@@ -311,6 +346,8 @@ class TaskSpec:
 
         return {
             "builder_id": self.builder_id,
+            "app_owner": self.app_owner,
+            "execution_worker": self.execution_worker,
             "objective": self.objective,
             "branch": self.branch,
             "repo": self.repo,
@@ -337,6 +374,9 @@ class TaskSpec:
             "roadmap_item_id": self.roadmap_item_id,
             "debug_budget": self.debug_budget,
             "repeated_failure_limit": self.repeated_failure_limit,
+            "required_capabilities": list(self.required_capabilities),
+            "authority_requirements": list(self.authority_requirements),
+            "verification_matrix_version": self.verification_matrix_version,
         }
 
     def as_dict(self) -> dict[str, Any]:
@@ -482,6 +522,11 @@ class TaskRecord:
     last_failure_signature: str | None = None
     failure_repeat_count: int = 0
     repeated_failure_limit: int = 2
+    app_owner: str = "APP_B5"
+    execution_worker: str | None = None
+    required_capabilities: tuple[str, ...] = ()
+    authority_requirements: tuple[str, ...] = ()
+    verification_matrix_version: str = "nightshift-verification-v1"
 
     @property
     def lease_active(self) -> bool:
@@ -501,6 +546,12 @@ class TaskRecord:
         """Return whether this persisted task requires a real pull request."""
 
         return self.requires_pr
+
+    @property
+    def terminal_worker_id(self) -> str:
+        """Canonical execution identity; ``builder_id`` remains a legacy alias."""
+
+        return self.execution_worker or self.builder_id
 
     @property
     def runtime_seconds(self) -> int:
@@ -542,6 +593,10 @@ class TaskRecord:
         result["allowed_paths"] = list(self.allowed_paths)
         result["prohibited_paths"] = list(self.prohibited_paths)
         result["resource_locks"] = list(self.resource_locks)
+        result["app_owner"] = self.app_owner
+        result["execution_worker"] = self.terminal_worker_id
+        result["required_capabilities"] = list(self.required_capabilities)
+        result["authority_requirements"] = list(self.authority_requirements)
         result["required_tests"] = list(self.required_tests)
         result["verification_commands"] = [
             list(command) for command in self.verification_commands
@@ -553,6 +608,8 @@ class TaskRecord:
     def canonical(self) -> dict[str, Any]:
         fields = (
             "builder_id",
+            "app_owner",
+            "execution_worker",
             "objective",
             "branch",
             "repo",
@@ -577,6 +634,9 @@ class TaskRecord:
             "roadmap_item_id",
             "debug_budget",
             "repeated_failure_limit",
+            "required_capabilities",
+            "authority_requirements",
+            "verification_matrix_version",
         )
         serialized = self.as_dict()
         return {field: serialized[field] for field in fields}

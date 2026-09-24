@@ -35,7 +35,19 @@ class AuditMixin:
         event_value = (
             event_type.value if isinstance(event_type, EventType) else event_type
         )
-        details_json = self._json(json_payload(details))
+        enriched = dict(details)
+        if task_id is not None:
+            task_row = conn.execute(
+                "SELECT app_owner, execution_worker, builder_id FROM tasks WHERE task_id = ?",
+                (task_id,),
+            ).fetchone()
+            if task_row is not None:
+                enriched.setdefault("app_owner", task_row["app_owner"] or "APP_B5")
+                enriched.setdefault(
+                    "execution_worker",
+                    task_row["execution_worker"] or task_row["builder_id"],
+                )
+        details_json = self._json(json_payload(enriched))
         body = self._json(
             {
                 "task_id": task_id,
