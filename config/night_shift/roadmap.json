@@ -1,7 +1,7 @@
 {
   "version": 1,
   "mode": "bounded",
-  "max_cycles": 100,
+  "max_cycles": 25,
   "merge_backpressure_limit": 12,
   "items": [
     {
@@ -9,276 +9,217 @@
       "title": "Builder 1 bounded research shadow generation 1",
       "builder_id": "builder-1",
       "template_id": "builder-1.research-shadow-evidence",
-      "payload": {
-        "scope": "night shift research shadow generation 1"
-      },
+      "payload": {"scope": "night shift research shadow generation 1"},
       "priority": 30,
       "generation": 1,
       "debug_budget": 2,
       "repeated_failure_limit": 2,
       "mode": "bounded",
-      "enabled": true
+      "enabled": false
     },
     {
       "item_id": "roadmap-b1-evidence",
       "title": "Builder 1 evidence lifecycle audit generation 1",
       "builder_id": "builder-1",
       "template_id": "builder-1.evidence-lifecycle-audit",
-      "payload": {
-        "scope": "night shift evidence lifecycle generation 1"
-      },
-      "dependency_item_ids": [
-        "roadmap-b1-research-1"
-      ],
+      "payload": {"scope": "night shift evidence lifecycle generation 1"},
+      "dependency_item_ids": ["roadmap-b1-research-1"],
       "priority": 20,
       "generation": 1,
       "debug_budget": 2,
       "repeated_failure_limit": 2,
       "mode": "bounded",
-      "enabled": true
+      "enabled": false
     },
     {
       "item_id": "roadmap-b1-research-2",
       "title": "Builder 1 bounded research shadow generation 2",
       "builder_id": "builder-1",
       "template_id": "builder-1.research-shadow-evidence",
-      "payload": {
-        "scope": "night shift research shadow generation 2"
-      },
-      "dependency_item_ids": [
-        "roadmap-b1-evidence"
-      ],
+      "payload": {"scope": "night shift research shadow generation 2"},
+      "dependency_item_ids": ["roadmap-b1-evidence"],
       "priority": 30,
       "generation": 2,
       "debug_budget": 2,
       "repeated_failure_limit": 2,
       "mode": "bounded",
-      "enabled": true
+      "enabled": false
     },
     {
       "item_id": "roadmap-b1-evidence-2",
       "title": "Builder 1 evidence lifecycle audit generation 2",
       "builder_id": "builder-1",
       "template_id": "builder-1.evidence-lifecycle-audit",
-      "payload": {
-        "scope": "night shift evidence lifecycle generation 2"
-      },
-      "dependency_item_ids": [
-        "roadmap-b1-research-2"
-      ],
+      "payload": {"scope": "night shift evidence lifecycle generation 2"},
+      "dependency_item_ids": ["roadmap-b1-research-2"],
       "priority": 20,
       "generation": 2,
       "debug_budget": 2,
       "repeated_failure_limit": 2,
       "mode": "bounded",
-      "enabled": true
+      "enabled": false
     },
     {
       "item_id": "roadmap-b2-qualification-1",
       "title": "Builder 2 independent qualification generation 1",
       "builder_id": "builder-2",
       "template_id": "builder-2.independent-qualification",
-      "payload": {
-        "scope": "night shift qualification generation 1"
-      },
+      "payload": {"scope": "night shift qualification generation 1"},
       "priority": 25,
       "generation": 1,
       "debug_budget": 2,
       "repeated_failure_limit": 2,
       "mode": "bounded",
-      "enabled": true
+      "enabled": false
     },
     {
       "item_id": "roadmap-b2-authority",
       "title": "Builder 2 authority review generation 1",
       "builder_id": "builder-2",
       "template_id": "builder-2.authority-review",
-      "payload": {
-        "scope": "night shift authority boundary generation 1"
-      },
-      "dependency_item_ids": [
-        "roadmap-b2-qualification-1"
-      ],
+      "payload": {"scope": "night shift authority boundary generation 1"},
+      "dependency_item_ids": ["roadmap-b2-qualification-1"],
       "priority": 15,
       "generation": 1,
       "debug_budget": 2,
       "repeated_failure_limit": 2,
       "mode": "bounded",
-      "enabled": true
+      "enabled": false
     },
     {
       "item_id": "roadmap-b2-qualification-2",
       "title": "Builder 2 independent qualification generation 2",
       "builder_id": "builder-2",
       "template_id": "builder-2.independent-qualification",
-      "payload": {
-        "scope": "night shift qualification generation 2"
-      },
-      "dependency_item_ids": [
-        "roadmap-b2-authority"
-      ],
+      "payload": {"scope": "night shift qualification generation 2"},
       "priority": 25,
       "generation": 2,
       "debug_budget": 2,
       "repeated_failure_limit": 2,
       "mode": "bounded",
-      "enabled": true
+      "enabled": false
     },
     {
       "item_id": "roadmap-b2-authority-2",
       "title": "Builder 2 authority review generation 2",
       "builder_id": "builder-2",
       "template_id": "builder-2.authority-review",
-      "payload": {
-        "scope": "night shift authority boundary generation 2"
-      },
-      "dependency_item_ids": [
-        "roadmap-b2-qualification-2"
-      ],
+      "payload": {"scope": "night shift authority boundary generation 2"},
+      "dependency_item_ids": ["roadmap-b2-qualification-2"],
       "priority": 15,
       "generation": 2,
       "debug_budget": 2,
       "repeated_failure_limit": 2,
       "mode": "bounded",
-      "enabled": true
+      "enabled": false
     },
     {
       "item_id": "roadmap-b3-integration-1",
       "title": "Builder 3 bounded observability integration generation 1",
       "builder_id": "builder-3",
       "template_id": "builder-3.memory-context-observability",
-      "payload": {
-        "scope": "night shift observability integration generation 1"
-      },
+      "payload": {"scope": "night shift observability integration generation 1"},
       "priority": 23,
       "generation": 1,
       "debug_budget": 2,
       "repeated_failure_limit": 2,
       "mode": "bounded",
-      "enabled": true
+      "enabled": false
     },
     {
       "item_id": "roadmap-b3-observability",
       "title": "Builder 3 context and observability audit generation 1",
       "builder_id": "builder-3",
       "template_id": "builder-3.observability-audit",
-      "payload": {
-        "scope": "night shift context and observability generation 1"
-      },
-      "dependency_item_ids": [
-        "roadmap-b3-integration-1"
-      ],
+      "payload": {"scope": "night shift context and observability generation 1"},
+      "dependency_item_ids": ["roadmap-b3-integration-1"],
       "priority": 13,
       "generation": 1,
       "debug_budget": 2,
       "repeated_failure_limit": 2,
       "mode": "bounded",
-      "enabled": true
+      "enabled": false
     },
     {
       "item_id": "roadmap-b3-integration-2",
       "title": "Builder 3 bounded observability integration generation 2",
       "builder_id": "builder-3",
       "template_id": "builder-3.memory-context-observability",
-      "payload": {
-        "scope": "night shift observability integration generation 2"
-      },
-      "dependency_item_ids": [
-        "roadmap-b3-observability"
-      ],
+      "payload": {"scope": "night shift observability integration generation 2"},
       "priority": 23,
       "generation": 2,
       "debug_budget": 2,
       "repeated_failure_limit": 2,
       "mode": "bounded",
-      "enabled": true
+      "enabled": false
     },
     {
       "item_id": "roadmap-b3-observability-2",
       "title": "Builder 3 context and observability audit generation 2",
       "builder_id": "builder-3",
       "template_id": "builder-3.observability-audit",
-      "payload": {
-        "scope": "night shift context and observability generation 2"
-      },
-      "dependency_item_ids": [
-        "roadmap-b3-integration-2"
-      ],
+      "payload": {"scope": "night shift context and observability generation 2"},
+      "dependency_item_ids": ["roadmap-b3-integration-2"],
       "priority": 13,
       "generation": 2,
       "debug_budget": 2,
       "repeated_failure_limit": 2,
       "mode": "bounded",
-      "enabled": true
+      "enabled": false
     },
     {
       "item_id": "roadmap-b4-shadow-1",
       "title": "Builder 4 bounded provider shadow generation 1",
       "builder_id": "builder-4",
       "template_id": "builder-4.provider-cascade-shadow",
-      "payload": {
-        "scope": "night shift provider shadow generation 1"
-      },
+      "payload": {"scope": "night shift provider shadow generation 1"},
       "priority": 21,
       "generation": 1,
       "debug_budget": 2,
       "repeated_failure_limit": 2,
       "mode": "bounded",
-      "enabled": true
+      "enabled": false
     },
     {
       "item_id": "roadmap-b4-provider-health",
       "title": "Builder 4 provider-health replay generation 1",
       "builder_id": "builder-4",
       "template_id": "builder-4.provider-health-replay",
-      "payload": {
-        "scope": "night shift provider cascade health generation 1"
-      },
-      "dependency_item_ids": [
-        "roadmap-b4-shadow-1"
-      ],
+      "payload": {"scope": "night shift provider cascade health generation 1"},
+      "dependency_item_ids": ["roadmap-b4-shadow-1"],
       "priority": 11,
       "generation": 1,
       "debug_budget": 2,
       "repeated_failure_limit": 2,
       "mode": "bounded",
-      "enabled": true
+      "enabled": false
     },
     {
       "item_id": "roadmap-b4-shadow-2",
       "title": "Builder 4 bounded provider shadow generation 2",
       "builder_id": "builder-4",
       "template_id": "builder-4.provider-cascade-shadow",
-      "payload": {
-        "scope": "night shift provider shadow generation 2"
-      },
-      "dependency_item_ids": [
-        "roadmap-b4-provider-health"
-      ],
+      "payload": {"scope": "night shift provider shadow generation 2"},
       "priority": 21,
       "generation": 2,
       "debug_budget": 2,
       "repeated_failure_limit": 2,
       "mode": "bounded",
-      "enabled": true
+      "enabled": false
     },
     {
       "item_id": "roadmap-b4-provider-health-2",
       "title": "Builder 4 provider-health replay generation 2",
       "builder_id": "builder-4",
       "template_id": "builder-4.provider-health-replay",
-      "payload": {
-        "scope": "night shift provider cascade health generation 2"
-      },
-      "dependency_item_ids": [
-        "roadmap-b4-shadow-2"
-      ],
+      "payload": {"scope": "night shift provider cascade health generation 2"},
+      "dependency_item_ids": ["roadmap-b4-shadow-2"],
       "priority": 11,
       "generation": 2,
       "debug_budget": 2,
       "repeated_failure_limit": 2,
       "mode": "bounded",
-      "enabled": true
+      "enabled": false
     },
     {
       "item_id": "top5-final-runtime-health",
@@ -306,9 +247,7 @@
         "launchd/top5",
         "tests/nightshift/top5_runtime"
       ],
-      "resource_locks": [
-        "top5-runtime-health"
-      ]
+      "resource_locks": ["top5-runtime-health"]
     },
     {
       "item_id": "top5-final-b4-dossier",
@@ -317,9 +256,7 @@
       "template_id": "builder-4.provider-cascade-shadow",
       "payload": {
         "scope": "Top5 B4 final execution dossier for CEO authorization",
-        "provider_set": [
-          "therundown_experimental"
-        ],
+        "provider_set": ["therundown_experimental"],
         "acceptance_criteria": [
           "pins current origin/main and the merged B4 implementation identity",
           "uses exactly five request slots total, exactly one per EPL, BL1, LL, SA, and L1, with no additional league slot",
@@ -340,9 +277,7 @@
         "artifacts/top5_b4",
         "tests/nightshift/top5_b4"
       ],
-      "resource_locks": [
-        "top5-b4-final-dossier"
-      ]
+      "resource_locks": ["top5-b4-final-dossier"]
     },
     {
       "item_id": "top5-final-b2-preflight",
@@ -359,9 +294,7 @@
           "expected result is TOP5_B2_ACTIVATION_PIPELINE_OFFLINE_READY"
         ]
       },
-      "dependency_item_ids": [
-        "top5-final-b4-dossier"
-      ],
+      "dependency_item_ids": ["top5-final-b4-dossier"],
       "priority": 25,
       "generation": 1,
       "debug_budget": 2,
@@ -373,9 +306,7 @@
         "artifacts/top5_b2",
         "tests/nightshift/top5_b2"
       ],
-      "resource_locks": [
-        "top5-b2-final-preflight"
-      ]
+      "resource_locks": ["top5-b2-final-preflight"]
     },
     {
       "item_id": "top5-final-public-product",
@@ -392,7 +323,7 @@
           "expected result is TOP5_PUBLIC_PRODUCT_PRE_PHONE_READY"
         ]
       },
-      "priority": 31,
+      "priority": 30,
       "generation": 1,
       "debug_budget": 2,
       "repeated_failure_limit": 2,
@@ -404,9 +335,7 @@
         "docs/service-worker",
         "tests/public_product/top5"
       ],
-      "resource_locks": [
-        "top5-public-product-final-audit"
-      ]
+      "resource_locks": ["top5-public-product-final-audit"]
     },
     {
       "item_id": "top5-final-convergence",
@@ -441,9 +370,7 @@
         "artifacts/top5_final",
         "tests/nightshift/top5_final"
       ],
-      "resource_locks": [
-        "top5-final-convergence-authority"
-      ]
+      "resource_locks": ["top5-final-convergence-authority"]
     }
   ]
 }
