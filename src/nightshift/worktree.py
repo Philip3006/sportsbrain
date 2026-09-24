@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -18,6 +19,8 @@ from typing import Any
 from .control_repo import control_repo_lock_path, run_locked_control_repo_operation
 from .errors import ScopeViolation, WorktreeSafetyError
 from .models import TaskSpec
+
+_SHA_RE = re.compile(r"^[0-9a-fA-F]{40,64}$")
 
 
 @dataclass(frozen=True)
@@ -456,6 +459,26 @@ class WorktreeManager:
             raise WorktreeSafetyError(
                 "expected_base_sha does not match the fetched origin base"
             )
+        required_merged_sha = task.payload.get("required_merged_sha")
+        if required_merged_sha is not None:
+            if not isinstance(required_merged_sha, str) or not _SHA_RE.fullmatch(
+                required_merged_sha
+            ):
+                raise WorktreeSafetyError("required_merged_sha is invalid")
+            ancestry = self._locked_control_run(
+                control,
+                self._git_path_args(control)
+                + [
+                    "merge-base",
+                    "--is-ancestor",
+                    required_merged_sha.lower(),
+                    base_sha,
+                ],
+            )
+            if ancestry.returncode != 0:
+                raise WorktreeSafetyError(
+                    "required_merged_sha is not contained in the fetched origin base"
+                )
         return BaseResolution(task.base_branch, base_sha, base_sha)
 
     def is_isolated_path(self, path: Path) -> bool:

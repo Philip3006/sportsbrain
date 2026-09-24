@@ -779,16 +779,22 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
                 f"worker_missing_capabilities:{selected_worker}",
             )
             return None
+        payload = dict(item.payload)
+        if getattr(item, "required_merged_sha", None) is not None:
+            payload.setdefault("required_merged_sha", item.required_merged_sha)
         task = self.submit_template(
                 item.template_id,
                 branch=f"{definition.branch_prefix}{item.item_id}",
-                payload=item.payload,
+                payload=payload,
                 requested_by="nightshift-dispatcher:roadmap",
                 idempotency_key=item.idempotency_key,
                 priority=item.priority,
                 debug_budget=item.debug_budget,
                 repeated_failure_limit=item.repeated_failure_limit,
-                expected_base_sha=getattr(item, "required_merged_sha", None),
+                # The required merge SHA is an ancestry dependency, not a
+                # frozen base.  Worktree allocation verifies that the
+                # authoritative current base contains it before checkout.
+                expected_base_sha=None,
                 execution_worker=selected_worker,
                 app_owner=(
                     getattr(item, "app_owner", None)

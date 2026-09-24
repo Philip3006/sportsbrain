@@ -43,6 +43,14 @@ def _repo(tmp_path: Path) -> Path:
     return repo
 
 
+def _git(path: Path, *args: str) -> str:
+    result = subprocess.run(
+        ["git", "-C", str(path), *args], capture_output=True, text=True, check=False
+    )
+    assert result.returncode == 0, result.stderr
+    return result.stdout.strip()
+
+
 def _task(task_id: str, branch: str, **kwargs: object) -> TaskSpec:
     return TaskSpec(
         task_id=task_id,
@@ -76,6 +84,27 @@ def test_dirty_canonical_checkout_blocks_allocation(tmp_path: Path) -> None:
     manager = WorktreeManager(tmp_path / "runtime", {"Philip3006/sportsbrain": repo})
     with pytest.raises(WorktreeSafetyError, match="not clean"):
         manager.allocate(_task("worktree-000002", "nightshift/builder-1/dirty"))
+
+
+def test_required_merged_sha_accepts_a_newer_authoritative_base(tmp_path: Path) -> None:
+    repo = _repo(tmp_path)
+    merged_sha = _git(repo, "rev-parse", "HEAD")
+    (repo / "README.md").write_text("newer base\n", encoding="utf-8")
+    _git(repo, "add", "README.md")
+    _git(repo, "commit", "-qm", "advance authoritative base")
+    _git(repo, "push", "-q", "origin", "HEAD:main")
+
+    manager = WorktreeManager(tmp_path / "runtime", {"Philip3006/sportsbrain": repo})
+    allocation = manager.allocate(
+        _task(
+            "worktree-000003",
+            "nightshift/builder-1/merge-bound",
+            payload={"required_merged_sha": merged_sha},
+        )
+    )
+
+    assert allocation.base_sha != merged_sha
+    assert _git(allocation.path, "merge-base", "--is-ancestor", merged_sha, allocation.base_sha) == ""
 
 
 def test_scope_violation_fails_safe_and_keeps_diagnostic(tmp_path: Path) -> None:

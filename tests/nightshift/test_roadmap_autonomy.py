@@ -188,7 +188,8 @@ def test_roadmap_materialization_binds_merge_sha_and_capability_contract(
     assert task is not None
     assert task.app_owner == "APP_B4"
     assert task.execution_worker in {"builder-4", "terminal-5"}
-    assert task.expected_base_sha == "b" * 40
+    assert task.expected_base_sha is None
+    assert task.payload["required_merged_sha"] == "b" * 40
     assert task.required_capabilities == (
         "integration_review",
     )
