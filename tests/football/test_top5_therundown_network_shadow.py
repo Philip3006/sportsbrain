@@ -742,26 +742,155 @@ def test_network_shaped_five_league_output_matches_downstream_input_shapes():
 
 
 def test_network_request_contract_has_no_retry_and_exact_scope_binding():
-    configuration = _configuration(enabled=True)
-    authorization = _authorization(configuration)
-    request = authorization.request_for(configuration.targets[0], configuration)
+    kickoff = datetime(2026, 10, 10, 11, 30, tzinfo=UTC)
+    frozen_epl_target = TheRundownCanaryTargetV1(
+        provider=THERUNDOWN_PROVIDER_NAME,
+        league="EPL",
+        fixture_key=make_fixture_key("EPL", "Arsenal FC", "Leeds United", kickoff),
+        provider_event_id="92f6ca88e98f7e51ea425f91bd316357",
+        home_team="Arsenal FC",
+        away_team="Leeds United",
+        kickoff=kickoff,
+    )
+    targets = (frozen_epl_target, *_targets()[1:])
+    participant_scope = tuple(
+        TheRundownNetworkParticipantScopeV1(
+            target.fixture_key,
+            "3436" if target.league == "EPL" else f"home-id-{target.league}",
+            "3444" if target.league == "EPL" else f"away-id-{target.league}",
+        )
+        for target in targets
+    )
+    configuration = _configuration(
+        targets=targets,
+        participant_scope=participant_scope,
+        adapter_version=THERUNDOWN_ADAPTER_VERSION,
+        enabled=True,
+    )
+    authorization = _authorization(configuration, provider=THERUNDOWN_PROVIDER_NAME)
+    request = authorization.request_for(frozen_epl_target, configuration)
     request.validate(now=NOW)
-    assert request.target.provider == "therundown"
+    assert request.target.provider == THERUNDOWN_PROVIDER_NAME
     assert request.target.league == "EPL"
     assert request.request_identity == "request-EPL"
     assert request.sequence == 0
     assert request.market_type == MARKET_PREMATCH_1X2
     http_request = TheRundownCanonicalPayloadAdapterV1().build_request(
         request,
-        endpoint="https://therundown.example/events",
+        endpoint="https://therundown.io/api/v2",
         api_key="injected-test-only",
     )
-    assert http_request.query["affiliate_ids"] == ",".join(
-        QUOTA_PROOF_AFFILIATE_IDS
+    assert http_request.endpoint == (
+        "https://therundown.io/api/v2/events/92f6ca88e98f7e51ea425f91bd316357"
     )
+    assert http_request.query == {
+        "market_ids": "1",
+        "affiliate_ids": "19",
+        "main_line": "true",
+        "hide_closed": "true",
+    }
+    assert http_request.headers["X-TheRundown-Key"] == "injected-test-only"
+    assert "Authorization" not in http_request.headers
+    assert not {
+        "league",
+        "fixture_key",
+        "provider_event_id",
+        "market",
+        "pre_match",
+    }.intersection(http_request.query)
     assert configuration.provider_affiliate_ids == QUOTA_PROOF_AFFILIATE_IDS
     assert configuration.as_payload()["provider_affiliate_ids"] == ["19"]
     assert authorization.as_payload()["provider_affiliate_ids"] == ["19"]
+
+    observed_at = datetime(2026, 10, 10, 11, 29, tzinfo=UTC)
+    payload = json.loads(
+        Path("tests/fixtures/therundown/champions_league_events.json").read_text()
+    )
+    event = payload["events"][0]
+    event.update(
+        {
+            "event_id": frozen_epl_target.provider_event_id,
+            "sport_id": 11,
+            "event_date": frozen_epl_target.kickoff.isoformat(),
+            "score": {"event_status": "STATUS_SCHEDULED"},
+            "teams": [
+                {
+                    "team_id": 3436,
+                    "name": "Arsenal FC",
+                    "is_away": False,
+                    "is_home": True,
+                },
+                {
+                    "team_id": 3444,
+                    "name": "Leeds United",
+                    "is_away": True,
+                    "is_home": False,
+                },
+            ],
+            "schedule": {
+                "event_name": "Leeds United at Arsenal FC",
+                "season_type": "Regular Season",
+                "season_year": 2026,
+                "league_name": "Premier League",
+            },
+        }
+    )
+    event["markets"][0]["participants"][0].update(
+        {"id": 3436, "name": "Arsenal FC", "is_away": False, "is_home": True}
+    )
+    event["markets"][0]["participants"][2].update(
+        {"id": 3444, "name": "Leeds United", "is_away": True, "is_home": False}
+    )
+    for participant in event["markets"][0]["participants"]:
+        for line in participant["lines"]:
+            for price in line["prices"].values():
+                price["updated_at"] = (observed_at - timedelta(seconds=5)).isoformat()
+    decoded = TheRundownCanonicalPayloadAdapterV1(
+        adapter_version=THERUNDOWN_ADAPTER_VERSION,
+        adapter_source_sha=ADAPTER_SHA,
+        maximum_source_age_seconds=300,
+    ).decode_response(
+        request,
+        TheRundownNetworkHttpResponseV1(
+            status_code=200,
+            payload=payload,
+            headers={
+                "X-Datapoints": "55",
+                "X-Datapoints-Used": "485",
+                "X-Datapoints-Remaining": "19515",
+                "X-Datapoints-Limit": "20000",
+                "X-Data-Delay-Seconds": "300",
+            },
+            started_at=observed_at - timedelta(seconds=1),
+            finished_at=observed_at,
+        ),
+    )
+    assert decoded.outcome is CanaryOutcome.SUCCESS
+    assert decoded.provider_event_id == frozen_epl_target.provider_event_id
+    assert decoded.home_participant_id == "3436"
+    assert decoded.away_participant_id == "3444"
+
+
+def test_curated_transport_failure_reason_is_preserved_without_secrets():
+    configuration = _configuration(enabled=True)
+    authorization = _authorization(configuration)
+    transport = _UntrustedReplayTransport(
+        lambda _request: (_ for _ in ()).throw(
+            NetworkShadowExecutionBlocked("single-event events envelope is malformed")
+        )
+    )
+    result = TheRundownNetworkShadowExecutorV1(
+        clock=lambda: NOW,
+        fail_closed_immediately=True,
+    ).run(configuration, authorization, transport=transport)
+
+    assert result.request_count == 1
+    assert result.failures == (
+        (
+            "EPL:TRANSPORT_ERROR:NetworkShadowExecutionBlocked:"
+            "single-event events envelope is malformed"
+        ),
+    )
 
 
 def test_network_shadow_rejects_alternate_provider_affiliate_scope():

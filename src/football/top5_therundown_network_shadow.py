@@ -2511,18 +2511,18 @@ class TheRundownCanonicalPayloadAdapterV1:
     ) -> TheRundownNetworkHttpRequestV1:
         http_request = TheRundownNetworkHttpRequestV1(
             method="GET",
-            endpoint=endpoint,
+            endpoint=(
+                f"{endpoint.rstrip('/')}/events/{request.target.provider_event_id}"
+            ),
             query={
+                "market_ids": ",".join(QUOTA_PROOF_MARKET_IDS),
                 "affiliate_ids": ",".join(QUOTA_PROOF_AFFILIATE_IDS),
-                "league": request.target.league,
-                "fixture_key": request.target.fixture_key,
-                "provider_event_id": request.target.provider_event_id,
-                "market": MARKET_PREMATCH_1X2,
-                "pre_match": "true",
+                "main_line": "true",
+                "hide_closed": "true",
             },
             headers={
                 "Accept": "application/json",
-                "Authorization": f"Bearer {api_key}",
+                "X-TheRundown-Key": api_key,
                 "X-SportsBrain-Request-Identity": request.request_identity,
             },
             timeout_seconds=10.0,
@@ -3222,7 +3222,12 @@ class TheRundownNetworkShadowExecutorV1:
             try:
                 response = transport.execute(request)
             except Exception as exc:  # noqa: BLE001 - transport boundary fails closed
-                failures.append(f"{target.league}:TRANSPORT_ERROR:{type(exc).__name__}")
+                failure = f"{target.league}:TRANSPORT_ERROR:{type(exc).__name__}"
+                if isinstance(exc, NetworkShadowExecutionBlocked):
+                    reason = " ".join(str(exc).split())[:240]
+                    if reason:
+                        failure = f"{failure}:{reason}"
+                failures.append(failure)
                 request_count += 1
                 if self.fail_closed_immediately:
                     break
