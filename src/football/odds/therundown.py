@@ -142,6 +142,23 @@ class _TeamPair:
 
 
 @dataclass(frozen=True)
+class TheRundownDiscoveryEventCandidateV1:
+    """Provider-normalized identity fields used by native event discovery.
+
+    This is deliberately limited to identity and lifecycle data.  Odds
+    normalization remains owned by ``TheRundownExperimentalAdapter``.
+    """
+
+    provider_event_id: str
+    league: str
+    kickoff: datetime
+    home_team: str
+    away_team: str
+    home_participant_id: str
+    away_participant_id: str
+
+
+@dataclass(frozen=True)
 class _PriceRow:
     decimal_price: float
     updated_at: datetime
@@ -828,6 +845,66 @@ class TheRundownExperimentalAdapter:
 
         return self._event_identity(event, fixture, timing_policy=timing_policy)
 
+    def discovery_event_candidate(
+        self,
+        event: Mapping[str, object],
+        *,
+        league: str,
+    ) -> TheRundownDiscoveryEventCandidateV1:
+        """Extract one provider-native discovery candidate.
+
+        The extraction deliberately delegates sport, competition, lifecycle,
+        kickoff and participant semantics to the same private normalization
+        helpers used by ``fetch``.  Callers still own future-kickoff and
+        deterministic selection policy.
+        """
+
+        if league not in THERUNDOWN_VERIFIED_LEAGUE_SPORT_IDS:
+            raise ProductionContractError("unsupported TheRundown discovery league")
+        if not isinstance(event, Mapping):
+            raise ProductionContractError("TheRundown discovery event is malformed")
+        if (
+            _integer_field(event.get("sport_id"))
+            != THERUNDOWN_VERIFIED_LEAGUE_SPORT_IDS[league]
+        ):
+            raise ProductionContractError("TheRundown discovery event league mismatch")
+        if _event_prematch_state(event) != "accepted":
+            raise ProductionContractError("TheRundown discovery event is not prematch")
+        schedule = event.get("schedule")
+        if schedule is not None and not isinstance(schedule, Mapping):
+            raise ProductionContractError("TheRundown discovery schedule is malformed")
+        if isinstance(schedule, Mapping):
+            league_name = schedule.get("league_name")
+            if (
+                league_name is not None
+                and _team_key(league_name, {})
+                not in THERUNDOWN_VERIFIED_LEAGUE_NAMES[league]
+            ):
+                raise ProductionContractError(
+                    "TheRundown discovery competition mismatch"
+                )
+        provider_event_id = str(event.get("event_id", "")).strip()
+        if not provider_event_id or provider_event_id in {"0", "None"}:
+            raise ProductionContractError("TheRundown discovery event ID is invalid")
+        kickoff = _parse_datetime(event.get("event_date"), field_name="event_date")
+        try:
+            teams = _extract_teams(event)
+        except _NormalizationFailure as exc:
+            raise ProductionContractError(str(exc.reason)) from exc
+        home_id = str(teams.home.get("team_id", "")).strip()
+        away_id = str(teams.away.get("team_id", "")).strip()
+        home_name = str(teams.home.get("name", "")).strip()
+        away_name = str(teams.away.get("name", "")).strip()
+        return TheRundownDiscoveryEventCandidateV1(
+            provider_event_id=provider_event_id,
+            league=league,
+            kickoff=kickoff,
+            home_team=home_name,
+            away_team=away_name,
+            home_participant_id=home_id,
+            away_participant_id=away_id,
+        )
+
     def fetch(
         self,
         fixture: Fixture,
@@ -1207,5 +1284,6 @@ __all__ = [
     "THERUNDOWN_VERIFIED_LEAGUE_NAMES",
     "THERUNDOWN_VERIFIED_LEAGUE_SPORT_IDS",
     "THERUNDOWN_VERIFIED_SPORT_LEAGUE_CODES",
+    "TheRundownDiscoveryEventCandidateV1",
     "TheRundownExperimentalAdapter",
 ]
