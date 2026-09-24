@@ -340,6 +340,21 @@ def verify_final_acceptance(
         discovery_items = _validate_discovery(
             bundle.get("discovery_evidence"), now=now_utc
         )
+        native_provenance = bundle.get("provider_native_discovery_provenance")
+        if native_provenance is not None:
+            from src.football.top5_provider_native_evidence_bridge import (
+                ProviderNativeEvidenceBridgeError,
+                validate_native_provenance_against_legacy,
+            )
+
+            try:
+                validate_native_provenance_against_legacy(
+                    native_provenance, discovery_items
+                )
+            except ProviderNativeEvidenceBridgeError as exc:
+                raise Top5FinalAcceptanceError(
+                    f"provider-native discovery provenance rejected: {exc}"
+                ) from exc
         discovery_by_league = {str(item["league"]): item for item in discovery_items}
         (
             run_id,

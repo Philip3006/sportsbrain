@@ -95,6 +95,56 @@ def _sha(value: object, name: str, *, length: int = 64) -> str:
     return result
 
 
+def _date_field(value: object, name: str) -> date:
+    if not isinstance(value, str):
+        raise EventDiscoveryContractError(f"{name} must be an ISO date")
+    try:
+        return date.fromisoformat(value)
+    except ValueError as exc:
+        raise EventDiscoveryContractError(f"{name} must be an ISO date") from exc
+
+
+def _datetime_field(value: object, name: str) -> datetime:
+    if not isinstance(value, str):
+        raise EventDiscoveryContractError(f"{name} must be an ISO timestamp")
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise EventDiscoveryContractError(f"{name} must be an ISO timestamp") from exc
+    return _utc(parsed, name)
+
+
+def _int_field_required(value: object, name: str) -> int:
+    if not isinstance(value, int) or isinstance(value, bool):
+        raise EventDiscoveryContractError(f"{name} must be an integer")
+    return value
+
+
+def _float_field_required(value: object, name: str) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise EventDiscoveryContractError(f"{name} must be numeric")
+    return float(value)
+
+
+def _bool_field(value: object, name: str) -> bool:
+    if not isinstance(value, bool):
+        raise EventDiscoveryContractError(f"{name} must be boolean")
+    return value
+
+
+def _mapping_field(value: object, name: str) -> Mapping[str, object]:
+    if not isinstance(value, Mapping):
+        raise EventDiscoveryContractError(f"{name} must be an object")
+    return value
+
+
+def _require_payload_keys(
+    payload: Mapping[str, object], expected: set[str], name: str
+) -> None:
+    if set(payload) != expected:
+        raise EventDiscoveryContractError(f"{name} payload shape is invalid")
+
+
 def _digest(value: object) -> str:
     return sha256(
         json.dumps(
@@ -114,9 +164,7 @@ class _CumulativeQuotaState:
 
 
 def _lower_headers(headers: Mapping[str, object]) -> dict[str, str]:
-    return {
-        str(key).casefold(): str(value).strip() for key, value in headers.items()
-    }
+    return {str(key).casefold(): str(value).strip() for key, value in headers.items()}
 
 
 def _header_int(headers: Mapping[str, str], name: str) -> int:
@@ -181,9 +229,7 @@ def _quota_state_from_headers(
         )
     period = lowered["x-datapoints-period"].casefold()
     if period not in {"daily", "weekly", "monthly"}:
-        raise EventDiscoveryExecutionBlocked(
-            "cumulative quota period is not approved"
-        )
+        raise EventDiscoveryExecutionBlocked("cumulative quota period is not approved")
     tier = lowered["x-tier"].casefold()
     if tier != "free":
         raise EventDiscoveryExecutionBlocked("cumulative quota tier is not approved")
@@ -257,9 +303,7 @@ def _validate_quota_transition(
             "cumulative quota counters moved backwards"
         )
     if used_delta != remaining_delta:
-        raise EventDiscoveryExecutionBlocked(
-            "cumulative quota deltas do not reconcile"
-        )
+        raise EventDiscoveryExecutionBlocked("cumulative quota deltas do not reconcile")
     if current.limit != previous.limit:
         raise EventDiscoveryExecutionBlocked("cumulative quota limit changed")
     if current.period != previous.period:
@@ -656,6 +700,172 @@ class TheRundownProviderNativeDiscoveryAuthorizationV1:
             "authorization_digest": self.authorization_digest,
         }
 
+    @classmethod
+    def from_payload(
+        cls, payload: object
+    ) -> TheRundownProviderNativeDiscoveryAuthorizationV1:
+        raw = _mapping_field(payload, "native discovery authorization")
+        required = {
+            "schema_version",
+            "discovery_authorization_id",
+            "ceo_discovery_authorization_identity",
+            "provider",
+            "league_order",
+            "search_start_date",
+            "adapter_version",
+            "adapter_source_sha",
+            "request_shape_digest",
+            "quota_proof_id",
+            "quota_proof_authorization_id",
+            "quota_proof_evidence_digest",
+            "quota_proof_response_digest",
+            "quota_proof_account_scope",
+            "quota_proof_remaining_datapoints",
+            "quota_proof_sport_id",
+            "quota_proof_snapshot_date",
+            "quota_proof_observed_at",
+            "quota_proof_finished_at",
+            "quota_proof_reset_at",
+            "issued_at",
+            "expires_at",
+            "maximum_dates_per_league",
+            "maximum_request_count",
+            "maximum_datapoints_per_request",
+            "maximum_datapoints",
+            "minimum_interval_seconds",
+            "maximum_retries",
+            "discovery_target_source",
+            "independent_fixture_source_qualification",
+            "no_bet",
+            "candidate_qualification",
+            "production_authority",
+            "activation",
+            "publication",
+            "ledger_mutation",
+            "monetary_spend_authorized",
+            "authorization_digest",
+        }
+        _require_payload_keys(raw, required, "native discovery authorization")
+        if (
+            raw.get("schema_version")
+            != PROVIDER_NATIVE_DISCOVERY_AUTHORIZATION_SCHEMA_VERSION
+        ):
+            raise EventDiscoveryContractError(
+                "native discovery authorization schema is unsupported"
+            )
+        league_order = raw.get("league_order")
+        if (
+            not isinstance(league_order, list)
+            or tuple(league_order) != DISCOVERY_LEAGUE_ORDER
+        ):
+            raise EventDiscoveryContractError(
+                "native discovery authorization league order is invalid"
+            )
+        authorization = cls(
+            discovery_authorization_id=_text(
+                raw.get("discovery_authorization_id"),
+                "discovery_authorization_id",
+            ),
+            ceo_discovery_authorization_identity=_text(
+                raw.get("ceo_discovery_authorization_identity"),
+                "ceo_discovery_authorization_identity",
+            ),
+            provider=_text(raw.get("provider"), "provider"),
+            search_start_date=_date_field(
+                raw.get("search_start_date"), "search_start_date"
+            ),
+            adapter_version=_text(raw.get("adapter_version"), "adapter_version"),
+            adapter_source_sha=_sha(
+                raw.get("adapter_source_sha"), "adapter_source_sha", length=40
+            ),
+            request_shape_digest=_sha(
+                raw.get("request_shape_digest"), "request_shape_digest"
+            ),
+            quota_proof_id=_text(raw.get("quota_proof_id"), "quota_proof_id"),
+            quota_proof_authorization_id=_text(
+                raw.get("quota_proof_authorization_id"),
+                "quota_proof_authorization_id",
+            ),
+            quota_proof_evidence_digest=_sha(
+                raw.get("quota_proof_evidence_digest"),
+                "quota_proof_evidence_digest",
+            ),
+            quota_proof_response_digest=_sha(
+                raw.get("quota_proof_response_digest"),
+                "quota_proof_response_digest",
+            ),
+            quota_proof_account_scope=_text(
+                raw.get("quota_proof_account_scope"), "quota_proof_account_scope"
+            ),
+            quota_proof_remaining_datapoints=_int_field_required(
+                raw.get("quota_proof_remaining_datapoints"),
+                "quota_proof_remaining_datapoints",
+            ),
+            quota_proof_sport_id=_int_field_required(
+                raw.get("quota_proof_sport_id"), "quota_proof_sport_id"
+            ),
+            quota_proof_snapshot_date=_date_field(
+                raw.get("quota_proof_snapshot_date"), "quota_proof_snapshot_date"
+            ),
+            quota_proof_observed_at=_datetime_field(
+                raw.get("quota_proof_observed_at"), "quota_proof_observed_at"
+            ),
+            quota_proof_finished_at=_datetime_field(
+                raw.get("quota_proof_finished_at"), "quota_proof_finished_at"
+            ),
+            quota_proof_reset_at=_datetime_field(
+                raw.get("quota_proof_reset_at"), "quota_proof_reset_at"
+            ),
+            issued_at=_datetime_field(raw.get("issued_at"), "issued_at"),
+            expires_at=_datetime_field(raw.get("expires_at"), "expires_at"),
+            maximum_dates_per_league=_int_field_required(
+                raw.get("maximum_dates_per_league"), "maximum_dates_per_league"
+            ),
+            maximum_request_count=_int_field_required(
+                raw.get("maximum_request_count"), "maximum_request_count"
+            ),
+            maximum_datapoints_per_request=_int_field_required(
+                raw.get("maximum_datapoints_per_request"),
+                "maximum_datapoints_per_request",
+            ),
+            maximum_datapoints=_int_field_required(
+                raw.get("maximum_datapoints"), "maximum_datapoints"
+            ),
+            minimum_interval_seconds=_float_field_required(
+                raw.get("minimum_interval_seconds"), "minimum_interval_seconds"
+            ),
+            maximum_retries=_int_field_required(
+                raw.get("maximum_retries"), "maximum_retries"
+            ),
+            discovery_target_source=_text(
+                raw.get("discovery_target_source"), "discovery_target_source"
+            ),
+            independent_fixture_source_qualification=_text(
+                raw.get("independent_fixture_source_qualification"),
+                "independent_fixture_source_qualification",
+            ),
+            no_bet=_bool_field(raw.get("no_bet"), "no_bet"),
+            candidate_qualification=_bool_field(
+                raw.get("candidate_qualification"), "candidate_qualification"
+            ),
+            production_authority=_bool_field(
+                raw.get("production_authority"), "production_authority"
+            ),
+            activation=_bool_field(raw.get("activation"), "activation"),
+            publication=_bool_field(raw.get("publication"), "publication"),
+            ledger_mutation=_bool_field(raw.get("ledger_mutation"), "ledger_mutation"),
+            monetary_spend_authorized=_bool_field(
+                raw.get("monetary_spend_authorized"),
+                "monetary_spend_authorized",
+            ),
+        )
+        authorization.validate(now=authorization.issued_at)
+        if raw.get("authorization_digest") != authorization.authorization_digest:
+            raise EventDiscoveryContractError(
+                "native discovery authorization digest mismatch"
+            )
+        return authorization
+
 
 @dataclass(frozen=True)
 class TheRundownProviderNativeDiscoveryRequestV1:
@@ -878,6 +1088,131 @@ class TheRundownProviderNativeDiscoveryCaptureV1:
         self.validate()
         return {**self._payload_without_digest, "evidence_digest": self.evidence_digest}
 
+    @classmethod
+    def from_payload(
+        cls, payload: object
+    ) -> TheRundownProviderNativeDiscoveryCaptureV1:
+        raw = _mapping_field(payload, "native discovery capture")
+        required = {
+            "schema_version",
+            "discovery_authorization_id",
+            "discovery_authorization_digest",
+            "discovery_target_source",
+            "independent_fixture_source_qualification",
+            "provider",
+            "league",
+            "snapshot_date",
+            "fixture_key",
+            "home_team",
+            "away_team",
+            "home_participant_id",
+            "away_participant_id",
+            "kickoff",
+            "provider_event_id",
+            "request_identity",
+            "request_shape_digest",
+            "request_started_at",
+            "response_completed_at",
+            "raw_response_digest",
+            "datapoints",
+            "remaining_datapoints",
+            "billing_mode",
+            "retry_count",
+            "network_execution",
+            "qualification_eligible",
+            "receipt_eligible",
+            "provider_authority",
+            "activation_authorized",
+            "publication_authorized",
+            "ledger_mutated",
+            "monetary_spend_authorized",
+            "evidence_digest",
+        }
+        _require_payload_keys(raw, required, "native discovery capture")
+        if raw.get("schema_version") != PROVIDER_NATIVE_DISCOVERY_SCHEMA_VERSION:
+            raise EventDiscoveryContractError(
+                "native discovery capture schema is unsupported"
+            )
+        capture = cls(
+            discovery_authorization_id=_text(
+                raw.get("discovery_authorization_id"),
+                "discovery_authorization_id",
+            ),
+            discovery_authorization_digest=_sha(
+                raw.get("discovery_authorization_digest"),
+                "discovery_authorization_digest",
+            ),
+            discovery_target_source=_text(
+                raw.get("discovery_target_source"), "discovery_target_source"
+            ),
+            independent_fixture_source_qualification=_text(
+                raw.get("independent_fixture_source_qualification"),
+                "independent_fixture_source_qualification",
+            ),
+            provider=_text(raw.get("provider"), "provider"),
+            league=_text(raw.get("league"), "league"),
+            snapshot_date=_date_field(raw.get("snapshot_date"), "snapshot_date"),
+            fixture_key=_text(raw.get("fixture_key"), "fixture_key"),
+            home_team=_text(raw.get("home_team"), "home_team"),
+            away_team=_text(raw.get("away_team"), "away_team"),
+            home_participant_id=_text(
+                raw.get("home_participant_id"), "home_participant_id"
+            ),
+            away_participant_id=_text(
+                raw.get("away_participant_id"), "away_participant_id"
+            ),
+            kickoff=_datetime_field(raw.get("kickoff"), "kickoff"),
+            provider_event_id=_text(raw.get("provider_event_id"), "provider_event_id"),
+            request_identity=_text(raw.get("request_identity"), "request_identity"),
+            request_shape_digest=_sha(
+                raw.get("request_shape_digest"), "request_shape_digest"
+            ),
+            request_started_at=_datetime_field(
+                raw.get("request_started_at"), "request_started_at"
+            ),
+            response_completed_at=_datetime_field(
+                raw.get("response_completed_at"), "response_completed_at"
+            ),
+            raw_response_digest=_sha(
+                raw.get("raw_response_digest"), "raw_response_digest"
+            ),
+            datapoints=_int_field_required(raw.get("datapoints"), "datapoints"),
+            remaining_datapoints=_int_field_required(
+                raw.get("remaining_datapoints"), "remaining_datapoints"
+            ),
+            billing_mode=_text(raw.get("billing_mode"), "billing_mode"),
+            retry_count=_int_field_required(raw.get("retry_count"), "retry_count"),
+            network_execution=_bool_field(
+                raw.get("network_execution"), "network_execution"
+            ),
+            qualification_eligible=_bool_field(
+                raw.get("qualification_eligible"), "qualification_eligible"
+            ),
+            receipt_eligible=_bool_field(
+                raw.get("receipt_eligible"), "receipt_eligible"
+            ),
+            provider_authority=_bool_field(
+                raw.get("provider_authority"), "provider_authority"
+            ),
+            activation_authorized=_bool_field(
+                raw.get("activation_authorized"), "activation_authorized"
+            ),
+            publication_authorized=_bool_field(
+                raw.get("publication_authorized"), "publication_authorized"
+            ),
+            ledger_mutated=_bool_field(raw.get("ledger_mutated"), "ledger_mutated"),
+            monetary_spend_authorized=_bool_field(
+                raw.get("monetary_spend_authorized"),
+                "monetary_spend_authorized",
+            ),
+        )
+        capture.validate()
+        if raw.get("evidence_digest") != capture.evidence_digest:
+            raise EventDiscoveryContractError(
+                "native discovery evidence digest mismatch"
+            )
+        return capture
+
 
 @dataclass(frozen=True)
 class TheRundownProviderNativeDiscoveryRunResultV1:
@@ -932,11 +1267,16 @@ class TheRundownProviderNativeDiscoveryRunResultV1:
             raise EventDiscoveryContractError(
                 "native result billing mode count does not match requests"
             )
-        if self.billing_datapoints and len(self.billing_datapoints) != self.request_count:
+        if (
+            self.billing_datapoints
+            and len(self.billing_datapoints) != self.request_count
+        ):
             raise EventDiscoveryContractError(
                 "native result billing count does not match requests"
             )
-        if any(mode not in _PROVIDER_NATIVE_BILLING_MODES for mode in self.billing_modes):
+        if any(
+            mode not in _PROVIDER_NATIVE_BILLING_MODES for mode in self.billing_modes
+        ):
             raise EventDiscoveryContractError("native result billing mode is invalid")
         if any(
             datapoints < 0 or datapoints > PROVIDER_NATIVE_MAX_DATAPOINTS_PER_REQUEST
@@ -945,7 +1285,10 @@ class TheRundownProviderNativeDiscoveryRunResultV1:
             raise EventDiscoveryExecutionBlocked(
                 "native result billing datapoint is invalid"
             )
-        if self.billing_datapoints and sum(self.billing_datapoints) != self.datapoint_total:
+        if (
+            self.billing_datapoints
+            and sum(self.billing_datapoints) != self.datapoint_total
+        ):
             raise EventDiscoveryContractError(
                 "native result billing total does not reconcile"
             )
@@ -983,6 +1326,82 @@ class TheRundownProviderNativeDiscoveryRunResultV1:
             "billing_datapoints": list(self.billing_datapoints),
             "run_digest": self.run_digest,
         }
+
+    @classmethod
+    def from_payload(
+        cls, payload: object
+    ) -> TheRundownProviderNativeDiscoveryRunResultV1:
+        raw = _mapping_field(payload, "native discovery run result")
+        required = {
+            "schema_version",
+            "discovery_target_source",
+            "independent_fixture_source_qualification",
+            "authorization",
+            "captures",
+            "request_count",
+            "datapoint_total",
+            "raw_response_digests",
+            "billing_modes",
+            "billing_datapoints",
+            "run_digest",
+        }
+        _require_payload_keys(raw, required, "native discovery run result")
+        if raw.get("schema_version") != PROVIDER_NATIVE_DISCOVERY_SCHEMA_VERSION:
+            raise EventDiscoveryContractError(
+                "native discovery run schema is unsupported"
+            )
+        if (
+            raw.get("discovery_target_source")
+            != PROVIDER_NATIVE_DISCOVERY_TARGET_SOURCE
+        ):
+            raise EventDiscoveryContractError("native discovery run source is invalid")
+        if (
+            raw.get("independent_fixture_source_qualification")
+            != PROVIDER_NATIVE_INDEPENDENT_QUALIFICATION
+        ):
+            raise EventDiscoveryContractError("native discovery run waiver is invalid")
+        raw_captures = raw.get("captures")
+        if not isinstance(raw_captures, list):
+            raise EventDiscoveryContractError(
+                "native discovery captures must be a list"
+            )
+        raw_response_digests = raw.get("raw_response_digests")
+        billing_modes = raw.get("billing_modes")
+        billing_datapoints = raw.get("billing_datapoints")
+        if not all(
+            isinstance(value, list)
+            for value in (raw_response_digests, billing_modes, billing_datapoints)
+        ):
+            raise EventDiscoveryContractError("native discovery run arrays are invalid")
+        result = cls(
+            authorization=TheRundownProviderNativeDiscoveryAuthorizationV1.from_payload(
+                raw.get("authorization")
+            ),
+            captures=tuple(
+                TheRundownProviderNativeDiscoveryCaptureV1.from_payload(item)
+                for item in raw_captures
+            ),
+            request_count=_int_field_required(
+                raw.get("request_count"), "request_count"
+            ),
+            datapoint_total=_int_field_required(
+                raw.get("datapoint_total"), "datapoint_total"
+            ),
+            raw_response_digests=tuple(
+                _sha(value, "raw_response_digest") for value in raw_response_digests
+            ),
+            billing_modes=tuple(
+                _text(value, "billing_mode") for value in billing_modes
+            ),
+            billing_datapoints=tuple(
+                _int_field_required(value, "billing_datapoints item")
+                for value in billing_datapoints
+            ),
+        )
+        result.validate()
+        if raw.get("run_digest") != result.run_digest:
+            raise EventDiscoveryContractError("native discovery run digest mismatch")
+        return result
 
 
 class TheRundownProviderNativeDiscoveryTransport(Protocol):
