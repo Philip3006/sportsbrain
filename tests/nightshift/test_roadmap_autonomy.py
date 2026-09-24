@@ -83,6 +83,7 @@ def test_top5_finalization_wave_is_explicit_and_bounded(tmp_path: Path) -> None:
     dispatcher = _dispatcher(tmp_path)
     enabled = {item.item_id for item in dispatcher.roadmap.items if item.enabled}
     assert enabled == {
+        "top5-b4-provider-native-real-evidence",
         "top5-final-runtime-health",
         "top5-final-b4-dossier",
         "top5-final-b2-preflight",
@@ -101,6 +102,14 @@ def test_top5_finalization_wave_is_explicit_and_bounded(tmp_path: Path) -> None:
     assert dispatcher.roadmap.by_id("top5-final-b2-preflight").dependency_item_ids == (
         "top5-final-b4-dossier",
     )
+    continuation = dispatcher.roadmap.by_id("top5-b4-provider-native-real-evidence")
+    assert continuation.app_owner == "APP_B4"
+    assert continuation.required_capabilities == ("APP_B4_REAL_PROVIDER",)
+    assert continuation.authority_requirements == ("APP_B4_REAL_PROVIDER",)
+    assert continuation.required_merged_sha == (
+        "0f039dc30d51c9d8950776ca49e3542f20dfea22"
+    )
+    assert continuation.resource_locks == ("TOP5_REAL_PROVIDER_EXECUTION",)
     assert set(dispatcher.roadmap.by_id("top5-final-convergence").dependency_item_ids) == {
         "top5-final-runtime-health",
         "top5-final-b4-dossier",
@@ -112,6 +121,78 @@ def test_top5_finalization_wave_is_explicit_and_bounded(tmp_path: Path) -> None:
         for item in dispatcher.roadmap.items
         if item.item_id.startswith("roadmap-")
     )
+
+
+def test_real_evidence_roadmap_stays_unmaterialized_without_provider_capability(
+    tmp_path: Path,
+) -> None:
+    dispatcher = _dispatcher(
+        tmp_path,
+        roadmap=RoadmapRegistry.from_mapping(
+            {
+                "version": 1,
+                "items": [
+                    {
+                        "item_id": "b4-real-evidence-gate",
+                        "title": "B4 real evidence gate",
+                        "builder_id": "builder-4",
+                        "app_owner": "APP_B4",
+                        "template_id": "builder-4.provider-health-replay",
+                        "payload": {"scope": "real evidence gate"},
+                        "required_capabilities": ["APP_B4_REAL_PROVIDER"],
+                        "authority_requirements": ["APP_B4_REAL_PROVIDER"],
+                        "required_merged_sha": "a" * 40,
+                        "resource_locks": ["TOP5_REAL_PROVIDER_EXECUTION"],
+                        "enabled": True,
+                    }
+                ],
+            }
+        ),
+    )
+
+    assert dispatcher.select_next_roadmap_task() is None
+    assert dispatcher.store.list_tasks(limit=100) == []
+    row = dispatcher.store.roadmap_records()[0]
+    assert row["item_id"] == "b4-real-evidence-gate"
+    assert row["task_id"] is None
+    assert row["skip_count"] == 1
+
+
+def test_roadmap_materialization_binds_merge_sha_and_capability_contract(
+    tmp_path: Path,
+) -> None:
+    dispatcher = _dispatcher(
+        tmp_path,
+        roadmap=RoadmapRegistry.from_mapping(
+            {
+                "version": 1,
+                "items": [
+                    {
+                        "item_id": "b4-merge-bound-replay",
+                        "title": "B4 merge-bound replay",
+                        "builder_id": "builder-4",
+                        "app_owner": "APP_B4",
+                        "template_id": "builder-4.provider-health-replay",
+                        "payload": {"scope": "merge-bound replay"},
+                        "required_capabilities": ["integration_review"],
+                        "required_merged_sha": "b" * 40,
+                        "resource_locks": ["TOP5_REAL_PROVIDER_EXECUTION"],
+                        "enabled": True,
+                    }
+                ],
+            }
+        ),
+    )
+
+    task = dispatcher.select_next_roadmap_task()
+    assert task is not None
+    assert task.app_owner == "APP_B4"
+    assert task.execution_worker in {"builder-4", "terminal-5"}
+    assert task.expected_base_sha == "b" * 40
+    assert task.required_capabilities == (
+        "integration_review",
+    )
+    assert task.resource_locks == ("TOP5_REAL_PROVIDER_EXECUTION",)
 
 
 def test_roadmap_sync_retires_only_unmaterialized_obsolete_rows(tmp_path: Path) -> None:

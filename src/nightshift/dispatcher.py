@@ -648,6 +648,7 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
         """Choose free terminal capacity from the reviewed worker pool."""
 
         template = self.templates.resolve(item.template_id)
+        required_capabilities = self._roadmap_required_capabilities(item)
         active = {
             record.terminal_worker_id
             for record in self.store.list_tasks(limit=1000)
@@ -667,12 +668,18 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
                 continue
             if template.task_type not in definition.task_types and template.task_type not in definition.delegated_task_types:
                 continue
-            if not set(template.required_capabilities).issubset(definition.capabilities):
+            if not required_capabilities.issubset(definition.capabilities):
                 continue
             if template.risk_class not in definition.allowed_risk_classes:
                 continue
             return definition.builder_id
         return None
+
+    def _roadmap_required_capabilities(self, item: Any) -> set[str]:
+        template = self.templates.resolve(item.template_id)
+        required = set(template.required_capabilities)
+        required.update(getattr(item, "required_capabilities", ()))
+        return required
 
     def select_next_roadmap_task(
         self, *, builder_id: str | None = None
@@ -765,6 +772,13 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
             self._record_roadmap_skip(item, "no_free_capable_terminal_worker")
             return None
         definition = self.registry.assert_worker_target(selected_worker)
+        required_capabilities = self._roadmap_required_capabilities(item)
+        if not required_capabilities.issubset(definition.capabilities):
+            self._record_roadmap_skip(
+                item,
+                f"worker_missing_capabilities:{selected_worker}",
+            )
+            return None
         task = self.submit_template(
                 item.template_id,
                 branch=f"{definition.branch_prefix}{item.item_id}",
@@ -774,6 +788,7 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
                 priority=item.priority,
                 debug_budget=item.debug_budget,
                 repeated_failure_limit=item.repeated_failure_limit,
+                expected_base_sha=getattr(item, "required_merged_sha", None),
                 execution_worker=selected_worker,
                 app_owner=(
                     getattr(item, "app_owner", None)
@@ -782,6 +797,10 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
                 ),
                 allowed_paths=tuple(getattr(item, "governed_paths", ())),
                 resource_locks=tuple(getattr(item, "resource_locks", ())),
+                required_capabilities=tuple(sorted(required_capabilities)),
+                authority_requirements=tuple(
+                    getattr(item, "authority_requirements", ())
+                ),
                 roadmap_item_id=item.item_id,
             )
         status = "BLOCKED" if task.state is TaskState.BLOCKED else "ENQUEUED"
