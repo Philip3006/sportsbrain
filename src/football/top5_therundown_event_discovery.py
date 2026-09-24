@@ -211,6 +211,10 @@ class TheRundownB4QuotaProofV1:
     response_digest: str
     evidence_digest: str
     request_shape_digest: str
+    quota_used_datapoints: int | None = None
+    quota_limit_datapoints: int | None = None
+    quota_period: str | None = None
+    quota_tier: str | None = None
 
     @staticmethod
     def _timestamp(raw: Mapping[str, object], name: str) -> datetime:
@@ -617,6 +621,12 @@ class TheRundownB4QuotaProofV1:
             response_digest=proof["response_digest"],
             evidence_digest=proof["evidence_digest"],
             request_shape_digest=proof["request_shape_digest"],
+            quota_used_datapoints=proof["quota_used_datapoints"],
+            quota_limit_datapoints=proof["quota_limit_datapoints"],
+            quota_period=proof["quota_period"],
+            quota_tier=str(
+                proof["raw_header_evidence"].get("x-tier", "")
+            ).strip(),
         )
 
     def validate(
