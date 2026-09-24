@@ -11,9 +11,11 @@ from typing import Any
 
 from .errors import ConfigurationError, InvalidTaskError
 from .registry import BuilderRegistry
+from .task_validation import safe_labels
 from .templates import TemplateRegistry
 
 _ITEM_ID_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{7,127}$")
+_SHA_RE = re.compile(r"^[0-9a-fA-F]{40,64}$")
 _MODES = {"bounded", "unlimited"}
 
 
@@ -27,6 +29,9 @@ class RoadmapItem:
     template_id: str
     payload: Mapping[str, Any]
     app_owner: str | None = None
+    required_capabilities: tuple[str, ...] = ()
+    authority_requirements: tuple[str, ...] = ()
+    required_merged_sha: str | None = None
     dependency_item_ids: tuple[str, ...] = ()
     priority: int = 0
     debug_budget: int = 0
@@ -60,6 +65,23 @@ class RoadmapItem:
             "APP_B1", "APP_B2", "APP_B3", "APP_B4", "APP_B5"
         }:
             raise ConfigurationError(f"{item_id}: app_owner is invalid")
+        try:
+            required_capabilities = safe_labels(
+                raw.get("required_capabilities", ()),
+                "required_capabilities",
+            )
+            authority_requirements = safe_labels(
+                raw.get("authority_requirements", ()),
+                "authority_requirements",
+            )
+        except InvalidTaskError as exc:
+            raise ConfigurationError(f"{item_id}: capability contract is invalid") from exc
+        required_merged_sha = raw.get("required_merged_sha")
+        if required_merged_sha is not None and (
+            not isinstance(required_merged_sha, str)
+            or not _SHA_RE.fullmatch(required_merged_sha)
+        ):
+            raise ConfigurationError(f"{item_id}: required_merged_sha is invalid")
         payload = raw["payload"]
         if not isinstance(payload, Mapping):
             raise ConfigurationError(f"{item_id}: payload must be an object")
@@ -119,6 +141,9 @@ class RoadmapItem:
             template_id=raw["template_id"].strip(),
             payload=dict(payload),
             dependency_item_ids=tuple(dependencies),
+            required_capabilities=required_capabilities,
+            authority_requirements=authority_requirements,
+            required_merged_sha=required_merged_sha,
             priority=priority,
             debug_budget=debug_budget,
             repeated_failure_limit=repeat_limit,
@@ -137,6 +162,9 @@ class RoadmapItem:
             "app_owner": self.app_owner or _app_owner_for_builder(self.builder_id),
             "template_id": self.template_id,
             "payload": dict(self.payload),
+            "required_capabilities": list(self.required_capabilities),
+            "authority_requirements": list(self.authority_requirements),
+            "required_merged_sha": self.required_merged_sha,
             "dependency_item_ids": list(self.dependency_item_ids),
             "priority": self.priority,
             "debug_budget": self.debug_budget,

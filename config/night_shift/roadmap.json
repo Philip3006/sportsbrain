@@ -280,6 +280,43 @@
       "resource_locks": ["top5-b4-final-dossier"]
     },
     {
+      "item_id": "top5-b4-provider-native-real-evidence",
+      "title": "APP_B4 provider-native Discovery real-evidence continuation",
+      "builder_id": "builder-4",
+      "app_owner": "APP_B4",
+      "template_id": "builder-4.provider-health-replay",
+      "payload": {
+        "scope": "Continue the APP_B4 provider-native Discovery real-evidence chain only after the merged affiliate-scope fix is authoritative",
+        "provider_set": ["therundown_provider_native"],
+        "required_merged_sha": "0f039dc30d51c9d8950776ca49e3542f20dfea22",
+        "acceptance_criteria": [
+          "requires a fresh source checkout containing merged SHA 0f039dc30d51c9d8950776ca49e3542f20dfea22; never run from Builder 1's local branch",
+          "requires a fresh quota-proof authorization, fresh quota proof and fresh Discovery authorization; never reuse consumed authorization IDs",
+          "binds affiliate_ids=19 in every provider-native Discovery and controlled-shadow request",
+          "preserves canonical leagues EPL, BL1, LL, SA, L1 with corrected sport IDs EPL=11, BL1=13, LL=14, SA=15, L1=12",
+          "preserves 21 dates per league, 105 max requests, 55 datapoints per request, 5775 cumulative datapoints, 11550 fresh headroom, zero retries and at least 1.1 seconds pacing",
+          "preserves candidate-only/no-bet/no-publication/no-activation and production authority the_odds_api",
+          "fails closed on incomplete five-league results with no partial artifact",
+          "must not acquire or execute while TOP5_REAL_PROVIDER_EXECUTION is held or may be held by Builder 4"
+        ]
+      },
+      "required_capabilities": ["APP_B4_REAL_PROVIDER"],
+      "authority_requirements": ["APP_B4_REAL_PROVIDER"],
+      "required_merged_sha": "0f039dc30d51c9d8950776ca49e3542f20dfea22",
+      "priority": 34,
+      "generation": 1,
+      "debug_budget": 0,
+      "repeated_failure_limit": 1,
+      "mode": "bounded",
+      "enabled": true,
+      "governed_paths": [
+        "docs/night_shift/top5_b4",
+        "artifacts/top5_b4",
+        "tests/nightshift/top5_b4"
+      ],
+      "resource_locks": ["TOP5_REAL_PROVIDER_EXECUTION"]
+    },
+    {
       "item_id": "top5-final-b2-preflight",
       "title": "Builder 2 Top5 activation pipeline offline preflight",
       "builder_id": "builder-2",
