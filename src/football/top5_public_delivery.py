@@ -164,6 +164,9 @@ def _validate_artifact(artifact: PublishedTop5BatchArtifact) -> tuple[
         "controlled_shadow_run_id",
         "qualification_session_id",
         "league_codes",
+        "generated_at",
+        "published_at",
+        "fallback_max_age_seconds",
         "no_bet",
     }
     missing = sorted(key for key in required_release if not release.get(key))
@@ -179,6 +182,10 @@ def _validate_artifact(artifact: PublishedTop5BatchArtifact) -> tuple[
         or release.get("no_bet") is not True
     ):
         raise Top5DeliveryError("artifact is not an authorized controlled no-bet release")
+    if release.get("provider_authority") != "the_odds_api":
+        raise Top5DeliveryError(
+            "Top-5 public provider authority must remain the_odds_api"
+        )
     codes = tuple(str(code).upper() for code in release["league_codes"])
     if set(codes) != _TOP5_LEAGUES or len(codes) != len(_TOP5_LEAGUES):
         raise Top5DeliveryError("artifact release must contain the five Top-5 leagues once")

@@ -387,7 +387,42 @@ const _PUBLIC_TOP5_RELEASE_FIELDS = new Set([
   'candidate_id', 'model_identity', 'evidence_digest', 'evidence_digests',
   'controlled_shadow_run_id', 'qualification_session_id', 'league_codes',
   'generated_at', 'published_at', 'fallback_max_age_seconds', 'no_bet',
+  'source_release_sha', 'runtime_data_sha', 'source_runtime_consistent',
 ]);
+const _TOP5_LEAGUES = new Set(['EPL', 'BL1', 'LL', 'SA', 'L1']);
+const _TOP5_PUBLIC_PROVIDER_AUTHORITY = 'the_odds_api';
+const _TOP5_LEAGUE_ALIASES = new Map([
+  ['epl', 'EPL'], ['premier_league', 'EPL'],
+  ['english_premier_league', 'EPL'], ['soccer_epl', 'EPL'],
+  ['bl1', 'BL1'], ['bundesliga', 'BL1'],
+  ['german_bundesliga', 'BL1'], ['soccer_germany_bundesliga', 'BL1'],
+  ['ll', 'LL'], ['la_liga', 'LL'], ['laliga', 'LL'],
+  ['spanish_la_liga', 'LL'], ['soccer_spain_la_liga', 'LL'],
+  ['sa', 'SA'], ['serie_a', 'SA'], ['italian_serie_a', 'SA'],
+  ['soccer_italy_serie_a', 'SA'],
+  ['l1', 'L1'], ['ligue_1', 'L1'], ['ligue1', 'L1'],
+  ['french_ligue_1', 'L1'], ['soccer_france_ligue_1', 'L1'],
+]);
+
+function _canonicalTop5LeagueCode(value) {
+  if (typeof value !== 'string') return value;
+  const normalized = value.trim().toLowerCase();
+  return _TOP5_LEAGUE_ALIASES.get(normalized) || value;
+}
+
+function _normalizeTop5LeagueCodes(value) {
+  if (!Array.isArray(value) || value.some((code) => typeof code !== 'string')) {
+    throw new Error('invalid top5_release league_codes');
+  }
+  const normalized = value.map((code) => _canonicalTop5LeagueCode(code));
+  if (normalized.length !== _TOP5_LEAGUES.size ||
+      new Set(normalized).size !== normalized.length ||
+      new Set(normalized).size !== _TOP5_LEAGUES.size ||
+      normalized.some((code) => !_TOP5_LEAGUES.has(code))) {
+    throw new Error('top5_release league_codes must contain the five Top-5 leagues exactly once');
+  }
+  return [...normalized].sort();
+}
 
 // Forbidden private keys — must never appear anywhere in the public payload.
 // Mirrors FORBIDDEN_PRIVATE_KEYS in src/notifications/public_serializer.py.
@@ -439,10 +474,7 @@ function _publicTop5Release(value) {
     if (!(key in value)) continue;
     const item = value[key];
     if (key === 'league_codes') {
-      if (!Array.isArray(item) || item.some((code) => typeof code !== 'string')) {
-        throw new Error('invalid top5_release league_codes');
-      }
-      out[key] = [...item];
+      out[key] = _normalizeTop5LeagueCodes(item);
     } else if (key === 'evidence_digests') {
       if (!item || typeof item !== 'object' || Array.isArray(item)) {
         throw new Error('invalid top5_release evidence_digests');
@@ -464,7 +496,7 @@ function _publicTop5Release(value) {
   for (const key of [
     'schema_version', 'generation_id', 'activation_state', 'activation_id',
     'publication_status', 'publication_enabled', 'publication_authorization_id',
-    'league_codes', 'no_bet',
+    'league_codes', 'generated_at', 'published_at', 'fallback_max_age_seconds', 'no_bet',
   ]) {
     if (!(key in out)) throw new Error(`incomplete top5_release: ${key}`);
   }
@@ -472,17 +504,49 @@ function _publicTop5Release(value) {
       out.publication_enabled !== true || out.no_bet !== true || out.league_codes.length === 0) {
     throw new Error('top5_release is not a published controlled no-bet release');
   }
+  if (out.provider_authority !== _TOP5_PUBLIC_PROVIDER_AUTHORITY) {
+    throw new Error('Top-5 public provider authority must remain the_odds_api');
+  }
   return out;
 }
 
+function _canonicalizeTop5PublicRecords(records) {
+  if (!Array.isArray(records)) return records;
+  return records.map((record) => {
+    if (!record || typeof record !== 'object') return record;
+    const canonical = _canonicalTop5LeagueCode(record.league);
+    if (!_TOP5_LEAGUES.has(canonical) || record.league === canonical) return record;
+    return { ...record, league: canonical };
+  });
+}
+
 function _validateTop5PublicRecords(records, release) {
-  if (!Array.isArray(records)) return;
-  const leagues = new Set(['EPL', 'BL1', 'LL', 'SA', 'L1']);
+  if (!Array.isArray(records)) {
+    if (release) throw new Error('published Top-5 release requires complete football records');
+    return;
+  }
   const top5 = records.filter((record) =>
-    record && typeof record === 'object' && leagues.has(String(record.league || '').toUpperCase())
+    record && typeof record === 'object' && _TOP5_LEAGUES.has(_canonicalTop5LeagueCode(record.league))
   );
-  if (!top5.length) return;
+  if (!top5.length) {
+    if (release) throw new Error('published Top-5 release requires complete five-league records');
+    return;
+  }
   if (!release) throw new Error('Top-5 records require a controlled release envelope');
+  if (top5.length !== _TOP5_LEAGUES.size * 3) {
+    throw new Error('published Top-5 release requires exactly 15 records');
+  }
+  const byLeague = new Map([..._TOP5_LEAGUES].map((league) => [league, []]));
+  for (const record of top5) byLeague.get(_canonicalTop5LeagueCode(record.league)).push(record);
+  for (const [league, leagueRecords] of byLeague) {
+    if (leagueRecords.length !== 3) {
+      throw new Error(`published Top-5 release requires three records for ${league}`);
+    }
+    const fixtures = new Set(leagueRecords.map((record) => record.fixture_key));
+    if (fixtures.size !== 1 || !leagueRecords[0].fixture_key) {
+      throw new Error(`published Top-5 release requires one fixture for ${league}`);
+    }
+  }
   for (const record of top5) {
     const provenance = record.provenance && typeof record.provenance === 'object'
       ? record.provenance : {};
@@ -535,6 +599,7 @@ export function serializePublicProduct(snapshot) {
   for (const key of _PUBLIC_TOP_LEVEL_KEYS) {
     if (key in snapshot) pub[key] = snapshot[key];
   }
+  if ('football' in pub) pub.football = _canonicalizeTop5PublicRecords(pub.football);
   if ('top5_release' in pub) pub.top5_release = _publicTop5Release(pub.top5_release);
   _validateTop5PublicRecords(pub.football, pub.top5_release);
   if ('meta' in snapshot) pub.meta = _publicMeta(snapshot.meta);

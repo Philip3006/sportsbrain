@@ -1,0 +1,15 @@
+{
+  "schema": "top5-runtime-health-expectations-v1",
+  "mode": "offline-only",
+  "top5_scheduler_registered": false,
+  "top5_publication_registered": false,
+  "top5_ledger_writer_registered": false,
+  "expected_existing_jobs": {
+    "com.sportsbrain.aggregate-health": "active",
+    "com.sportsbrain.odds-refresh": "active"
+  },
+  "notes": [
+    "This is a read-only expectation manifest, not a launchd job.",
+    "Top-5 runtime, publication, and ledger writers remain unregistered offline."
+  ]
+}

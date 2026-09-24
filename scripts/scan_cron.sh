@@ -2,7 +2,8 @@
 # Wrapper for launchd: runs SportsBrain daily scan with auto-logging.
 # Triggered at 07:00 UTC (09:00 CET) by com.sportsbrain.daily-scan.plist
 
-SPORTSBRAIN_DIR="/Users/philiprassillier/sportsbrain"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+SPORTSBRAIN_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd -P)"
 LOG="/Users/philiprassillier/Library/Logs/sportsbrain_daily_scan.log"
 RUNTIME_STATE_DIR="/Users/philiprassillier/Library/Application Support/SportsBrain/runtime-state"
 mkdir -p "/Users/philiprassillier/Library/Caches/SportsBrain" "$RUNTIME_STATE_DIR" || exit 1

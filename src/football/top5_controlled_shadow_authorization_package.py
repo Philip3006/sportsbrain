@@ -11,16 +11,22 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import stat
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 from hashlib import sha256
 from math import isfinite
 from pathlib import Path
 from typing import Any
 
 from src.football.odds.therundown import THERUNDOWN_BASE_URL
+from src.football.odds.therundown_la_liga_capture import (
+    SAME_RUN_LL_VALIDATION_SCHEMA,
+    validate_same_run_ll_capture,
+)
 from src.football.provider_cascade.candidate_eligibility import (
     CandidateEligibilityError,
     CandidateProviderEligibilityV1,
@@ -75,8 +81,14 @@ from src.football.top5_therundown_network_shadow import (
     TheRundownNetworkShadowCaptureV1,
     TheRundownNetworkShadowExecutorV1,
     TheRundownNetworkShadowRunResultV1,
+    TheRundownQuotaHeadroomEvidenceV1,
+    TheRundownQuotaProofAuthorizationV1,
+    TheRundownQuotaProofEvidenceV1,
+    TheRundownQuotaProofRequestV1,
+    execute_therundown_quota_proof,
 )
 from src.football.top5_therundown_shadow_canary import TheRundownCanaryTargetV1
+from src.runtime.paths import runtime_state_path
 from src.utils.atomic_io import atomic_write_json
 
 CANONICAL_CANDIDATE_PROVIDER = "therundown_experimental"
@@ -90,11 +102,24 @@ FUTURE_EXECUTION_COMMAND = (
     "python -m src.football.top5_controlled_shadow_authorization_package "
     "--execute-network --package <authorization-package.json> "
     "--authorization <ceo-authorization.json> "
-    "--b1-ll-artifact <b1-ll-evidence-bundle.json> "
+    "--quota-headroom <quota-headroom-evidence.json> "
     "--credential-file /operator-only/top5/therundown.env "
     "--output /operator-only/top5/top5-b2-five-league-shadow-package.json"
 )
+QUOTA_PROOF_COMMAND = (
+    "python -m src.football.top5_controlled_shadow_authorization_package "
+    "--execute-quota-proof "
+    "--proof-authorization <quota-proof-authorization.json> "
+    "--spend-control-evidence <provider-tier-evidence.json> "
+    "--credential-file /operator-only/top5/therundown.env "
+    "--output /operator-only/top5/top5-quota-proof.json"
+)
 DEFAULT_THERUNDOWN_CREDENTIAL_PATH = Path.home() / "sportsbrain" / ".env"
+SPEND_CONTROL_EVIDENCE_MAXIMUM_AGE_SECONDS = 86_400
+SPEND_CONTROL_DASHBOARD_SCHEMA_VERSION = "top5-spend-control-dashboard-attestation-v1"
+SPEND_CONTROL_DASHBOARD_EVIDENCE_KIND = "operator_dashboard_attestation"
+QUOTA_PROOF_CONSUMPTION_SCHEMA_VERSION = "top5-therundown-quota-proof-consumption-v2"
+QUOTA_PROOF_FAILURE_SCHEMA_VERSION = "top5-therundown-quota-proof-failure-v1"
 B2_SHADOW_TIMING_KICKOFF_TOLERANCE_SECONDS = 60
 B2_SHADOW_TIMING_MINIMUM_LEAD_SECONDS = 0
 B2_SHADOW_TIMING_MAXIMUM_LEAD_SECONDS = 10_800
@@ -256,6 +281,177 @@ def _read_protected_therundown_credential(path_value: object) -> str:
     )
 
 
+def quota_proof_consumption_state_path() -> Path:
+    """Return the sole external operator-owned quota-proof consumption store."""
+
+    return runtime_state_path(
+        "football/top5/quota-proof-consumption",
+        require_external=True,
+    )
+
+
+def _quota_proof_consumption_identity(
+    authorization: TheRundownQuotaProofAuthorizationV1,
+) -> str:
+    return _digest(
+        {
+            "proof_authorization_id": authorization.proof_authorization_id,
+            "authorization_digest": authorization.authorization_digest,
+        }
+    )
+
+
+def _quota_proof_consumption_marker_path(
+    authorization: TheRundownQuotaProofAuthorizationV1,
+) -> Path:
+    directory = quota_proof_consumption_state_path()
+    if not directory.is_absolute():
+        raise ControlledShadowAuthorizationPackageError(
+            "quota proof consumption store must be an absolute operator path"
+        )
+    marker_name = "quota-proof-" + _digest(
+        {"proof_authorization_id": authorization.proof_authorization_id}
+    )
+    return directory / f"{marker_name}.json"
+
+
+def _read_quota_proof_consumption_marker(path: Path) -> Mapping[str, object]:
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ControlledShadowAuthorizationPackageError(
+            "existing quota proof consumption marker is invalid; refusing reuse"
+        ) from exc
+    marker = _mapping(raw, "quota proof consumption marker")
+    required = {
+        "schema_version",
+        "consumption_identity",
+        "proof_authorization_id",
+        "authorization_digest",
+        "proof_id",
+        "provider",
+        "sport_id",
+        "snapshot_date",
+        "request_shape_digest",
+        "consumed_at",
+        "maximum_request_count",
+        "retry_count",
+    }
+    if (
+        set(marker) != required
+        or marker.get("schema_version") != QUOTA_PROOF_CONSUMPTION_SCHEMA_VERSION
+    ):
+        raise ControlledShadowAuthorizationPackageError(
+            "existing quota proof consumption marker is invalid; refusing reuse"
+        )
+    for name in (
+        "consumption_identity",
+        "authorization_digest",
+        "request_shape_digest",
+    ):
+        _digest_value(marker.get(name), f"quota proof marker {name}")
+    _timestamp(marker.get("consumed_at"), "quota proof marker consumed_at")
+    if marker.get("maximum_request_count") != 1 or marker.get("retry_count") != 0:
+        raise ControlledShadowAuthorizationPackageError(
+            "existing quota proof consumption marker has unsafe limits"
+        )
+    return marker
+
+
+def _consume_quota_proof_authorization(
+    authorization: TheRundownQuotaProofAuthorizationV1,
+    *,
+    consumed_at: datetime,
+) -> Path:
+    """Atomically consume one proof authorization before credential/transport use."""
+
+    directory = quota_proof_consumption_state_path()
+    if directory.is_symlink():
+        raise ControlledShadowAuthorizationPackageError(
+            "quota proof consumption store must not be a symlink"
+        )
+    try:
+        directory.mkdir(parents=True, mode=0o700, exist_ok=True)
+        if directory.is_symlink() or not directory.is_dir():
+            raise ControlledShadowAuthorizationPackageError(
+                "quota proof consumption store is not a directory"
+            )
+        directory.chmod(0o700)
+        if stat.S_IMODE(directory.stat().st_mode) & 0o077:
+            raise ControlledShadowAuthorizationPackageError(
+                "quota proof consumption store permissions are too broad"
+            )
+    except ControlledShadowAuthorizationPackageError:
+        raise
+    except OSError as exc:
+        raise ControlledShadowAuthorizationPackageError(
+            "quota proof consumption store is unavailable"
+        ) from exc
+
+    marker_path = _quota_proof_consumption_marker_path(authorization)
+    marker = {
+        "schema_version": QUOTA_PROOF_CONSUMPTION_SCHEMA_VERSION,
+        "consumption_identity": _quota_proof_consumption_identity(authorization),
+        "proof_authorization_id": authorization.proof_authorization_id,
+        "authorization_digest": authorization.authorization_digest,
+        "proof_id": authorization.proof_id,
+        "provider": authorization.provider,
+        "sport_id": authorization.sport_id,
+        "snapshot_date": authorization.snapshot_date.isoformat(),
+        "request_shape_digest": authorization.request_shape_digest,
+        "consumed_at": _utc(consumed_at, "quota proof consumed_at").isoformat(),
+        "maximum_request_count": 1,
+        "retry_count": 0,
+    }
+    payload = json.dumps(
+        marker, sort_keys=True, separators=(",", ":"), ensure_ascii=True
+    ).encode("utf-8")
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+    nofollow = getattr(os, "O_NOFOLLOW", 0)
+    try:
+        descriptor = os.open(marker_path, flags | nofollow, 0o600)
+    except FileExistsError as exc:
+        if marker_path.is_symlink():
+            raise ControlledShadowAuthorizationPackageError(
+                "existing quota proof consumption marker is a symlink; refusing reuse"
+            ) from exc
+        existing = _read_quota_proof_consumption_marker(marker_path)
+        if (
+            existing.get("proof_authorization_id")
+            != authorization.proof_authorization_id
+            or existing.get("authorization_digest")
+            != authorization.authorization_digest
+        ):
+            raise ControlledShadowAuthorizationPackageError(
+                "quota proof authorization identity conflicts with consumed state"
+            ) from exc
+        raise ControlledShadowAuthorizationPackageError(
+            "TOP5_B4_QUOTA_PROOF — proof authorization has already been consumed"
+        ) from exc
+    except OSError as exc:
+        raise ControlledShadowAuthorizationPackageError(
+            "quota proof consumption marker could not be created"
+        ) from exc
+
+    try:
+        with os.fdopen(descriptor, "wb") as handle:
+            handle.write(payload)
+            handle.flush()
+            os.fsync(handle.fileno())
+        marker_path.chmod(0o600)
+        directory_descriptor = os.open(directory, os.O_RDONLY)
+        try:
+            os.fsync(directory_descriptor)
+        finally:
+            os.close(directory_descriptor)
+    except OSError as exc:
+        # The exclusive marker remains as a deliberate fail-closed tombstone.
+        raise ControlledShadowAuthorizationPackageError(
+            "quota proof consumption marker could not be committed"
+        ) from exc
+    return marker_path
+
+
 def _target_from_payload(raw: object) -> TheRundownCanaryTargetV1:
     item = _mapping(raw, "target")
     return TheRundownCanaryTargetV1(
@@ -372,6 +568,9 @@ def _authorization_from_payload(
         maximum_source_age_seconds=mapping.get("maximum_source_age_seconds"),  # type: ignore[arg-type]
         issued_at=_timestamp(mapping.get("issued_at"), "issued_at"),
         expires_at=_timestamp(mapping.get("expires_at"), "expires_at"),
+        quota_headroom_evidence_digest=str(
+            mapping.get("quota_headroom_evidence_digest", "")
+        ),
         minimum_interval_seconds=mapping.get("minimum_interval_seconds", 1.1),  # type: ignore[arg-type]
         maximum_retries=mapping.get("maximum_retries", 0),  # type: ignore[arg-type]
         no_bet=mapping.get("no_bet", True),  # type: ignore[arg-type]
@@ -387,14 +586,12 @@ def _authorization_from_payload(
 def _load_execution_inputs(
     package_path: object,
     authorization_path: object,
-    b1_path: object,
     *,
     now: datetime,
 ) -> tuple[
     ControlledShadowAuthorizationPackageV1,
     TheRundownNetworkConfigurationV1,
     TheRundownNetworkAuthorizationV1,
-    Mapping[str, object],
 ]:
     package_payload = _read_json_file(package_path, "authorization package")
     package = ControlledShadowAuthorizationPackageV1(
@@ -463,21 +660,654 @@ def _load_execution_inputs(
         raise ControlledShadowAuthorizationPackageError(
             "CEO authorization provider is not canonical"
         )
-    b1_payload = _read_json_file(b1_path, "B1 La Liga artifact")
-    b1_artifact = _materialize_b1_ll_artifact(b1_payload)
-    _validate_b1_execution_envelope(
-        b1_artifact,
-        configuration=execution_configuration,
-        authorization=authorization,
+    return package, execution_configuration, authorization
+
+
+def _load_quota_proof_authorization(
+    path_value: object,
+    *,
+    now: datetime,
+) -> TheRundownQuotaProofAuthorizationV1:
+    container = _read_json_file(path_value, "quota proof authorization")
+    payload = container.get("authorization")
+    if not isinstance(payload, Mapping):
+        payload = container.get("proof_authorization")
+    if not isinstance(payload, Mapping):
+        payload = container
+    authorization = TheRundownQuotaProofAuthorizationV1.from_payload(payload)
+    outer_digest = container.get("authorization_digest")
+    if outer_digest is not None and outer_digest != authorization.authorization_digest:
+        raise ControlledShadowAuthorizationPackageError(
+            "quota proof authorization digest wrapper mismatch"
+        )
+    try:
+        authorization.validate(now=now)
+    except NetworkShadowContractError as exc:
+        raise ControlledShadowAuthorizationPackageError(str(exc)) from exc
+    return authorization
+
+
+def _load_quota_headroom(
+    path_value: object,
+    *,
+    package: ControlledShadowAuthorizationPackageV1,
+    configuration: TheRundownNetworkConfigurationV1,
+    authorization: TheRundownNetworkAuthorizationV1,
+    now: datetime,
+) -> TheRundownQuotaHeadroomEvidenceV1:
+    raise ControlledShadowAuthorizationPackageError(
+        "NO_TRUSTWORTHY_PRE_REQUEST_QUOTA_SOURCE: TheRundown exposes "
+        "quota remaining only in billed response headers; no provider-native "
+        "non-billable account artifact or verifier is configured"
+    )
+
+
+def _load_spend_control_evidence(
+    path_value: object,
+    *,
+    now: datetime,
+) -> dict[str, object]:
+    """Accept only recent provider evidence proving a hard-capped free tier.
+
+    This is deliberately not quota headroom.  It gates paid-overage exposure
+    before the single billed proof request; remaining datapoints must still be
+    obtained from that provider response and cannot be supplied by the caller.
+    """
+
+    try:
+        raw = _read_json_file(path_value, "spend-control evidence")
+        if (
+            raw.get("schema_version") == SPEND_CONTROL_DASHBOARD_SCHEMA_VERSION
+            and raw.get("evidence_kind") != SPEND_CONTROL_DASHBOARD_EVIDENCE_KIND
+        ):
+            raise ControlledShadowAuthorizationPackageError(
+                "TOP5_B4_QUOTA_PROOF — BLOCKED_SPEND_CONTROL: dashboard evidence kind is invalid"
+            )
+        if raw.get("evidence_kind") == SPEND_CONTROL_DASHBOARD_EVIDENCE_KIND:
+            return _load_dashboard_spend_control_evidence(raw, now=now)
+        headers_raw = raw.get("headers", raw)
+        headers = {
+            str(key).casefold(): str(value).strip()
+            for key, value in _mapping(headers_raw, "spend-control headers").items()
+            if str(value).strip()
+        }
+        if raw.get("provider") not in (None, CANONICAL_CANDIDATE_PROVIDER):
+            raise ValueError("provider mismatch")
+        if headers.get("x-tier", "").casefold() != "free":
+            raise ValueError("account tier is not free")
+        if headers.get("x-datapoints-period", "").casefold() != "daily":
+            raise ValueError("datapoint period is not daily")
+        if int(headers.get("x-datapoints-limit", "-1")) != 20_000:
+            raise ValueError("free-tier daily limit is not 20000")
+        if int(headers.get("x-rate-limit", "-1")) != 1:
+            raise ValueError("provider rate limit is not the bounded one-request rate")
+        observed_raw = raw.get("observed_at") or headers.get("date")
+        if not observed_raw:
+            raise ValueError("observation timestamp is missing")
+        if isinstance(observed_raw, str) and "," in observed_raw:
+            observed = parsedate_to_datetime(observed_raw)
+        else:
+            observed = _timestamp(observed_raw, "spend-control observed_at")
+        observed = _utc(observed, "spend-control observed_at")
+        current = _utc(now, "spend-control validation now")
+        if observed > current:
+            raise ValueError("observation timestamp is in the future")
+        if (
+            current - observed
+        ).total_seconds() > SPEND_CONTROL_EVIDENCE_MAXIMUM_AGE_SECONDS:
+            raise ValueError("spend-control evidence is stale")
+        safe = {
+            key: headers[key]
+            for key in (
+                "x-tier",
+                "x-datapoints-period",
+                "x-datapoints-limit",
+                "x-rate-limit",
+            )
+        }
+        if "date" in headers:
+            safe["date"] = headers["date"]
+        return {
+            "provider": CANONICAL_CANDIDATE_PROVIDER,
+            "evidence_kind": "provider_response_headers",
+            "observed_at": observed,
+            "account_tier": "free",
+            "overage_exposure": "none",
+            "digest": _digest(
+                {
+                    "provider": CANONICAL_CANDIDATE_PROVIDER,
+                    "observed_at": observed,
+                    "safe_headers": safe,
+                }
+            ),
+            "safe_headers": safe,
+        }
+    except (ControlledShadowAuthorizationPackageError, TypeError, ValueError) as exc:
+        if isinstance(exc, ControlledShadowAuthorizationPackageError) and str(
+            exc
+        ).startswith("TOP5_B4_QUOTA_PROOF"):
+            raise
+        raise ControlledShadowAuthorizationPackageError(
+            "TOP5_B4_QUOTA_PROOF — BLOCKED_SPEND_CONTROL: " + str(exc)
+        ) from exc
+
+
+def _load_dashboard_spend_control_evidence(
+    raw: Mapping[str, object],
+    *,
+    now: datetime,
+) -> dict[str, object]:
+    """Normalize an operator assertion without turning it into quota evidence."""
+
+    if raw.get("schema_version") != SPEND_CONTROL_DASHBOARD_SCHEMA_VERSION:
+        raise ControlledShadowAuthorizationPackageError(
+            "TOP5_B4_QUOTA_PROOF — BLOCKED_SPEND_CONTROL: dashboard attestation schema is unsupported"
+        )
+    if raw.get("provider") != CANONICAL_CANDIDATE_PROVIDER:
+        raise ControlledShadowAuthorizationPackageError(
+            "TOP5_B4_QUOTA_PROOF — BLOCKED_SPEND_CONTROL: dashboard provider mismatch"
+        )
+    if raw.get("account_tier") != "free":
+        raise ControlledShadowAuthorizationPackageError(
+            "TOP5_B4_QUOTA_PROOF — BLOCKED_SPEND_CONTROL: dashboard account tier is not free"
+        )
+    plan_price = raw.get("plan_price_usd")
+    if isinstance(plan_price, bool) or plan_price != 0:
+        raise ControlledShadowAuthorizationPackageError(
+            "TOP5_B4_QUOTA_PROOF — BLOCKED_SPEND_CONTROL: dashboard plan is not zero-cost"
+        )
+    if raw.get("paid_overage_enabled") is not False:
+        raise ControlledShadowAuthorizationPackageError(
+            "TOP5_B4_QUOTA_PROOF — BLOCKED_SPEND_CONTROL: dashboard paid overage is enabled"
+        )
+    for name, expected in (
+        ("daily_datapoint_limit", 20_000),
+        ("monthly_datapoint_limit", 200_000),
+        ("rate_limit_requests_per_second", 1),
+    ):
+        value = raw.get(name)
+        if isinstance(value, bool) or value != expected:
+            raise ControlledShadowAuthorizationPackageError(
+                f"TOP5_B4_QUOTA_PROOF — BLOCKED_SPEND_CONTROL: dashboard {name} is invalid"
+            )
+    if raw.get("hard_cap_behavior") != "http_429":
+        raise ControlledShadowAuthorizationPackageError(
+            "TOP5_B4_QUOTA_PROOF — BLOCKED_SPEND_CONTROL: dashboard hard-cap behavior is invalid"
+        )
+    attestation_identity = raw.get("attestation_identity")
+    if not isinstance(attestation_identity, str) or not attestation_identity.strip():
+        raise ControlledShadowAuthorizationPackageError(
+            "TOP5_B4_QUOTA_PROOF — BLOCKED_SPEND_CONTROL: dashboard attestation identity is missing"
+        )
+    observed = _utc(
+        _timestamp(raw.get("observed_at"), "dashboard observed_at"),
+        "dashboard observed_at",
+    )
+    current = _utc(now, "spend-control validation now")
+    if observed > current:
+        raise ControlledShadowAuthorizationPackageError(
+            "TOP5_B4_QUOTA_PROOF — BLOCKED_SPEND_CONTROL: dashboard observation is future-dated"
+        )
+    if (
+        current - observed
+    ).total_seconds() > SPEND_CONTROL_EVIDENCE_MAXIMUM_AGE_SECONDS:
+        raise ControlledShadowAuthorizationPackageError(
+            "TOP5_B4_QUOTA_PROOF — BLOCKED_SPEND_CONTROL: dashboard attestation is stale"
+        )
+
+    normalized = {
+        "schema_version": SPEND_CONTROL_DASHBOARD_SCHEMA_VERSION,
+        "evidence_kind": SPEND_CONTROL_DASHBOARD_EVIDENCE_KIND,
+        "provider": CANONICAL_CANDIDATE_PROVIDER,
+        "observed_at": observed,
+        "account_tier": "free",
+        "plan_price_usd": 0,
+        "paid_overage_enabled": False,
+        "daily_datapoint_limit": 20_000,
+        "monthly_datapoint_limit": 200_000,
+        "rate_limit_requests_per_second": 1,
+        "hard_cap_behavior": "http_429",
+        "attestation_identity": attestation_identity.strip(),
+    }
+    return {
+        **normalized,
+        "overage_exposure": "none",
+        "digest": _digest(normalized),
+    }
+
+
+def _write_quota_proof(
+    path_value: object,
+    *,
+    request: TheRundownQuotaProofRequestV1,
+    evidence: TheRundownQuotaProofEvidenceV1,
+    spend_control: Mapping[str, object],
+) -> Path:
+    path = _absolute_path(path_value, "quota proof output")
+    if path.exists():
+        raise ControlledShadowAuthorizationPackageError(
+            "TOP5_B4_QUOTA_PROOF — second quota proof output is not allowed"
+        )
+    spend_control_payload = {
+        "provider": spend_control["provider"],
+        "evidence_kind": spend_control["evidence_kind"],
+        "account_tier": spend_control["account_tier"],
+        "overage_exposure": spend_control["overage_exposure"],
+        "observed_at": spend_control["observed_at"],
+        "digest": spend_control["digest"],
+    }
+    if spend_control["evidence_kind"] == SPEND_CONTROL_DASHBOARD_EVIDENCE_KIND:
+        for name in (
+            "schema_version",
+            "plan_price_usd",
+            "paid_overage_enabled",
+            "daily_datapoint_limit",
+            "monthly_datapoint_limit",
+            "rate_limit_requests_per_second",
+            "hard_cap_behavior",
+            "attestation_identity",
+        ):
+            spend_control_payload[name] = spend_control[name]
+    payload = {
+        "schema_version": "top5-therundown-quota-proof-package-v1",
+        "execution_phase": "quota_proof",
+        "proof": evidence.as_payload(),
+        "request": {
+            "proof_id": request.proof_id,
+            "provider": request.provider,
+            "sport_id": request.sport_id,
+            "snapshot_date": request.snapshot_date.isoformat(),
+            "authorization_package_digest": request.authorization_package_digest,
+            "configuration_digest": request.configuration_digest,
+            "authorization_id": request.authorization_id,
+            "controlled_shadow_run_id": request.controlled_shadow_run_id,
+            "qualification_session_id": request.qualification_session_id,
+            "ceo_authorization_identity": request.ceo_authorization_identity,
+            "adapter_version": request.adapter_version,
+            "adapter_source_sha": request.adapter_source_sha,
+            "endpoint": request.endpoint,
+            "query": dict(request.query),
+            "request_shape_digest": request.request_shape_digest,
+            "maximum_datapoints": request.maximum_datapoints,
+            "request_count": request.request_count,
+            "retry_count": request.retry_count,
+        },
+        "spend_control": spend_control_payload,
+        "safety": {
+            "five_league_requests": 0,
+            "receipt_issued": False,
+            "authority_changed": False,
+            "activation": False,
+            "publication": False,
+            "betting": False,
+            "monetary_spend_authorized": False,
+        },
+    }
+    try:
+        atomic_write_json(
+            path,
+            _jsonable(payload),
+            indent=2,
+            ensure_ascii=False,
+            sort_keys=True,
+        )
+        path.chmod(0o600)
+    except OSError as exc:
+        raise ControlledShadowAuthorizationPackageError(
+            "quota proof output could not be written"
+        ) from exc
+    reloaded = _read_json_file(path, "quota proof output")
+    reloaded_evidence = TheRundownQuotaProofEvidenceV1.from_payload(
+        reloaded.get("proof")
+    )
+    reloaded_evidence.validate(
+        request=request, now=reloaded_evidence.response_finished_at
+    )
+    if reloaded_evidence.evidence_digest != evidence.evidence_digest:
+        raise ControlledShadowAuthorizationPackageError(
+            "quota proof output digest changed during reload"
+        )
+    return path
+
+
+def _write_quota_proof_failure(
+    path_value: object,
+    *,
+    request: TheRundownQuotaProofRequestV1,
+    error: Exception,
+    consumed_at: datetime,
+) -> Path:
+    """Persist only safe diagnostics after a consumed proof fails."""
+
+    output = _absolute_path(path_value, "quota proof output")
+    path = Path(f"{output}.failure.json")
+    if path.exists():
+        raise ControlledShadowAuthorizationPackageError(
+            "quota proof failure artifact already exists; refusing overwrite"
+        )
+    diagnostic = getattr(error, "diagnostic", None)
+    if not isinstance(diagnostic, Mapping):
+        diagnostic = {
+            "failure_classification": "credential_or_execution_failure",
+            "request_started_at": _utc(
+                consumed_at, "quota proof failure consumed_at"
+            ).isoformat(),
+            "request_finished_at": _utc(
+                consumed_at, "quota proof failure finished_at"
+            ).isoformat(),
+            "http_status": None,
+            "safe_response_headers": {},
+            "transport_exception_class": type(error).__name__,
+            "transport_reason_class": None,
+            "transport_reason_category": "generic",
+            "transport_errno": None,
+            "content_type": None,
+            "response_body_length": None,
+            "response_body_digest": None,
+        }
+    safe_diagnostic = {
+        "failure_classification": str(
+            diagnostic.get("failure_classification", "quota_proof_failure")
+        ),
+        "request_started_at": str(
+            diagnostic.get(
+                "request_started_at",
+                _utc(consumed_at, "quota proof failure consumed_at").isoformat(),
+            )
+        ),
+        "request_finished_at": str(
+            diagnostic.get(
+                "request_finished_at",
+                _utc(consumed_at, "quota proof failure consumed_at").isoformat(),
+            )
+        ),
+        "http_status": diagnostic.get("http_status"),
+        "safe_response_headers": {
+            str(key): str(value)
+            for key, value in dict(diagnostic.get("safe_response_headers", {})).items()
+            if str(key).casefold()
+            in {
+                "x-datapoints",
+                "x-datapoints-used",
+                "x-datapoints-remaining",
+                "x-datapoints-limit",
+                "x-datapoints-period",
+                "x-datapoints-reset",
+                "x-tier",
+                "x-rate-limit",
+                "x-rate-limit-remaining",
+                "x-rate-limit-reset",
+                "x-ratelimit-limit",
+                "x-ratelimit-remaining",
+                "x-ratelimit-reset",
+                "x-data-delay-seconds",
+                "x-history-access",
+                "x-live-odds-access",
+                "x-websocket-access",
+            }
+        },
+        "transport_exception_class": (
+            str(diagnostic["transport_exception_class"])
+            if diagnostic.get("transport_exception_class")
+            else None
+        ),
+        "transport_reason_class": (
+            str(diagnostic["transport_reason_class"])
+            if isinstance(diagnostic.get("transport_reason_class"), str)
+            and str(diagnostic["transport_reason_class"]).isidentifier()
+            else None
+        ),
+        "transport_reason_category": (
+            str(diagnostic["transport_reason_category"])
+            if diagnostic.get("transport_reason_category")
+            in {
+                "dns",
+                "tls_certificate",
+                "tcp_refused",
+                "timeout",
+                "proxy",
+                "generic_urllib",
+                "generic",
+            }
+            else "generic"
+        ),
+        "transport_errno": (
+            int(diagnostic["transport_errno"])
+            if isinstance(diagnostic.get("transport_errno"), int)
+            and not isinstance(diagnostic.get("transport_errno"), bool)
+            else None
+        ),
+        "content_type": (
+            str(diagnostic["content_type"]) if diagnostic.get("content_type") else None
+        ),
+        "response_body_length": diagnostic.get("response_body_length"),
+        "response_body_digest": (
+            str(diagnostic["response_body_digest"])
+            if diagnostic.get("response_body_digest")
+            else None
+        ),
+    }
+    payload = {
+        "schema_version": QUOTA_PROOF_FAILURE_SCHEMA_VERSION,
+        "execution_phase": "quota_proof_failure",
+        "proof_authorization_id": request.authorization_id,
+        "proof_id": request.proof_id,
+        "provider": request.provider,
+        "sport_id": request.sport_id,
+        "snapshot_date": request.snapshot_date.isoformat(),
+        "request_shape_digest": request.request_shape_digest,
+        **safe_diagnostic,
+        "retry_count": 0,
+        "request_count": 1,
+        "safety": {
+            "quota_confirmed": False,
+            "discovery_authorized": False,
+            "receipt_issued": False,
+            "authority_changed": False,
+            "activation": False,
+            "publication": False,
+            "betting": False,
+            "monetary_spend_authorized": False,
+        },
+    }
+    try:
+        atomic_write_json(
+            path,
+            payload,
+            indent=2,
+            ensure_ascii=False,
+            sort_keys=True,
+        )
+        path.chmod(0o600)
+    except OSError as exc:
+        raise ControlledShadowAuthorizationPackageError(
+            "quota proof failure artifact could not be written"
+        ) from exc
+    return path
+
+
+def run_guarded_quota_proof(
+    proof_authorization_path: object,
+    *,
+    spend_control_evidence_path: object,
+    credential_file: object = DEFAULT_THERUNDOWN_CREDENTIAL_PATH,
+    output_path: object,
+    clock: Any = None,
+    http_client: Any = None,
+) -> dict[str, object]:
+    """Perform only the one billed proof transaction; never start league execution."""
+
+    clock_fn = clock or (lambda: datetime.now(timezone.utc))
+    now = _utc(clock_fn(), "quota proof now")
+    proof_authorization = _load_quota_proof_authorization(
+        proof_authorization_path,
         now=now,
     )
-    return package, execution_configuration, authorization, b1_artifact
+    spend_control = _load_spend_control_evidence(
+        spend_control_evidence_path,
+        now=now,
+    )
+    output = _absolute_path(output_path, "quota proof output")
+    if output.exists():
+        raise ControlledShadowAuthorizationPackageError(
+            "TOP5_B4_QUOTA_PROOF — second quota proof output is not allowed"
+        )
+    proof_configuration_digest = _digest(
+        {
+            "schema_version": "top5-therundown-quota-proof-configuration-v1",
+            "proof_authorization_digest": proof_authorization.authorization_digest,
+            "request_shape_digest": proof_authorization.request_shape_digest,
+            "sport_id": proof_authorization.sport_id,
+            "snapshot_date": proof_authorization.snapshot_date.isoformat(),
+        }
+    )
+    request = proof_authorization.request_for_proof(
+        proof_configuration_digest=proof_configuration_digest,
+        now=now,
+    )
+    _consume_quota_proof_authorization(
+        proof_authorization,
+        consumed_at=now,
+    )
+    try:
+        api_key = _read_protected_therundown_credential(credential_file)
+        evidence = execute_therundown_quota_proof(
+            request,
+            api_key=api_key,
+            http_client=http_client,
+            now=now,
+            clock=clock_fn,
+        )
+        artifact_path = _write_quota_proof(
+            output,
+            request=request,
+            evidence=evidence,
+            spend_control=spend_control,
+        )
+    except Exception as exc:
+        _write_quota_proof_failure(
+            output,
+            request=request,
+            error=exc,
+            consumed_at=now,
+        )
+        raise
+    return {
+        "status": "TOP5_B4_QUOTA_PROOF — QUOTA_CONFIRMED",
+        "artifact_path": str(artifact_path),
+        "proof_id": evidence.proof_id,
+        "proof_authorization_id": proof_authorization.proof_authorization_id,
+        "provider": evidence.provider,
+        "sport_id": evidence.sport_id,
+        "snapshot_date": evidence.snapshot_date.isoformat(),
+        "request_count": evidence.request_count,
+        "billed_datapoints": evidence.billed_datapoints,
+        "remaining_datapoints": evidence.remaining_datapoints,
+        "quota_limit_datapoints": evidence.quota_limit_datapoints,
+        "quota_period": evidence.quota_period,
+        "proof_digest": evidence.evidence_digest,
+        "response_digest": evidence.response_digest,
+        "request_shape_digest": evidence.request_shape_digest,
+        "spend_control_digest": spend_control["digest"],
+        "spend_control_evidence_kind": spend_control["evidence_kind"],
+        "five_league_requests": 0,
+        "next_step": "STOP_FOR_NEW_CEO_AUTHORIZATION",
+        "safety": {
+            "receipt_issued": False,
+            "authority_changed": False,
+            "activation": False,
+            "publication": False,
+            "betting": False,
+            "monetary_spend_authorized": False,
+        },
+    }
 
 
 def _validate_b1_ll_artifact_shape(artifact: Mapping[str, object]) -> None:
     """Validate the serialized shape without inventing B1 authority."""
 
     raw = _materialize_b1_ll_artifact(artifact)
+    if raw.get("schema_version") == SAME_RUN_LL_VALIDATION_SCHEMA:
+        required = (
+            "validation_status",
+            "provider_identity",
+            "league",
+            "canonical_fixture_key",
+            "provider_event_id",
+            "provider_request_id",
+            "controlled_shadow_run_id",
+            "qualification_session_id",
+            "ceo_authorization_id",
+            "participant_ids",
+            "bookmaker_identity",
+            "source_identity",
+            "home_odds",
+            "draw_odds",
+            "away_odds",
+            "source_timestamp",
+            "captured_at",
+            "request_started_at",
+            "request_finished_at",
+            "adapter_version",
+            "adapter_source_sha",
+            "raw_response_digest",
+            "provider_record_digest",
+            "normalized_record_digest",
+            "normalized_observations",
+            "quota_before",
+            "quota_after",
+            "datapoint_count",
+            "quota_cost_units",
+            "validation_digest",
+        )
+        missing = [name for name in required if name not in raw]
+        if missing:
+            raise ControlledShadowAuthorizationPackageError(
+                "same-run B1 validation is missing: " + ", ".join(missing)
+            )
+        if raw.get("validation_status") != "VALIDATED":
+            raise ControlledShadowAuthorizationPackageError(
+                "same-run B1 validation is not valid"
+            )
+        if raw.get("provider_identity") != CANONICAL_CANDIDATE_PROVIDER:
+            raise ControlledShadowAuthorizationPackageError(
+                "same-run B1 provider identity is not canonical"
+            )
+        if raw.get("league") != "LL":
+            raise ControlledShadowAuthorizationPackageError(
+                "same-run B1 league is not LL"
+            )
+        if not isinstance(raw.get("participant_ids"), Mapping):
+            raise ControlledShadowAuthorizationPackageError(
+                "same-run B1 participant IDs are missing"
+            )
+        if not isinstance(raw.get("normalized_observations"), list):
+            raise ControlledShadowAuthorizationPackageError(
+                "same-run B1 normalized observations are missing"
+            )
+        for name, expected in (
+            ("network_execution", True),
+            ("evidence_kind", ObservationEvidenceKind.REAL_OBSERVED.value),
+            ("b1_authority_issued", False),
+            ("receipt_issued", False),
+            ("no_bet", True),
+            ("publication", False),
+            ("production_activation", False),
+            ("monetary_spend_authorized", False),
+        ):
+            if raw.get(name) is not expected:
+                raise ControlledShadowAuthorizationPackageError(
+                    f"same-run B1 safety field {name} is unsafe"
+                )
+        if _digest_value(
+            raw.get("validation_digest"), "same-run B1 validation digest"
+        ) != _digest(
+            {key: value for key, value in raw.items() if key != "validation_digest"}
+        ):
+            raise ControlledShadowAuthorizationPackageError(
+                "same-run B1 validation digest mismatch"
+            )
+        return
     if raw.get("schema_version") != "top5-therundown-ll-evidence-bundle-v1":
         raise ControlledShadowAuthorizationPackageError(
             "B1 La Liga artifact schema is unsupported"
@@ -507,117 +1337,6 @@ def _validate_b1_ll_artifact_shape(artifact: Mapping[str, object]) -> None:
             )
 
 
-def _validate_b1_execution_envelope(
-    artifact: Mapping[str, object],
-    *,
-    configuration: TheRundownNetworkConfigurationV1,
-    authorization: TheRundownNetworkAuthorizationV1,
-    now: datetime,
-) -> None:
-    """Bind the supplied B1 input before the first possible network request."""
-
-    _validate_b1_ll_artifact_shape(artifact)
-    bridge = _mapping(artifact.get("b1_bridge_inputs"), "B1 bridge inputs")
-    nested = _mapping(artifact.get("authorization"), "B1 authorization")
-    ll_target = next(
-        (target for target in configuration.targets if target.league == "LL"),
-        None,
-    )
-    if ll_target is None:
-        raise ControlledShadowAuthorizationPackageError(
-            "execution configuration is missing the LL target"
-        )
-    expected_bindings = {
-        "provider_identity": CANONICAL_CANDIDATE_PROVIDER,
-        "league": "LL",
-        "controlled_shadow_run_id": authorization.controlled_shadow_run_id,
-        "ceo_authorization_id": authorization.authorization_id,
-        "qualification_session_id": authorization.qualification_session_id,
-        "adapter_version": authorization.adapter_version,
-        "adapter_source_sha": authorization.adapter_source_sha,
-        "evidence_kind": ObservationEvidenceKind.REAL_OBSERVED.value,
-        "network_execution": True,
-    }
-    for name, expected in expected_bindings.items():
-        if bridge.get(name) != expected:
-            raise ControlledShadowAuthorizationPackageError(
-                f"B1 execution binding mismatch: {name}"
-            )
-    for name, expected in (
-        ("provider", CANONICAL_CANDIDATE_PROVIDER),
-        ("league", "LL"),
-        ("controlled_shadow_run_id", authorization.controlled_shadow_run_id),
-        ("ceo_authorization_id", authorization.authorization_id),
-        ("qualification_session_id", authorization.qualification_session_id),
-    ):
-        if nested.get(name) != expected:
-            raise ControlledShadowAuthorizationPackageError(
-                f"B1 nested authorization mismatch: {name}"
-            )
-    if _timestamp(nested.get("expires_at"), "B1 authorization expiry") != _utc(
-        authorization.expires_at, "authorization expiry"
-    ):
-        raise ControlledShadowAuthorizationPackageError(
-            "B1 authorization expiry does not match the CEO authorization"
-        )
-    if _timestamp(nested.get("expires_at"), "B1 authorization expiry") <= _utc(
-        now, "execution now"
-    ):
-        raise ControlledShadowAuthorizationPackageError(
-            "B1 authorization artifact is expired"
-        )
-    provider_event_id = bridge.get("provider_event_id")
-    if provider_event_id != ll_target.provider_event_id:
-        raise ControlledShadowAuthorizationPackageError(
-            "B1 provider event does not match the authorized LL target"
-        )
-    if (
-        bridge.get("provider_request_id")
-        != configuration.request_for(ll_target.fixture_key).request_identity
-    ):
-        raise ControlledShadowAuthorizationPackageError(
-            "B1 request identity does not match the authorized LL target"
-        )
-    if (
-        bridge.get("home_team") != ll_target.home_team
-        or bridge.get("away_team") != ll_target.away_team
-    ):
-        raise ControlledShadowAuthorizationPackageError(
-            "B1 participant names do not match the authorized LL target"
-        )
-    if _timestamp(bridge.get("kickoff"), "B1 kickoff") != _utc(
-        ll_target.kickoff, "LL kickoff"
-    ):
-        raise ControlledShadowAuthorizationPackageError(
-            "B1 kickoff does not match the authorized LL target"
-        )
-    raw_digest = _digest_value(
-        bridge.get("raw_response_digest"), "B1 raw_response_digest"
-    )
-    if raw_digest != _digest_value(
-        artifact.get("raw_response_digest"), "B1 top-level raw_response_digest"
-    ):
-        raise ControlledShadowAuthorizationPackageError(
-            "B1 raw response digest is internally inconsistent"
-        )
-    captured_at = _timestamp(bridge.get("captured_at"), "B1 captured_at")
-    source_timestamps = bridge.get("source_timestamps")
-    if not isinstance(source_timestamps, (tuple, list)) or not source_timestamps:
-        raise ControlledShadowAuthorizationPackageError(
-            "B1 source timestamp provenance is missing"
-        )
-    newest_source = max(
-        _timestamp(value, "B1 source timestamp") for value in source_timestamps
-    )
-    current = _utc(now, "execution now")
-    if (
-        captured_at < newest_source
-        or (current - newest_source).total_seconds()
-        > configuration.maximum_source_age_seconds
-    ):
-        raise ControlledShadowAuthorizationPackageError("B1 evidence is stale")
-
-
 def _validate_b1_ll_artifact(
     artifact: object,
     *,
@@ -634,6 +1353,25 @@ def _validate_b1_ll_artifact(
     """
 
     raw = dict(_materialize_b1_ll_artifact(artifact))
+    if raw.get("schema_version") == SAME_RUN_LL_VALIDATION_SCHEMA:
+        try:
+            expected = validate_same_run_ll_capture(
+                target=capture.target,
+                request=capture.request,
+                response=capture.response,
+                authorization=authorization,
+                now=now,
+                maximum_source_age_seconds=configuration.maximum_source_age_seconds,
+            )
+        except Exception as exc:
+            raise ControlledShadowAuthorizationPackageError(
+                f"B1 same-run LL validation failed: {exc}"
+            ) from exc
+        if raw != expected:
+            raise ControlledShadowAuthorizationPackageError(
+                "B1 same-run validation attestation does not match the genuine LL capture"
+            )
+        return raw
     if raw.get("schema_version") != "top5-therundown-ll-evidence-bundle-v1":
         raise ControlledShadowAuthorizationPackageError(
             "B1 La Liga artifact schema is unsupported"
@@ -1035,6 +1773,7 @@ class ControlledShadowAuthorizationPackageV1:
             "request_quota_cost_units",
             "adapter_source_sha",
             "configuration_digest",
+            "quota_headroom_evidence_digest",
         ):
             if name not in self.authorization_template:
                 raise ControlledShadowAuthorizationPackageError(
@@ -1113,6 +1852,7 @@ def prepare_authorization_package(
         "maximum_source_age_seconds": configuration.maximum_source_age_seconds,
         "issued_at": None,
         "expires_at": None,
+        "quota_headroom_evidence_digest": None,
         "minimum_interval_seconds": configuration.minimum_interval_seconds,
         "maximum_retries": 0,
         "no_bet": True,
@@ -1946,8 +2686,8 @@ def _write_and_reload_b2_shadow_package(
 def run_guarded_network_execution(
     package_path: object,
     authorization_path: object,
-    b1_ll_artifact_path: object,
     *,
+    quota_headroom_path: object,
     credential_file: object = DEFAULT_THERUNDOWN_CREDENTIAL_PATH,
     output_path: object,
     endpoint: str = THERUNDOWN_BASE_URL,
@@ -1964,10 +2704,16 @@ def run_guarded_network_execution(
 
     clock_fn = clock or (lambda: datetime.now(timezone.utc))
     now = _utc(clock_fn(), "execution now")
-    _, configuration, authorization, b1_artifact = _load_execution_inputs(
+    package, configuration, authorization = _load_execution_inputs(
         package_path,
         authorization_path,
-        b1_ll_artifact_path,
+        now=now,
+    )
+    quota_headroom = _load_quota_headroom(
+        quota_headroom_path,
+        package=package,
+        configuration=configuration,
+        authorization=authorization,
         now=now,
     )
     api_key = _read_protected_therundown_credential(credential_file)
@@ -1983,12 +2729,33 @@ def run_guarded_network_execution(
             adapter=adapter,
             clock=clock_fn,
         )
+    same_run_b1_validation: dict[str, object] | None = None
+
+    def validate_b1_after_capture(capture: TheRundownNetworkShadowCaptureV1) -> None:
+        nonlocal same_run_b1_validation
+        if capture.target.league != "LL":
+            return
+        same_run_b1_validation = validate_same_run_ll_capture(
+            target=capture.target,
+            request=capture.request,
+            response=capture.response,
+            authorization=authorization,
+            now=_utc(clock_fn(), "B1 same-run validation now"),
+            maximum_source_age_seconds=configuration.maximum_source_age_seconds,
+        )
+
     result = TheRundownNetworkShadowExecutorV1(
         clock=clock_fn,
         pacer=pacer,
         allow_live_network=True,
         fail_closed_immediately=True,
-    ).run(configuration, authorization, transport=transport)
+    ).run(
+        configuration,
+        authorization,
+        transport=transport,
+        quota_headroom=quota_headroom,
+        post_capture_validator=validate_b1_after_capture,
+    )
     if (
         result.status is not NetworkShadowRunStatus.COMPLETED_NETWORK
         or not result.all_five_succeeded
@@ -1997,11 +2764,15 @@ def run_guarded_network_execution(
             "network shadow did not complete all five leagues: "
             + "; ".join(result.failures)
         )
+    if same_run_b1_validation is None:
+        raise ControlledShadowAuthorizationPackageError(
+            "B1 same-run validation did not run for the LL capture"
+        )
     reconciliation = reconcile_controlled_shadow_run_with_b1_ll_artifact(
         result,
         configuration,
         authorization,
-        b1_artifact,
+        same_run_b1_validation,
         now=_utc(clock_fn(), "reconciliation now"),
     )
     b2_package = _build_b2_shadow_package(
@@ -2045,8 +2816,8 @@ def run_guarded_network_execution(
 def run_guarded_network_preflight(
     package_path: object,
     authorization_path: object,
-    b1_ll_artifact_path: object,
     *,
+    quota_headroom_path: object,
     credential_file: object = DEFAULT_THERUNDOWN_CREDENTIAL_PATH,
     clock: Any = None,
 ) -> dict[str, object]:
@@ -2054,10 +2825,16 @@ def run_guarded_network_preflight(
 
     clock_fn = clock or (lambda: datetime.now(timezone.utc))
     now = _utc(clock_fn(), "preflight now")
-    package, configuration, authorization, _ = _load_execution_inputs(
+    package, configuration, authorization = _load_execution_inputs(
         package_path,
         authorization_path,
-        b1_ll_artifact_path,
+        now=now,
+    )
+    quota_headroom = _load_quota_headroom(
+        quota_headroom_path,
+        package=package,
+        configuration=configuration,
+        authorization=authorization,
         now=now,
     )
     _read_protected_therundown_credential(credential_file)
@@ -2077,6 +2854,8 @@ def run_guarded_network_preflight(
         "maximum_quota_cost_units": authorization.maximum_quota_cost_units,
         "minimum_interval_seconds": authorization.minimum_interval_seconds,
         "maximum_retries": authorization.maximum_retries,
+        "quota_headroom_evidence_digest": quota_headroom.evidence_digest,
+        "observed_remaining_datapoints": quota_headroom.observed_remaining_datapoints,
         "execution_enabled": False,
         "provider_requests": 0,
     }
@@ -2091,9 +2870,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--preflight", action="store_true")
     mode.add_argument("--execute-network", action="store_true")
-    parser.add_argument("--package", required=True, type=Path)
-    parser.add_argument("--authorization", required=True, type=Path)
-    parser.add_argument("--b1-ll-artifact", required=True, type=Path)
+    mode.add_argument("--execute-quota-proof", action="store_true")
+    parser.add_argument("--package", type=Path)
+    parser.add_argument("--authorization", type=Path)
+    parser.add_argument("--proof-authorization", type=Path)
+    parser.add_argument("--quota-headroom", type=Path)
+    parser.add_argument("--spend-control-evidence", type=Path)
     parser.add_argument(
         "--credential-file",
         type=Path,
@@ -2104,22 +2886,51 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--endpoint", default=THERUNDOWN_BASE_URL)
     args = parser.parse_args(argv)
     try:
-        if args.execute_network:
+        if args.execute_quota_proof:
+            if args.output is None:
+                parser.error("--output is required with --execute-quota-proof")
+            if args.proof_authorization is None:
+                parser.error(
+                    "--proof-authorization is required with --execute-quota-proof"
+                )
+            if args.spend_control_evidence is None:
+                parser.error(
+                    "--spend-control-evidence is required with --execute-quota-proof"
+                )
+            summary = run_guarded_quota_proof(
+                args.proof_authorization,
+                spend_control_evidence_path=args.spend_control_evidence,
+                credential_file=args.credential_file,
+                output_path=args.output,
+            )
+        elif args.execute_network:
+            if args.package is None or args.authorization is None:
+                parser.error(
+                    "--package and --authorization are required with --execute-network"
+                )
             if args.output is None:
                 parser.error("--output is required with --execute-network")
+            if args.quota_headroom is None:
+                parser.error("--quota-headroom is required with --execute-network")
             summary = run_guarded_network_execution(
                 args.package,
                 args.authorization,
-                args.b1_ll_artifact,
+                quota_headroom_path=args.quota_headroom,
                 credential_file=args.credential_file,
                 output_path=args.output,
                 endpoint=args.endpoint,
             )
         else:
+            if args.package is None or args.authorization is None:
+                parser.error(
+                    "--package and --authorization are required with --preflight"
+                )
+            if args.quota_headroom is None:
+                parser.error("--quota-headroom is required with --preflight")
             summary = run_guarded_network_preflight(
                 args.package,
                 args.authorization,
-                args.b1_ll_artifact,
+                quota_headroom_path=args.quota_headroom,
                 credential_file=args.credential_file,
             )
         print(json.dumps(_jsonable(summary), indent=2, sort_keys=True))
@@ -2139,6 +2950,7 @@ __all__ = [
     "AUTHORIZATION_PACKAGE_SCHEMA_VERSION",
     "CANONICAL_CANDIDATE_PROVIDER",
     "FUTURE_EXECUTION_COMMAND",
+    "QUOTA_PROOF_COMMAND",
     "RECONCILIATION_SCHEMA_VERSION",
     "TOP5_LEAGUE_ORDER",
     "ControlledShadowAuthorizationPackageError",
@@ -2150,6 +2962,7 @@ __all__ = [
     "reconcile_controlled_shadow_run_with_b1_ll_artifact",
     "run_guarded_network_execution",
     "run_guarded_network_preflight",
+    "run_guarded_quota_proof",
 ]
 
 

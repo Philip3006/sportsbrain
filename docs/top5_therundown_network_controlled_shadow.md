@@ -34,6 +34,16 @@ maximum of `5` requests, `request_quota_cost_units=55`, and total
 normalized-row or bookmaker count. A response above `55` datapoints is
 rejected and requires a new authorization package.
 
+The pre-request gate is intentionally stricter than response billing. The
+repository currently has no provider-native, non-billable quota-usage source
+or verifier for the same TheRundown account: `X-Datapoints-Remaining` exists
+only on a billed provider response, and historical response artifacts cannot
+prove current headroom. Consequently, an arbitrary operator-authored
+`TheRundownQuotaHeadroomEvidenceV1` cannot authorize the real path; the
+guarded operator entrypoint fails closed with
+`NO_TRUSTWORTHY_PRE_REQUEST_QUOTA_SOURCE`. Structural quota fixtures are
+restricted to an explicit offline-test seam and never satisfy real execution.
+
 The executor refuses an expired, mismatched, disabled, over-budget, non-
 sequential, retried, or unsafe request before it can reach the transport. It
 executes at most one request per league, in configured order, and stops on a

@@ -5,7 +5,8 @@
 #
 # Hourly schedule is preserved by the plist's StartCalendarInterval.
 
-SPORTSBRAIN_DIR="/Users/philiprassillier/sportsbrain"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+SPORTSBRAIN_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd -P)"
 LOG="/Users/philiprassillier/Library/Logs/sportsbrain_settle.log"
 
 cd "$SPORTSBRAIN_DIR" || exit 1

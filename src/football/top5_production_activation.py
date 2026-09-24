@@ -22,17 +22,20 @@ from hashlib import sha256
 
 from src.football.production_contracts import ProductionContractError, _utc
 from src.football.provider_cascade.contracts import (
+    CANDIDATE_ONLY_PROVIDER_IDENTITIES,
     ProviderCascadeConfig,
     ProviderConfig,
     digest_record,
 )
-from src.football.top5_builder2_qualification_receipt import (
-    Builder2QualificationReceiptV1,
+from src.football.top5_b2_qualification_batch_orchestrator import (
+    Builder2FiveLeagueReceiptPackageV1,
+    Builder2QualificationBatchError,
 )
 from src.football.top5_controlled_release import (
     ApprovedProviderResultAuthority,
     ControlledActivationAuthorization,
 )
+from src.football.top5_controlled_shadow_provider_qualification import TOP5_LEAGUES
 
 TOP5_PRODUCTION_ROUTING_CONTRACT_VERSION = "top5-production-routing-activation-v1"
 TOP5_CURRENT_PROVIDER_ORDER = ("the_odds_api",)
@@ -56,6 +59,15 @@ def _sha256(value: object, name: str) -> str:
     value = _text(value, name)
     if _HEX_DIGEST_RE.fullmatch(value) is None:
         raise ProductionContractError(f"{name} must be a 64-character SHA-256 digest")
+    return value.lower()
+
+
+def _hash(value: object, name: str) -> str:
+    value = _text(value, name)
+    if len(value) not in (40, 64) or any(
+        char not in "0123456789abcdefABCDEF" for char in value
+    ):
+        raise ProductionContractError(f"{name} must be a hexadecimal digest")
     return value.lower()
 
 
@@ -224,13 +236,16 @@ class Top5ProductionActivationContract:
 
     league_scope: tuple[str, ...]
     approved_provider_identity: str
-    receipt_digest: str
+    receipt_package_digest: str
     authority_authorization_id: str
     activation_authorization_id: str
+    ceo_shadow_authorization_id: str
     activation_expires_at: datetime
     expected_current_provider_order: tuple[str, ...]
     target_provider_order: tuple[str, ...]
-    expected_candidate_adapter_config_digest: str
+    candidate_configuration_digest: str
+    candidate_adapter_source_sha: str
+    target_provider_config_digest: str
     rollback_target: str
     rollback_snapshot_digest: str
     publication_enabled: bool = False
@@ -260,14 +275,28 @@ class Top5ProductionActivationContract:
             _text(self.approved_provider_identity, "approved_provider_identity"),
         )
         object.__setattr__(
-            self, "receipt_digest", _sha256(self.receipt_digest, "receipt_digest")
+            self,
+            "receipt_package_digest",
+            _sha256(self.receipt_package_digest, "receipt_package_digest"),
         )
         object.__setattr__(
             self,
-            "expected_candidate_adapter_config_digest",
+            "candidate_configuration_digest",
             _sha256(
-                self.expected_candidate_adapter_config_digest,
-                "expected_candidate_adapter_config_digest",
+                self.candidate_configuration_digest,
+                "candidate_configuration_digest",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "candidate_adapter_source_sha",
+            _hash(self.candidate_adapter_source_sha, "candidate_adapter_source_sha"),
+        )
+        object.__setattr__(
+            self,
+            "target_provider_config_digest",
+            _sha256(
+                self.target_provider_config_digest, "target_provider_config_digest"
             ),
         )
         object.__setattr__(
@@ -286,6 +315,11 @@ class Top5ProductionActivationContract:
             _text(self.activation_authorization_id, "activation_authorization_id"),
         )
         object.__setattr__(
+            self,
+            "ceo_shadow_authorization_id",
+            _text(self.ceo_shadow_authorization_id, "ceo_shadow_authorization_id"),
+        )
+        object.__setattr__(
             self, "rollback_target", _text(self.rollback_target, "rollback_target")
         )
         object.__setattr__(
@@ -295,6 +329,30 @@ class Top5ProductionActivationContract:
         )
 
     def validate(self) -> None:
+        if tuple(self.league_scope) != TOP5_LEAGUES:
+            raise ProductionContractError(
+                "production activation requires the canonical five-league scope"
+            )
+        if self.approved_provider_identity in CANDIDATE_ONLY_PROVIDER_IDENTITIES:
+            raise ProductionContractError(
+                "candidate-only provider cannot be production authority"
+            )
+        if any(
+            provider in CANDIDATE_ONLY_PROVIDER_IDENTITIES
+            for provider in self.expected_current_provider_order
+            + self.target_provider_order
+        ):
+            raise ProductionContractError(
+                "candidate-only provider cannot enter production routing"
+            )
+        if set(self.expected_current_provider_order) - set(TOP5_CURRENT_PROVIDER_ORDER):
+            raise ProductionContractError(
+                "current production routing contains a non-canonical provider"
+            )
+        if set(self.target_provider_order) - set(TOP5_CURRENT_PROVIDER_ORDER):
+            raise ProductionContractError(
+                "target production routing contains a non-canonical provider"
+            )
         if set(self.target_provider_order) - (
             set(self.expected_current_provider_order)
             | {self.approved_provider_identity}
@@ -311,6 +369,10 @@ class Top5ProductionActivationContract:
         if self.approved_provider_identity not in self.target_provider_order:
             raise ProductionContractError(
                 "target provider order does not include the approved provider"
+            )
+        if self.approved_provider_identity not in TOP5_CURRENT_PROVIDER_ORDER:
+            raise ProductionContractError(
+                "approved provider is not in the canonical production repertoire"
             )
         if self.publication_enabled or self.top5_scheduler_enabled:
             raise ProductionContractError(
@@ -332,15 +394,18 @@ class Top5ProductionActivationContract:
             "contract_version": TOP5_PRODUCTION_ROUTING_CONTRACT_VERSION,
             "league_scope": list(self.league_scope),
             "approved_provider_identity": self.approved_provider_identity,
-            "receipt_digest": self.receipt_digest,
+            "receipt_package_digest": self.receipt_package_digest,
             "authority_authorization_id": self.authority_authorization_id,
             "activation_authorization_id": self.activation_authorization_id,
+            "ceo_shadow_authorization_id": self.ceo_shadow_authorization_id,
             "activation_expires_at": self.activation_expires_at.isoformat(),
             "expected_current_provider_order": list(
                 self.expected_current_provider_order
             ),
             "target_provider_order": list(self.target_provider_order),
-            "expected_candidate_adapter_config_digest": self.expected_candidate_adapter_config_digest,
+            "candidate_configuration_digest": self.candidate_configuration_digest,
+            "candidate_adapter_source_sha": self.candidate_adapter_source_sha,
+            "target_provider_config_digest": self.target_provider_config_digest,
             "rollback_target": self.rollback_target,
             "rollback_snapshot_digest": self.rollback_snapshot_digest,
             "publication_enabled": self.publication_enabled,
@@ -354,7 +419,7 @@ class Top5ProductionActivationContract:
 
     def bind(
         self,
-        receipt: Builder2QualificationReceiptV1,
+        receipt_package: Builder2FiveLeagueReceiptPackageV1,
         authority: ApprovedProviderResultAuthority,
         activation: ControlledActivationAuthorization,
         current: Top5ProductionRoutingSnapshot,
@@ -362,19 +427,53 @@ class Top5ProductionActivationContract:
         now: datetime,
     ) -> None:
         self.validate()
-        if not isinstance(receipt, Builder2QualificationReceiptV1):
+        if not isinstance(receipt_package, Builder2FiveLeagueReceiptPackageV1):
             raise ProductionContractError(
-                "a Builder2QualificationReceiptV1 is required"
+                "the canonical five-league receipt package is required"
             )
-        receipt.validate()
+        try:
+            receipt_package.validate()
+        except Builder2QualificationBatchError as exc:
+            raise ProductionContractError(
+                "canonical five-league receipt package is invalid"
+            ) from exc
+        dossier = receipt_package.dossier
+        if receipt_package.package_digest.lower() != self.receipt_package_digest.lower():
+            raise ProductionContractError("qualification receipt package digest mismatch")
+        if (
+            tuple(receipt.qualification_receipt_id for receipt in receipt_package.receipts)
+            != dossier.receipt_ids
+            or tuple(receipt.receipt_digest for receipt in receipt_package.receipts)
+            != dossier.receipt_digests
+        ):
+            raise ProductionContractError(
+                "receipt package/dossier receipt identity binding mismatch"
+            )
+        if any(
+            receipt.provider_identity != dossier.provider_identity
+            for receipt in receipt_package.receipts
+        ):
+            raise ProductionContractError(
+                "receipt package contains mixed provider evidence"
+            )
+        if dossier.configuration_digest != self.candidate_configuration_digest:
+            raise ProductionContractError("candidate configuration digest mismatch")
+        if dossier.adapter_source_sha.lower() != self.candidate_adapter_source_sha.lower():
+            raise ProductionContractError("candidate adapter source SHA mismatch")
         authority.validate(now=now)
         activation.validate(now=now)
         current.validate()
-        if receipt.receipt_digest.lower() != self.receipt_digest.lower():
-            raise ProductionContractError("qualification receipt digest mismatch")
-        if receipt.provider_identity != self.approved_provider_identity:
+        if dossier.provider_identity not in CANDIDATE_ONLY_PROVIDER_IDENTITIES:
             raise ProductionContractError(
-                "approved provider identity mismatches receipt"
+                "receipt package provider is not canonical candidate evidence"
+            )
+        if authority.approved_odds_provider != self.approved_provider_identity:
+            raise ProductionContractError(
+                "approved production provider identity mismatch"
+            )
+        if authority.approved_odds_provider in CANDIDATE_ONLY_PROVIDER_IDENTITIES:
+            raise ProductionContractError(
+                "candidate-only provider cannot receive production authority"
             )
         if authority.authority_decision_id != self.authority_authorization_id:
             raise ProductionContractError(
@@ -384,13 +483,9 @@ class Top5ProductionActivationContract:
             raise ProductionContractError(
                 "provider authority league is outside activation scope"
             )
-        if authority.approved_odds_provider != self.approved_provider_identity:
-            raise ProductionContractError(
-                "approved provider identity mismatches authority"
-            )
         if set(authority.approved_provider_set) != {self.approved_provider_identity}:
             raise ProductionContractError(
-                "provider authority is broader than the approved Top-5 provider"
+                "provider authority is broader than the canonical production provider"
             )
         if activation.authorization_id != self.activation_authorization_id:
             raise ProductionContractError("activation authorization ID mismatch")
@@ -400,6 +495,19 @@ class Top5ProductionActivationContract:
             )
         if activation.expires_at != self.activation_expires_at:
             raise ProductionContractError("activation expiry binding mismatch")
+        if activation.ceo_shadow_authorization_id != dossier.ceo_authorization_id:
+            raise ProductionContractError("CEO shadow authorization binding mismatch")
+        if (
+            activation.controlled_shadow_run_id != dossier.controlled_shadow_run_id
+            or activation.qualification_session_id != dossier.qualification_session_id
+        ):
+            raise ProductionContractError("receipt package run/session binding mismatch")
+        package_fixture_scope = tuple(
+            receipt_package.dossier.bindings[index].fixture_key
+            for index in range(len(receipt_package.dossier.bindings))
+        )
+        if set(package_fixture_scope) != set(activation.fixture_scope):
+            raise ProductionContractError("receipt package fixture scope binding mismatch")
         if current.provider_order != self.expected_current_provider_order:
             raise ProductionContractError(
                 "unexpected current production provider order"
@@ -408,12 +516,9 @@ class Top5ProductionActivationContract:
             raise ProductionContractError(
                 "rollback snapshot does not match current routing"
             )
-        if (
-            current.provider_config_digest.lower()
-            == self.expected_candidate_adapter_config_digest.lower()
-        ):
+        if current.provider_config_digest.lower() == self.target_provider_config_digest.lower():
             raise ProductionContractError(
-                "candidate adapter/config digest is not a new routing target"
+                "target provider/config digest is not a new routing target"
             )
         if now > self.activation_expires_at:
             raise ProductionContractError("activation authorization is stale")
@@ -431,7 +536,7 @@ class Top5ProductionActivationPlan:
 
     def validate(
         self,
-        receipt: Builder2QualificationReceiptV1,
+        receipt_package: Builder2FiveLeagueReceiptPackageV1,
         authority: ApprovedProviderResultAuthority,
         activation: ControlledActivationAuthorization,
         *,
@@ -441,7 +546,11 @@ class Top5ProductionActivationPlan:
             raise ProductionContractError("activation plan is already executed")
         self.pre_activation_snapshot.validate()
         self.contract.bind(
-            receipt, authority, activation, self.pre_activation_snapshot, now=now
+            receipt_package,
+            authority,
+            activation,
+            self.pre_activation_snapshot,
+            now=now,
         )
         if (
             self.pre_activation_snapshot.snapshot_digest
@@ -466,7 +575,7 @@ class Top5ProductionActivationPlan:
         return Top5ProductionRoutingSnapshot(
             provider_order=self.contract.target_provider_order,
             adapter_registry=self.contract.target_provider_order,
-            provider_config_digest=self.contract.expected_candidate_adapter_config_digest,
+            provider_config_digest=self.contract.target_provider_config_digest,
             snapshot_id=f"active:{self.contract.activation_authorization_id}",
         )
 
@@ -484,7 +593,7 @@ class Top5ProductionActivationPlan:
 
 def prepare_top5_production_activation(
     contract: Top5ProductionActivationContract,
-    receipt: Builder2QualificationReceiptV1,
+    receipt_package: Builder2FiveLeagueReceiptPackageV1,
     authority: ApprovedProviderResultAuthority,
     activation: ControlledActivationAuthorization,
     current: Top5ProductionRoutingSnapshot,
@@ -494,7 +603,7 @@ def prepare_top5_production_activation(
     """Validate all bindings and return a non-executed activation plan."""
 
     plan = Top5ProductionActivationPlan(contract, current, prepared_at)
-    plan.validate(receipt, authority, activation, now=prepared_at)
+    plan.validate(receipt_package, authority, activation, now=prepared_at)
     return plan
 
 
@@ -514,7 +623,7 @@ class InMemoryTop5RoutingState:
     def activate(
         self,
         plan: Top5ProductionActivationPlan,
-        receipt: Builder2QualificationReceiptV1,
+        receipt_package: Builder2FiveLeagueReceiptPackageV1,
         authority: ApprovedProviderResultAuthority,
         activation: ControlledActivationAuthorization,
         *,
@@ -531,7 +640,7 @@ class InMemoryTop5RoutingState:
             raise ProductionContractError(
                 "current routing drifted since pre-activation snapshot"
             )
-        plan.validate(receipt, authority, activation, now=now)
+        plan.validate(receipt_package, authority, activation, now=now)
         target = plan.target_snapshot()
         self._rollback_snapshot = self._snapshot
         self._active_plan_digest = plan.plan_digest

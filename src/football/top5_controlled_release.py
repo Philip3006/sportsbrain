@@ -24,17 +24,26 @@ from src.football.production_contracts import (
     SignalTimeContract,
     _utc,
 )
+from src.football.provider_cascade.contracts import (
+    CANDIDATE_ONLY_PROVIDER_IDENTITIES,
+    FOOTBALL_PROVIDER_REPERTOIRE,
+)
 from src.football.top5_activation_readiness import (
     ControlledActivationRequest,
     RollbackController,
     RollbackResult,
     RollbackTrigger,
 )
+from src.football.top5_b2_qualification_batch_orchestrator import (
+    Builder2FiveLeagueReceiptPackageV1,
+    Builder2QualificationBatchError,
+)
 from src.football.top5_builder2_qualification_receipt import (
     Builder2QualificationReceiptError,
     Builder2QualificationReceiptV1,
 )
 from src.football.top5_controlled_shadow_provider_qualification import (
+    TOP5_LEAGUES,
     MinimumSamplePolicy,
 )
 from src.football.top5_publisher import (
@@ -190,6 +199,7 @@ class ControlledActivationAuthorization:
     provider_authority: ApprovedProviderResultAuthority
     controlled_shadow_run_id: str
     qualification_session_id: str
+    ceo_shadow_authorization_id: str
     fixture_scope: tuple[str, ...]
     rollback_pointer: str
     authorization_token: str
@@ -214,6 +224,7 @@ class ControlledActivationAuthorization:
             ("signal_time_experiment_id", self.signal_time_experiment_id),
             ("controlled_shadow_run_id", self.controlled_shadow_run_id),
             ("qualification_session_id", self.qualification_session_id),
+            ("ceo_shadow_authorization_id", self.ceo_shadow_authorization_id),
         ):
             _text(value, name)
         for name, value in (
@@ -305,11 +316,17 @@ class Top5ControlledReleaseEvidence:
     sample_report: Builder2QualificationSampleReportV1
     audit_report: Mapping[str, object]
     measurement_report: Mapping[str, object]
+    five_league_package: Builder2FiveLeagueReceiptPackageV1 | None = None
 
     def evidence_digest(self) -> str:
         return _digest(
             {
                 "receipts": [receipt.as_payload() for receipt in self.receipts],
+                "five_league_package": (
+                    self.five_league_package.as_payload()
+                    if self.five_league_package is not None
+                    else None
+                ),
                 "sample_report": self.sample_report.as_payload(),
                 "audit_report": dict(self.audit_report),
                 "measurement_report": dict(self.measurement_report),
@@ -321,12 +338,103 @@ class Top5ControlledReleaseEvidence:
         request: ControlledActivationRequest,
         authorization: ControlledActivationAuthorization,
     ) -> None:
-        if not self.receipts:
+        package = self.five_league_package
+        if not isinstance(package, Builder2FiveLeagueReceiptPackageV1):
             raise ProductionContractError(
-                "controlled activation requires at least one canonical receipt"
+                "Top-5 controlled activation requires the canonical five-league receipt package"
+            )
+        try:
+            package.validate()
+        except Builder2QualificationBatchError as exc:
+            raise ProductionContractError(
+                "canonical five-league receipt package is invalid"
+            ) from exc
+        if tuple(self.receipts) != package.receipts:
+            raise ProductionContractError(
+                "controlled-release receipts do not exactly match the five-league package"
+            )
+        if len(self.receipts) != len(TOP5_LEAGUES):
+            raise ProductionContractError(
+                "controlled activation requires exactly five canonical receipts"
             )
         authorization.validate()
         authorization.provider_authority.binds_request(request)
+        dossier = package.dossier
+        dossier.validate()
+        if dossier.leagues != TOP5_LEAGUES:
+            raise ProductionContractError(
+                "controlled activation requires the canonical five-league order"
+            )
+        if any(
+            value is not False
+            for value in (
+                dossier.authority_granted,
+                dossier.provider_authority_selected,
+                dossier.publication,
+                dossier.production_activation,
+                dossier.betting,
+            )
+        ):
+            raise ProductionContractError(
+                "five-league dossier must remain non-authorizing"
+            )
+        receipt_leagues = {
+            binding.receipt_id: binding.league for binding in dossier.bindings
+        }
+        receipt_digests = {
+            binding.receipt_id: binding.receipt_digest
+            for binding in dossier.bindings
+        }
+        if set(receipt_leagues.values()) != set(TOP5_LEAGUES):
+            raise ProductionContractError(
+                "five-league dossier does not contain exactly one receipt per league"
+            )
+        if any(
+            receipt.controlled_shadow_run_id != dossier.controlled_shadow_run_id
+            or receipt.qualification_session_id != dossier.qualification_session_id
+            or receipt.ceo_authorization_id != dossier.ceo_authorization_id
+            or receipt.provider_identity != dossier.provider_identity
+            or receipt.receipt_digest != receipt_digests.get(
+                receipt.qualification_receipt_id
+            )
+            for receipt in self.receipts
+        ):
+            raise ProductionContractError(
+                "receipt/dossier identity binding mismatch"
+            )
+        if (
+            authorization.controlled_shadow_run_id != dossier.controlled_shadow_run_id
+            or authorization.qualification_session_id != dossier.qualification_session_id
+        ):
+            raise ProductionContractError(
+                "dossier run/session binding mismatch"
+            )
+        if request.league_code not in TOP5_LEAGUES:
+            raise ProductionContractError(
+                "controlled activation league is outside the canonical Top-5"
+            )
+        configured_digest = request.config_snapshot.get("configuration_digest")
+        if configured_digest is not None and configured_digest != dossier.configuration_digest:
+            raise ProductionContractError("configuration digest binding mismatch")
+        production_provider = authorization.provider_authority.approved_odds_provider
+        if production_provider in CANDIDATE_ONLY_PROVIDER_IDENTITIES:
+            raise ProductionContractError(
+                "candidate evidence provider cannot receive production authority"
+            )
+        if production_provider not in FOOTBALL_PROVIDER_REPERTOIRE:
+            raise ProductionContractError(
+                "production authority provider is outside the canonical repertoire"
+            )
+        if set(authorization.provider_authority.approved_provider_set) != {
+            production_provider
+        }:
+            raise ProductionContractError(
+                "production authority must contain exactly one canonical provider"
+            )
+        if dossier.provider_identity == production_provider:
+            raise ProductionContractError(
+                "candidate evidence provider must remain distinct from production authority"
+            )
         self.sample_report.validate()
         if (
             self.sample_report.minimum_sample_policy
@@ -362,7 +470,6 @@ class Top5ControlledReleaseEvidence:
         try:
             for receipt in self.receipts:
                 receipt.validate()
-            authorization.provider_authority.binds_receipts(self.receipts)
             recomputed = aggregate_builder2_qualification_samples(
                 self.receipts,
                 minimum_sample_policy=authorization.minimum_sample_policy,
@@ -395,12 +502,14 @@ class Top5ControlledReleaseEvidence:
             authorization,
             receipt_ids=receipt_ids,
             receipt_digests=receipt_digests,
+            receipt_leagues=receipt_leagues,
         )
         self._validate_measurement(
             request,
             authorization,
             receipt_ids=receipt_ids,
             receipt_digests=receipt_digests,
+            receipt_leagues=receipt_leagues,
         )
 
     def _validate_audit(
@@ -410,6 +519,7 @@ class Top5ControlledReleaseEvidence:
         *,
         receipt_ids: set[str],
         receipt_digests: set[str],
+        receipt_leagues: Mapping[str, str],
     ) -> None:
         audit = self.audit_report
         if audit.get("overall_state") != "COMPLETE":
@@ -431,7 +541,8 @@ class Top5ControlledReleaseEvidence:
                 raise ProductionContractError(
                     "shadow audit contains non-real or incomplete evidence"
                 )
-            if item.get("league") != request.league_code:
+            receipt_id = item.get("qualification_receipt_id")
+            if item.get("league") != receipt_leagues.get(receipt_id):
                 raise ProductionContractError("shadow audit league binding mismatch")
             if (
                 item.get("signal_time_experiment_id")
@@ -440,7 +551,7 @@ class Top5ControlledReleaseEvidence:
                 raise ProductionContractError(
                     "shadow audit Signal-Time binding mismatch"
                 )
-            if item.get("qualification_receipt_id") not in receipt_ids:
+            if receipt_id not in receipt_ids:
                 raise ProductionContractError(
                     "shadow audit references an unknown receipt"
                 )
@@ -470,6 +581,7 @@ class Top5ControlledReleaseEvidence:
         *,
         receipt_ids: set[str],
         receipt_digests: set[str],
+        receipt_leagues: Mapping[str, str],
     ) -> None:
         measurement = self.measurement_report
         if measurement.get("overall_state") != "COMPLETE":
@@ -513,7 +625,8 @@ class Top5ControlledReleaseEvidence:
         for item in candidates:
             if item.get("evidence_mode") != REAL_OBSERVED:
                 raise ProductionContractError("measurement contains non-real evidence")
-            if item.get("league") != request.league_code:
+            receipt_id = item.get("qualification_receipt_id")
+            if item.get("league") != receipt_leagues.get(receipt_id):
                 raise ProductionContractError("measurement league binding mismatch")
             if item.get("model_identity") != request.model_identity:
                 raise ProductionContractError("measurement model identity mismatch")
@@ -526,7 +639,7 @@ class Top5ControlledReleaseEvidence:
                 raise ProductionContractError(
                     "measurement Signal-Time binding mismatch"
                 )
-            if item.get("qualification_receipt_id") not in receipt_ids:
+            if receipt_id not in receipt_ids:
                 raise ProductionContractError(
                     "measurement references an unknown receipt"
                 )

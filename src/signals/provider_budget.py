@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Mapping
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -23,6 +24,9 @@ _log = logging.getLogger("sportsbrain.signals.provider_budget")
 
 _BUDGET_PATH: Path | None = None
 _API_USAGE_PATH: Path | None = None
+AUTH_REVALIDATION_SCHEMA_VERSION = "the-odds-api-auth-revalidation-v1"
+AUTH_REVALIDATION_PROVIDER = "the_odds_api"
+AUTH_FAILURE_CODES = frozenset({401, 403})
 
 
 def _api_usage_path() -> Path:
@@ -258,3 +262,102 @@ def record_error(name: str, error_code: int, *, open_circuit: bool = False) -> N
 def get_budget_snapshot() -> dict[str, dict]:
     """Return full budget state for health dashboards."""
     return _load()
+
+
+def begin_auth_revalidation(
+    name: str,
+    *,
+    explicit_opt_in: bool,
+    now: datetime | None = None,
+) -> dict[str, object]:
+    """Authorize one bounded authentication revalidation attempt.
+
+    This is intentionally narrower than normal availability: only the Odds
+    API's existing 401/403 circuit may enter it, and callers must opt in
+    explicitly.  It never closes or weakens the circuit by itself.
+    """
+
+    if name != AUTH_REVALIDATION_PROVIDER:
+        raise RuntimeError("auth revalidation provider is not permitted")
+    if explicit_opt_in is not True:
+        raise RuntimeError("auth revalidation requires explicit opt-in")
+    state = _load()
+    entry = state.get(name)
+    if not isinstance(entry, Mapping) or entry.get("circuit_open") is not True:
+        raise RuntimeError("auth revalidation requires an open provider circuit")
+    try:
+        error_code = int(entry.get("last_error_code"))
+    except (TypeError, ValueError) as exc:
+        raise RuntimeError(
+            "auth revalidation requires a recorded auth failure"
+        ) from exc
+    reason = str(entry.get("fallback_reason", ""))
+    if error_code not in AUTH_FAILURE_CODES and reason not in {
+        "http_401",
+        "http_403",
+    }:
+        raise RuntimeError("auth revalidation is not permitted for this circuit reason")
+    observed = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
+    return {
+        "provider": name,
+        "prior_error_code": error_code,
+        "prior_reason": reason,
+        "authorized_at": observed.isoformat(),
+    }
+
+
+def record_auth_revalidation(
+    name: str,
+    *,
+    status_code: int | None,
+    request_count: int,
+    credential_access_count: int,
+    safe_headers: Mapping[str, str],
+    failure_class: str | None = None,
+    now: datetime | None = None,
+) -> dict[str, object]:
+    """Persist one redacted auth-revalidation outcome and governed transition."""
+
+    if name != AUTH_REVALIDATION_PROVIDER:
+        raise RuntimeError("auth revalidation provider is not permitted")
+    if request_count not in (0, 1) or credential_access_count not in (0, 1):
+        raise RuntimeError("auth revalidation counts are invalid")
+    if request_count == 0 and credential_access_count == 1:
+        transition = "remains_open"
+    elif status_code is not None and 200 <= status_code < 300:
+        remaining = safe_headers.get("x-requests-remaining")
+        try:
+            remaining_value = int(remaining) if remaining is not None else None
+        except (TypeError, ValueError):
+            remaining_value = None
+        record_success(name, quota_remaining=remaining_value)
+        transition = "closed"
+    elif status_code in AUTH_FAILURE_CODES:
+        record_error(name, int(status_code), open_circuit=True)
+        transition = "reopened"
+    else:
+        if status_code is not None:
+            record_error(name, int(status_code), open_circuit=True)
+        transition = "remains_open"
+    observed = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
+    audit = {
+        "schema_version": AUTH_REVALIDATION_SCHEMA_VERSION,
+        "observed_at": observed.isoformat(),
+        "provider": name,
+        "request_count": request_count,
+        "credential_access_count": credential_access_count,
+        "http_status": status_code,
+        "safe_headers": {
+            str(key).casefold(): str(value) for key, value in safe_headers.items()
+        },
+        "failure_class": failure_class,
+        "circuit_transition": transition,
+    }
+    state = _load()
+    entry = state.get(name, {})
+    if not isinstance(entry, dict):
+        entry = {}
+    entry["last_auth_revalidation"] = audit
+    state[name] = entry
+    _save(state)
+    return audit

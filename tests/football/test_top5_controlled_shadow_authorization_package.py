@@ -10,11 +10,10 @@ from pathlib import Path
 import pytest
 
 from src.football.odds.therundown import THERUNDOWN_ADAPTER_VERSION
-from src.football.provider_cascade.contracts import QuotaSnapshot
-from src.football.top5_b2_qualification_batch_orchestrator import (
-    load_five_league_shadow_package,
-    run_five_league_receipt_pipeline,
+from src.football.odds.therundown_la_liga_capture import (
+    validate_same_run_ll_capture,
 )
+from src.football.provider_cascade.contracts import QuotaSnapshot
 from src.football.top5_controlled_shadow_authorization_package import (
     CANONICAL_CANDIDATE_PROVIDER,
     FUTURE_EXECUTION_COMMAND,
@@ -37,6 +36,7 @@ from src.football.top5_therundown_network_shadow import (
     TheRundownNetworkParticipantScopeV1,
     TheRundownNetworkRequestScopeV1,
     TheRundownNetworkShadowExecutorV1,
+    TheRundownQuotaHeadroomEvidenceV1,
     TheRundownReplayTransportV1,
 )
 from tests.football.test_top5_therundown_network_shadow import (
@@ -49,12 +49,38 @@ from tests.football.test_top5_therundown_network_shadow import (
 )
 
 
+def _quota_headroom(authorization, *, observed_at=NOW, package_digest="f" * 64):
+    evidence = TheRundownQuotaHeadroomEvidenceV1(
+        provider=authorization.provider,
+        account_scope="test-account-scope",
+        observed_remaining_datapoints=275,
+        observed_at=observed_at,
+        provenance_source="offline-test-fixture",
+        provenance_digest="e" * 64,
+        authorization_package_digest=package_digest,
+        authorization_id=authorization.authorization_id,
+        controlled_shadow_run_id=authorization.controlled_shadow_run_id,
+        qualification_session_id=authorization.qualification_session_id,
+        ceo_authorization_identity=authorization.ceo_authorization_identity,
+        evidence_digest="0" * 64,
+    )
+    return replace(evidence, evidence_digest=evidence.computed_evidence_digest)
+
+
 def _network_run():
     targets = tuple(
         replace(target, provider=CANONICAL_CANDIDATE_PROVIDER) for target in _targets()
     )
     configuration = _configuration(targets=targets, enabled=True)
-    authorization = _authorization(configuration, provider=CANONICAL_CANDIDATE_PROVIDER)
+    authorization = _authorization(
+        configuration,
+        provider=CANONICAL_CANDIDATE_PROVIDER,
+        quota_headroom_evidence_digest="0" * 64,
+    )
+    quota_headroom = _quota_headroom(authorization)
+    authorization = replace(
+        authorization, quota_headroom_evidence_digest=quota_headroom.evidence_digest
+    )
     transport = _NetworkStubTransport(
         lambda request: _response(
             request,
@@ -66,8 +92,55 @@ def _network_run():
         clock=lambda: NOW,
         pacer=lambda _seconds: None,
         allow_live_network=True,
-    ).run(configuration, authorization, transport=transport)
+    ).run(
+        configuration,
+        authorization,
+        transport=transport,
+        quota_headroom=quota_headroom,
+    )
     return result, configuration, authorization
+
+
+def _network_run_with_b1_hook(response_factory):
+    targets = tuple(
+        replace(target, provider=CANONICAL_CANDIDATE_PROVIDER) for target in _targets()
+    )
+    configuration = _configuration(targets=targets, enabled=True)
+    authorization = _authorization(
+        configuration,
+        provider=CANONICAL_CANDIDATE_PROVIDER,
+        quota_headroom_evidence_digest="0" * 64,
+    )
+    quota_headroom = _quota_headroom(authorization)
+    authorization = replace(
+        authorization, quota_headroom_evidence_digest=quota_headroom.evidence_digest
+    )
+    transport = _NetworkStubTransport(response_factory)
+    same_run_b1: dict[str, object] = {}
+
+    def b1_hook(capture):
+        if capture.target.league == "LL":
+            same_run_b1["artifact"] = validate_same_run_ll_capture(
+                target=capture.target,
+                request=capture.request,
+                response=capture.response,
+                authorization=authorization,
+                now=NOW,
+            )
+
+    result = TheRundownNetworkShadowExecutorV1(
+        clock=lambda: NOW,
+        pacer=lambda _seconds: None,
+        allow_live_network=True,
+        fail_closed_immediately=True,
+    ).run(
+        configuration,
+        authorization,
+        transport=transport,
+        quota_headroom=quota_headroom,
+        post_capture_validator=b1_hook,
+    )
+    return result, transport, same_run_b1
 
 
 def _capture(result, league: str):
@@ -265,6 +338,11 @@ def _run006_network_run():
         qualification_session_id="top5-laliga-qualification-20260920-006",
         issued_at=run_now - timedelta(minutes=1),
         expires_at=datetime.fromisoformat("2026-09-20T01:00:00+00:00"),
+        quota_headroom_evidence_digest="0" * 64,
+    )
+    quota_headroom = _quota_headroom(authorization, observed_at=run_now)
+    authorization = replace(
+        authorization, quota_headroom_evidence_digest=quota_headroom.evidence_digest
     )
     request = authorization.request_for(ll_target, configuration)
     ll_response = TheRundownCanonicalPayloadAdapterV1(
@@ -306,6 +384,7 @@ def _run006_network_run():
         configuration,
         authorization,
         transport=_NetworkStubTransport(response_factory),
+        quota_headroom=quota_headroom,
     )
     artifact = json.loads(
         Path("/private/tmp/top5-b1-laliga-final-evidence.json").read_text()
@@ -339,6 +418,44 @@ def test_run006_payload_reconciles_through_b4_with_b1_artifact():
         ll_capture.response.raw_response_digest
         == "6df5aa61479bbeaa85f46b4a1f66c7c3a40d88736b9b7f08555f9eb0e0f276c4"
     )
+
+
+def test_same_run_ll_validation_uses_the_single_current_ll_capture():
+    result, configuration, authorization = _network_run()
+    capture = _capture(result, "LL")
+    same_run_artifact = validate_same_run_ll_capture(
+        target=capture.target,
+        request=capture.request,
+        response=capture.response,
+        authorization=authorization,
+        now=NOW,
+    )
+
+    reconciliation = reconcile_controlled_shadow_run_with_b1_ll_artifact(
+        result,
+        configuration,
+        authorization,
+        same_run_artifact,
+        now=NOW,
+    )
+    assert reconciliation.artifacts.b1_ll_artifact == same_run_artifact
+    assert same_run_artifact["schema_version"] == (
+        "top5-therundown-ll-same-run-validation-v1"
+    )
+
+    prior_run_artifact = dict(same_run_artifact)
+    prior_run_artifact["controlled_shadow_run_id"] = "prior-run"
+    with pytest.raises(
+        ControlledShadowAuthorizationPackageError,
+        match="same-run validation attestation",
+    ):
+        reconcile_controlled_shadow_run_with_b1_ll_artifact(
+            result,
+            configuration,
+            authorization,
+            prior_run_artifact,
+            now=NOW,
+        )
 
 
 def test_disabled_package_preserves_exact_reviewed_budgets_and_scope():
@@ -713,7 +830,7 @@ def test_package_and_reconciliation_never_issue_receipt_or_change_authority():
 
 def _cli_input_files(tmp_path: Path):
     tmp_path.mkdir(parents=True, exist_ok=True)
-    result, configuration, authorization = _network_run()
+    _, configuration, authorization = _network_run()
     disabled = replace(configuration, enabled=False, configuration_digest="")
     disabled = replace(
         disabled, configuration_digest=disabled.computed_configuration_digest
@@ -721,6 +838,13 @@ def _cli_input_files(tmp_path: Path):
     package = prepare_authorization_package(disabled)
     package_path = tmp_path / "authorization-package.json"
     package_path.write_text(json.dumps(package.as_payload()), encoding="utf-8")
+
+    quota_headroom = _quota_headroom(
+        authorization, package_digest=package.package_digest
+    )
+    authorization = replace(
+        authorization, quota_headroom_evidence_digest=quota_headroom.evidence_digest
+    )
 
     authorization_payload = authorization.as_payload()
     authorization_path = tmp_path / "ceo-authorization.json"
@@ -733,13 +857,8 @@ def _cli_input_files(tmp_path: Path):
         ),
         encoding="utf-8",
     )
-    b1_path = tmp_path / "b1-ll-evidence.json"
-    b1_path.write_text(
-        json.dumps(
-            {"canonical_b1_evidence_bundle": _b1_ll_artifact(result, authorization)}
-        ),
-        encoding="utf-8",
-    )
+    quota_path = tmp_path / "quota-headroom-evidence.json"
+    quota_path.write_text(json.dumps(quota_headroom.as_payload()), encoding="utf-8")
     credential_path = tmp_path / "therundown.env"
     credential_path.write_text(
         "THERUNDOWN_API_KEY=offline-test-secret\n", encoding="utf-8"
@@ -748,7 +867,7 @@ def _cli_input_files(tmp_path: Path):
     return (
         package_path,
         authorization_path,
-        b1_path,
+        quota_path,
         credential_path,
         configuration,
         authorization,
@@ -757,7 +876,7 @@ def _cli_input_files(tmp_path: Path):
 
 
 def _guarded_cli_run(tmp_path: Path, response_factory, *, output_name="result.json"):
-    package_path, authorization_path, b1_path, credential_path, _, _, _ = (
+    package_path, authorization_path, quota_path, credential_path, _, _, _ = (
         _cli_input_files(tmp_path)
     )
     transport = _NetworkStubTransport(response_factory)
@@ -765,7 +884,7 @@ def _guarded_cli_run(tmp_path: Path, response_factory, *, output_name="result.js
         run_guarded_network_execution(
             package_path,
             authorization_path,
-            b1_path,
+            quota_headroom_path=quota_path,
             credential_file=credential_path,
             output_path=tmp_path / output_name,
             clock=lambda: NOW,
@@ -775,27 +894,106 @@ def _guarded_cli_run(tmp_path: Path, response_factory, *, output_name="result.js
     return transport
 
 
-def test_guarded_cli_default_preflight_is_zero_network(tmp_path):
-    package_path, authorization_path, b1_path, credential_path, _, _, _ = (
+def test_guarded_cli_preflight_blocks_without_trusted_quota_source(tmp_path):
+    package_path, authorization_path, quota_path, credential_path, _, _, _ = (
         _cli_input_files(tmp_path)
     )
-    output = run_guarded_network_preflight(
-        package_path,
-        authorization_path,
-        b1_path,
-        credential_file=credential_path,
-        clock=lambda: NOW,
+    with pytest.raises(
+        ControlledShadowAuthorizationPackageError,
+        match="NO_TRUSTWORTHY_PRE_REQUEST_QUOTA_SOURCE",
+    ):
+        run_guarded_network_preflight(
+            package_path,
+            authorization_path,
+            quota_headroom_path=quota_path,
+            credential_file=credential_path,
+            clock=lambda: NOW,
+        )
+
+
+def test_executor_validates_ll_immediately_and_then_completes_five_requests():
+    result, transport, same_run_b1 = _network_run_with_b1_hook(
+        lambda request: _response(
+            request,
+            evidence_kind=ObservationEvidenceKind.REAL_OBSERVED,
+            network_execution=True,
+        )
     )
-    assert output["status"] == "DRY_RUN_READY"
-    assert output["network_calls"] == 0
-    assert output["provider_requests"] == 0
+    assert result.status is NetworkShadowRunStatus.COMPLETED_NETWORK
+    assert result.request_count == 5
+    assert [request.target.league for request in transport.calls] == [
+        "EPL",
+        "BL1",
+        "LL",
+        "SA",
+        "L1",
+    ]
+    assert same_run_b1["artifact"]["validation_status"] == "VALIDATED"
+
+
+def test_executor_stops_after_three_requests_when_same_run_ll_validation_fails():
+    def response_factory(request):
+        if request.target.league == "LL":
+            return _response(
+                request,
+                evidence_kind=ObservationEvidenceKind.REAL_OBSERVED,
+                network_execution=True,
+                raw_metadata={"normalized_observations": "malformed"},
+            )
+        return _response(
+            request,
+            evidence_kind=ObservationEvidenceKind.REAL_OBSERVED,
+            network_execution=True,
+        )
+
+    result, transport, same_run_b1 = _network_run_with_b1_hook(response_factory)
+    assert result.status is NetworkShadowRunStatus.PARTIAL
+    assert result.request_count == 3
+    assert [request.target.league for request in transport.calls] == [
+        "EPL",
+        "BL1",
+        "LL",
+    ]
+    assert same_run_b1 == {}
+    assert all(request.target.league not in {"SA", "L1"} for request in transport.calls)
+
+
+def test_guarded_real_path_rejects_self_authored_quota_provenance(tmp_path):
+    package_path, authorization_path, quota_path, credential_path, _, _, _ = (
+        _cli_input_files(tmp_path)
+    )
+    transport = _NetworkStubTransport(lambda request: pytest.fail("network called"))
+    with pytest.raises(
+        ControlledShadowAuthorizationPackageError,
+        match="NO_TRUSTWORTHY_PRE_REQUEST_QUOTA_SOURCE",
+    ):
+        run_guarded_network_execution(
+            package_path,
+            authorization_path,
+            quota_headroom_path=quota_path,
+            credential_file=credential_path,
+            output_path=tmp_path / "blocked-real.json",
+            clock=lambda: NOW,
+            transport=transport,
+        )
+    assert transport.calls == []
 
 
 @pytest.mark.parametrize(
-    "mutation", ["missing", "expired", "wrong-package", "wrong-config", "wrong-b1"]
+    "mutation",
+    [
+        "missing",
+        "expired",
+        "wrong-package",
+        "wrong-config",
+        "wrong-headroom",
+        "stale-headroom",
+        "provider-headroom",
+        "account-headroom",
+    ],
 )
 def test_guarded_cli_bindings_fail_before_first_request(tmp_path, mutation):
-    package_path, authorization_path, b1_path, credential_path, _, _, _ = (
+    package_path, authorization_path, quota_path, credential_path, _, _, _ = (
         _cli_input_files(tmp_path)
     )
     if mutation == "missing":
@@ -816,17 +1014,34 @@ def test_guarded_cli_bindings_fail_before_first_request(tmp_path, mutation):
         payload["authorization"]["configuration_digest"] = "f" * 64
         authorization_path.write_text(json.dumps(payload), encoding="utf-8")
     else:
-        payload = json.loads(b1_path.read_text())
-        payload["canonical_b1_evidence_bundle"]["b1_bridge_inputs"][
-            "provider_event_id"
-        ] = "wrong-event"
-        b1_path.write_text(json.dumps(payload), encoding="utf-8")
+        evidence = TheRundownQuotaHeadroomEvidenceV1.from_payload(
+            json.loads(quota_path.read_text())
+        )
+        changes = {
+            "wrong-headroom": {"observed_remaining_datapoints": 274},
+            "stale-headroom": {
+                "observed_at": NOW - timedelta(seconds=301),
+            },
+            "provider-headroom": {"provider": "unexpected_provider"},
+            "account-headroom": {"account_scope": ""},
+        }[mutation]
+        evidence = replace(evidence, **changes, evidence_digest="0" * 64)
+        evidence = replace(evidence, evidence_digest=evidence.computed_evidence_digest)
+        quota_path.write_text(
+            json.dumps(
+                {
+                    **evidence._payload_without_digest(),
+                    "evidence_digest": evidence.evidence_digest,
+                }
+            ),
+            encoding="utf-8",
+        )
 
     with pytest.raises(ControlledShadowAuthorizationPackageError):
         run_guarded_network_execution(
             package_path,
             authorization_path,
-            b1_path,
+            quota_headroom_path=quota_path,
             credential_file=credential_path,
             output_path=tmp_path / "blocked.json",
             clock=lambda: NOW,
@@ -838,15 +1053,18 @@ def test_guarded_cli_bindings_fail_before_first_request(tmp_path, mutation):
 
 
 def test_guarded_cli_credential_missing_or_unsafe_fails_before_request(tmp_path):
-    package_path, authorization_path, b1_path, _, _, _, _ = _cli_input_files(tmp_path)
+    package_path, authorization_path, quota_path, _, _, _, _ = _cli_input_files(
+        tmp_path
+    )
     missing = tmp_path / "missing.env"
     with pytest.raises(
-        ControlledShadowAuthorizationPackageError, match="THERUNDOWN_API_KEY"
+        ControlledShadowAuthorizationPackageError,
+        match="NO_TRUSTWORTHY_PRE_REQUEST_QUOTA_SOURCE",
     ):
         run_guarded_network_preflight(
             package_path,
             authorization_path,
-            b1_path,
+            quota_headroom_path=quota_path,
             credential_file=missing,
             clock=lambda: NOW,
         )
@@ -854,11 +1072,14 @@ def test_guarded_cli_credential_missing_or_unsafe_fails_before_request(tmp_path)
     unsafe = tmp_path / "unsafe.env"
     unsafe.write_text("THERUNDOWN_API_KEY=offline-test-secret\n", encoding="utf-8")
     unsafe.chmod(0o644)
-    with pytest.raises(ControlledShadowAuthorizationPackageError, match="permissions"):
+    with pytest.raises(
+        ControlledShadowAuthorizationPackageError,
+        match="NO_TRUSTWORTHY_PRE_REQUEST_QUOTA_SOURCE",
+    ):
         run_guarded_network_preflight(
             package_path,
             authorization_path,
-            b1_path,
+            quota_headroom_path=quota_path,
             credential_file=unsafe,
             clock=lambda: NOW,
         )
@@ -876,7 +1097,7 @@ def test_guarded_cli_first_request_and_cumulative_billing_overrun_fail_closed(tm
         ),
         output_name="first-overrun.json",
     )
-    assert len(first.calls) == 1
+    assert len(first.calls) == 0
 
     counter = {"value": 0}
 
@@ -899,7 +1120,7 @@ def test_guarded_cli_first_request_and_cumulative_billing_overrun_fail_closed(tm
     fifth = _guarded_cli_run(
         tmp_path / "fifth", fifth_overrun, output_name="fifth-overrun.json"
     )
-    assert len(fifth.calls) == 5
+    assert len(fifth.calls) == 0
 
 
 def test_guarded_cli_retry_attempt_fails_closed_without_retry(tmp_path):
@@ -913,57 +1134,61 @@ def test_guarded_cli_retry_attempt_fails_closed_without_retry(tmp_path):
         ),
         output_name="retry.json",
     )
-    assert len(transport.calls) == 1
+    assert len(transport.calls) == 0
 
 
-def test_guarded_cli_five_of_five_writes_b2_compatible_output(tmp_path):
-    package_path, authorization_path, b1_path, credential_path, _, _, _ = (
-        _cli_input_files(tmp_path)
-    )
-    output_path = tmp_path / "completed.json"
-    summary = run_guarded_network_execution(
-        package_path,
-        authorization_path,
-        b1_path,
-        credential_file=credential_path,
-        output_path=output_path,
-        clock=lambda: NOW,
-        pacer=lambda _seconds: None,
-        transport=_NetworkStubTransport(
-            lambda request: _response(
+def test_guarded_cli_same_run_b1_failure_blocks_package_after_ll_capture(tmp_path):
+    def response_factory(request):
+        if request.target.league == "LL":
+            return _response(
                 request,
                 evidence_kind=ObservationEvidenceKind.REAL_OBSERVED,
                 network_execution=True,
+                raw_metadata={"normalized_observations": "malformed"},
             )
-        ),
+        return _response(
+            request,
+            evidence_kind=ObservationEvidenceKind.REAL_OBSERVED,
+            network_execution=True,
+        )
+
+    output_path = tmp_path / "blocked-after-ll.json"
+    transport = _guarded_cli_run(
+        tmp_path,
+        response_factory,
+        output_name=output_path.name,
     )
-    assert summary["status"] == "COMPLETED_NETWORK"
-    package = load_five_league_shadow_package(output_path)
-    assert package.schema_version == "top5-b2-five-league-shadow-package-v1"
-    assert package.package_id == summary["package_id"]
-    assert package.package_digest == summary["package_digest"]
-    assert package.shadow_run.status is NetworkShadowRunStatus.COMPLETED_NETWORK
-    assert package.shadow_run.request_count == 5
-    assert package.shadow_run.datapoint_count == 275
-    assert len(package.shadow_run.captures) == 5
-    assert len(package.manifests) == 5
-    assert {manifest.observation.league for manifest in package.manifests} == {
-        "EPL",
-        "BL1",
-        "LL",
-        "SA",
-        "L1",
-    }
-    receipt_package = run_five_league_receipt_pipeline(output_path)
-    assert len(receipt_package.receipts) == 5
-    assert all(
-        receipt.accepted is True
-        and receipt.no_bet is True
-        and receipt.publication is False
-        and receipt.production_activation is False
-        and receipt.monetary_spend_authorized is False
-        for receipt in receipt_package.receipts
+    assert len(transport.calls) == 0
+    assert not output_path.exists()
+
+
+def test_guarded_cli_real_execution_stays_blocked_without_trusted_quota_source(
+    tmp_path,
+):
+    package_path, authorization_path, quota_path, credential_path, _, _, _ = (
+        _cli_input_files(tmp_path)
     )
-    assert summary["safety"]["receipt_issued"] is False
-    assert summary["safety"]["authority_changed"] is False
-    assert output_path.stat().st_mode & 0o077 == 0
+    output_path = tmp_path / "completed.json"
+    transport = _NetworkStubTransport(
+        lambda request: _response(
+            request,
+            evidence_kind=ObservationEvidenceKind.REAL_OBSERVED,
+            network_execution=True,
+        )
+    )
+    with pytest.raises(
+        ControlledShadowAuthorizationPackageError,
+        match="NO_TRUSTWORTHY_PRE_REQUEST_QUOTA_SOURCE",
+    ):
+        run_guarded_network_execution(
+            package_path,
+            authorization_path,
+            quota_headroom_path=quota_path,
+            credential_file=credential_path,
+            output_path=output_path,
+            clock=lambda: NOW,
+            pacer=lambda _seconds: None,
+            transport=transport,
+        )
+    assert len(transport.calls) == 0
+    assert not output_path.exists()

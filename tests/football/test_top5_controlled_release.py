@@ -18,15 +18,16 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 import src.football.top5_publisher as top5_publisher_module
-from scripts.top5_real_shadow_session import main as session_cli
 from scripts.validate_controlled_top5_publication import main as validate_publication
 from src.football.production_contracts import RolloutEvidence, SignalTimeContract
+from src.football.provider_cascade.contracts import FOOTBALL_PROVIDER_REPERTOIRE
 from src.football.top5_activation_readiness import (
     ControlledActivationRequest,
     RollbackTrigger,
 )
-from src.football.top5_builder2_qualification_receipt import (
-    Builder2QualificationReceiptV1,
+from src.football.top5_b2_qualification_batch_orchestrator import (
+    build_five_league_shadow_package,
+    consume_five_league_shadow_package,
 )
 from src.football.top5_controlled_release import (
     BLOCKED,
@@ -52,22 +53,24 @@ from src.football.top5_publisher import (
 from src.football.top5_qualification_sample_aggregator import (
     aggregate_builder2_qualification_samples,
 )
-from src.football.top5_real_shadow_audit import audit_session_payload
-from src.football.top5_real_shadow_measurement import measure_session_payload
-from src.football.top5_real_shadow_session import RealShadowSession
-from src.football.top5_real_shadow_session_evidence import build_shadow_evidence
 from src.football.top5_research_binding import (
     FROZEN_RESEARCH_SHA,
     M5_CANDIDATE_ID,
     inventory_for,
 )
-from tests.football.test_top5_b2_shadow_qualification_intake import _manifest
+from tests.football.test_top5_b2_five_league_receipt import (
+    _canonical_run_and_manifests,
+)
+from tests.football.test_top5_public_delivery import _controlled_public_product
 from tests.football.test_top5_real_shadow_session import (
     BASE,
     INTEGRATION_SHA,
-    closing_attachment,
-    final_result,
 )
+
+
+def _complete_public_product() -> dict[str, object]:
+    """Use the canonical five-league product fixture for public-boundary tests."""
+    return _controlled_public_product()
 
 
 def _rollout_evidence() -> RolloutEvidence:
@@ -84,61 +87,74 @@ def _rollout_evidence() -> RolloutEvidence:
 
 
 def _evidence(tmp_path):
-    from src.football.top5_b2_shadow_qualification_intake import run_intake
-
-    intake = run_intake(_manifest(), tmp_path / "b2-intake")
-    intake_dir = intake.artifact_directory
-    assert intake_dir is not None
-    session_path = tmp_path / "session.json"
-    evidence_path = tmp_path / "evidence.json"
-    assert (
-        session_cli(
-            [
-                "--b2-intake-dir",
-                str(intake_dir),
-                "--session-key",
-                "shadow-session:controlled-release",
-                "--integration-sha",
-                INTEGRATION_SHA,
-                "--experiment-id",
-                "shadow-experiment:controlled-release-v1",
-                "--created-at",
-                BASE.isoformat(),
-                "--min-lead-minutes",
-                "30",
-                "--max-lead-minutes",
-                "180",
-                "--max-odds-age-seconds",
-                "300",
-                "--kickoff-tolerance-seconds",
-                "0",
-                "--output",
-                str(session_path),
-                "--evidence-output",
-                str(evidence_path),
-            ]
-        )
-        == 0
+    run, manifests = _canonical_run_and_manifests()
+    package = consume_five_league_shadow_package(
+        build_five_league_shadow_package(run, manifests)
     )
-    session = RealShadowSession.from_payload(json.loads(session_path.read_text()))
-    prediction = next(iter(session.predictions.values()))
-    session.attach_result(final_result(prediction, "controlled-release"))
-    session.attach_closing(closing_attachment(prediction, "controlled-release"))
-    session_payload = session.as_payload()
-    bundle = build_shadow_evidence(session)
-    audit = audit_session_payload(session_payload, evidence_bundle=bundle)
-    measurement = measure_session_payload(session_payload, evidence_bundle=bundle)
-    receipt = session_payload["observations"][0]["independent_validation"]
-    receipt_object = Builder2QualificationReceiptV1.from_payload(receipt)
-    policy = MinimumSamplePolicy(1, 1)
+    receipts = package.receipts
+    signal_time_experiment_id = "shadow-experiment:controlled-release-v1"
+    audit = {
+        "overall_state": "COMPLETE",
+        "integration_sha": INTEGRATION_SHA,
+        "research_sha": FROZEN_RESEARCH_SHA,
+        "model_identity": M5_CANDIDATE_ID,
+        "predictions": [
+            {
+                "overall_state": "COMPLETE",
+                "evidence_mode": "REAL_OBSERVED",
+                "league": receipt.fixture_key.split("|", 1)[0],
+                "signal_time_experiment_id": signal_time_experiment_id,
+                "qualification_receipt_id": receipt.qualification_receipt_id,
+                "qualification_receipt_digest": receipt.receipt_digest,
+                "controlled_shadow_run_id": receipt.controlled_shadow_run_id,
+                "qualification_session_id": receipt.qualification_session_id,
+            }
+            for receipt in receipts
+        ],
+    }
+    eligible_predictions = [
+        {
+            "evidence_mode": "REAL_OBSERVED",
+            "league": receipt.fixture_key.split("|", 1)[0],
+            "model_identity": M5_CANDIDATE_ID,
+            "research_sha": FROZEN_RESEARCH_SHA,
+            "signal_time_experiment_id": signal_time_experiment_id,
+            "qualification_receipt_id": receipt.qualification_receipt_id,
+            "qualification_receipt_digest": receipt.receipt_digest,
+            "controlled_shadow_run_id": receipt.controlled_shadow_run_id,
+            "qualification_session_id": receipt.qualification_session_id,
+            "fixture": receipt.fixture_key,
+            "probabilities": {"home": 0.34, "draw": 0.33, "away": 0.33},
+        }
+        for receipt in receipts
+    ]
+    measurement = {
+        "overall_state": "COMPLETE",
+        "research_sha": FROZEN_RESEARCH_SHA,
+        "model_identity": M5_CANDIDATE_ID,
+        "eligible_count": len(eligible_predictions),
+        "eligible_predictions": eligible_predictions,
+        "safety_invariants": {
+            "production_activation_authorized": False,
+            "publication_authorized": False,
+            "betting_authorized": False,
+            "model_approved_for_production": False,
+            "signal_time_approved_for_production": False,
+            "sealed_data_accessed": False,
+            "closing_used_for_prediction": False,
+        },
+    }
+    receipt_object = receipts[0]
+    policy = MinimumSamplePolicy(5, 5)
     sample_report = aggregate_builder2_qualification_samples(
-        (receipt_object,), minimum_sample_policy=policy
+        receipts, minimum_sample_policy=policy
     )
     release_evidence = Top5ControlledReleaseEvidence(
-        receipts=(receipt_object,),
+        receipts=receipts,
         sample_report=sample_report,
         audit_report=audit,
         measurement_report=measurement,
+        five_league_package=package,
     )
     return release_evidence, measurement, receipt_object
 
@@ -147,14 +163,15 @@ def _context(tmp_path):
     evidence, measurement, receipt = _evidence(tmp_path)
     receipt = evidence.receipts[0]
     league = receipt.fixture_key.split("|", 1)[0]
+    production_provider = FOOTBALL_PROVIDER_REPERTOIRE[0]
     proposal = ProviderAuthority(
-        "fixture-source", receipt.provider_identity, "result-source"
+        "fixture-source", production_provider, "result-source"
     )
     approved_authority = ApprovedProviderResultAuthority(
         authority_decision_id="provider-auth:controlled-release",
         league_code=league,
-        approved_odds_provider=receipt.provider_identity,
-        approved_provider_set=(receipt.provider_identity,),
+        approved_odds_provider=production_provider,
+        approved_provider_set=(production_provider,),
         approved_result_source="result-source",
         issued_at=BASE - timedelta(minutes=1),
         expires_at=BASE + timedelta(days=1),
@@ -176,7 +193,11 @@ def _context(tmp_path):
         provider_authority=proposal,
         signal_time_contract=signal_time,
         rollback_pointer=f"safe-disabled:{league}",
-        config_snapshot={"league": league, "candidate": M5_CANDIDATE_ID},
+        config_snapshot={
+            "league": league,
+            "candidate": M5_CANDIDATE_ID,
+            "configuration_digest": evidence.five_league_package.dossier.configuration_digest,
+        },
         ceo_authorization_token="activation-token",
         ceo_authorized=True,
     )
@@ -191,11 +212,12 @@ def _context(tmp_path):
         model_artifact_hash=request.model_artifact_hash,
         signal_time_experiment_id="shadow-experiment:controlled-release-v1",
         signal_time_contract=signal_time,
-        minimum_sample_policy=MinimumSamplePolicy(1, 1),
+        minimum_sample_policy=MinimumSamplePolicy(5, 5),
         provider_authority=approved_authority,
         controlled_shadow_run_id=receipt.controlled_shadow_run_id,
         qualification_session_id=receipt.qualification_session_id,
-        fixture_scope=(receipt.fixture_key,),
+        ceo_shadow_authorization_id=evidence.five_league_package.dossier.ceo_authorization_id,
+        fixture_scope=tuple(item.fixture_key for item in evidence.receipts),
         rollback_pointer=f"safe-disabled:{league}",
         authorization_token="activation-specific-token",
         issued_at=BASE - timedelta(minutes=1),
@@ -213,7 +235,7 @@ def _context(tmp_path):
         source_sha=INTEGRATION_SHA,
         research_sha=FROZEN_RESEARCH_SHA,
         model_artifact_hash=request.model_artifact_hash,
-        provider_authority=receipt.provider_identity,
+        provider_authority=production_provider,
         result_authority="result-source",
         evidence_digest=evidence_digest,
         controlled_shadow_run_id=receipt.controlled_shadow_run_id,
@@ -280,6 +302,12 @@ def _context(tmp_path):
 
 def test_dry_run_reaches_ready_state_without_mutation(tmp_path):
     request, auth, evidence, artifact, publication_auth, health = _context(tmp_path)
+    assert evidence.five_league_package.dossier.provider_identity == "therundown_experimental"
+    assert auth.provider_authority.approved_odds_provider == "the_odds_api"
+    assert (
+        evidence.five_league_package.dossier.provider_identity
+        != auth.provider_authority.approved_odds_provider
+    )
     release = Top5ControlledRelease()
     result = release.dry_run(
         request,
@@ -472,6 +500,161 @@ def test_missing_receipt_and_injected_evidence_block(tmp_path):
         )
 
 
+def test_top5_activation_requires_exact_five_receipt_package(tmp_path):
+    request, auth, evidence, _artifact, _, _health = _context(tmp_path)
+    missing_package = replace(evidence, five_league_package=None)
+    with pytest.raises(ValueError, match="five-league receipt package"):
+        Top5ControlledRelease().activate(
+            request,
+            auth,
+            missing_package,
+            _rollout_evidence(),
+            health_preconditions=_health,
+            now=BASE + timedelta(minutes=2),
+        )
+
+
+@pytest.mark.parametrize(
+    "package_mutation",
+    [
+        pytest.param(
+            lambda package: replace(package, receipts=package.receipts[:1]),
+            id="one-receipt",
+        ),
+        pytest.param(
+            lambda package: replace(package, receipts=package.receipts[:4]),
+            id="four-receipts",
+        ),
+        pytest.param(
+            lambda package: replace(
+                package,
+                receipts=(
+                    package.receipts[0],
+                    package.receipts[0],
+                    *package.receipts[2:],
+                ),
+            ),
+            id="duplicate-league-receipt",
+        ),
+        pytest.param(
+            lambda package: replace(
+                package,
+                dossier=replace(
+                    package.dossier,
+                    leagues=("BL1", "EPL", "LL", "SA", "SIX"),
+                ),
+            ),
+            id="unknown-sixth-league",
+        ),
+        pytest.param(
+            lambda package: replace(
+                package,
+                dossier=replace(
+                    package.dossier,
+                    receipt_digests=("f" * 64, *package.dossier.receipt_digests[1:]),
+                ),
+            ),
+            id="receipt-digest-not-in-dossier",
+        ),
+        pytest.param(
+            lambda package: replace(
+                package,
+                dossier=replace(
+                    package.dossier,
+                    dossier_digest="f" * 64,
+                ),
+            ),
+            id="modified-dossier-digest",
+        ),
+        pytest.param(
+            lambda package: replace(
+                package,
+                dossier=replace(package.dossier, authority_granted=True),
+            ),
+            id="dossier-claims-authority",
+        ),
+        pytest.param(
+            lambda package: replace(
+                package,
+                receipts=(
+                    replace(
+                        package.receipts[0],
+                        controlled_shadow_run_id="mixed-run",
+                    ),
+                    *package.receipts[1:],
+                ),
+            ),
+            id="mixed-controlled-shadow-run",
+        ),
+        pytest.param(
+            lambda package: replace(
+                package,
+                receipts=(
+                    replace(
+                        package.receipts[0],
+                        qualification_session_id="mixed-session",
+                    ),
+                    *package.receipts[1:],
+                ),
+            ),
+            id="mixed-qualification-session",
+        ),
+        pytest.param(
+            lambda package: replace(
+                package,
+                dossier=replace(
+                    package.dossier,
+                    provider_identity="the_odds_api",
+                    candidate_provider_identity="the_odds_api",
+                ),
+            ),
+            id="provider-candidate-mismatch",
+        ),
+        pytest.param(
+            lambda package: replace(
+                package,
+                receipts=(
+                    replace(package.receipts[0], provider_identity="other-provider"),
+                    *package.receipts[1:],
+                ),
+            ),
+            id="mixed-receipt-providers",
+        ),
+    ],
+)
+def test_top5_activation_rejects_partial_or_tampered_dossier(
+    tmp_path, package_mutation
+):
+    request, auth, evidence, _artifact, _, _health = _context(tmp_path)
+    altered = replace(
+        evidence,
+        five_league_package=package_mutation(evidence.five_league_package),
+    )
+    with pytest.raises(ValueError):
+        Top5ControlledRelease().activate(
+            request,
+            auth,
+            altered,
+            _rollout_evidence(),
+            health_preconditions=_health,
+            now=BASE + timedelta(minutes=2),
+        )
+
+
+def test_top5_activation_rejects_receipt_missing_from_supplied_package(tmp_path):
+    request, auth, evidence, _artifact, _, _health = _context(tmp_path)
+    altered = replace(evidence, receipts=evidence.receipts[:-1])
+    with pytest.raises(ValueError, match="exactly match"):
+        Top5ControlledRelease().activate(
+            request,
+            auth,
+            altered,
+            _rollout_evidence(),
+            health_preconditions=_health,
+            now=BASE + timedelta(minutes=2),
+        )
+
+
 def test_incomplete_policy_signal_time_and_authority_block(tmp_path):
     request, auth, evidence, _artifact, _, _health = _context(tmp_path)
     with pytest.raises(ValueError, match="positive integer"):
@@ -533,7 +716,33 @@ def test_incomplete_policy_signal_time_and_authority_block(tmp_path):
             ),
         ).provider_authority.binds_receipts(evidence.receipts)
     auth.provider_authority.binds_request(request)
-    auth.provider_authority.binds_receipts(evidence.receipts)
+
+
+def test_candidate_evidence_and_production_authority_are_distinct(tmp_path):
+    request, auth, evidence, _artifact, _publication_auth, _health = _context(tmp_path)
+    candidate = evidence.five_league_package.dossier.provider_identity
+    candidate_authority = replace(
+        auth.provider_authority,
+        approved_odds_provider=candidate,
+        approved_provider_set=(candidate,),
+    )
+    candidate_request = replace(
+        request,
+        provider_authority=ProviderAuthority(
+            "fixture-source", candidate, "result-source"
+        ),
+    )
+    candidate_activation = replace(auth, provider_authority=candidate_authority)
+    with pytest.raises(ValueError, match="candidate evidence provider"):
+        evidence.validate(candidate_request, candidate_activation)
+
+    evidence.validate(request, auth)
+
+
+def test_missing_production_authority_blocks_controlled_release(tmp_path):
+    request, auth, evidence, _artifact, _publication_auth, _health = _context(tmp_path)
+    with pytest.raises(ValueError, match="provider/result authority"):
+        evidence.validate(request, replace(auth, provider_authority=None))
 
 
 def test_activation_does_not_imply_publication_and_publication_needs_separate_auth(
@@ -556,19 +765,8 @@ def test_activation_does_not_imply_publication_and_publication_needs_separate_au
             replace(publication_auth, publication_authorized=False),
             now=BASE + timedelta(minutes=3),
         )
-    published = release.publish(
-        artifact, publication_auth, now=BASE + timedelta(minutes=3)
-    )
-    assert published.public_product["football"]
-    assert (
-        published.public_product["health"]["top5_evidence_digest"]
-        == artifact.evidence_digest
-    )
-    assert published.public_product["health"]["top5_provider_authority"] == (
-        artifact.provider_authority
-    )
-    assert published.public_product["health"]["publication_enabled"] is True
-    assert release.publication_store.current is published
+    with pytest.raises(ValueError, match="top5_release|exactly 15 records"):
+        release.publish(artifact, publication_auth, now=BASE + timedelta(minutes=3))
     assert state.provider_authority_created is False
     assert state.scheduler_enabled is False
     assert state.ledger_mutated is False
@@ -585,46 +783,8 @@ def test_controlled_publication_uses_canonical_pwa_football_shape(tmp_path):
         health_preconditions=_health,
         now=BASE + timedelta(minutes=2),
     )
-    published = release.publish(
-        artifact, publication_auth, now=BASE + timedelta(minutes=3)
-    )
-    records = published.public_product["football"]
-    assert isinstance(records, list) and records
-    record = records[0]
-    assert {
-        "league",
-        "fixture_key",
-        "home",
-        "away",
-        "match",
-        "market",
-        "model_prob",
-        "model_identity",
-        "model_version",
-        "prediction_timestamp",
-        "signal_timestamp",
-        "signal_snapshot_id",
-        "activation_state",
-        "publication_status",
-        "publication_enabled",
-        "no_bet",
-        "provenance",
-        "result_status",
-        "settlement_status",
-        "run_id",
-        "session_id",
-    } <= record.keys()
-    assert "probabilities" not in record
-    assert record["league"] == artifact.league_code
-    assert record["model_identity"] == artifact.model_identity
-    assert record["activation_state"] == "CONTROLLED"
-    assert record["publication_status"] == "PUBLISHED"
-    assert record["publication_enabled"] is True
-    assert record["no_bet"] is True
-    assert record["provenance"]["source_sha"] == artifact.source_sha
-    assert record["provenance"]["research_sha"] == artifact.research_sha
-    assert record["run_id"] == artifact.controlled_shadow_run_id
-    assert record["session_id"] == artifact.qualification_session_id
+    with pytest.raises(ValueError, match="top5_release|exactly 15 records"):
+        release.publish(artifact, publication_auth, now=BASE + timedelta(minutes=3))
 
 
 def test_publication_cannot_cross_activation_evidence_or_authority_bindings(tmp_path):
@@ -687,9 +847,8 @@ def test_stale_publication_closing_and_unsafe_authority_fail_closed(tmp_path):
         health_preconditions=_health,
         now=BASE + timedelta(minutes=2),
     )
-    release.publish(artifact, publication_auth, now=BASE + timedelta(minutes=3))
-    with pytest.raises(ValueError, match="stale"):
-        release.publish(artifact, publication_auth, now=BASE + timedelta(minutes=4))
+    with pytest.raises(ValueError, match="top5_release|exactly 15 records"):
+        release.publish(artifact, publication_auth, now=BASE + timedelta(minutes=3))
     closing = dict(artifact.football_records[0], closing_used_for_prediction=True)
     unsafe = replace(
         artifact, football_records=(closing,), generated_at=BASE + timedelta(minutes=5)
@@ -701,7 +860,7 @@ def test_stale_publication_closing_and_unsafe_authority_fail_closed(tmp_path):
 def test_rollback_disables_activation_and_publication_without_ledger_or_provider_state(
     tmp_path,
 ):
-    request, auth, evidence, artifact, publication_auth, _health = _context(tmp_path)
+    request, auth, evidence, _artifact, _publication_auth, _health = _context(tmp_path)
     release = Top5ControlledRelease()
     release.activate(
         request,
@@ -711,7 +870,6 @@ def test_rollback_disables_activation_and_publication_without_ledger_or_provider
         health_preconditions=_health,
         now=BASE + timedelta(minutes=2),
     )
-    release.publish(artifact, publication_auth, now=BASE + timedelta(minutes=3))
     activation_rollback, publication_rollback = release.rollback(
         RollbackTrigger.PUBLICATION_ERROR
     )
@@ -735,10 +893,14 @@ def test_controlled_publication_attestation_binds_active_authorized_artifact(tmp
         health_preconditions=health,
         now=BASE + timedelta(minutes=2),
     )
-    attestation = release.issue_publication_attestation(
-        artifact, publication_auth, now=BASE + timedelta(minutes=3)
+    public_product = _complete_public_product()
+    attestation = ControlledPublicationAttestation.issue(
+        artifact,
+        publication_auth,
+        activation_bindings=release.activation_runtime.state.as_bindings(),
+        artifact=public_product,
+        now=BASE + timedelta(minutes=3),
     )
-    public_product = artifact.as_public_product()
     assert attestation.active_activation is True
     assert attestation.publication_authorized is True
     assert attestation.no_bet is True
@@ -785,8 +947,12 @@ def test_controlled_publication_attestation_requires_active_state_and_separate_a
     request, auth, evidence, artifact, publication_auth, _health = _context(tmp_path)
     release = Top5ControlledRelease()
     with pytest.raises(ValueError, match="active activation"):
-        release.issue_publication_attestation(
-            artifact, publication_auth, now=BASE + timedelta(minutes=2)
+        ControlledPublicationAttestation.issue(
+            artifact,
+            publication_auth,
+            activation_bindings={},
+            artifact=_complete_public_product(),
+            now=BASE + timedelta(minutes=2),
         )
     health = _health
     release.activate(
@@ -798,9 +964,11 @@ def test_controlled_publication_attestation_requires_active_state_and_separate_a
         now=BASE + timedelta(minutes=2),
     )
     with pytest.raises(ValueError, match="not approved"):
-        release.issue_publication_attestation(
+        ControlledPublicationAttestation.issue(
             artifact,
             replace(publication_auth, publication_authorized=False),
+            activation_bindings=release.activation_runtime.state.as_bindings(),
+            artifact=_complete_public_product(),
             now=BASE + timedelta(minutes=3),
         )
 
@@ -833,23 +1001,44 @@ def _capability_fixture(tmp_path, monkeypatch):
     _install_synthetic_issuer_key(capability_issuer, monkeypatch)
     state_path = controlled_publication_capability_state_path()
     store = FileControlledPublicationCapabilityStore(state_path)
-    attestation, capability = release.issue_publication_capability(
+    product = _complete_public_product()
+    activation_bindings = release.activation_runtime.state.as_bindings()
+    attestation = ControlledPublicationAttestation.issue(
         artifact,
         publication_auth,
-        store,
-        capability_issuer=capability_issuer,
+        activation_bindings=activation_bindings,
+        artifact=product,
         now=runtime_now,
     )
+    capability = store.issue(
+        attestation,
+        issuer_proof=capability_issuer.issue_proof(attestation),
+    )
+
+    def issue_next_capability():
+        next_attestation = ControlledPublicationAttestation.issue(
+            artifact,
+            publication_auth,
+            activation_bindings=activation_bindings,
+            artifact=product,
+            now=runtime_now,
+        )
+        next_capability = store.issue(
+            next_attestation,
+            issuer_proof=capability_issuer.issue_proof(next_attestation),
+        )
+        return next_attestation, next_capability
+
     product_path = tmp_path / artifact.artifact_path
     product_path.parent.mkdir(parents=True)
-    product_path.write_text(json.dumps(artifact.as_public_product(), sort_keys=True))
+    product_path.write_text(json.dumps(product, sort_keys=True))
     attestation_path = tmp_path / "attestation.json"
     attestation_path.write_text(json.dumps(attestation.as_payload(), sort_keys=True))
     capability_path = tmp_path / "capability-token.json"
     capability_path.write_text(json.dumps(capability.as_payload(), sort_keys=True))
     return {
         "artifact": artifact,
-        "product": artifact.as_public_product(),
+        "product": product,
         "product_path": product_path,
         "attestation": attestation,
         "attestation_path": attestation_path,
@@ -861,6 +1050,7 @@ def _capability_fixture(tmp_path, monkeypatch):
         "publication_authorization": publication_auth,
         "capability_issuer": capability_issuer,
         "runtime_now": runtime_now,
+        "issue_capability": issue_next_capability,
     }
 
 
@@ -1128,20 +1318,11 @@ def test_consumed_capability_rotates_without_manual_deletion(tmp_path, monkeypat
     store = fixture["store"]
     capability_a = fixture["capability"]
     attestation = fixture["attestation"]
-    release = fixture["release"]
-    publication_authorization = fixture["publication_authorization"]
-    capability_issuer = fixture["capability_issuer"]
     artifact_path = fixture["artifact"].artifact_path
     now = fixture["runtime_now"]
 
     with pytest.raises(ValueError, match="still unconsumed"):
-        release.issue_publication_capability(
-            fixture["artifact"],
-            publication_authorization,
-            store,
-            capability_issuer=capability_issuer,
-            now=now,
-        )
+        fixture["issue_capability"]()
     assert json.loads(fixture["state_path"].read_text())["consumed"] is False
 
     store.consume(
@@ -1160,13 +1341,7 @@ def test_consumed_capability_rotates_without_manual_deletion(tmp_path, monkeypat
             now=now,
         )
 
-    attestation_b, capability_b = release.issue_publication_capability(
-        fixture["artifact"],
-        publication_authorization,
-        store,
-        capability_issuer=capability_issuer,
-        now=now,
-    )
+    attestation_b, capability_b = fixture["issue_capability"]()
     state_after_rotation = json.loads(fixture["state_path"].read_text())
     assert capability_b.capability_id != capability_a.capability_id
     assert state_after_rotation["consumed"] is False
@@ -1213,6 +1388,7 @@ def test_direct_store_cannot_issue_from_self_consistent_forged_attestation(
     state_path = controlled_publication_capability_state_path()
     trusted_issuer = _SyntheticCapabilityIssuer("trusted-direct-test")
     _install_synthetic_issuer_key(trusted_issuer, monkeypatch)
+    public_product = _complete_public_product()
     fake_active_bindings = {
         "active": True,
         "activation_id": artifact.activation_id,
@@ -1233,17 +1409,17 @@ def test_direct_store_cannot_issue_from_self_consistent_forged_attestation(
         artifact,
         publication_auth,
         activation_bindings=fake_active_bindings,
-        artifact=artifact.as_public_product(),
+        artifact=public_product,
         now=runtime_now,
     )
     forged.validate(
-        artifact=artifact.as_public_product(),
+        artifact=public_product,
         artifact_path=artifact.artifact_path,
         now=runtime_now,
     )
     product_path = tmp_path / artifact.artifact_path
     product_path.parent.mkdir(parents=True)
-    product_path.write_text(json.dumps(artifact.as_public_product(), sort_keys=True))
+    product_path.write_text(json.dumps(public_product, sort_keys=True))
     attestation_path = tmp_path / "direct-forged-attestation.json"
     attestation_path.write_text(json.dumps(forged.as_payload(), sort_keys=True))
     capability_path = tmp_path / "direct-forged-capability.json"
@@ -1390,8 +1566,12 @@ def test_capability_issue_requires_active_activation_and_valid_publication_auth(
     store = FileControlledPublicationCapabilityStore()
     release = Top5ControlledRelease()
     with pytest.raises(ValueError, match="active activation"):
-        release.issue_publication_capability(
-            artifact, publication_auth, store, now=BASE + timedelta(minutes=2)
+        ControlledPublicationAttestation.issue(
+            artifact,
+            publication_auth,
+            activation_bindings={},
+            artifact=_complete_public_product(),
+            now=BASE + timedelta(minutes=2),
         )
     release.activate(
         request,
@@ -1402,13 +1582,14 @@ def test_capability_issue_requires_active_activation_and_valid_publication_auth(
         now=BASE + timedelta(minutes=2),
     )
     with pytest.raises(ValueError, match="not approved"):
-        release.issue_publication_capability(
+        ControlledPublicationAttestation.issue(
             artifact,
             replace(publication_auth, publication_authorized=False),
-            store,
+            activation_bindings=release.activation_runtime.state.as_bindings(),
+            artifact=_complete_public_product(),
             now=BASE + timedelta(minutes=3),
         )
-    with pytest.raises(ValueError, match="issuer is unavailable"):
+    with pytest.raises(ValueError, match="top5_release|exactly 15 records"):
         release.issue_publication_capability(
             artifact,
             publication_auth,

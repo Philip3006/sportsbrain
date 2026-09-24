@@ -5,6 +5,7 @@ Set ODDS_API_KEY in .env or pass directly.
 """
 import json
 import os
+from collections.abc import Mapping
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -64,6 +65,112 @@ def get_api_key(api_key: str | None = None) -> str:
             "ODDS_API_KEY not set. Add it to .env or pass api_key= directly."
         )
     return key
+
+
+_AUTH_REVALIDATION_SAFE_HEADERS = frozenset(
+    {
+        "content-type",
+        "retry-after",
+        "x-requests-used",
+        "x-requests-remaining",
+        "x-requests-limit",
+        "x-rate-limit",
+        "x-rate-limit-remaining",
+    }
+)
+
+
+def _safe_auth_revalidation_headers(headers: Mapping[str, object]) -> dict[str, str]:
+    return {
+        str(key).casefold(): str(value)
+        for key, value in headers.items()
+        if str(key).casefold() in _AUTH_REVALIDATION_SAFE_HEADERS
+    }
+
+
+def revalidate_the_odds_api_auth_once(
+    *,
+    explicit_opt_in: bool = False,
+    timeout: float = 20.0,
+) -> dict[str, object]:
+    """Make exactly one no-retry authenticated reference request.
+
+    This is not a quota probe or odds fetch.  It is available only when the
+    existing provider-budget circuit records a 401/403 and the caller opts in
+    explicitly.  Credential/header/body secrets never enter the returned or
+    persisted audit record.
+    """
+
+    from src.signals import provider_budget
+
+    provider_budget.begin_auth_revalidation(
+        "the_odds_api", explicit_opt_in=explicit_opt_in
+    )
+    credential_access_count = 0
+    request_count = 0
+    try:
+        key = get_api_key()
+        credential_access_count = 1
+    except OSError as exc:
+        audit = provider_budget.record_auth_revalidation(
+            "the_odds_api",
+            status_code=None,
+            request_count=0,
+            credential_access_count=credential_access_count,
+            safe_headers={},
+            failure_class=type(exc).__name__,
+        )
+        return {
+            "status": "failed_closed",
+            "http_status": None,
+            "request_count": 0,
+            "credential_access_count": credential_access_count,
+            "retry_count": 0,
+            "audit": audit,
+        }
+    try:
+        request_count = 1
+        response = requests.get(
+            f"{ODDS_API_URL}/sports/soccer_epl/events",
+            params={"apiKey": key},
+            timeout=timeout,
+        )
+        safe_headers = _safe_auth_revalidation_headers(response.headers)
+        status_code = int(response.status_code)
+        audit = provider_budget.record_auth_revalidation(
+            "the_odds_api",
+            status_code=status_code,
+            request_count=request_count,
+            credential_access_count=credential_access_count,
+            safe_headers=safe_headers,
+            failure_class=None if 200 <= status_code < 300 else "http_error",
+        )
+        return {
+            "status": "verified" if 200 <= status_code < 300 else "failed_closed",
+            "http_status": status_code,
+            "safe_headers": safe_headers,
+            "request_count": request_count,
+            "credential_access_count": credential_access_count,
+            "retry_count": 0,
+            "audit": audit,
+        }
+    except requests.RequestException as exc:
+        audit = provider_budget.record_auth_revalidation(
+            "the_odds_api",
+            status_code=None,
+            request_count=request_count,
+            credential_access_count=credential_access_count,
+            safe_headers={},
+            failure_class=type(exc).__name__,
+        )
+        return {
+            "status": "failed_closed",
+            "http_status": None,
+            "request_count": request_count,
+            "credential_access_count": credential_access_count,
+            "retry_count": 0,
+            "audit": audit,
+        }
 
 
 # Compatibility flag retained for dashboard payloads.  Football refreshes are

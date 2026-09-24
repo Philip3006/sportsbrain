@@ -17,7 +17,16 @@ class StoreRoadmapMixin:
     def sync_roadmap(
         self, roadmap: RoadmapRegistry, *, now: datetime | None = None
     ) -> None:
+        """Synchronize governed definitions without rewriting task history.
+
+        Disabled or removed roadmap definitions may be retired only while they
+        have no materialized task. A task-linked row keeps its durable status,
+        task identity, blocker, and audit trail even when its roadmap entry is
+        no longer selectable.
+        """
+
         timestamp = isoformat(now or utc_now())
+        current_item_ids = {item.item_id for item in roadmap.items}
         with self._write() as conn:
             for item in roadmap.items:
                 conn.execute(
@@ -34,10 +43,21 @@ class StoreRoadmapMixin:
                         dependency_item_ids_json = excluded.dependency_item_ids_json,
                         priority = excluded.priority, debug_budget = excluded.debug_budget,
                         repeated_failure_limit = excluded.repeated_failure_limit,
-                        mode = excluded.mode, enabled = excluded.enabled,
+                        mode = excluded.mode,
+                        enabled = CASE
+                            WHEN roadmap_items.task_id IS NULL THEN excluded.enabled
+                            ELSE roadmap_items.enabled
+                        END,
                         generation = excluded.generation,
                         governed_paths_json = excluded.governed_paths_json,
                         resource_locks_json = excluded.resource_locks_json,
+                        status = CASE
+                            WHEN excluded.enabled = 0
+                                AND roadmap_items.task_id IS NULL
+                                AND roadmap_items.status IN ('PENDING', 'ENQUEUED', 'BLOCKED')
+                            THEN 'DISABLED'
+                            ELSE roadmap_items.status
+                        END,
                         updated_at = excluded.updated_at""",
                     (
                         item.item_id,
@@ -58,6 +78,16 @@ class StoreRoadmapMixin:
                         self._json(list(item.resource_locks)),
                         timestamp,
                     ),
+                )
+            if current_item_ids:
+                placeholders = ",".join("?" for _ in current_item_ids)
+                conn.execute(
+                    f"""UPDATE roadmap_items
+                        SET enabled = 0, status = 'DISABLED', updated_at = ?
+                        WHERE item_id NOT IN ({placeholders})
+                          AND task_id IS NULL
+                          AND status IN ('PENDING', 'ENQUEUED', 'BLOCKED')""",
+                    (timestamp, *sorted(current_item_ids)),
                 )
 
     def roadmap_records(self) -> list[dict[str, Any]]:

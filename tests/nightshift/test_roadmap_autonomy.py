@@ -59,16 +59,147 @@ def test_roadmap_selection_is_explicit_and_registry_scoped(tmp_path: Path) -> No
     dispatcher = _dispatcher(tmp_path)
     selected = dispatcher.select_next_roadmap_task(builder_id="builder-1")
     assert selected is not None
-    assert selected.roadmap_item_id == "roadmap-b1-research-1"
+    assert selected.roadmap_item_id == "top5-final-public-product"
     assert selected.builder_id == "builder-1"
+    assert selected.resource_locks == ("top5-public-product-final-audit",)
+    assert selected.allowed_paths == (
+        "docs/data",
+        "docs/js",
+        "docs/service-worker",
+        "tests/public_product/top5",
+    )
     with pytest.raises(UnknownBuilderError):
         dispatcher.select_next_roadmap_task(builder_id="builder-6")
-    # Code-changing roadmap stages remain approval-gated after materialization.
-    assert selected.state is TaskState.BACKLOG
+    # This read-only audit template is immediately runnable after materialization.
+    assert selected.state is TaskState.READY
     assert any(
-        item["item_id"] == "roadmap-b1-research-1" and item["status"] == "ENQUEUED"
+        item["item_id"] == "top5-final-public-product"
+        and item["status"] == "ENQUEUED"
         for item in dispatcher.store.roadmap_records()
     )
+
+
+def test_top5_finalization_wave_is_explicit_and_bounded(tmp_path: Path) -> None:
+    dispatcher = _dispatcher(tmp_path)
+    enabled = {item.item_id for item in dispatcher.roadmap.items if item.enabled}
+    assert {
+        "top5-final-runtime-health",
+        "top5-final-b4-dossier",
+        "top5-final-b2-preflight",
+        "top5-final-public-product",
+        "top5-final-convergence",
+    }.issubset(enabled)
+    assert "roadmap-b1-research-1" in enabled
+    assert dispatcher.roadmap.max_cycles >= 25
+    assert dispatcher.merge_backpressure_limit == 12
+    assert dispatcher.registry.builder_ids == (
+        "builder-1",
+        "builder-2",
+        "builder-3",
+        "builder-4",
+        "terminal-5",
+    )
+    assert dispatcher.roadmap.by_id("top5-final-b2-preflight").dependency_item_ids == (
+        "top5-final-b4-dossier",
+    )
+    assert set(dispatcher.roadmap.by_id("top5-final-convergence").dependency_item_ids) == {
+        "top5-final-runtime-health",
+        "top5-final-b4-dossier",
+        "top5-final-b2-preflight",
+        "top5-final-public-product",
+    }
+    assert any(
+        item.enabled for item in dispatcher.roadmap.items if item.item_id.startswith("roadmap-")
+    )
+
+
+def test_roadmap_sync_retires_only_unmaterialized_obsolete_rows(tmp_path: Path) -> None:
+    dispatcher = _dispatcher(tmp_path)
+    initial = RoadmapRegistry.from_mapping(
+        {
+            "version": 1,
+            "items": [
+                {
+                    "item_id": "legacy-stage-01",
+                    "title": "legacy",
+                    "builder_id": "builder-1",
+                    "template_id": "builder-1.evidence-lifecycle-audit",
+                    "payload": {"scope": "legacy"},
+                    "enabled": True,
+                },
+                {
+                    "item_id": "future-stage-01",
+                    "title": "future",
+                    "builder_id": "builder-1",
+                    "template_id": "builder-1.evidence-lifecycle-audit",
+                    "payload": {"scope": "future"},
+                    "enabled": True,
+                },
+            ],
+        }
+    )
+    dispatcher.store.sync_roadmap(initial)
+    dispatcher.store.set_roadmap_status(
+        "legacy-stage-01",
+        status="ENQUEUED",
+        task_id="task-linked-0001",
+    )
+    replacement = RoadmapRegistry.from_mapping(
+        {
+            "version": 1,
+            "items": [
+                {
+                    "item_id": "replacement-stage-01",
+                    "title": "replacement",
+                    "builder_id": "builder-1",
+                    "template_id": "builder-1.evidence-lifecycle-audit",
+                    "payload": {"scope": "replacement"},
+                    "enabled": True,
+                }
+            ],
+        }
+    )
+    dispatcher.store.sync_roadmap(replacement)
+    rows = {row["item_id"]: row for row in dispatcher.store.roadmap_records()}
+    assert rows["legacy-stage-01"]["enabled"] is True
+    assert rows["legacy-stage-01"]["status"] == "ENQUEUED"
+    assert rows["legacy-stage-01"]["task_id"] == "task-linked-0001"
+    assert rows["future-stage-01"]["enabled"] is False
+    assert rows["future-stage-01"]["status"] == "DISABLED"
+
+
+def test_top5_wave_materializes_independent_items_once_and_holds_dependencies(
+    tmp_path: Path,
+) -> None:
+    dispatcher = _dispatcher(tmp_path)
+    runtime = dispatcher.select_next_roadmap_task(builder_id="builder-3")
+    dossier = dispatcher.select_next_roadmap_task(builder_id="builder-4")
+    public = dispatcher.select_next_roadmap_task(builder_id="builder-1")
+
+    assert runtime is not None and runtime.roadmap_item_id == "top5-final-runtime-health"
+    assert dossier is not None and dossier.roadmap_item_id == "top5-final-b4-dossier"
+    assert public is not None and public.roadmap_item_id == "top5-final-public-product"
+    next_b3 = dispatcher.select_next_roadmap_task(builder_id="builder-3")
+    assert next_b3 is not None
+    assert next_b3.roadmap_item_id == "roadmap-b3-integration-1"
+    next_b4 = dispatcher.select_next_roadmap_task(builder_id="builder-4")
+    next_b1 = dispatcher.select_next_roadmap_task(builder_id="builder-1")
+    assert next_b4 is not None and next_b4.roadmap_item_id == "roadmap-b4-shadow-1"
+    assert next_b1 is not None and next_b1.roadmap_item_id == "roadmap-b1-research-1"
+    next_b2 = dispatcher.select_next_roadmap_task(builder_id="builder-2")
+    assert next_b2 is not None and next_b2.roadmap_item_id == "roadmap-b2-qualification-1"
+    task_ids = [
+        item["task_id"]
+        for item in dispatcher.store.roadmap_records()
+        if item["item_id"].startswith("top5-final-") and item["task_id"]
+    ]
+    assert len(task_ids) == 3
+    assert len(set(task_ids)) == 3
+    assert next(
+        item["status"]
+        for item in dispatcher.store.roadmap_records()
+        if item["item_id"] == "top5-final-b2-preflight"
+    ) == "BLOCKED"
 
 
 def test_bounded_debug_repair_can_retest_and_succeed(tmp_path: Path) -> None:

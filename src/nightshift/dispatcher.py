@@ -644,7 +644,6 @@ class NightShiftDispatcher(DispatcherExecutionMixin):
             actor=self.dispatcher_id,
             now=self.clock(),
         )
-
     def _select_execution_worker(self, item: Any) -> str | None:
         """Choose free terminal capacity from the reviewed worker pool."""
 

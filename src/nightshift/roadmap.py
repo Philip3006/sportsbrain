@@ -159,11 +159,9 @@ class RoadmapItem:
             return f"roadmap:{self.item_id}"
         return f"roadmap:{self.item_id}:generation:{self.generation}"
 
-
 def _app_owner_for_builder(builder_id: str) -> str:
     match = re.fullmatch(r"builder-([1-4])", builder_id)
     return f"APP_B{match.group(1)}" if match else "APP_B5"
-
 
 class RoadmapRegistry:
     """Read-only registry loaded from a governed roadmap file."""

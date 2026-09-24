@@ -3,7 +3,10 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
+import pytest
+
 from src.nightshift import (
+    DispatcherRecursionError,
     FakeExecutor,
     NightShiftDispatcher,
     TaskState,
@@ -209,9 +212,10 @@ def test_dependency_blocking_remains_fail_closed(tmp_path: Path) -> None:
     assert row["blocked_reason"] == "dependency roadmap item incomplete"
 
 
-def test_terminal_five_can_be_idle_when_no_compatible_roadmap_work_exists(tmp_path: Path) -> None:
+def test_builder_5_cannot_select_rolling_work(tmp_path: Path) -> None:
     dispatcher, _, _, _ = _fixture(tmp_path)
-    assert dispatcher.select_next_roadmap_task(builder_id="terminal-5") is None
+    with pytest.raises(DispatcherRecursionError):
+        dispatcher.select_next_roadmap_task(builder_id="builder-5")
 
 
 def test_static_roadmap_defaults_to_generation_one_and_migrates(tmp_path: Path) -> None:

@@ -265,7 +265,7 @@ class BuilderRegistry:
         return definition
 
     def assert_worker_target(self, builder_id: str) -> BuilderDefinition:
-        if builder_id == DISPATCHER_ID:
+        if builder_id in {DISPATCHER_ID, "builder-5", "b5"}:
             raise DispatcherRecursionError(
                 "Builder 5 is the dispatcher and cannot be dispatched as a worker"
             )

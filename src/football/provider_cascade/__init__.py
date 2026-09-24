@@ -51,25 +51,6 @@ from src.football.provider_cascade.contracts import (
     TimingProvenance,
     TransportCapability,
 )
-from src.football.provider_cascade.execution_harness import (
-    AUTHORIZATION_SCHEMA_VERSION,
-    CAPTURE_ATTESTATION_SCHEMA_VERSION,
-    EXECUTION_BANNERS,
-    ControlledShadowCaptureAttestationV1,
-    ControlledShadowExecutionHarness,
-    ControlledShadowExecutionResult,
-    ControlledShadowRunAuthorizationV1,
-    FakeControlledShadowTransport,
-    HarnessContractError,
-    HarnessExecutionBlocked,
-    InMemoryControlledShadowRuntimeState,
-    NetworkCapableProviderTransport,
-    ProviderAction,
-    ProviderTransportRequest,
-    ProviderTransportResponse,
-    RealProviderTransport,
-    RunValidationReport,
-)
 from src.football.provider_cascade.health import ProviderHealth, ProviderHealthRegistry
 from src.football.provider_cascade.preparation import (
     PREPARATION_BLOCKED,
@@ -100,16 +81,61 @@ from src.football.provider_cascade.readiness import (
     quota_reset_revalidation_eligible,
     release_day_preflight,
 )
-from src.football.provider_cascade.real_transport_bridge import (
-    ConfiguredNetworkProviderTransport,
-)
 from src.football.provider_cascade.router import ProviderCascadeRouter
-from src.football.top5_builder2_qualification_receipt import (
-    Builder2QualificationReceiptError,
-    Builder2QualificationReceiptV1,
-    validate_builder1_qualification_receipt,
-    validate_builder4_qualification_receipt,
+
+# The execution harness validates observations using contracts from
+# ``top5_controlled_shadow_provider_qualification``.  Importing it eagerly
+# here creates a package-initialization cycle when that contract imports the
+# candidate-eligibility submodule through this package.  Keep the historical
+# public API, but load the harness only after package initialization has
+# completed.
+_EXECUTION_HARNESS_EXPORTS = frozenset(
+    {
+        "AUTHORIZATION_SCHEMA_VERSION",
+        "CAPTURE_ATTESTATION_SCHEMA_VERSION",
+        "EXECUTION_BANNERS",
+        "ControlledShadowCaptureAttestationV1",
+        "ControlledShadowExecutionHarness",
+        "ControlledShadowExecutionResult",
+        "ControlledShadowRunAuthorizationV1",
+        "FakeControlledShadowTransport",
+        "HarnessContractError",
+        "HarnessExecutionBlocked",
+        "InMemoryControlledShadowRuntimeState",
+        "NetworkCapableProviderTransport",
+        "ProviderAction",
+        "ProviderTransportRequest",
+        "ProviderTransportResponse",
+        "RealProviderTransport",
+        "RunValidationReport",
+    }
 )
+def __getattr__(name: str):
+    if name in _EXECUTION_HARNESS_EXPORTS:
+        from src.football.provider_cascade import execution_harness
+
+        value = getattr(execution_harness, name)
+        globals()[name] = value
+        return value
+    if name == "ConfiguredNetworkProviderTransport":
+        from src.football.provider_cascade.real_transport_bridge import (
+            ConfiguredNetworkProviderTransport,
+        )
+
+        globals()[name] = ConfiguredNetworkProviderTransport
+        return ConfiguredNetworkProviderTransport
+    if name in {
+        "Builder2QualificationReceiptError",
+        "Builder2QualificationReceiptV1",
+        "validate_builder1_qualification_receipt",
+        "validate_builder4_qualification_receipt",
+    }:
+        from src.football import top5_builder2_qualification_receipt
+
+        value = getattr(top5_builder2_qualification_receipt, name)
+        globals()[name] = value
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 __all__ = [
     "AUTHORIZATION_SCHEMA_VERSION",
