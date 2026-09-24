@@ -2,9 +2,32 @@
 
 This is a separate, non-authorizing bootstrap stage for the later strict
 TheRundown controlled-shadow run. It resolves exact provider event IDs from a
-dated event snapshot without weakening the real-run invariant that every
-`TheRundownCanaryTargetV1` is pre-bound to an event ID before network
+current dated event snapshot without weakening the real-run invariant that
+every `TheRundownCanaryTargetV1` is pre-bound to an event ID before network
 execution.
+
+## Two-stage identity model
+
+The current target manifest is deliberately provider-independent at the
+participant/event level. Each ordered target contains only the canonical
+SportsBrain league, fixture key, home/away names, UTC kickoff, and a
+deterministic request identity. It must be sourced from a current, non-synthetic
+fixture source and carries source provenance plus source-release/runtime-data
+bindings. It does not contain a guessed TheRundown event ID or participant ID.
+
+The first real discovery response is the only authority for TheRundown
+identity. The response-side matcher requires exactly one pre-match event whose
+league, participants, orientation, canonical fixture identity, and kickoff
+match the target. It then derives the provider event ID and the home/away
+provider participant IDs from that matched event. Missing, duplicate,
+ambiguous, stale, live, or contradictory IDs fail closed. If a legacy target
+already contains provider IDs, they are treated only as an additional strict
+consistency check; they are never used to bootstrap a new target.
+
+Only the validated response evidence is allowed to populate the participant
+scope and event ID in the strict pre-bound network configuration. This stage
+still does not grant provider authority, create a receipt, enable the
+controlled run, publish, bet, or register a scheduler.
 
 The discovery authorization is structurally distinct from
 `TheRundownNetworkAuthorizationV1`. It binds the candidate provider,
