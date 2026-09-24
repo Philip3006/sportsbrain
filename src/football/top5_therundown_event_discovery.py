@@ -59,10 +59,12 @@ DISCOVERY_AUTHORIZATION_SCHEMA_VERSION = (
 DISCOVERY_EVIDENCE_SCHEMA_VERSION = (
     "top5-therundown-provider-event-discovery-evidence-v1"
 )
+CURRENT_TARGET_MANIFEST_SCHEMA_VERSION = "top5-current-discovery-target-manifest-v1"
 DISCOVERY_LEAGUE_ORDER = ("EPL", "BL1", "LL", "SA", "L1")
 DISCOVERY_KICKOFF_TOLERANCE_SECONDS = 60
 DISCOVERY_MINIMUM_COMBINED_HEADROOM = 550
 DISCOVERY_QUOTA_PROOF_MAX_AGE_SECONDS = 300
+CURRENT_TARGET_MANIFEST_MAX_AGE_SECONDS = 3600
 B4_QUOTA_PROOF_PACKAGE_SCHEMA_VERSION = "top5-therundown-quota-proof-package-v1"
 B4_QUOTA_PROOF_SCHEMA_VERSION = "top5-therundown-quota-proof-v1"
 B4_QUOTA_PROOF_EXECUTION_PHASE = "quota_proof"
@@ -748,7 +750,12 @@ def _provider_shape(target: TheRundownEventDiscoveryTargetV1) -> dict[str, objec
 
 @dataclass(frozen=True)
 class TheRundownEventDiscoveryTargetV1:
-    """Stable fixture scope; deliberately contains no provider event ID."""
+    """Stable canonical fixture scope before provider identity is discovered.
+
+    Provider participant IDs are intentionally optional here.  They are
+    response-side identity, and are bound only after a real provider response
+    has matched this canonical league/team/kickoff scope.
+    """
 
     provider: str
     league: str
@@ -756,9 +763,9 @@ class TheRundownEventDiscoveryTargetV1:
     home_team: str
     away_team: str
     kickoff: datetime
-    home_participant_id: str
-    away_participant_id: str
     request_identity: str
+    home_participant_id: str | None = None
+    away_participant_id: str | None = None
 
     def validate(self) -> None:
         if self.provider != THERUNDOWN_PROVIDER_NAME:
@@ -769,13 +776,20 @@ class TheRundownEventDiscoveryTargetV1:
             ("fixture_key", self.fixture_key),
             ("home_team", self.home_team),
             ("away_team", self.away_team),
-            ("home_participant_id", self.home_participant_id),
-            ("away_participant_id", self.away_participant_id),
             ("request_identity", self.request_identity),
         ):
             _text(value, name)
-        if self.home_participant_id == self.away_participant_id:
-            raise EventDiscoveryContractError("participant IDs must be distinct")
+        participant_ids = (self.home_participant_id, self.away_participant_id)
+        if any(value is not None for value in participant_ids):
+            if any(
+                not isinstance(value, str) or not value.strip()
+                for value in participant_ids
+            ):
+                raise EventDiscoveryContractError(
+                    "provider participant IDs must be supplied together"
+                )
+            if self.home_participant_id == self.away_participant_id:
+                raise EventDiscoveryContractError("participant IDs must be distinct")
         kickoff = _utc_datetime(self.kickoff, "kickoff")
         try:
             expected = make_fixture_key(
@@ -790,17 +804,326 @@ class TheRundownEventDiscoveryTargetV1:
 
     def as_payload(self) -> dict[str, object]:
         self.validate()
-        return {
+        payload = {
             "provider": self.provider,
             "league": self.league,
             "fixture_key": self.fixture_key,
             "home_team": self.home_team,
             "away_team": self.away_team,
             "kickoff": _utc_datetime(self.kickoff, "kickoff").isoformat(),
-            "home_participant_id": self.home_participant_id,
-            "away_participant_id": self.away_participant_id,
             "request_identity": self.request_identity,
         }
+        if self.home_participant_id is not None:
+            payload["home_participant_id"] = self.home_participant_id
+            payload["away_participant_id"] = self.away_participant_id
+        return payload
+
+
+def _manifest_source_is_noncanonical(source_provenance: str) -> bool:
+    lowered = source_provenance.casefold()
+    return any(
+        marker in lowered
+        for marker in (
+            "synthetic",
+            "test_fixture",
+            "test-fixture",
+            "offline_replay",
+            "offline-replay",
+            "mock://",
+            "fixture://",
+        )
+    )
+
+
+@dataclass(frozen=True)
+class Top5CurrentDiscoveryTargetManifestV1:
+    """Current provider-independent five-league discovery scope.
+
+    This manifest deliberately stops at canonical SportsBrain fixture
+    identity.  TheRundown event and participant IDs are not known, guessed,
+    or serialized until response-side discovery produces them.
+    """
+
+    generated_at: datetime
+    observed_at: datetime
+    source_provenance: str
+    source_release_sha: str
+    targets: tuple[TheRundownEventDiscoveryTargetV1, ...]
+    runtime_data_sha: str | None = None
+    manifest_digest: str = ""
+
+    @property
+    def _payload_without_digest(self) -> dict[str, object]:
+        return {
+            "schema_version": CURRENT_TARGET_MANIFEST_SCHEMA_VERSION,
+            "generated_at": _utc_datetime(
+                self.generated_at, "generated_at"
+            ).isoformat(),
+            "observed_at": _utc_datetime(self.observed_at, "observed_at").isoformat(),
+            "source_provenance": self.source_provenance,
+            "source_release_sha": self.source_release_sha,
+            "runtime_data_sha": self.runtime_data_sha,
+            "targets": [target.as_payload() for target in self.targets],
+        }
+
+    @property
+    def computed_manifest_digest(self) -> str:
+        return _digest(self._payload_without_digest)
+
+    def validate(self, *, now: datetime | None = None) -> None:
+        current = _utc_datetime(
+            now or datetime.now(timezone.utc), "target manifest validation now"
+        )
+        generated = _utc_datetime(self.generated_at, "generated_at")
+        observed = _utc_datetime(self.observed_at, "observed_at")
+        if generated < observed:
+            raise EventDiscoveryContractError(
+                "target manifest generated_at precedes observed_at"
+            )
+        if generated > current or observed > current:
+            raise EventDiscoveryExecutionBlocked(
+                "target manifest timestamp is future-dated"
+            )
+        if (
+            current - observed
+        ).total_seconds() > CURRENT_TARGET_MANIFEST_MAX_AGE_SECONDS:
+            raise EventDiscoveryExecutionBlocked("target manifest source is stale")
+        source = _text(self.source_provenance, "source_provenance")
+        if _manifest_source_is_noncanonical(source):
+            raise EventDiscoveryExecutionBlocked(
+                "synthetic or offline source cannot establish current targets"
+            )
+        _sha(self.source_release_sha, "source_release_sha")
+        if self.runtime_data_sha is not None:
+            _sha(self.runtime_data_sha, "runtime_data_sha")
+        if tuple(target.league for target in self.targets) != DISCOVERY_LEAGUE_ORDER:
+            raise EventDiscoveryContractError(
+                "target manifest league order is not canonical"
+            )
+        for target in self.targets:
+            target.validate()
+            if (
+                target.home_participant_id is not None
+                or target.away_participant_id is not None
+            ):
+                raise EventDiscoveryExecutionBlocked(
+                    "target manifest must not contain provider participant IDs"
+                )
+        if len({target.fixture_key for target in self.targets}) != len(self.targets):
+            raise EventDiscoveryContractError(
+                "target manifest fixture IDs are duplicated"
+            )
+        if len({target.request_identity for target in self.targets}) != len(
+            self.targets
+        ):
+            raise EventDiscoveryContractError(
+                "target manifest request identities are duplicated"
+            )
+        _sha(self.manifest_digest, "manifest_digest")
+        if self.manifest_digest.lower() != self.computed_manifest_digest:
+            raise EventDiscoveryContractError("target manifest digest mismatch")
+
+    def as_payload(self) -> dict[str, object]:
+        self.validate(now=self.generated_at)
+        return {
+            **self._payload_without_digest,
+            "manifest_digest": self.manifest_digest.lower(),
+        }
+
+    @classmethod
+    def from_payload(
+        cls, payload: object, *, now: datetime | None = None
+    ) -> Top5CurrentDiscoveryTargetManifestV1:
+        if not isinstance(payload, Mapping):
+            raise EventDiscoveryContractError("target manifest must be an object")
+        expected = {
+            "schema_version",
+            "generated_at",
+            "observed_at",
+            "source_provenance",
+            "source_release_sha",
+            "runtime_data_sha",
+            "targets",
+            "manifest_digest",
+        }
+        if set(payload) != expected:
+            raise EventDiscoveryContractError("target manifest shape is invalid")
+        if payload.get("schema_version") != CURRENT_TARGET_MANIFEST_SCHEMA_VERSION:
+            raise EventDiscoveryContractError("target manifest schema is invalid")
+        raw_targets = payload.get("targets")
+        if not isinstance(raw_targets, list):
+            raise EventDiscoveryContractError("target manifest targets are invalid")
+        targets: list[TheRundownEventDiscoveryTargetV1] = []
+        for raw in raw_targets:
+            if not isinstance(raw, Mapping):
+                raise EventDiscoveryContractError("target manifest target is invalid")
+            target_keys = {
+                "provider",
+                "league",
+                "fixture_key",
+                "home_team",
+                "away_team",
+                "kickoff",
+                "request_identity",
+                "home_participant_id",
+                "away_participant_id",
+            }
+            if set(raw) not in (
+                target_keys - {"home_participant_id", "away_participant_id"},
+                target_keys,
+            ):
+                raise EventDiscoveryContractError(
+                    "target manifest target shape is invalid"
+                )
+            targets.append(
+                TheRundownEventDiscoveryTargetV1(
+                    provider=raw.get("provider", ""),
+                    league=raw.get("league", ""),
+                    fixture_key=raw.get("fixture_key", ""),
+                    home_team=raw.get("home_team", ""),
+                    away_team=raw.get("away_team", ""),
+                    kickoff=_utc_datetime(raw.get("kickoff"), "target kickoff"),
+                    request_identity=raw.get("request_identity", ""),
+                    home_participant_id=raw.get("home_participant_id"),
+                    away_participant_id=raw.get("away_participant_id"),
+                )
+            )
+        manifest = cls(
+            generated_at=_utc_datetime(payload.get("generated_at"), "generated_at"),
+            observed_at=_utc_datetime(payload.get("observed_at"), "observed_at"),
+            source_provenance=payload.get("source_provenance", ""),
+            source_release_sha=payload.get("source_release_sha", ""),
+            runtime_data_sha=payload.get("runtime_data_sha"),
+            targets=tuple(targets),
+            manifest_digest=payload.get("manifest_digest", ""),
+        )
+        manifest.validate(now=now)
+        return manifest
+
+
+def select_current_top5_discovery_targets(
+    fixtures: Sequence[Fixture],
+    *,
+    now: datetime,
+    observed_at: datetime,
+    source_provenance: str,
+    source_release_sha: str,
+    runtime_data_sha: str | None = None,
+    minimum_lead_seconds: int = 3600,
+    maximum_window_seconds: int = 7 * 24 * 3600,
+) -> Top5CurrentDiscoveryTargetManifestV1:
+    """Select one deterministic, upcoming canonical fixture per Top-5 league.
+
+    The caller must provide a genuinely current canonical fixture source.  No
+    provider lookup, alias, synthetic fixture, or guessed kickoff is created
+    by this helper.
+    """
+
+    current = _utc_datetime(now, "selection now")
+    observed = _utc_datetime(observed_at, "selection observed_at")
+    if observed > current:
+        raise EventDiscoveryExecutionBlocked("fixture source is future-dated")
+    if (current - observed).total_seconds() > CURRENT_TARGET_MANIFEST_MAX_AGE_SECONDS:
+        raise EventDiscoveryExecutionBlocked("fixture source is stale")
+    if (
+        isinstance(minimum_lead_seconds, bool)
+        or minimum_lead_seconds <= 0
+        or isinstance(maximum_window_seconds, bool)
+        or maximum_window_seconds <= minimum_lead_seconds
+    ):
+        raise EventDiscoveryContractError("fixture selection window is invalid")
+    source = _text(source_provenance, "source_provenance")
+    if _manifest_source_is_noncanonical(source):
+        raise EventDiscoveryExecutionBlocked(
+            "synthetic or offline source cannot establish current targets"
+        )
+    _sha(source_release_sha, "source_release_sha")
+    if runtime_data_sha is not None:
+        _sha(runtime_data_sha, "runtime_data_sha")
+    candidates: dict[str, list[Fixture]] = {
+        league: [] for league in DISCOVERY_LEAGUE_ORDER
+    }
+    for fixture in fixtures:
+        if not isinstance(fixture, Fixture):
+            raise EventDiscoveryContractError(
+                "fixture source contains an invalid record"
+            )
+        fixture.validate()
+        if fixture.league_code not in candidates:
+            continue
+        expected_key = make_fixture_key(
+            fixture.league_code,
+            fixture.home_team,
+            fixture.away_team,
+            fixture.kickoff,
+        )
+        if fixture.fixture_key != expected_key:
+            raise EventDiscoveryExecutionBlocked(
+                "fixture source identity is non-canonical"
+            )
+        lead = (fixture.kickoff - current).total_seconds()
+        if minimum_lead_seconds <= lead <= maximum_window_seconds:
+            candidates[fixture.league_code].append(fixture)
+    targets: list[TheRundownEventDiscoveryTargetV1] = []
+    for league in DISCOVERY_LEAGUE_ORDER:
+        if not candidates[league]:
+            raise EventDiscoveryExecutionBlocked(
+                f"current fixture source has no eligible {league} target"
+            )
+        fixture = min(
+            candidates[league], key=lambda item: (item.kickoff, item.fixture_key)
+        )
+        request_identity = _digest(
+            {
+                "phase": "top5_event_discovery",
+                "provider": THERUNDOWN_PROVIDER_NAME,
+                "league": league,
+                "fixture_key": fixture.fixture_key,
+                "kickoff": fixture.kickoff,
+            }
+        )
+        targets.append(
+            TheRundownEventDiscoveryTargetV1(
+                provider=THERUNDOWN_PROVIDER_NAME,
+                league=league,
+                fixture_key=fixture.fixture_key,
+                home_team=fixture.home_team,
+                away_team=fixture.away_team,
+                kickoff=fixture.kickoff,
+                request_identity=request_identity,
+            )
+        )
+    draft = Top5CurrentDiscoveryTargetManifestV1(
+        generated_at=current,
+        observed_at=observed,
+        source_provenance=source,
+        source_release_sha=source_release_sha.lower(),
+        runtime_data_sha=runtime_data_sha.lower() if runtime_data_sha else None,
+        targets=tuple(targets),
+        manifest_digest="0" * 64,
+    )
+    manifest = replace(draft, manifest_digest=draft.computed_manifest_digest)
+    manifest.validate(now=current)
+    return manifest
+
+
+def load_current_top5_discovery_target_manifest(
+    path: str | Path, *, now: datetime
+) -> Top5CurrentDiscoveryTargetManifestV1:
+    """Load and fully validate one operator-produced current target manifest."""
+
+    candidate = Path(path)
+    if candidate.is_symlink() or not candidate.is_file():
+        raise EventDiscoveryExecutionBlocked(
+            "current discovery target manifest is unavailable"
+        )
+    try:
+        payload = json.loads(candidate.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise EventDiscoveryContractError(
+            "current discovery target manifest is unreadable"
+        ) from exc
+    return Top5CurrentDiscoveryTargetManifestV1.from_payload(payload, now=now)
 
 
 @dataclass(frozen=True)
@@ -1487,12 +1810,12 @@ def _validated_datapoint_total(current: int, datapoints: int) -> int:
     return total
 
 
-def _resolve_event_id(
+def _resolve_event_identity(
     target: TheRundownEventDiscoveryTargetV1,
     payload: Mapping[str, object],
     *,
     response_at: datetime,
-) -> str:
+) -> tuple[str, str, str]:
     events = payload.get("events")
     if not isinstance(events, list):
         raise EventDiscoveryExecutionBlocked("discovery payload has no events list")
@@ -1557,16 +1880,41 @@ def _resolve_event_id(
     else:
         # TheRundown's documented unmarked order is [away, home].
         away_team, home_team = typed_teams
-    if (
-        str(home_team.get("team_id", "")).strip() != target.home_participant_id
-        or str(away_team.get("team_id", "")).strip() != target.away_participant_id
+    home_participant_id = str(home_team.get("team_id", "")).strip()
+    away_participant_id = str(away_team.get("team_id", "")).strip()
+    if not home_participant_id or not away_participant_id:
+        raise EventDiscoveryExecutionBlocked(
+            "discovery match has missing provider participant IDs"
+        )
+    if home_participant_id in {"0", "None"} or away_participant_id in {"0", "None"}:
+        raise EventDiscoveryExecutionBlocked(
+            "discovery match has invalid provider participant IDs"
+        )
+    if home_participant_id == away_participant_id:
+        raise EventDiscoveryExecutionBlocked(
+            "discovery match has duplicate provider participant IDs"
+        )
+    if target.home_participant_id is not None and (
+        home_participant_id != target.home_participant_id
+        or away_participant_id != target.away_participant_id
     ):
         raise EventDiscoveryExecutionBlocked("discovery participant identity mismatch")
     if target.kickoff <= response_at:
         raise EventDiscoveryExecutionBlocked(
             "discovery fixture is stale or already started"
         )
-    return resolved
+    return resolved, home_participant_id, away_participant_id
+
+
+def _resolve_event_id(
+    target: TheRundownEventDiscoveryTargetV1,
+    payload: Mapping[str, object],
+    *,
+    response_at: datetime,
+) -> str:
+    """Compatibility wrapper returning only the provider event ID."""
+
+    return _resolve_event_identity(target, payload, response_at=response_at)[0]
 
 
 def discover_five_league_events(
@@ -1610,7 +1958,7 @@ def discover_five_league_events(
             )
         datapoints, remaining = _billing(response)
         datapoints_total = _validated_datapoint_total(datapoints_total, datapoints)
-        event_id = _resolve_event_id(
+        event_id, home_participant_id, away_participant_id = _resolve_event_identity(
             target, response.payload, response_at=response.finished_at
         )
         raw_digest = digest_record(response.payload)
@@ -1623,8 +1971,8 @@ def discover_five_league_events(
             "fixture_key": target.fixture_key,
             "home_team": target.home_team,
             "away_team": target.away_team,
-            "home_participant_id": target.home_participant_id,
-            "away_participant_id": target.away_participant_id,
+            "home_participant_id": home_participant_id,
+            "away_participant_id": away_participant_id,
             "kickoff": target.kickoff,
             "provider_event_id": event_id,
             "request_identity": target.request_identity,
@@ -1652,8 +2000,8 @@ def discover_five_league_events(
             fixture_key=target.fixture_key,
             home_team=target.home_team,
             away_team=target.away_team,
-            home_participant_id=target.home_participant_id,
-            away_participant_id=target.away_participant_id,
+            home_participant_id=home_participant_id,
+            away_participant_id=away_participant_id,
             kickoff=target.kickoff,
             provider_event_id=event_id,
             request_identity=target.request_identity,
@@ -1709,14 +2057,17 @@ def materialize_prebound_network_configuration(
             )
         if item.discovery_authorization_digest != authorization.authorization_digest:
             raise EventDiscoveryContractError("discovery authorization digest mismatch")
+        target_participants_match = target.home_participant_id is None or (
+            item.home_participant_id == target.home_participant_id
+            and item.away_participant_id == target.away_participant_id
+        )
         if (
             item.fixture_key != target.fixture_key
             or item.request_identity != target.request_identity
             or item.provider != target.provider
             or item.home_team != target.home_team
             or item.away_team != target.away_team
-            or item.home_participant_id != target.home_participant_id
-            or item.away_participant_id != target.away_participant_id
+            or not target_participants_match
             or _utc_datetime(item.kickoff, "evidence kickoff")
             != _utc_datetime(target.kickoff, "target kickoff")
         ):
@@ -1744,11 +2095,12 @@ def materialize_prebound_network_configuration(
         )
     participants = tuple(
         TheRundownNetworkParticipantScopeV1(
-            fixture_key=target.fixture_key,
-            home_participant_id=target.home_participant_id,
-            away_participant_id=target.away_participant_id,
+            fixture_key=item.fixture_key,
+            home_participant_id=item.home_participant_id,
+            away_participant_id=item.away_participant_id,
         )
         for target in authorization.targets
+        for item in (by_league[target.league],)
     )
     requests = tuple(
         TheRundownNetworkRequestScopeV1(
@@ -1793,6 +2145,8 @@ __all__ = [
     "B4_QUOTA_PROOF_SCHEMA_VERSION",
     "B4_QUOTA_PROOF_SNAPSHOT_MAX_OFFSET_DAYS",
     "B4_QUOTA_PROOF_SPORT_ID",
+    "CURRENT_TARGET_MANIFEST_MAX_AGE_SECONDS",
+    "CURRENT_TARGET_MANIFEST_SCHEMA_VERSION",
     "DISCOVERY_AUTHORIZATION_SCHEMA_VERSION",
     "DISCOVERY_CONSUMPTION_SCHEMA_VERSION",
     "DISCOVERY_EVIDENCE_SCHEMA_VERSION",
@@ -1808,9 +2162,12 @@ __all__ = [
     "TheRundownEventDiscoveryResponseV1",
     "TheRundownEventDiscoveryTargetV1",
     "TheRundownEventDiscoveryTransport",
+    "Top5CurrentDiscoveryTargetManifestV1",
     "b4_quota_proof_state_path",
     "discover_five_league_events",
     "discovery_authorization_consumption_state_path",
     "discovery_request_shape_digest",
+    "load_current_top5_discovery_target_manifest",
     "materialize_prebound_network_configuration",
+    "select_current_top5_discovery_targets",
 ]

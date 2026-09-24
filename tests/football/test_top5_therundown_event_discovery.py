@@ -14,6 +14,7 @@ from src.football.odds.therundown import (
     THERUNDOWN_PROVIDER_NAME,
     THERUNDOWN_VERIFIED_LEAGUE_SPORT_IDS,
 )
+from src.football.production_contracts import Fixture
 from src.football.top5_builder2_qualification_receipt import (
     Builder2QualificationReceiptV1,
 )
@@ -32,12 +33,14 @@ from src.football.top5_therundown_event_discovery import (
     TheRundownEventDiscoveryAuthorizationV1,
     TheRundownEventDiscoveryResponseV1,
     TheRundownEventDiscoveryTargetV1,
+    Top5CurrentDiscoveryTargetManifestV1,
     _validated_datapoint_total,
     b4_quota_proof_state_path,
     discover_five_league_events,
     discovery_authorization_consumption_state_path,
     discovery_request_shape_digest,
     materialize_prebound_network_configuration,
+    select_current_top5_discovery_targets,
 )
 from src.football.top5_therundown_network_shadow import (
     TheRundownNetworkAuthorizationV1,
@@ -270,6 +273,8 @@ def test_discovery_request_cost_remains_55_when_b4_proof_cap_is_56():
 def _event(
     target: TheRundownEventDiscoveryTargetV1, *, event_id: str | None = None
 ) -> dict[str, object]:
+    home_participant_id = target.home_participant_id or f"provider-home-{target.league}"
+    away_participant_id = target.away_participant_id or f"provider-away-{target.league}"
     return {
         "event_id": event_id or f"event-{target.league}",
         "sport_id": THERUNDOWN_VERIFIED_LEAGUE_SPORT_IDS[target.league],
@@ -278,12 +283,12 @@ def _event(
         "score": {"event_status": "STATUS_SCHEDULED"},
         "teams": [
             {
-                "team_id": target.home_participant_id,
+                "team_id": home_participant_id,
                 "name": target.home_team,
                 "is_home": True,
             },
             {
-                "team_id": target.away_participant_id,
+                "team_id": away_participant_id,
                 "name": target.away_team,
                 "is_away": True,
             },
@@ -330,6 +335,157 @@ class FakeDiscoveryTransport:
         if isinstance(response, Exception):
             raise response
         return response
+
+
+def _scope_authorization() -> TheRundownEventDiscoveryAuthorizationV1:
+    authorization = _authorization()
+    targets = tuple(
+        replace(target, home_participant_id=None, away_participant_id=None)
+        for target in authorization.targets
+    )
+    return replace(
+        authorization,
+        targets=targets,
+        request_shape_digest=discovery_request_shape_digest(targets),
+    )
+
+
+def test_discovery_target_scope_does_not_require_provider_participant_ids():
+    target = _scope_authorization().targets[0]
+    target.validate()
+    payload = target.as_payload()
+    assert "home_participant_id" not in payload
+    assert "away_participant_id" not in payload
+
+
+def test_provider_participant_ids_are_bound_from_matched_response():
+    authorization = _scope_authorization()
+    evidence = discover_five_league_events(
+        authorization,
+        transport=FakeDiscoveryTransport(
+            [_response(target) for target in authorization.targets]
+        ),
+        now=NOW,
+    )
+    assert evidence[0].home_participant_id == "provider-home-EPL"
+    assert evidence[0].away_participant_id == "provider-away-EPL"
+    configuration = materialize_prebound_network_configuration(authorization, evidence)
+    assert configuration.participant_scope[0].home_participant_id == "provider-home-EPL"
+    assert configuration.participant_scope[0].away_participant_id == "provider-away-EPL"
+
+
+@pytest.mark.parametrize(
+    "mutator",
+    [
+        lambda event: {
+            **event,
+            "teams": [{**event["teams"][0], "team_id": ""}, event["teams"][1]],
+        },
+        lambda event: {
+            **event,
+            "teams": [
+                {**event["teams"][0], "team_id": "same"},
+                {**event["teams"][1], "team_id": "same"},
+            ],
+        },
+    ],
+    ids=["missing-provider-id", "duplicate-provider-id"],
+)
+def test_response_side_provider_identity_is_fail_closed(mutator):
+    authorization = _scope_authorization()
+    target = authorization.targets[0]
+    broken = mutator(_event(target))
+    with pytest.raises(EventDiscoveryExecutionBlocked):
+        discover_five_league_events(
+            authorization,
+            transport=FakeDiscoveryTransport([_response(target, events=[broken])]),
+            now=NOW,
+        )
+
+
+def _current_fixture_source(*, now: datetime = NOW) -> list[Fixture]:
+    return [
+        Fixture(
+            make_fixture_key(
+                league,
+                f"Home {league}",
+                f"Away {league}",
+                now + timedelta(hours=2, minutes=index),
+            ),
+            league,
+            f"Home {league}",
+            f"Away {league}",
+            now + timedelta(hours=2, minutes=index),
+        )
+        for index, league in enumerate(DISCOVERY_LEAGUE_ORDER)
+    ]
+
+
+def test_current_target_manifest_selection_is_deterministic_and_round_trips():
+    fixtures = _current_fixture_source()
+    manifest = select_current_top5_discovery_targets(
+        list(reversed(fixtures)),
+        now=NOW,
+        observed_at=NOW - timedelta(minutes=2),
+        source_provenance="the_odds_api:current_fixture_source",
+        source_release_sha="a" * 40,
+        runtime_data_sha="b" * 64,
+    )
+    manifest.validate(now=NOW)
+    assert tuple(target.league for target in manifest.targets) == DISCOVERY_LEAGUE_ORDER
+    assert all(target.home_participant_id is None for target in manifest.targets)
+    assert all(target.away_participant_id is None for target in manifest.targets)
+    loaded = Top5CurrentDiscoveryTargetManifestV1.from_payload(
+        manifest.as_payload(), now=NOW
+    )
+    assert loaded.manifest_digest == manifest.manifest_digest
+    assert loaded.targets == manifest.targets
+
+
+def test_current_target_manifest_rejects_stale_or_synthetic_source():
+    with pytest.raises(EventDiscoveryExecutionBlocked, match="stale"):
+        select_current_top5_discovery_targets(
+            _current_fixture_source(),
+            now=NOW,
+            observed_at=NOW - timedelta(hours=2),
+            source_provenance="the_odds_api:current_fixture_source",
+            source_release_sha="a" * 40,
+        )
+    with pytest.raises(EventDiscoveryExecutionBlocked, match="synthetic"):
+        select_current_top5_discovery_targets(
+            _current_fixture_source(),
+            now=NOW,
+            observed_at=NOW - timedelta(minutes=1),
+            source_provenance="synthetic://top5/current",
+            source_release_sha="a" * 40,
+        )
+
+
+def test_current_target_manifest_rejects_missing_league_and_wrong_order():
+    fixtures = _current_fixture_source()
+    with pytest.raises(EventDiscoveryExecutionBlocked, match="no eligible L1"):
+        select_current_top5_discovery_targets(
+            fixtures[:-1],
+            now=NOW,
+            observed_at=NOW - timedelta(minutes=1),
+            source_provenance="the_odds_api:current_fixture_source",
+            source_release_sha="a" * 40,
+        )
+    manifest = select_current_top5_discovery_targets(
+        fixtures,
+        now=NOW,
+        observed_at=NOW - timedelta(minutes=1),
+        source_provenance="the_odds_api:current_fixture_source",
+        source_release_sha="a" * 40,
+    )
+    broken = replace(
+        manifest,
+        targets=(manifest.targets[1], manifest.targets[0], *manifest.targets[2:]),
+    )
+    with pytest.raises(
+        EventDiscoveryContractError, match="digest mismatch|league order"
+    ):
+        broken.validate(now=NOW)
 
 
 def test_fake_five_league_discovery_is_ordered_non_authorizing_and_materializes_prebound_ids():
