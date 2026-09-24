@@ -25,8 +25,12 @@ from src.football.top5_therundown_provider_native_discovery import (
     PROVIDER_NATIVE_DISCOVERY_TARGET_SOURCE,
     PROVIDER_NATIVE_INDEPENDENT_QUALIFICATION,
     PROVIDER_NATIVE_MAX_DATAPOINTS,
+    PROVIDER_NATIVE_MAX_DATAPOINTS_PER_REQUEST,
     PROVIDER_NATIVE_MAX_DATES_PER_LEAGUE,
     PROVIDER_NATIVE_MAX_REQUEST_COUNT,
+    PROVIDER_NATIVE_MAXIMUM_RETRIES,
+    PROVIDER_NATIVE_MINIMUM_HEADROOM,
+    PROVIDER_NATIVE_MINIMUM_INTERVAL_SECONDS,
     TheRundownProviderNativeDiscoveryAuthorizationV1,
     TheRundownProviderNativeDiscoveryRequestV1,
     _real_provider_execution_lock,
@@ -300,11 +304,18 @@ def test_native_request_shape_binds_each_league_to_its_verified_sport_endpoint()
     )
 
 
-def test_native_discovery_has_exact_request_and_datapoint_bounds():
+def test_native_discovery_has_exact_21_day_request_and_datapoint_bounds():
     auth = _authorization()
-    assert auth.maximum_dates_per_league == PROVIDER_NATIVE_MAX_DATES_PER_LEAGUE
-    assert auth.maximum_request_count == PROVIDER_NATIVE_MAX_REQUEST_COUNT
-    assert auth.maximum_datapoints == PROVIDER_NATIVE_MAX_DATAPOINTS
+    assert PROVIDER_NATIVE_MAX_DATES_PER_LEAGUE == 21
+    assert PROVIDER_NATIVE_MAX_REQUEST_COUNT == 105
+    assert PROVIDER_NATIVE_MAX_DATAPOINTS_PER_REQUEST == 55
+    assert PROVIDER_NATIVE_MAX_DATAPOINTS == 5775
+    assert PROVIDER_NATIVE_MINIMUM_HEADROOM == 11550
+    assert PROVIDER_NATIVE_MINIMUM_INTERVAL_SECONDS == 1.1
+    assert PROVIDER_NATIVE_MAXIMUM_RETRIES == 0
+    assert auth.maximum_dates_per_league == 21
+    assert auth.maximum_request_count == 105
+    assert auth.maximum_datapoints == 5775
     assert auth.maximum_datapoints_per_request == 55
 
     too_expensive = FakeNativeTransport(
@@ -322,8 +333,21 @@ def test_native_discovery_has_exact_request_and_datapoint_bounds():
     assert len(too_expensive.calls) == 1
 
 
+def test_native_authorization_rejects_stale_headroom_and_unsafe_pacing():
+    low_headroom = _authorization(
+        remaining_datapoints=PROVIDER_NATIVE_MINIMUM_HEADROOM - 1
+    )
+    with pytest.raises(EventDiscoveryExecutionBlocked):
+        low_headroom.validate(now=NOW)
+
+    too_fast = _authorization()
+    object.__setattr__(too_fast, "minimum_interval_seconds", 1.0)
+    with pytest.raises(EventDiscoveryExecutionBlocked):
+        too_fast.validate(now=NOW)
+
+
 def test_native_discovery_rejects_insufficient_proof_headroom_before_consumption():
-    auth = _authorization(remaining_datapoints=3849)
+    auth = _authorization(remaining_datapoints=PROVIDER_NATIVE_MINIMUM_HEADROOM - 1)
     with pytest.raises(EventDiscoveryExecutionBlocked):
         discover_five_league_events_provider_native(
             auth,
@@ -335,24 +359,28 @@ def test_native_discovery_rejects_insufficient_proof_headroom_before_consumption
         )
 
 
-def test_native_discovery_never_exceeds_thirty_five_requests_without_partial_result():
+def test_native_discovery_never_exceeds_105_requests_without_partial_result():
     transport = FakeNativeTransport(
         [
-            _response(league, events=[])
+            _response(
+                league,
+                day=day,
+                events=[] if day < PROVIDER_NATIVE_MAX_DATES_PER_LEAGUE - 1 else None,
+            )
             for league in DISCOVERY_LEAGUE_ORDER
-            for _ in range(PROVIDER_NATIVE_MAX_DATES_PER_LEAGUE)
+            for day in range(PROVIDER_NATIVE_MAX_DATES_PER_LEAGUE)
         ]
     )
-    with pytest.raises(EventDiscoveryExecutionBlocked):
-        discover_five_league_events_provider_native(
-            _authorization(),
-            proof=_proof(),
-            api_key="injected-test-only",
-            transport=transport,
-            now=NOW,
-            pacer=lambda _: None,
-        )
-    assert 0 < len(transport.calls) <= PROVIDER_NATIVE_MAX_REQUEST_COUNT
+    result = discover_five_league_events_provider_native(
+        _authorization(),
+        proof=_proof(),
+        api_key="injected-test-only",
+        transport=transport,
+        now=NOW,
+        pacer=lambda _: None,
+    )
+    assert len(transport.calls) == PROVIDER_NATIVE_MAX_REQUEST_COUNT == 105
+    assert result.datapoint_total == PROVIDER_NATIVE_MAX_DATAPOINTS == 5775
 
 
 def test_native_discovery_rejects_cross_league_and_incomplete_runs_without_partial_result():
