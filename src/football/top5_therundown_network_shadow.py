@@ -1690,9 +1690,11 @@ class TheRundownQuotaProofEvidenceV1:
         self,
         *,
         request: TheRundownQuotaProofRequestV1,
-        now: datetime | None = None,
+        now: datetime,
+        request_now: datetime | None = None,
+        require_provider_delay: bool = False,
     ) -> None:
-        request.validate(now=now)
+        request.validate(now=request_now or now)
         if self.schema_version != QUOTA_PROOF_SCHEMA_VERSION:
             raise NetworkShadowContractError("unsupported quota proof schema")
         if self.execution_phase != "quota_proof":
@@ -1778,7 +1780,7 @@ class TheRundownQuotaProofEvidenceV1:
             raise NetworkShadowExecutionBlocked("quota proof period is unsupported")
         started = _utc(self.request_started_at, "quota proof request start")
         finished = _utc(self.response_finished_at, "quota proof response finish")
-        current = _utc(now or finished, "quota proof validation now")
+        current = _utc(now, "quota proof validation now")
         if finished < started or finished > current:
             raise NetworkShadowExecutionBlocked(
                 "quota proof response timestamps are invalid"
@@ -1798,8 +1800,9 @@ class TheRundownQuotaProofEvidenceV1:
             "x-datapoints-reset",
             "x-tier",
             "x-rate-limit",
-            "x-data-delay-seconds",
         }
+        if require_provider_delay:
+            required_headers.add("x-data-delay-seconds")
         headers = _lower_headers(self.raw_header_evidence)
         if not required_headers.issubset(headers):
             raise NetworkShadowExecutionBlocked(
@@ -1853,9 +1856,10 @@ class TheRundownQuotaProofEvidenceV1:
         response: TheRundownNetworkHttpResponseV1,
         *,
         api_key: str,
-        now: datetime | None = None,
+        now: datetime,
+        request_now: datetime | None = None,
     ) -> TheRundownQuotaProofEvidenceV1:
-        request.validate(now=now or response.finished_at)
+        request.validate(now=request_now or now)
         response.validate()
         if (
             response.timed_out
@@ -1891,7 +1895,8 @@ class TheRundownQuotaProofEvidenceV1:
         _text(period, "quota proof x-datapoints-period")
         reset = _header_timestamp(headers, "x-datapoints-reset")
         _header_int(headers, "x-rate-limit")
-        _header_int(headers, "x-data-delay-seconds")
+        if "x-data-delay-seconds" in headers:
+            _header_int(headers, "x-data-delay-seconds")
         if not headers.get("x-tier"):
             raise NetworkShadowExecutionBlocked("quota proof x-tier is missing")
         finished = _utc(response.finished_at, "quota proof response finish")
@@ -1934,7 +1939,7 @@ class TheRundownQuotaProofEvidenceV1:
             status_code=response.status_code,
         )
         evidence = replace(evidence, evidence_digest=evidence.computed_evidence_digest)
-        evidence.validate(request=request, now=now or finished)
+        evidence.validate(request=request, now=now, request_now=request_now)
         return evidence
 
     @classmethod
@@ -2451,17 +2456,24 @@ def execute_therundown_quota_proof(
     api_key: str,
     http_client: TheRundownNetworkHttpClient | None = None,
     now: datetime | None = None,
+    clock: Callable[[], datetime] | None = None,
 ) -> TheRundownQuotaProofEvidenceV1:
-    """Perform exactly one proof request and never continue into league calls."""
+    """Perform exactly one proof request and never continue into league calls.
 
-    request.validate(now=now)
+    ``now`` is the pre-request instant used for request validation. Response
+    evidence is validated against a fresh post-response instant, supplied by
+    ``clock`` when deterministic control is required.
+    """
+
+    preflight_now = _utc(now or datetime.now(timezone.utc), "quota proof preflight now")
+    request.validate(now=preflight_now)
     _text(api_key, "TheRundown API credential")
     client = http_client or TheRundownRequestsHttpClientV1()
     try:
-        response = client.execute(request.as_http_request(api_key, now=now))
+        response = client.execute(request.as_http_request(api_key, now=preflight_now))
     except Exception as exc:
         diagnostic_now = _utc(
-            now or datetime.now(timezone.utc), "quota proof transport diagnostic now"
+            preflight_now, "quota proof transport diagnostic now"
         ).isoformat()
         transport = _transport_failure_metadata(exc)
         raise NetworkShadowExecutionBlocked(
@@ -2480,11 +2492,16 @@ def execute_therundown_quota_proof(
             },
         ) from exc
     try:
+        response_validation_now = _utc(
+            clock() if clock is not None else datetime.now(timezone.utc),
+            "quota proof response validation now",
+        )
         return TheRundownQuotaProofEvidenceV1.from_http_response(
             request,
             response,
             api_key=api_key,
-            now=now,
+            now=response_validation_now,
+            request_now=preflight_now,
         )
     except NetworkShadowExecutionBlocked as exc:
         if exc.diagnostic is not None:
