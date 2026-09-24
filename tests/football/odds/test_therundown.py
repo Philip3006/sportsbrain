@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import copy
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -27,6 +27,7 @@ from src.football.provider_cascade.contracts import (
     NetworkAuthorizationContract,
     ProviderConfig,
     ProviderState,
+    digest_record,
 )
 
 _ROOT = Path(__file__).parents[3]
@@ -82,6 +83,7 @@ def _response(payload: object, **headers: str) -> RawProviderResponse:
             "X-Datapoints-Limit": "20000",
             "X-Rate-Limit": "1",
             "X-Rate-Limit-Remaining": "1",
+            "X-Data-Delay-Seconds": "300",
             **headers,
         },
         started_at=_STARTED_AT,
@@ -365,15 +367,87 @@ def test_invalid_and_off_board_prices_are_rejected(
     assert result.observation is None
 
 
-def test_all_stale_bookmakers_are_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_old_unchanged_price_timestamps_do_not_make_snapshot_stale(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setenv("THERUNDOWN_API_KEY", "synthetic-secret")
-    stale = _payload()
-    for price in _price_rows(stale):
+    snapshot = _payload()
+    old_updated_at = "2026-09-22T17:00:00+00:00"
+    for price in _price_rows(snapshot):
         price["updated_at"] = "2026-09-22T17:00:00Z"
-    result = _fetch(_response(stale))
+    response = _response(snapshot)
 
-    assert result.state is ProviderState.STALE
-    assert result.observation is None
+    observations = _adapter(response).fetch_observations(
+        _FIXTURE,
+        _config(),
+        request_identity="synthetic-request-001",
+        requested_at=_STARTED_AT,
+        provider_priority=0,
+        timing_policy=_TIMING,
+        authorization=_AUTHORIZATION,
+    )
+
+    assert len(observations) == 2
+    assert all(
+        item.source_timestamp == _COMPLETED_AT - timedelta(seconds=300)
+        for item in observations
+    )
+    assert all(
+        item.metadata["source_update_timestamps"] == [old_updated_at]
+        for item in observations
+    )
+    assert all(
+        item.metadata["raw_response_digest"] == digest_record(response.payload)
+        for item in observations
+    )
+    assert all(
+        all(
+            row["updated_at"] == old_updated_at
+            for row in item.metadata["price_provenance"]
+        )
+        for item in observations
+    )
+
+
+@pytest.mark.parametrize(
+    ("delay", "expected_state", "expected_reason"),
+    [
+        ("600", ProviderState.AVAILABLE, None),
+        ("601", ProviderState.STALE, "snapshot delay exceeds freshness ceiling"),
+        (None, ProviderState.MALFORMED, "snapshot delay provenance is missing"),
+        ("not-a-number", ProviderState.MALFORMED, "snapshot delay provenance is invalid"),
+        ("-1", ProviderState.MALFORMED, "snapshot delay provenance is invalid"),
+    ],
+)
+def test_snapshot_delay_controls_freshness_fail_closed(
+    monkeypatch: pytest.MonkeyPatch,
+    delay: str | None,
+    expected_state: ProviderState,
+    expected_reason: str | None,
+) -> None:
+    monkeypatch.setenv("THERUNDOWN_API_KEY", "synthetic-secret")
+    headers = {} if delay is None else {"X-Data-Delay-Seconds": delay}
+    response = _response(_payload(), **headers)
+    if delay is None:
+        response.headers.pop("X-Data-Delay-Seconds")
+    result = _fetch(response)
+
+    assert result.state is expected_state
+    if expected_reason is not None:
+        assert result.reason == expected_reason
+
+
+def test_price_timestamp_in_the_future_remains_malformed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("THERUNDOWN_API_KEY", "synthetic-secret")
+    future = _payload()
+    next(_price_rows(future))["updated_at"] = "2026-09-22T19:00:31Z"
+
+    result = _fetch(_response(future))
+
+    assert result.state is ProviderState.MALFORMED
+    assert result.reason == "price_timestamp_in_future"
 
 
 @pytest.mark.parametrize(

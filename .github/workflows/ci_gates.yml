@@ -60,6 +60,8 @@ jobs:
             tests/test_monte_carlo.py \
             tests/scanner/test_rule7_gate_enforcement.py \
             tests/football/test_top5_provider_cascade.py \
+            tests/football/test_top5_public_delivery.py \
+            tests/football/test_top5_public_delivery_executor.py \
             tests/e2e/test_signal_pipeline_smoke.py
 
       # ── HARD GATE 3: Node.js Worker contract tests ─────────────────────────
@@ -71,7 +73,7 @@ jobs:
           node-version: '22'
 
       - name: Node Worker contract tests
-        run: node --test tests/js/worker.test.mjs
+        run: node --test tests/js/worker.test.mjs tests/js/top5_delivery.test.mjs
 
       # ── HARD GATE 4: Ruff Regression — blockt NEUE Violations,
       # existierender Altbestand steht in .ruff_baseline.json und

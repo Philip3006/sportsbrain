@@ -22,6 +22,94 @@ const VAPID_PUBLIC_KEY = 'BCWFSMWF_b1ef9i76yoGltxiEEel_pJtXqjl-0q7ZYS3Ya2V9dBW5g
 const calcEV = (p, q) => (p * q - 1) * 100;  // p: decimal prob, q: decimal odds
 const DATA_URL   = 'data/signals.json';
 const SQUADS_URL = 'data/squads.json';
+const _TOP5_LEAGUES = new Set(['EPL', 'BL1', 'LL', 'SA', 'L1']);
+const _TOP5_LAST_GENERATION_KEY = 'sb_top5_public_generation_v1';
+
+function _dropUntrustedTop5(payload) {
+  const safe = Object.assign({}, payload);
+  const football = Array.isArray(payload.football) ? payload.football : [];
+  safe.football = football.filter((record) =>
+    !_TOP5_LEAGUES.has(String(record && record.league || '').toUpperCase())
+  );
+  delete safe.top5_release;
+  return safe;
+}
+
+function _top5ReleaseAgeMs(release, nowMs) {
+  const raw = release.published_at || release.generated_at;
+  const timestamp = Date.parse(raw || '');
+  if (!Number.isFinite(timestamp)) return Infinity;
+  return Math.max(0, nowMs - timestamp);
+}
+
+function _top5PublicReleaseGuard(payload, source, nowMs = Date.now()) {
+  if (!payload || typeof payload !== 'object') throw new Error('invalid public payload');
+  const football = Array.isArray(payload.football) ? payload.football : [];
+  const top5Records = football.filter((record) =>
+    _TOP5_LEAGUES.has(String(record && record.league || '').toUpperCase())
+  );
+  if (!top5Records.length) {
+    return payload.top5_release ? _dropUntrustedTop5(payload) : payload;
+  }
+
+  const release = payload.top5_release;
+  const validRelease = release && typeof release === 'object' &&
+    release.schema_version === 'top5-public-release-v1' &&
+    typeof release.generation_id === 'string' && release.generation_id &&
+    release.activation_state === 'CONTROLLED' &&
+    typeof release.activation_id === 'string' && release.activation_id &&
+    release.publication_status === 'PUBLISHED' &&
+    release.publication_enabled === true && release.no_bet === true &&
+    typeof release.publication_authorization_id === 'string' &&
+    release.publication_authorization_id && Array.isArray(release.league_codes) &&
+    release.league_codes.length > 0 &&
+    typeof release.provider_authority === 'string' && release.provider_authority;
+  if (!validRelease) {
+    if (source === 'static') return _dropUntrustedTop5(payload);
+    throw new Error('public Top-5 release is not authorized and published');
+  }
+
+  const allowedLeagues = new Set(release.league_codes.map((code) => String(code).toUpperCase()));
+  for (const record of top5Records) {
+    const provenance = record && typeof record.provenance === 'object' ? record.provenance : {};
+    if (!allowedLeagues.has(String(record.league).toUpperCase()) ||
+        record.activation_state !== 'CONTROLLED' || record.signal_status !== 'CONTROLLED' ||
+        record.publication_status !== 'PUBLISHED' || record.publication_enabled !== true ||
+        record.no_bet !== true || record.activation_id !== release.activation_id ||
+        record.provider !== release.provider_authority ||
+        record.run_id !== release.controlled_shadow_run_id ||
+        record.session_id !== release.qualification_session_id ||
+        provenance.activation_id !== release.activation_id ||
+        provenance.evidence_digest !== record.evidence_digest) {
+      if (source === 'static') return _dropUntrustedTop5(payload);
+      throw new Error('public Top-5 record/release binding mismatch');
+    }
+  }
+
+  const maxAgeSeconds = Number(release.fallback_max_age_seconds);
+  if (!Number.isFinite(maxAgeSeconds) || maxAgeSeconds <= 0 ||
+      _top5ReleaseAgeMs(release, nowMs) > maxAgeSeconds * 1000) {
+    if (source === 'static') return _dropUntrustedTop5(payload);
+    throw new Error('public Top-5 release is stale');
+  }
+
+  let previous = null;
+  try { previous = JSON.parse(localStorage.getItem(_TOP5_LAST_GENERATION_KEY) || 'null'); } catch {}
+  const currentPublishedAt = Date.parse(release.published_at || release.generated_at || '');
+  if (previous && Number.isFinite(previous.published_at) &&
+      (currentPublishedAt < previous.published_at ||
+       (currentPublishedAt === previous.published_at && previous.generation_id !== release.generation_id))) {
+    if (source === 'static') return _dropUntrustedTop5(payload);
+    throw new Error('public Top-5 release generation regressed');
+  }
+  try {
+    localStorage.setItem(_TOP5_LAST_GENERATION_KEY, JSON.stringify({
+      generation_id: release.generation_id,
+      published_at: currentPublishedAt,
+    }));
+  } catch {}
+  return payload;
+}
 let _signals = [];
 let _schedule = [];
 let _allOdds = {};
@@ -717,6 +805,7 @@ async function _load() {
     try { r = await fetch(CLOUD_URL + ts, { cache: 'no-store' }); } catch (_) { cloudFailed = true; }
     if (!r || !r.ok) cloudFailed = true;
   }
+  let source = cloudFailed || !CLOUD_URL ? 'static' : 'worker';
   if (!r || !r.ok) r = await fetch(DATA_URL + ts, { cache: 'no-store' });
   if (!r.ok) throw new Error('HTTP ' + r.status);
   // Cloud-Erreichbarkeit nur einmal melden, wenn sich der Zustand ändert
@@ -726,7 +815,19 @@ async function _load() {
   } else if (!cloudFailed && !_cloudHealthy) {
     _cloudHealthy = true;
   }
-  const d = await r.json();
+  let d = await r.json();
+  try {
+    d = _top5PublicReleaseGuard(d, source);
+  } catch (workerReleaseError) {
+    // A malformed Worker release must not be displayed and must not become a
+    // reason to accept an unvalidated staged artifact.  Try the independent
+    // static snapshot once; its own guard strips unsafe Top-5 records.
+    if (source !== 'worker') throw workerReleaseError;
+    cloudFailed = true;
+    const fallback = await fetch(DATA_URL + ts, { cache: 'no-store' });
+    if (!fallback.ok) throw workerReleaseError;
+    d = _top5PublicReleaseGuard(await fallback.json(), 'static');
+  }
 
   const dt = new Date(d.updated), age = (Date.now()-dt)/36e5;
   document.getElementById('updated-time').textContent =
@@ -871,4 +972,3 @@ async function load() {
 }
 
 setInterval(load, 60*1000);
-

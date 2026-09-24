@@ -140,8 +140,8 @@ class CandidateProviderEligibilityV1:
     quota_before: int | None
     quota_after: int | None
     quota_cost_units: float
-    rate_limit_remaining: int
-    rate_limit_reset_at: datetime
+    rate_limit_remaining: int | None
+    rate_limit_reset_at: datetime | None
     account_tier: str
     provider_delay_seconds: float
     evidence_kind: str = REAL_OBSERVED
@@ -150,6 +150,7 @@ class CandidateProviderEligibilityV1:
     publication: bool = False
     production_activation: bool = False
     monetary_spend_authorized: bool = False
+    rate_limit_limit: int | None = None
 
     @classmethod
     def from_network_capture(
@@ -157,6 +158,7 @@ class CandidateProviderEligibilityV1:
         capture: object,
         *,
         now: datetime | None = None,
+        maximum_source_age_seconds: int = 300,
     ) -> CandidateProviderEligibilityV1:
         """Build eligibility only from a completed PR #103 capture envelope."""
 
@@ -165,6 +167,12 @@ class CandidateProviderEligibilityV1:
         response = getattr(capture, "response", None)
         if target is None or request is None or response is None:
             raise CandidateEligibilityError("network capture envelope is required")
+        provider_billing = response.raw_metadata.get("provider_billing")
+        rate_limit_limit = None
+        if isinstance(provider_billing, Mapping):
+            rate_limit_limit = provider_billing.get("x-rate-limit")
+            if rate_limit_limit is None:
+                rate_limit_limit = provider_billing.get("x-ratelimit-limit")
         candidate = cls(
             provider_identity=target.provider,
             candidate_capability=True,
@@ -201,7 +209,7 @@ class CandidateProviderEligibilityV1:
             captured_at=response.captured_at,
             request_started_at=response.request_started_at,
             request_finished_at=response.request_finished_at,
-            maximum_source_age_seconds=300,
+            maximum_source_age_seconds=maximum_source_age_seconds,
             source_provenance=response.source_identity,
             provider_timestamp_provenance=response.provider_timestamp_provenance,
             raw_response_digest=response.raw_response_digest,
@@ -221,6 +229,7 @@ class CandidateProviderEligibilityV1:
             publication=response.publication,
             production_activation=response.production_activation,
             monetary_spend_authorized=response.monetary_spend_authorized,
+            rate_limit_limit=rate_limit_limit,
         )
         candidate.validate(now=now)
         if getattr(capture, "candidate_only", None) is not True:
@@ -323,7 +332,24 @@ class CandidateProviderEligibilityV1:
         if not isfinite(float(self.quota_cost_units)) or self.quota_cost_units < 0:
             raise CandidateEligibilityError("quota cost evidence is invalid")
         _optional_nonnegative_int(self.rate_limit_remaining, "rate_limit_remaining")
-        _utc(self.rate_limit_reset_at, "rate_limit_reset_at")
+        if self.rate_limit_reset_at is None:
+            if self.rate_limit_limit is None:
+                raise CandidateEligibilityError("rate-limit evidence is missing")
+            _optional_nonnegative_int(self.rate_limit_limit, "rate_limit_limit")
+            if self.rate_limit_limit == 0:
+                raise CandidateEligibilityError("rate_limit_limit must be positive")
+        else:
+            _utc(self.rate_limit_reset_at, "rate_limit_reset_at")
+            if self.rate_limit_remaining is None:
+                raise CandidateEligibilityError(
+                    "rate_limit_reset_at requires rate_limit_remaining"
+                )
+        if (
+            self.rate_limit_limit is not None
+            and self.rate_limit_remaining is not None
+            and self.rate_limit_remaining > self.rate_limit_limit
+        ):
+            raise CandidateEligibilityError("rate-limit counters do not reconcile")
         if not isfinite(float(self.provider_delay_seconds)) or self.provider_delay_seconds < 0:
             raise CandidateEligibilityError("provider delay evidence is invalid")
         try:
@@ -408,8 +434,12 @@ class CandidateProviderEligibilityV1:
             quota_before=payload.get("quota_before"),
             quota_after=payload.get("quota_after"),
             quota_cost_units=required("quota_cost_units"),
-            rate_limit_remaining=required("rate_limit_remaining"),
-            rate_limit_reset_at=timestamp("rate_limit_reset_at"),
+            rate_limit_remaining=payload.get("rate_limit_remaining"),
+            rate_limit_reset_at=(
+                timestamp("rate_limit_reset_at")
+                if payload.get("rate_limit_reset_at") is not None
+                else None
+            ),
             account_tier=required("account_tier"),
             provider_delay_seconds=required("provider_delay_seconds"),
             evidence_kind=payload.get("evidence_kind", REAL_OBSERVED),
@@ -420,6 +450,7 @@ class CandidateProviderEligibilityV1:
             monetary_spend_authorized=payload.get(
                 "monetary_spend_authorized", False
             ),
+            rate_limit_limit=payload.get("rate_limit_limit"),
         )
 
     def matches_observation(self, observation: object) -> None:
@@ -491,9 +522,12 @@ class CandidateProviderEligibilityV1:
             "captured_at",
             "request_started_at",
             "request_finished_at",
-            "rate_limit_reset_at",
         ):
             payload[name] = _utc(payload[name], name).isoformat()
+        if payload.get("rate_limit_reset_at") is not None:
+            payload["rate_limit_reset_at"] = _utc(
+                payload["rate_limit_reset_at"], "rate_limit_reset_at"
+            ).isoformat()
         payload["provider_timestamp_provenance"] = _enum_value(
             self.provider_timestamp_provenance
         )
