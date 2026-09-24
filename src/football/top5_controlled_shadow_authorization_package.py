@@ -70,6 +70,7 @@ from src.football.top5_research_binding import FROZEN_RESEARCH_SHA
 from src.football.top5_shadow_provider_redundancy import make_fixture_key
 from src.football.top5_therundown_network_shadow import (
     NETWORK_SHADOW_SCHEMA_VERSION,
+    QUOTA_PROOF_AFFILIATE_IDS,
     NetworkShadowContractError,
     NetworkShadowRunStatus,
     TheRundownCanonicalPayloadAdapterV1,
@@ -541,6 +542,9 @@ def _configuration_from_payload(
         production_activation=mapping.get("production_activation", False),  # type: ignore[arg-type]
         monetary_spend_authorized=mapping.get("monetary_spend_authorized", False),  # type: ignore[arg-type]
         configuration_digest=digest,
+        provider_affiliate_ids=tuple(
+            mapping.get("provider_affiliate_ids", QUOTA_PROOF_AFFILIATE_IDS)
+        ),  # type: ignore[arg-type]
     )
     return configuration
 
@@ -577,6 +581,9 @@ def _authorization_from_payload(
         publication=mapping.get("publication", False),  # type: ignore[arg-type]
         production_activation=mapping.get("production_activation", False),  # type: ignore[arg-type]
         monetary_spend_authorized=mapping.get("monetary_spend_authorized", False),  # type: ignore[arg-type]
+        provider_affiliate_ids=tuple(
+            mapping.get("provider_affiliate_ids", QUOTA_PROOF_AFFILIATE_IDS)
+        ),  # type: ignore[arg-type]
         schema_version=str(
             mapping.get("schema_version", NETWORK_SHADOW_SCHEMA_VERSION)
         ),

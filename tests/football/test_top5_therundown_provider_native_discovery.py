@@ -12,6 +12,7 @@ from src.football.odds.therundown import (
 )
 from src.football.top5_shadow_provider_redundancy import make_fixture_key
 from src.football.top5_therundown_event_discovery import (
+    B4_QUOTA_PROOF_AFFILIATE_IDS,
     EventDiscoveryExecutionBlocked,
     TheRundownB4QuotaProofV1,
 )
@@ -34,6 +35,7 @@ from src.football.top5_therundown_provider_native_discovery import (
     TheRundownProviderNativeDiscoveryAuthorizationV1,
     TheRundownProviderNativeDiscoveryRequestV1,
     _real_provider_execution_lock,
+    _request_shape_payload,
     discover_five_league_events_provider_native,
     provider_native_discovery_request_shape_digest,
 )
@@ -279,6 +281,8 @@ def test_native_discovery_searches_canonical_order_and_stops_after_first_valid_d
 
 def test_native_request_shape_binds_each_league_to_its_verified_sport_endpoint():
     authorization = _authorization()
+    planned = _request_shape_payload(NOW.date())
+    assert len(planned) == 105
     expected_sport_ids = {
         "EPL": 11,
         "BL1": 13,
@@ -286,18 +290,25 @@ def test_native_request_shape_binds_each_league_to_its_verified_sport_endpoint()
         "SA": 15,
         "L1": 12,
     }
-    for league_index, league in enumerate(DISCOVERY_LEAGUE_ORDER):
+    for planned_index, planned_request in enumerate(planned):
+        league_index, date_offset = divmod(planned_index, 21)
+        league = DISCOVERY_LEAGUE_ORDER[league_index]
         request = TheRundownProviderNativeDiscoveryRequestV1(
             authorization=authorization,
             league=league,
-            snapshot_date=NOW.date(),
-            sequence=league_index,
-            date_offset=0,
+            snapshot_date=NOW.date() + timedelta(days=date_offset),
+            sequence=planned_index,
+            date_offset=date_offset,
             league_index=league_index,
         )
-        assert request.endpoint == (
+        actual = request.as_http_request(api_key="injected-test-only")
+        assert actual.endpoint == (
             f"{THERUNDOWN_BASE_URL}/sports/{expected_sport_ids[league]}"
-            f"/events/{NOW.date().isoformat()}"
+            f"/events/{(NOW.date() + timedelta(days=date_offset)).isoformat()}"
+        )
+        assert dict(actual.query) == planned_request["query"]
+        assert actual.query["affiliate_ids"] == ",".join(
+            B4_QUOTA_PROOF_AFFILIATE_IDS
         )
     assert authorization.request_shape_digest == provider_native_discovery_request_shape_digest(
         NOW.date()
@@ -331,6 +342,32 @@ def test_native_discovery_has_exact_21_day_request_and_datapoint_bounds():
             pacer=lambda _: None,
         )
     assert len(too_expensive.calls) == 1
+
+
+def test_provider_x_datapoints_over_cap_is_rejected_with_safe_diagnostic():
+    transport = FakeNativeTransport([_response("EPL", datapoints=56)])
+    with pytest.raises(
+        EventDiscoveryExecutionBlocked,
+        match="discovery request datapoint cap exceeded",
+    ) as caught:
+        discover_five_league_events_provider_native(
+            _authorization(),
+            proof=_proof(),
+            api_key="injected-test-only",
+            transport=transport,
+            now=NOW,
+            pacer=lambda _: None,
+        )
+
+    assert caught.value.diagnostic == {
+        "diagnostic_kind": "rejected_observed_x_datapoints",
+        "evidence_status": "rejected_observed",
+        "header": "x-datapoints",
+        "raw_provider_value": "56",
+        "authorized_cap": 55,
+        "accepted_as_billing": False,
+    }
+    assert len(transport.calls) == 1
 
 
 def test_native_authorization_rejects_stale_headroom_and_unsafe_pacing():

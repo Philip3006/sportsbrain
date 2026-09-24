@@ -493,6 +493,7 @@ class TheRundownNetworkConfigurationV1:
     production_activation: bool = False
     monetary_spend_authorized: bool = False
     configuration_digest: str = ""
+    provider_affiliate_ids: tuple[str, ...] = QUOTA_PROOF_AFFILIATE_IDS
 
     @property
     def computed_configuration_digest(self) -> str:
@@ -518,6 +519,7 @@ class TheRundownNetworkConfigurationV1:
             "publication": self.publication,
             "production_activation": self.production_activation,
             "monetary_spend_authorized": self.monetary_spend_authorized,
+            "provider_affiliate_ids": list(self.provider_affiliate_ids),
         }
 
     def validate(self) -> None:
@@ -551,6 +553,10 @@ class TheRundownNetworkConfigurationV1:
         request_ids = tuple(item.request_identity for item in self.request_scope)
         if len(set(request_ids)) != len(request_ids):
             raise NetworkShadowContractError("request identities must be unique")
+        if self.provider_affiliate_ids != QUOTA_PROOF_AFFILIATE_IDS:
+            raise NetworkShadowExecutionBlocked(
+                "provider affiliate scope is outside the reviewed bounded source"
+            )
         _text(self.adapter_version, "adapter_version")
         _sha(self.adapter_source_sha, "adapter_source_sha")
         _nonnegative_int(self.maximum_request_count, "maximum_request_count")
@@ -639,6 +645,7 @@ class TheRundownNetworkAuthorizationV1:
     production_activation: bool = False
     monetary_spend_authorized: bool = False
     schema_version: str = NETWORK_SHADOW_SCHEMA_VERSION
+    provider_affiliate_ids: tuple[str, ...] = QUOTA_PROOF_AFFILIATE_IDS
 
     @property
     def authorization_digest(self) -> str:
@@ -672,6 +679,7 @@ class TheRundownNetworkAuthorizationV1:
             "publication": self.publication,
             "production_activation": self.production_activation,
             "monetary_spend_authorized": self.monetary_spend_authorized,
+            "provider_affiliate_ids": list(self.provider_affiliate_ids),
         }
 
     def validate(
@@ -711,6 +719,10 @@ class TheRundownNetworkAuthorizationV1:
             item.validate()
         for item in self.request_scope:
             item.validate()
+        if self.provider_affiliate_ids != QUOTA_PROOF_AFFILIATE_IDS:
+            raise NetworkShadowExecutionBlocked(
+                "authorization provider affiliate scope is outside the reviewed bounded source"
+            )
         _text(self.adapter_version, "adapter_version")
         _sha(self.adapter_source_sha, "adapter_source_sha")
         _sha(self.configuration_digest, "configuration_digest")
@@ -784,6 +796,11 @@ class TheRundownNetworkAuthorizationV1:
                     "participant scope",
                 ),
                 (self.request_scope, configuration.request_scope, "request scope"),
+                (
+                    self.provider_affiliate_ids,
+                    configuration.provider_affiliate_ids,
+                    "provider affiliate scope",
+                ),
                 (
                     self.adapter_version,
                     configuration.adapter_version,
@@ -2298,6 +2315,7 @@ class TheRundownCanonicalPayloadAdapterV1:
             method="GET",
             endpoint=endpoint,
             query={
+                "affiliate_ids": ",".join(QUOTA_PROOF_AFFILIATE_IDS),
                 "league": request.target.league,
                 "fixture_key": request.target.fixture_key,
                 "provider_event_id": request.target.provider_event_id,
