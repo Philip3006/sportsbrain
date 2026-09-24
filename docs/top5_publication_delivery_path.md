@@ -106,6 +106,7 @@ separate CEO publication authorization and is not run by tests or CI.
 | activation state | controlled activation binding | `activation_state=CONTROLLED` | `activation_state` | Must not become ACTIVE |
 | publication state | separate publication authorization | `publication_status`, `publication_enabled` | `PUBLISHED` plus auth ID | PWA acceptance gate |
 | provider provenance | `provider_authority` | `provider`, `source`, `provenance.provider` | `provider_authority` | Exact binding; no provider widening |
+| source/runtime identity | accepted release manifest | `source_release_sha`, `runtime_data_sha`, `source_runtime_consistent` | same release fields | Machine-readable binding; not rendered as user-facing text |
 | evidence digest | per-league `evidence_digest` | `evidence_digest`, provenance copy | aggregate and `evidence_digests` | Audit/reconciliation |
 | no_bet | required true | `no_bet=true`, `no_bet_flag` | `no_bet=true` | Prevents actionability |
 | Controlled Shadow run | `controlled_shadow_run_id` | explicit field and `run_id` | same binding | Audit/reconciliation |
@@ -131,6 +132,13 @@ requests. `docs/sw.js` intentionally has no `fetch` handler and therefore does
 not cache the signal payload. A failed publication/verification must restore
 the prior safe single snapshot (or an unpublished snapshot) rather than write
 a partial league set.
+
+The Worker deliberately serves the complete governed bundle rather than
+creating separately cached per-league documents. The PWA's keyboard-accessible
+Top-5 filter selects `EPL`, `BL1`, `LL`, `SA`, or `L1` locally after the
+complete bundle passes validation. This preserves one generation/digest across
+all public readers and prevents a partial or empty league response from being
+mistaken for a complete release.
 
 ## Read-only post-publication acceptance
 
@@ -161,3 +169,68 @@ The offline fixture at
 `TEST/OFFLINE` / `TEST_FIXTURE`. It exercises publisher staging through the
 serializer and frontend-compatible shape, and is structurally unable to
 become `REAL_OBSERVED`, controlled, or published.
+
+## Public-read acceptance and precheck
+
+`src/football/top5_public_acceptance.py` is the single B3 read-only contract
+for a generated public bundle. It verifies the exact five canonical leagues,
+15-record coverage, one fixture per league, controlled/no-bet bindings,
+`the_odds_api` authority, record-level freshness, future timestamps,
+provenance digests, and test/candidate isolation. It returns machine-readable
+codes such as `PUBLIC_SCHEMA_INVALID`, `PUBLIC_ARTIFACT_STALE`,
+`PUBLIC_PROVENANCE_INVALID`, `PUBLIC_LEAGUE_INCOMPLETE`,
+`PUBLIC_CANDIDATE_AUTHORITY_LEAK`, and `PUBLIC_TEST_DATA_REJECTED`.
+
+Offline contract validation is intentionally distinct from production
+eligibility. A `TEST/OFFLINE` fixture can return
+`TOP5_PUBLIC_DELIVERY_READY` with `production_eligible: false`; it can never
+satisfy the real-evidence or Builder 1 acceptance boundary.
+
+```text
+python3 scripts/top5_public_acceptance.py accept \
+  --bundle /absolute/input/top5-public-bundle.json \
+  --now 2026-09-20T12:00:00Z
+
+python3 scripts/top5_public_acceptance.py precheck \
+  --bundle /absolute/input/top5-public-bundle.json \
+  --accepted-evidence /absolute/input/builder1-acceptance.json \
+  --delivery-manifest /absolute/input/top5-delivery-manifest.json \
+  --now 2026-09-20T12:00:00Z
+```
+
+The Builder 1 interface consumed by `precheck` is deliberately narrow:
+`schema_version=top5-final-acceptance-v1`, `status=ACCEPTED`,
+`publication_ready=true`, `provider_authority=the_odds_api`, and bound
+`generation_id`, `activation_id`, `source_release_sha`, `runtime_data_sha`,
+and `evidence_digest`. B3 does not recompute or replace Builder 1's evidence
+engine. Builder 2 supplies the runtime artifact and lifecycle state consumed
+by the upstream accepted manifest; disabled/degraded/incomplete runtime state
+therefore blocks the precheck rather than being published as a fallback.
+
+The delivery-manifest interface consumed by `precheck` combines the existing
+`Top5DeliveryPlan.manifest()` with the read-only dry-run result. It must carry
+the exact `public_product_digest`, `static_payload_digest`,
+`worker_payload_digest`, `generation_id`, and `activation_id`, plus
+`dry_run_status` of `TOP5_DELIVERY_DRY_RUN` (or an already-idempotent result)
+and `rollback_ready=true`. This proves that both public targets are prepared
+from the same bytes and that the prior safe version remains recoverable; it
+does not publish or deploy either target.
+
+The source/runtime binding is carried as `source_release_sha` and
+`runtime_data_sha`; bot-generated data commits must not be substituted for the
+source release identity. The first production precheck requires both fields
+and `source_runtime_consistent=true` when the accepted manifest is available.
+
+After authorized publication, the separate read-only verifier
+`scripts/top5_public_production_verification.py` can compare anonymous Worker
+and static GET captures. It requires HTTP success, exact generation and
+source/runtime identity agreement, the same public bundle digest, and the
+PWA status supplied by the operator. Its success token is
+`TOP5_PUBLIC_PRODUCTION_VERIFIED`; it never repairs or mutates a target.
+
+The existing `scripts/top5_production_verification.py` remains the read-only
+post-activation runtime verifier. After the first authorized publication, its
+captured evidence and this public-read precheck must both pass before the
+release is considered verified. No command in this section performs a live
+publication, Worker deployment, scheduler change, provider request, ledger
+mutation, or betting action.

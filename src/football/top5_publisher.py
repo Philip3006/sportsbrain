@@ -52,6 +52,7 @@ CONTROLLED_PUBLICATION_ISSUER_PUBLIC_KEY_SHA256 = (
 TOP5_PUBLIC_RELEASE_SCHEMA_VERSION = "top5-public-release-v1"
 TOP5_PUBLIC_RELEASE_LEAGUES = ("EPL", "BL1", "LL", "SA", "L1")
 TOP5_PUBLIC_RELEASE_MAX_FALLBACK_AGE_SECONDS = 2 * 60 * 60
+TOP5_PUBLIC_PROVIDER_AUTHORITY = "the_odds_api"
 
 
 def controlled_publication_capability_state_path() -> Path:
@@ -600,6 +601,14 @@ def _top5_public_release(
             for record in public_records
         ],
     }
+    for key in (
+        "source_release_sha",
+        "runtime_data_sha",
+        "source_runtime_consistent",
+    ):
+        value = first.health.get(key)
+        if value is not None:
+            seed[key] = value
     result: dict[str, object] = {
         "schema_version": TOP5_PUBLIC_RELEASE_SCHEMA_VERSION,
         "release_type": "CONTROLLED_TOP5",
@@ -628,6 +637,18 @@ def _top5_public_release(
         "fallback_max_age_seconds": TOP5_PUBLIC_RELEASE_MAX_FALLBACK_AGE_SECONDS,
         "no_bet": True,
     }
+    # Keep the source-release/runtime-data distinction machine-readable when
+    # the runtime health authority has established it.  These are optional at
+    # the publisher boundary because Builder 1/2 own the acceptance evidence;
+    # the final public precheck requires them before first publication.
+    for key in (
+        "source_release_sha",
+        "runtime_data_sha",
+        "source_runtime_consistent",
+    ):
+        value = first.health.get(key)
+        if value is not None:
+            result[key] = value
     if publication_authorization_id:
         result["publication_authorization_id"] = publication_authorization_id
     return result

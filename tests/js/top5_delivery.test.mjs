@@ -88,6 +88,14 @@ describe('Worker Top-5 public release boundary', () => {
     }), /controlled release envelope/);
   });
 
+  test('rejects a release without the freshness contract', () => {
+    const incomplete = { ...RELEASE };
+    delete incomplete.generated_at;
+    assert.throws(() => worker.serializePublicProduct(payload({
+      top5_release: incomplete,
+    })), /incomplete top5_release/);
+  });
+
   test('rejects partial, duplicate, and unknown release league sets', () => {
     for (const league_codes of [
       ['EPL'],
@@ -110,5 +118,21 @@ describe('Worker Top-5 public release boundary', () => {
         ? { ...record, fixture_key: 'EPL:fixture:other' }
         : record),
     })), /one fixture/);
+  });
+
+  test('rejects candidate-provider authority and canonicalizes accepted aliases', () => {
+    assert.throws(() => worker.serializePublicProduct(payload({
+      top5_release: { ...RELEASE, provider_authority: 'therundown_experimental' },
+    })), /provider authority/);
+    const aliased = payload({
+      top5_release: { ...RELEASE, league_codes: ['epl', 'bundesliga', 'la_liga', 'serie_a', 'ligue_1'] },
+      football: TOP5_RECORDS.map((record) => ({
+        ...record,
+        league: ({ EPL: 'premier_league', BL1: 'bundesliga', LL: 'la_liga', SA: 'serie_a', L1: 'ligue_1' })[record.league],
+      })),
+    });
+    const result = worker.serializePublicProduct(aliased);
+    assert.deepEqual(result.top5_release.league_codes, ['BL1', 'EPL', 'L1', 'LL', 'SA']);
+    assert.deepEqual(new Set(result.football.map((record) => record.league)), new Set(TOP5_LEAGUES));
   });
 });

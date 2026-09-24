@@ -24,10 +24,28 @@ const DATA_URL   = 'data/signals.json';
 const SQUADS_URL = 'data/squads.json';
 const _TOP5_LEAGUES = new Set(['EPL', 'BL1', 'LL', 'SA', 'L1']);
 const _TOP5_LAST_GENERATION_KEY = 'sb_top5_public_generation_v1';
+const _TOP5_PUBLIC_PROVIDER_AUTHORITY = 'the_odds_api';
+const _TOP5_LEAGUE_ALIASES = new Map([
+  ['epl', 'EPL'], ['premier_league', 'EPL'],
+  ['english_premier_league', 'EPL'], ['soccer_epl', 'EPL'],
+  ['bl1', 'BL1'], ['bundesliga', 'BL1'],
+  ['german_bundesliga', 'BL1'], ['soccer_germany_bundesliga', 'BL1'],
+  ['ll', 'LL'], ['la_liga', 'LL'], ['laliga', 'LL'],
+  ['spanish_la_liga', 'LL'], ['soccer_spain_la_liga', 'LL'],
+  ['sa', 'SA'], ['serie_a', 'SA'], ['italian_serie_a', 'SA'],
+  ['soccer_italy_serie_a', 'SA'],
+  ['l1', 'L1'], ['ligue_1', 'L1'], ['ligue1', 'L1'],
+  ['french_ligue_1', 'L1'], ['soccer_france_ligue_1', 'L1'],
+]);
+
+function _canonicalTop5LeagueCode(value) {
+  if (typeof value !== 'string') return value;
+  return _TOP5_LEAGUE_ALIASES.get(value.trim().toLowerCase()) || value;
+}
 
 function _normalizeTop5LeagueCodes(value) {
   if (!Array.isArray(value) || value.some((code) => typeof code !== 'string')) return null;
-  const normalized = value.map((code) => code.trim().toUpperCase());
+  const normalized = value.map((code) => _canonicalTop5LeagueCode(code));
   if (normalized.length !== _TOP5_LEAGUES.size ||
       new Set(normalized).size !== normalized.length ||
       new Set(normalized).size !== _TOP5_LEAGUES.size ||
@@ -39,7 +57,7 @@ function _dropUntrustedTop5(payload) {
   const safe = Object.assign({}, payload);
   const football = Array.isArray(payload.football) ? payload.football : [];
   safe.football = football.filter((record) =>
-    !_TOP5_LEAGUES.has(String(record && record.league || '').toUpperCase())
+    !_TOP5_LEAGUES.has(_canonicalTop5LeagueCode(record && record.league))
   );
   delete safe.top5_release;
   return safe;
@@ -56,7 +74,7 @@ function _top5PublicReleaseGuard(payload, source, nowMs = Date.now()) {
   if (!payload || typeof payload !== 'object') throw new Error('invalid public payload');
   const football = Array.isArray(payload.football) ? payload.football : [];
   const top5Records = football.filter((record) =>
-    _TOP5_LEAGUES.has(String(record && record.league || '').toUpperCase())
+    _TOP5_LEAGUES.has(_canonicalTop5LeagueCode(record && record.league))
   );
   if (!top5Records.length) {
     if (!payload.top5_release) return payload;
@@ -79,7 +97,9 @@ function _top5PublicReleaseGuard(payload, source, nowMs = Date.now()) {
     release.publication_enabled === true && release.no_bet === true &&
     typeof release.publication_authorization_id === 'string' &&
     release.publication_authorization_id && normalizedLeagueCodes !== null &&
-    typeof release.provider_authority === 'string' && release.provider_authority;
+    release.provider_authority === _TOP5_PUBLIC_PROVIDER_AUTHORITY &&
+    typeof release.generated_at === 'string' &&
+    typeof release.published_at === 'string';
   if (!validRelease) {
     if (source === 'static') return _dropUntrustedTop5(payload);
     throw new Error('public Top-5 release is not authorized and published');
@@ -91,7 +111,7 @@ function _top5PublicReleaseGuard(payload, source, nowMs = Date.now()) {
   }
   const recordsByLeague = new Map([..._TOP5_LEAGUES].map((league) => [league, []]));
   for (const record of top5Records) {
-    recordsByLeague.get(String(record.league).toUpperCase()).push(record);
+    recordsByLeague.get(_canonicalTop5LeagueCode(record.league)).push(record);
   }
   for (const [league, records] of recordsByLeague) {
     if (records.length !== 3) {
@@ -105,9 +125,12 @@ function _top5PublicReleaseGuard(payload, source, nowMs = Date.now()) {
     }
   }
   const allowedLeagues = new Set(normalizedLeagueCodes);
+  const maxAgeSeconds = Number(release.fallback_max_age_seconds);
   for (const record of top5Records) {
     const provenance = record && typeof record.provenance === 'object' ? record.provenance : {};
-    if (!allowedLeagues.has(String(record.league).toUpperCase()) ||
+    const signalTimestamp = record && (record.signal_timestamp || record.prediction_timestamp);
+    const signalTime = Date.parse(signalTimestamp || '');
+    if (!allowedLeagues.has(_canonicalTop5LeagueCode(record.league)) ||
         record.activation_state !== 'CONTROLLED' || record.signal_status !== 'CONTROLLED' ||
         record.publication_status !== 'PUBLISHED' || record.publication_enabled !== true ||
         record.no_bet !== true || record.activation_id !== release.activation_id ||
@@ -115,13 +138,24 @@ function _top5PublicReleaseGuard(payload, source, nowMs = Date.now()) {
         record.run_id !== release.controlled_shadow_run_id ||
         record.session_id !== release.qualification_session_id ||
         provenance.activation_id !== release.activation_id ||
-        provenance.evidence_digest !== record.evidence_digest) {
+        provenance.evidence_digest !== record.evidence_digest ||
+        !Number.isFinite(signalTime) || signalTime > nowMs ||
+        String(record.stale_state || '').toUpperCase() === 'STALE' ||
+        nowMs - signalTime > maxAgeSeconds * 1000 ||
+        record.synthetic === true ||
+        ['SYNTHETIC', 'TEST_FIXTURE'].includes(String(record.evidence_kind || '').toUpperCase())) {
       if (source === 'static') return _dropUntrustedTop5(payload);
-      throw new Error('public Top-5 record/release binding mismatch');
+      throw new Error('public Top-5 record/release/freshness binding mismatch');
     }
   }
 
-  const maxAgeSeconds = Number(release.fallback_max_age_seconds);
+  const generatedAt = Date.parse(release.generated_at);
+  const publishedAt = Date.parse(release.published_at);
+  if (!Number.isFinite(generatedAt) || !Number.isFinite(publishedAt) ||
+      generatedAt > nowMs || publishedAt > nowMs || publishedAt < generatedAt) {
+    if (source === 'static') return _dropUntrustedTop5(payload);
+    throw new Error('public Top-5 release timestamp is invalid or from the future');
+  }
   if (!Number.isFinite(maxAgeSeconds) || maxAgeSeconds <= 0 ||
       _top5ReleaseAgeMs(release, nowMs) > maxAgeSeconds * 1000) {
     if (source === 'static') return _dropUntrustedTop5(payload);
@@ -143,7 +177,14 @@ function _top5PublicReleaseGuard(payload, source, nowMs = Date.now()) {
       published_at: currentPublishedAt,
     }));
   } catch {}
-  return payload;
+  const normalizedPayload = Object.assign({}, payload);
+  normalizedPayload.football = football.map((record) => {
+    const canonical = _canonicalTop5LeagueCode(record && record.league);
+    return _TOP5_LEAGUES.has(canonical) && record.league !== canonical
+      ? Object.assign({}, record, { league: canonical })
+      : record;
+  });
+  return normalizedPayload;
 }
 let _signals = [];
 let _schedule = [];

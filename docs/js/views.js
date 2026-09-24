@@ -459,6 +459,13 @@ const _FOOTBALL_LEAGUE_LABELS = {
 const _FOOTBALL_CL_KEYS = new Set([
   'ucl', 'champions_league', 'uefa_champs_league', 'soccer_uefa_champs_league',
 ]);
+const _TOP5_FOOTBALL_KEYS = new Set([
+  'epl', 'premier_league', 'english_premier_league', 'soccer_epl',
+  'bl1', 'bundesliga', 'german_bundesliga', 'soccer_germany_bundesliga',
+  'll', 'la_liga', 'laliga', 'spanish_la_liga', 'soccer_spain_la_liga',
+  'sa', 'serie_a', 'italian_serie_a', 'soccer_italy_serie_a',
+  'l1', 'ligue_1', 'ligue1', 'french_ligue_1', 'soccer_france_ligue_1',
+]);
 
 function _footballLeagueLabel(league) {
   return _FOOTBALL_LEAGUE_LABELS[String(league || '').toLowerCase()] || '⚽ Fußball';
@@ -1109,7 +1116,7 @@ function _buildSportControls(sport, filter, totalAll, totalFiltered) {
   // Liga-Filter: nur für Football anzeigen (2.BL + WM trennbar)
   let ligaRow = '';
   if (sport === 'football') {
-    const ligaOptions = [['all','⚽ Alle'],['bl2','🇩🇪 2.BL'],['wm2026','🌍 WM'],['ucl','🏆 UCL']];
+    const ligaOptions = [['all','⚽ Alle'],['top5','⭐ Top-5'],['bl2','🇩🇪 2.BL'],['wm2026','🌍 WM'],['ucl','🏆 UCL']];
     const ligaChips = ligaOptions.map(([v, lbl]) => {
       const active = (filter.liga || 'all') === v ? ' active' : '';
       return `<span class="filter-chip${active}" data-sf="${sport}" data-key="liga" data-val="${v}" role="tab" tabindex="0" aria-selected="${(filter.liga||'all')===v}">${lbl}</span>`;
@@ -1154,6 +1161,7 @@ function renderSport(sport) {
       if (filter.liga === 'bl2' && !['bl2', '2. bundesliga'].includes(sigLeague)) return false;
       if (filter.liga === 'wm2026' && !['wm2026', 'wm'].includes(sigLeague)) return false;
       if (filter.liga === 'ucl' && !_FOOTBALL_CL_KEYS.has(sigLeague)) return false;
+      if (filter.liga === 'top5' && !_TOP5_FOOTBALL_KEYS.has(sigLeague)) return false;
     }
     return true;
   });
