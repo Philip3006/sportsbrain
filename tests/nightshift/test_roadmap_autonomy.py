@@ -82,15 +82,14 @@ def test_roadmap_selection_is_explicit_and_registry_scoped(tmp_path: Path) -> No
 def test_top5_finalization_wave_is_explicit_and_bounded(tmp_path: Path) -> None:
     dispatcher = _dispatcher(tmp_path)
     enabled = {item.item_id for item in dispatcher.roadmap.items if item.enabled}
-    assert {
+    assert enabled == {
         "top5-final-runtime-health",
         "top5-final-b4-dossier",
         "top5-final-b2-preflight",
         "top5-final-public-product",
         "top5-final-convergence",
-    }.issubset(enabled)
-    assert "roadmap-b1-research-1" in enabled
-    assert dispatcher.roadmap.max_cycles >= 25
+    }
+    assert dispatcher.roadmap.max_cycles == 25
     assert dispatcher.merge_backpressure_limit == 12
     assert dispatcher.registry.builder_ids == (
         "builder-1",
@@ -108,8 +107,10 @@ def test_top5_finalization_wave_is_explicit_and_bounded(tmp_path: Path) -> None:
         "top5-final-b2-preflight",
         "top5-final-public-product",
     }
-    assert any(
-        item.enabled for item in dispatcher.roadmap.items if item.item_id.startswith("roadmap-")
+    assert all(
+        not item.enabled
+        for item in dispatcher.roadmap.items
+        if item.item_id.startswith("roadmap-")
     )
 
 
@@ -179,15 +180,10 @@ def test_top5_wave_materializes_independent_items_once_and_holds_dependencies(
     assert runtime is not None and runtime.roadmap_item_id == "top5-final-runtime-health"
     assert dossier is not None and dossier.roadmap_item_id == "top5-final-b4-dossier"
     assert public is not None and public.roadmap_item_id == "top5-final-public-product"
-    next_b3 = dispatcher.select_next_roadmap_task(builder_id="builder-3")
-    assert next_b3 is not None
-    assert next_b3.roadmap_item_id == "roadmap-b3-integration-1"
-    next_b4 = dispatcher.select_next_roadmap_task(builder_id="builder-4")
-    next_b1 = dispatcher.select_next_roadmap_task(builder_id="builder-1")
-    assert next_b4 is not None and next_b4.roadmap_item_id == "roadmap-b4-shadow-1"
-    assert next_b1 is not None and next_b1.roadmap_item_id == "roadmap-b1-research-1"
-    next_b2 = dispatcher.select_next_roadmap_task(builder_id="builder-2")
-    assert next_b2 is not None and next_b2.roadmap_item_id == "roadmap-b2-qualification-1"
+    assert dispatcher.select_next_roadmap_task(builder_id="builder-3") is None
+    assert dispatcher.select_next_roadmap_task(builder_id="builder-4") is None
+    assert dispatcher.select_next_roadmap_task(builder_id="builder-1") is None
+    assert dispatcher.select_next_roadmap_task(builder_id="builder-2") is None
     task_ids = [
         item["task_id"]
         for item in dispatcher.store.roadmap_records()
