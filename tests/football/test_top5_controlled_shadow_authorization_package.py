@@ -728,6 +728,29 @@ def test_reconciliation_rejects_stale_observation():
         reconcile_controlled_shadow_run(tampered, configuration, authorization, now=NOW)
 
 
+def test_same_run_ll_accepts_the_provider_freshness_boundary_at_capture_time():
+    result, configuration, authorization = _network_run()
+    capture = _capture(result, "LL")
+    response = replace(
+        capture.response,
+        source_timestamp=NOW - timedelta(seconds=300),
+        captured_at=NOW,
+        request_finished_at=NOW,
+    )
+
+    validation = validate_same_run_ll_capture(
+        target=capture.target,
+        request=capture.request,
+        response=response,
+        authorization=authorization,
+        now=NOW + timedelta(microseconds=1),
+        maximum_source_age_seconds=configuration.maximum_source_age_seconds,
+    )
+
+    assert validation["source_timestamp"] == response.source_timestamp.isoformat()
+    assert validation["captured_at"] == response.captured_at.isoformat()
+
+
 def test_reconciliation_rejects_wrong_provider_and_post_kickoff_capture():
     result, configuration, authorization = _network_run()
     original = _capture(result, "EPL")
