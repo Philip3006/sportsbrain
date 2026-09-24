@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+import src.football.top5_therundown_provider_native_discovery as native_discovery
 from src.football.odds.therundown import (
     THERUNDOWN_BASE_URL,
     THERUNDOWN_PROVIDER_NAME,
@@ -20,12 +21,16 @@ from src.football.top5_therundown_network_shadow import (
 )
 from src.football.top5_therundown_provider_native_discovery import (
     DISCOVERY_LEAGUE_ORDER,
+    PROVIDER_NATIVE_BILLING_CUMULATIVE_DELTA,
+    PROVIDER_NATIVE_BILLING_PROVIDER_HEADER,
     PROVIDER_NATIVE_DISCOVERY_TARGET_SOURCE,
     PROVIDER_NATIVE_INDEPENDENT_QUALIFICATION,
     PROVIDER_NATIVE_MAX_DATAPOINTS,
     PROVIDER_NATIVE_MAX_DATES_PER_LEAGUE,
     PROVIDER_NATIVE_MAX_REQUEST_COUNT,
     TheRundownProviderNativeDiscoveryAuthorizationV1,
+    TheRundownProviderNativeDiscoveryRequestV1,
+    _validated_datapoint_total,
     discover_five_league_events_provider_native,
     provider_native_discovery_request_shape_digest,
 )
@@ -47,6 +52,11 @@ def _isolated_consumption(monkeypatch, tmp_path: Path):
         "src.football.top5_therundown_event_discovery.discovery_authorization_consumption_state_path",
         lambda: path,
     )
+    lock_path = tmp_path / "TOP5_REAL_PROVIDER_EXECUTION.lock"
+    monkeypatch.setattr(
+        "src.football.top5_therundown_provider_native_discovery.top5_real_provider_execution_lock_path",
+        lambda: lock_path,
+    )
     return path
 
 
@@ -65,6 +75,10 @@ def _proof() -> TheRundownB4QuotaProofV1:
         response_digest="a" * 64,
         evidence_digest="b" * 64,
         request_shape_digest="c" * 64,
+        quota_used_datapoints=48,
+        quota_limit_datapoints=20000,
+        quota_period="daily",
+        quota_tier="free",
     )
 
 
@@ -130,17 +144,33 @@ def _response(
     day: int = 0,
     datapoints: int = 55,
     events: list[dict[str, object]] | None = None,
+    used: int | None = None,
+    remaining: int | None = None,
+    include_exact: bool = True,
+    headers_override: dict[str, str] | None = None,
+    remove_headers: tuple[str, ...] = (),
 ) -> TheRundownNetworkHttpResponseV1:
     finished = NOW + timedelta(seconds=day + 1)
+    current_used = used if used is not None else 48 + datapoints
+    current_remaining = remaining if remaining is not None else 20000 - current_used
+    response_headers = {
+        "x-datapoints-used": str(current_used),
+        "x-datapoints-remaining": str(current_remaining),
+        "x-datapoints-limit": "20000",
+        "x-datapoints-period": "daily",
+        "x-datapoints-reset": (NOW + timedelta(hours=12)).isoformat(),
+        "x-tier": "free",
+    }
+    if include_exact:
+        response_headers["x-datapoints"] = str(datapoints)
+    if headers_override is not None:
+        response_headers.update(headers_override)
+    for name in remove_headers:
+        response_headers.pop(name, None)
     return TheRundownNetworkHttpResponseV1(
         status_code=200,
         payload={"events": events if events is not None else [_event(league, day=day)]},
-        headers={
-            "x-datapoints": str(datapoints),
-            "x-datapoints-used": str(datapoints),
-            "x-datapoints-remaining": str(20000 - datapoints),
-            "x-datapoints-limit": "20000",
-        },
+        headers=response_headers,
         started_at=finished - timedelta(milliseconds=100),
         finished_at=finished,
         body_digest=("e" * 64),
@@ -158,12 +188,37 @@ class FakeNativeTransport:
         return response(request) if callable(response) else response
 
 
-def test_native_discovery_searches_canonical_order_and_stops_after_first_valid_day():
+def _response_sequence(
+    entries: list[tuple[str, int, list[dict[str, object]] | None]],
+    *,
+    include_exact: bool = True,
+) -> list[TheRundownNetworkHttpResponseV1]:
+    used = 48
+    remaining = 19952
     responses = []
-    for league in DISCOVERY_LEAGUE_ORDER:
-        responses.append(_response(league, events=[]))
-        responses.append(_response(league, day=1))
-    transport = FakeNativeTransport(responses)
+    for league, day, events in entries:
+        used += 55
+        remaining -= 55
+        responses.append(
+            _response(
+                league,
+                day=day,
+                events=events,
+                used=used,
+                remaining=remaining,
+                include_exact=include_exact,
+            )
+        )
+    return responses
+
+
+def test_native_discovery_searches_canonical_order_and_stops_after_first_valid_day():
+    entries = [
+        (league, day, events)
+        for league in DISCOVERY_LEAGUE_ORDER
+        for day, events in ((0, []), (1, [_event(league, day=1)]))
+    ]
+    transport = FakeNativeTransport(_response_sequence(entries))
 
     result = discover_five_league_events_provider_native(
         _authorization(),
@@ -193,6 +248,10 @@ def test_native_discovery_searches_canonical_order_and_stops_after_first_valid_d
     )
     assert all(
         capture.provider_authority is False and capture.qualification_eligible is False
+        for capture in result.captures
+    )
+    assert all(
+        capture.billing_evidence_mode == PROVIDER_NATIVE_BILLING_PROVIDER_HEADER
         for capture in result.captures
     )
 
@@ -275,7 +334,9 @@ def test_native_discovery_rejects_cross_league_and_incomplete_runs_without_parti
 def test_native_discovery_consumes_before_loading_credential_and_rejects_replay():
     loader_calls: list[str] = []
     transport = FakeNativeTransport(
-        [_response(league) for league in DISCOVERY_LEAGUE_ORDER]
+        _response_sequence(
+            [(league, 0, [_event(league)]) for league in DISCOVERY_LEAGUE_ORDER]
+        )
     )
 
     def load_credential() -> str:
@@ -332,7 +393,9 @@ def test_native_discovery_expired_authorization_and_unsafe_flags_fail_closed():
 
 def test_native_fixture_identity_is_canonical_and_provider_identity_is_separate():
     transport = FakeNativeTransport(
-        [_response(league) for league in DISCOVERY_LEAGUE_ORDER]
+        _response_sequence(
+            [(league, 0, [_event(league)]) for league in DISCOVERY_LEAGUE_ORDER]
+        )
     )
     result = discover_five_league_events_provider_native(
         _authorization(),
@@ -358,3 +421,147 @@ def test_native_request_shape_is_the_reviewed_provider_shape():
         f"{THERUNDOWN_BASE_URL}/sports/{THERUNDOWN_VERIFIED_LEAGUE_SPORT_IDS[league]}"
         for league in DISCOVERY_LEAGUE_ORDER
     )
+
+
+def test_native_request_shape_binds_each_league_and_date_to_actual_endpoint():
+    authorization = _authorization()
+    for league_index, league in enumerate(DISCOVERY_LEAGUE_ORDER):
+        for date_offset in range(PROVIDER_NATIVE_MAX_DATES_PER_LEAGUE):
+            request = TheRundownProviderNativeDiscoveryRequestV1(
+                authorization=authorization,
+                league=league,
+                snapshot_date=NOW.date() + timedelta(days=date_offset),
+                sequence=league_index * PROVIDER_NATIVE_MAX_DATES_PER_LEAGUE
+                + date_offset,
+                date_offset=date_offset,
+                league_index=league_index,
+            )
+            assert request.endpoint == (
+                f"{THERUNDOWN_BASE_URL}/sports/"
+                f"{THERUNDOWN_VERIFIED_LEAGUE_SPORT_IDS[league]}/events/"
+                f"{request.snapshot_date.isoformat()}"
+            )
+
+
+def test_native_discovery_accepts_cumulative_quota_delta_without_exact_header():
+    transport = FakeNativeTransport(
+        _response_sequence(
+            [(league, 0, [_event(league)]) for league in DISCOVERY_LEAGUE_ORDER],
+            include_exact=False,
+        )
+    )
+    result = discover_five_league_events_provider_native(
+        _authorization(),
+        proof=_proof(),
+        api_key="injected-test-only",
+        transport=transport,
+        now=NOW,
+        pacer=lambda _: None,
+    )
+    assert result.datapoint_total == 275
+    assert all(
+        capture.billing_evidence_mode == PROVIDER_NATIVE_BILLING_CUMULATIVE_DELTA
+        for capture in result.captures
+    )
+
+
+@pytest.mark.parametrize(
+    ("headers_override", "remove_headers"),
+    [
+        ({"x-datapoints-used": "102", "x-datapoints-remaining": "19898"}, ()),
+        ({"x-datapoints-used": "47", "x-datapoints-remaining": "19953"}, ()),
+        ({"x-datapoints-used": "49", "x-datapoints-remaining": "19953"}, ()),
+        ({"x-datapoints-limit": "20001"}, ()),
+        ({"x-datapoints-period": "monthly"}, ()),
+        ({"x-datapoints-reset": (NOW + timedelta(hours=13)).isoformat()}, ()),
+        ({"x-tier": "paid"}, ()),
+        ({}, ("x-datapoints-used",)),
+    ],
+)
+def test_native_discovery_rejects_invalid_cumulative_quota_evidence(
+    headers_override: dict[str, str], remove_headers: tuple[str, ...]
+):
+    response = _response(
+        "EPL",
+        used=103,
+        remaining=19897,
+        headers_override=headers_override,
+        remove_headers=remove_headers,
+    )
+    with pytest.raises(EventDiscoveryExecutionBlocked):
+        discover_five_league_events_provider_native(
+            _authorization(),
+            proof=_proof(),
+            api_key="injected-test-only",
+            transport=FakeNativeTransport([response]),
+            now=NOW,
+            pacer=lambda _: None,
+        )
+
+
+def test_native_discovery_rejects_inferred_delta_above_per_request_cap():
+    response = _response(
+        "EPL",
+        datapoints=56,
+        used=104,
+        remaining=19896,
+        include_exact=False,
+    )
+    with pytest.raises(EventDiscoveryExecutionBlocked):
+        discover_five_league_events_provider_native(
+            _authorization(),
+            proof=_proof(),
+            api_key="injected-test-only",
+            transport=FakeNativeTransport([response]),
+            now=NOW,
+            pacer=lambda _: None,
+        )
+
+
+def test_native_discovery_rejects_exact_header_when_delta_disagrees():
+    response = _response("EPL", datapoints=55, used=102, remaining=19898)
+    with pytest.raises(EventDiscoveryExecutionBlocked):
+        discover_five_league_events_provider_native(
+            _authorization(),
+            proof=_proof(),
+            api_key="injected-test-only",
+            transport=FakeNativeTransport([response]),
+            now=NOW,
+            pacer=lambda _: None,
+        )
+
+
+def test_native_discovery_rejects_cumulative_total_above_governed_budget():
+    with pytest.raises(EventDiscoveryExecutionBlocked):
+        _validated_datapoint_total(
+            PROVIDER_NATIVE_MAX_DATAPOINTS,
+            1,
+            maximum=PROVIDER_NATIVE_MAX_DATAPOINTS,
+        )
+
+
+def test_native_discovery_uses_exclusive_execution_resource_without_authority():
+    observed = []
+
+    class LockObservingTransport(FakeNativeTransport):
+        def execute(self, request):
+            observed.append(
+                native_discovery.top5_real_provider_execution_lock_path().exists()
+            )
+            return super().execute(request)
+
+    transport = LockObservingTransport(
+        _response_sequence(
+            [(league, 0, [_event(league)]) for league in DISCOVERY_LEAGUE_ORDER]
+        )
+    )
+    result = discover_five_league_events_provider_native(
+        _authorization(),
+        proof=_proof(),
+        api_key="injected-test-only",
+        transport=transport,
+        now=NOW,
+        pacer=lambda _: None,
+    )
+    assert observed and all(observed)
+    assert all(not capture.provider_authority for capture in result.captures)

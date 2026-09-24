@@ -8,13 +8,17 @@ run.  TheRundown remains candidate-only throughout.
 
 from __future__ import annotations
 
+import fcntl
 import json
+import os
 import time
 import unicodedata
 from collections.abc import Callable, Mapping
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from hashlib import sha256
+from pathlib import Path
 from typing import Protocol
 
 from src.football.odds.therundown import (
@@ -36,13 +40,13 @@ from src.football.top5_therundown_event_discovery import (
     TheRundownB4QuotaProofV1,
     TheRundownDiscoveryAuthorizationConsumptionStore,
     TheRundownEventDiscoveryResponseV1,
-    _billing,
 )
 from src.football.top5_therundown_network_shadow import (
     TheRundownNetworkHttpRequestV1,
     TheRundownNetworkHttpResponseV1,
     TheRundownRequestsHttpClientV1,
 )
+from src.runtime.paths import runtime_state_path
 
 PROVIDER_NATIVE_DISCOVERY_SCHEMA_VERSION = (
     "top5-therundown-provider-native-discovery-v1"
@@ -60,6 +64,12 @@ PROVIDER_NATIVE_MINIMUM_HEADROOM = 3850
 PROVIDER_NATIVE_MINIMUM_INTERVAL_SECONDS = 1.1
 PROVIDER_NATIVE_MAXIMUM_RETRIES = 0
 PROVIDER_NATIVE_SPORT_ID = B4_QUOTA_PROOF_SPORT_ID
+PROVIDER_NATIVE_BILLING_PROVIDER_HEADER = "provider_x_datapoints"
+PROVIDER_NATIVE_BILLING_CUMULATIVE_DELTA = "cumulative_quota_delta"
+TOP5_REAL_PROVIDER_EXECUTION_RESOURCE = "TOP5_REAL_PROVIDER_EXECUTION"
+TOP5_REAL_PROVIDER_EXECUTION_LOCK_RELATIVE_PATH = (
+    "football/top5/TOP5_REAL_PROVIDER_EXECUTION.lock"
+)
 
 
 def _utc(value: datetime, name: str) -> datetime:
@@ -89,6 +99,211 @@ def _digest(value: object) -> str:
     ).hexdigest()
 
 
+@dataclass(frozen=True)
+class _QuotaCounterBaseline:
+    used: int
+    remaining: int
+    limit: int
+    period: str
+    reset_at: datetime
+    tier: str
+
+
+def top5_real_provider_execution_lock_path() -> Path:
+    return runtime_state_path(
+        TOP5_REAL_PROVIDER_EXECUTION_LOCK_RELATIVE_PATH,
+        require_external=True,
+    )
+
+
+@contextmanager
+def _exclusive_provider_execution_lock():
+    path = top5_real_provider_execution_lock_path()
+    if path.is_symlink():
+        raise EventDiscoveryExecutionBlocked(
+            "TOP5_REAL_PROVIDER_EXECUTION lock must not be a symlink"
+        )
+    path.parent.mkdir(parents=True, exist_ok=True)
+    os.chmod(path.parent, 0o700)
+    with path.open("a+") as handle:
+        os.chmod(path, 0o600)
+        fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+
+
+def _header_int(headers: Mapping[str, str], name: str) -> int:
+    raw = headers.get(name)
+    if raw is None:
+        raise EventDiscoveryExecutionBlocked(
+            f"native discovery billing header missing: {name}"
+        )
+    try:
+        value = int(raw)
+    except ValueError as exc:
+        raise EventDiscoveryExecutionBlocked(
+            f"native discovery billing header invalid: {name}"
+        ) from exc
+    if value < 0:
+        raise EventDiscoveryExecutionBlocked(
+            f"native discovery billing header negative: {name}"
+        )
+    return value
+
+
+def _header_reset(headers: Mapping[str, str]) -> datetime:
+    raw = headers.get("x-datapoints-reset")
+    if not raw:
+        raise EventDiscoveryExecutionBlocked(
+            "native discovery billing header missing: x-datapoints-reset"
+        )
+    try:
+        parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise EventDiscoveryExecutionBlocked(
+            "native discovery billing reset header is invalid"
+        ) from exc
+    return _utc(parsed, "native discovery billing reset")
+
+
+def _proof_quota_baseline(proof: TheRundownB4QuotaProofV1) -> _QuotaCounterBaseline:
+    if any(
+        value is None
+        for value in (
+            proof.quota_used_datapoints,
+            proof.quota_limit_datapoints,
+            proof.quota_period,
+            proof.quota_tier,
+        )
+    ):
+        raise EventDiscoveryExecutionBlocked(
+            "native discovery quota-proof cumulative baseline is incomplete"
+        )
+    if not isinstance(proof.quota_period, str) or not isinstance(proof.quota_tier, str):
+        raise EventDiscoveryExecutionBlocked(
+            "native discovery quota-proof baseline metadata is invalid"
+        )
+    baseline = _QuotaCounterBaseline(
+        used=proof.quota_used_datapoints,
+        remaining=proof.remaining_datapoints,
+        limit=proof.quota_limit_datapoints,
+        period=proof.quota_period,
+        reset_at=_utc(proof.quota_reset_at, "quota-proof reset"),
+        tier=proof.quota_tier.casefold(),
+    )
+    if baseline.used + baseline.remaining != baseline.limit:
+        raise EventDiscoveryExecutionBlocked(
+            "native discovery quota-proof baseline does not reconcile"
+        )
+    if baseline.limit <= 0 or baseline.tier != "free":
+        raise EventDiscoveryExecutionBlocked(
+            "native discovery quota-proof baseline is not approved"
+        )
+    return baseline
+
+
+def _billing_for_response(
+    response: TheRundownNetworkHttpResponseV1,
+    previous: _QuotaCounterBaseline,
+) -> tuple[int, int, str, _QuotaCounterBaseline]:
+    headers = {
+        str(key).casefold(): str(value).strip()
+        for key, value in response.headers.items()
+    }
+    used = _header_int(headers, "x-datapoints-used")
+    remaining = _header_int(headers, "x-datapoints-remaining")
+    limit = _header_int(headers, "x-datapoints-limit")
+    period = headers.get("x-datapoints-period", "")
+    tier = headers.get("x-tier", "").casefold()
+    reset_at = _header_reset(headers)
+    if not period or tier != previous.tier or tier != "free":
+        raise EventDiscoveryExecutionBlocked(
+            "native discovery quota period or tier changed"
+        )
+    if (
+        limit != previous.limit
+        or period != previous.period
+        or reset_at != previous.reset_at
+    ):
+        raise EventDiscoveryExecutionBlocked(
+            "native discovery quota boundary changed during run"
+        )
+    if used < previous.used or remaining > previous.remaining:
+        raise EventDiscoveryExecutionBlocked(
+            "native discovery cumulative quota counters moved backwards"
+        )
+    if used + remaining != limit:
+        raise EventDiscoveryExecutionBlocked(
+            "native discovery cumulative quota counters do not reconcile"
+        )
+    if response.finished_at >= reset_at:
+        raise EventDiscoveryExecutionBlocked(
+            "native discovery quota reset boundary occurred during run"
+        )
+    delta_used = used - previous.used
+    delta_remaining = previous.remaining - remaining
+    if delta_used < 0 or delta_remaining < 0 or delta_used != delta_remaining:
+        raise EventDiscoveryExecutionBlocked(
+            "native discovery quota deltas do not reconcile"
+        )
+    if delta_used > PROVIDER_NATIVE_MAX_DATAPOINTS_PER_REQUEST:
+        raise EventDiscoveryExecutionBlocked(
+            "native discovery inferred request cost exceeds 55"
+        )
+    exact_raw = headers.get("x-datapoints")
+    if exact_raw is None:
+        mode = PROVIDER_NATIVE_BILLING_CUMULATIVE_DELTA
+        datapoints = delta_used
+    else:
+        try:
+            datapoints = int(exact_raw)
+        except ValueError as exc:
+            raise EventDiscoveryExecutionBlocked(
+                "native discovery x-datapoints header is invalid"
+            ) from exc
+        if datapoints < 0 or datapoints > PROVIDER_NATIVE_MAX_DATAPOINTS_PER_REQUEST:
+            raise EventDiscoveryExecutionBlocked(
+                "native discovery x-datapoints exceeds 55"
+            )
+        if datapoints != delta_used:
+            raise EventDiscoveryExecutionBlocked(
+                "native discovery x-datapoints disagrees with cumulative delta"
+            )
+        mode = PROVIDER_NATIVE_BILLING_PROVIDER_HEADER
+    return (
+        datapoints,
+        remaining,
+        mode,
+        _QuotaCounterBaseline(
+            used=used,
+            remaining=remaining,
+            limit=limit,
+            period=period,
+            reset_at=reset_at,
+            tier=tier,
+        ),
+    )
+
+
+def _validated_datapoint_total(current: int, datapoints: int, *, maximum: int) -> int:
+    if datapoints < 0:
+        raise EventDiscoveryExecutionBlocked(
+            "native discovery datapoints cannot be negative"
+        )
+    if datapoints > PROVIDER_NATIVE_MAX_DATAPOINTS_PER_REQUEST:
+        raise EventDiscoveryExecutionBlocked(
+            "native discovery request datapoint cap exceeded"
+        )
+    total = current + datapoints
+    if total > maximum:
+        raise EventDiscoveryExecutionBlocked(
+            "native discovery cumulative datapoint budget exceeded"
+        )
+    return total
+
+
 def _participant_sort_key(value: str) -> str:
     return "".join(
         char
@@ -102,7 +317,7 @@ def _request_shape_payload(search_start_date: date) -> list[dict[str, object]]:
         {
             "method": "GET",
             "endpoint": (
-                f"{THERUNDOWN_BASE_URL}/sports/{PROVIDER_NATIVE_SPORT_ID}/events/"
+                f"{THERUNDOWN_BASE_URL}/sports/{THERUNDOWN_VERIFIED_LEAGUE_SPORT_IDS[league]}/events/"
                 f"{(search_start_date + timedelta(days=offset)).isoformat()}"
             ),
             "query": {
@@ -476,6 +691,7 @@ class TheRundownProviderNativeDiscoveryCaptureV1:
     raw_response_digest: str
     datapoints: int
     remaining_datapoints: int
+    billing_evidence_mode: str = PROVIDER_NATIVE_BILLING_PROVIDER_HEADER
     retry_count: int = 0
     network_execution: bool = True
     qualification_eligible: bool = False
@@ -515,6 +731,7 @@ class TheRundownProviderNativeDiscoveryCaptureV1:
             "raw_response_digest": self.raw_response_digest,
             "datapoints": self.datapoints,
             "remaining_datapoints": self.remaining_datapoints,
+            "billing_evidence_mode": self.billing_evidence_mode,
             "retry_count": self.retry_count,
             "network_execution": self.network_execution,
             "qualification_eligible": self.qualification_eligible,
@@ -573,6 +790,13 @@ class TheRundownProviderNativeDiscoveryCaptureV1:
             or self.datapoints > PROVIDER_NATIVE_MAX_DATAPOINTS_PER_REQUEST
         ):
             raise EventDiscoveryExecutionBlocked("native capture billing is invalid")
+        if self.billing_evidence_mode not in {
+            PROVIDER_NATIVE_BILLING_PROVIDER_HEADER,
+            PROVIDER_NATIVE_BILLING_CUMULATIVE_DELTA,
+        }:
+            raise EventDiscoveryExecutionBlocked(
+                "native capture billing evidence mode is invalid"
+            )
         if self.network_execution is not True:
             raise EventDiscoveryExecutionBlocked(
                 "native capture must be network evidence"
@@ -752,7 +976,7 @@ def _as_discovery_response(
     )
 
 
-def discover_five_league_events_provider_native(
+def _discover_five_league_events_provider_native_unlocked(
     authorization: TheRundownProviderNativeDiscoveryAuthorizationV1,
     *,
     proof: TheRundownB4QuotaProofV1,
@@ -768,6 +992,7 @@ def discover_five_league_events_provider_native(
 
     current = _utc(now or datetime.now(timezone.utc), "native discovery now")
     authorization.validate_against_quota_proof(proof, now=current)
+    previous_quota = _proof_quota_baseline(proof)
     if transport is None and credential_loader is None:
         raise EventDiscoveryExecutionBlocked(
             "native network discovery requires a post-consumption credential loader"
@@ -817,16 +1042,18 @@ def discover_five_league_events_provider_native(
                 )
             discovery_response = _as_discovery_response(response)
             discovery_response.validate()
-            datapoints, remaining = _billing(discovery_response)
+            datapoints, remaining, billing_mode, previous_quota = _billing_for_response(
+                response, previous_quota
+            )
             if datapoints > authorization.maximum_datapoints_per_request:
                 raise EventDiscoveryExecutionBlocked(
                     "native discovery request datapoint cap exceeded"
                 )
-            total_datapoints += datapoints
-            if total_datapoints > authorization.maximum_datapoints:
-                raise EventDiscoveryExecutionBlocked(
-                    "native discovery cumulative datapoint budget exceeded"
-                )
+            total_datapoints = _validated_datapoint_total(
+                total_datapoints,
+                datapoints,
+                maximum=authorization.maximum_datapoints,
+            )
             raw_digest = response.body_digest or _digest(response.payload)
             raw_digests.append(_sha(raw_digest, "native raw response digest"))
             candidate = _select_candidate(
@@ -871,6 +1098,7 @@ def discover_five_league_events_provider_native(
                 raw_response_digest=raw_digests[-1],
                 datapoints=datapoints,
                 remaining_datapoints=remaining,
+                billing_evidence_mode=billing_mode,
             )
             capture.validate()
             found = capture
@@ -891,6 +1119,34 @@ def discover_five_league_events_provider_native(
     return result
 
 
+def discover_five_league_events_provider_native(
+    authorization: TheRundownProviderNativeDiscoveryAuthorizationV1,
+    *,
+    proof: TheRundownB4QuotaProofV1,
+    api_key: str | None = None,
+    credential_loader: Callable[[], str] | None = None,
+    transport: TheRundownProviderNativeDiscoveryTransport | None = None,
+    adapter: TheRundownExperimentalAdapter | None = None,
+    now: datetime | None = None,
+    clock: Callable[[], datetime] | None = None,
+    pacer: Callable[[float], None] | None = None,
+) -> TheRundownProviderNativeDiscoveryRunResultV1:
+    """Run native Discovery while holding the exclusive real-provider lock."""
+
+    with _exclusive_provider_execution_lock():
+        return _discover_five_league_events_provider_native_unlocked(
+            authorization,
+            proof=proof,
+            api_key=api_key,
+            credential_loader=credential_loader,
+            transport=transport,
+            adapter=adapter,
+            now=now,
+            clock=clock,
+            pacer=pacer,
+        )
+
+
 class _RequestsNativeDiscoveryTransport:
     def __init__(self, *, api_key: str) -> None:
         self._api_key = _text(api_key, "TheRundown credential")
@@ -903,6 +1159,8 @@ class _RequestsNativeDiscoveryTransport:
 
 
 __all__ = [
+    "PROVIDER_NATIVE_BILLING_CUMULATIVE_DELTA",
+    "PROVIDER_NATIVE_BILLING_PROVIDER_HEADER",
     "PROVIDER_NATIVE_DISCOVERY_AUTHORIZATION_SCHEMA_VERSION",
     "PROVIDER_NATIVE_DISCOVERY_SCHEMA_VERSION",
     "PROVIDER_NATIVE_DISCOVERY_TARGET_SOURCE",
@@ -913,10 +1171,12 @@ __all__ = [
     "PROVIDER_NATIVE_MAX_REQUEST_COUNT",
     "PROVIDER_NATIVE_MINIMUM_HEADROOM",
     "PROVIDER_NATIVE_MINIMUM_INTERVAL_SECONDS",
+    "TOP5_REAL_PROVIDER_EXECUTION_RESOURCE",
     "TheRundownProviderNativeDiscoveryAuthorizationV1",
     "TheRundownProviderNativeDiscoveryCaptureV1",
     "TheRundownProviderNativeDiscoveryRequestV1",
     "TheRundownProviderNativeDiscoveryRunResultV1",
     "discover_five_league_events_provider_native",
     "provider_native_discovery_request_shape_digest",
+    "top5_real_provider_execution_lock_path",
 ]
