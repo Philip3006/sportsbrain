@@ -25,8 +25,11 @@ from src.football.top5_therundown_provider_native_discovery import (
     PROVIDER_NATIVE_DISCOVERY_TARGET_SOURCE,
     PROVIDER_NATIVE_INDEPENDENT_QUALIFICATION,
     PROVIDER_NATIVE_MAX_DATAPOINTS,
+    PROVIDER_NATIVE_MAX_DATAPOINTS_PER_REQUEST,
     PROVIDER_NATIVE_MAX_DATES_PER_LEAGUE,
     PROVIDER_NATIVE_MAX_REQUEST_COUNT,
+    PROVIDER_NATIVE_MINIMUM_HEADROOM,
+    PROVIDER_NATIVE_MINIMUM_INTERVAL_SECONDS,
     TheRundownProviderNativeDiscoveryAuthorizationV1,
     TheRundownProviderNativeDiscoveryRequestV1,
     _real_provider_execution_lock,
@@ -302,6 +305,14 @@ def test_native_request_shape_binds_each_league_to_its_verified_sport_endpoint()
 
 def test_native_discovery_has_exact_request_and_datapoint_bounds():
     auth = _authorization()
+    assert PROVIDER_NATIVE_MAX_DATES_PER_LEAGUE == 21
+    assert PROVIDER_NATIVE_MAX_REQUEST_COUNT == 105
+    assert PROVIDER_NATIVE_MAX_DATAPOINTS_PER_REQUEST == 55
+    assert PROVIDER_NATIVE_MAX_DATAPOINTS == 5775
+    assert PROVIDER_NATIVE_MINIMUM_HEADROOM == 11550
+    assert PROVIDER_NATIVE_MAX_REQUEST_COUNT * PROVIDER_NATIVE_MAX_DATAPOINTS_PER_REQUEST == PROVIDER_NATIVE_MAX_DATAPOINTS
+    assert 2 * PROVIDER_NATIVE_MAX_DATAPOINTS == PROVIDER_NATIVE_MINIMUM_HEADROOM
+    assert PROVIDER_NATIVE_MINIMUM_INTERVAL_SECONDS >= 1.1
     assert auth.maximum_dates_per_league == PROVIDER_NATIVE_MAX_DATES_PER_LEAGUE
     assert auth.maximum_request_count == PROVIDER_NATIVE_MAX_REQUEST_COUNT
     assert auth.maximum_datapoints == PROVIDER_NATIVE_MAX_DATAPOINTS
@@ -323,7 +334,7 @@ def test_native_discovery_has_exact_request_and_datapoint_bounds():
 
 
 def test_native_discovery_rejects_insufficient_proof_headroom_before_consumption():
-    auth = _authorization(remaining_datapoints=3849)
+    auth = _authorization(remaining_datapoints=PROVIDER_NATIVE_MINIMUM_HEADROOM - 1)
     with pytest.raises(EventDiscoveryExecutionBlocked):
         discover_five_league_events_provider_native(
             auth,
@@ -335,13 +346,24 @@ def test_native_discovery_rejects_insufficient_proof_headroom_before_consumption
         )
 
 
-def test_native_discovery_never_exceeds_thirty_five_requests_without_partial_result():
+def test_native_discovery_never_exceeds_105_requests_without_partial_result():
+    responses = []
+    for league_index, league in enumerate(DISCOVERY_LEAGUE_ORDER):
+        for date_offset in range(PROVIDER_NATIVE_MAX_DATES_PER_LEAGUE):
+            responses.append(
+                _response(
+                    league,
+                    day=date_offset,
+                    events=(
+                        []
+                        if league_index == len(DISCOVERY_LEAGUE_ORDER) - 1
+                        or date_offset < PROVIDER_NATIVE_MAX_DATES_PER_LEAGUE - 1
+                        else [_event(league, day=date_offset)]
+                    ),
+                )
+            )
     transport = FakeNativeTransport(
-        [
-            _response(league, events=[])
-            for league in DISCOVERY_LEAGUE_ORDER
-            for _ in range(PROVIDER_NATIVE_MAX_DATES_PER_LEAGUE)
-        ]
+        responses
     )
     with pytest.raises(EventDiscoveryExecutionBlocked):
         discover_five_league_events_provider_native(
@@ -352,7 +374,22 @@ def test_native_discovery_never_exceeds_thirty_five_requests_without_partial_res
             now=NOW,
             pacer=lambda _: None,
         )
-    assert 0 < len(transport.calls) <= PROVIDER_NATIVE_MAX_REQUEST_COUNT
+    assert len(transport.calls) == PROVIDER_NATIVE_MAX_REQUEST_COUNT == 105
+    assert len({request.league for request in transport.calls}) == 5
+    assert all(
+        max(request.date_offset for request in transport.calls if request.league == league)
+        == 20
+        for league in DISCOVERY_LEAGUE_ORDER
+    )
+    assert all(
+        {
+            request.date_offset
+            for request in transport.calls
+            if request.league == league
+        }
+        == set(range(PROVIDER_NATIVE_MAX_DATES_PER_LEAGUE))
+        for league in DISCOVERY_LEAGUE_ORDER
+    )
 
 
 def test_native_discovery_rejects_cross_league_and_incomplete_runs_without_partial_result():

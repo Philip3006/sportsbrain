@@ -56,11 +56,11 @@ PROVIDER_NATIVE_DISCOVERY_AUTHORIZATION_SCHEMA_VERSION = (
 )
 PROVIDER_NATIVE_DISCOVERY_TARGET_SOURCE = "therundown_provider_native"
 PROVIDER_NATIVE_INDEPENDENT_QUALIFICATION = "WAIVED"
-PROVIDER_NATIVE_MAX_DATES_PER_LEAGUE = 7
-PROVIDER_NATIVE_MAX_REQUEST_COUNT = 35
+PROVIDER_NATIVE_MAX_DATES_PER_LEAGUE = 21
+PROVIDER_NATIVE_MAX_REQUEST_COUNT = 105
 PROVIDER_NATIVE_MAX_DATAPOINTS_PER_REQUEST = 55
-PROVIDER_NATIVE_MAX_DATAPOINTS = 1925
-PROVIDER_NATIVE_MINIMUM_HEADROOM = 3850
+PROVIDER_NATIVE_MAX_DATAPOINTS = 5775
+PROVIDER_NATIVE_MINIMUM_HEADROOM = 11550
 PROVIDER_NATIVE_MINIMUM_INTERVAL_SECONDS = 1.1
 PROVIDER_NATIVE_MAXIMUM_RETRIES = 0
 PROVIDER_NATIVE_SPORT_ID = B4_QUOTA_PROOF_SPORT_ID
@@ -526,7 +526,7 @@ class TheRundownProviderNativeDiscoveryAuthorizationV1:
             raise EventDiscoveryContractError("native proof sport binding is invalid")
         if self.quota_proof_remaining_datapoints < PROVIDER_NATIVE_MINIMUM_HEADROOM:
             raise EventDiscoveryExecutionBlocked(
-                "native discovery requires 3850 datapoints of proof headroom"
+                "native discovery requires 11550 datapoints of proof headroom"
             )
         if self.maximum_dates_per_league != PROVIDER_NATIVE_MAX_DATES_PER_LEAGUE:
             raise EventDiscoveryExecutionBlocked(
