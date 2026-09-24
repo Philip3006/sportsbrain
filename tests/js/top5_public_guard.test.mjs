@@ -78,6 +78,7 @@ function recordFor(league, index, fixture = `${league}:fixture:test`) {
     provider: RELEASE.provider_authority,
     run_id: RELEASE.controlled_shadow_run_id,
     session_id: RELEASE.qualification_session_id,
+    signal_timestamp: RELEASE.published_at,
     evidence_digest: `evidence:${league}:${index}`,
     provenance: {
       activation_id: RELEASE.activation_id,
@@ -130,5 +131,44 @@ describe('browser Top-5 public guard', () => {
     }, 'static', NOW);
     assert.equal(result.top5_release, undefined);
     assert.equal(result.football.length, 0);
+  });
+
+  test('rejects future and candidate-provider releases', () => {
+    const guard = loadGuard();
+    assert.throws(() => guard({
+      ...payload(),
+      top5_release: { ...RELEASE, provider_authority: 'therundown_experimental' },
+    }, 'worker', NOW));
+    assert.throws(() => guard({
+      ...payload(),
+      top5_release: { ...RELEASE, published_at: '2026-09-20T13:00:00Z' },
+    }, 'worker', NOW));
+  });
+
+  test('rejects malformed or stale signal provenance even when the container is fresh', () => {
+    const guard = loadGuard();
+    assert.throws(() => guard({
+      ...payload(),
+      football: RECORDS.map((record, index) => index === 0
+        ? { ...record, signal_timestamp: 'not-a-timestamp' }
+        : record),
+    }, 'worker', NOW));
+    assert.throws(() => guard({
+      ...payload(),
+      football: RECORDS.map((record, index) => index === 0
+        ? { ...record, stale_state: 'STALE' }
+        : record),
+    }, 'worker', NOW));
+  });
+
+  test('normalizes accepted Top-5 aliases before rendering', () => {
+    const guard = loadGuard();
+    const aliases = { EPL: 'premier_league', BL1: 'bundesliga', LL: 'la_liga', SA: 'serie_a', L1: 'ligue_1' };
+    const result = guard({
+      ...payload(),
+      top5_release: { ...RELEASE, league_codes: Object.values(aliases) },
+      football: RECORDS.map((record) => ({ ...record, league: aliases[record.league] })),
+    }, 'worker', NOW);
+    assert.deepEqual(new Set(result.football.map((record) => record.league)), new Set(LEAGUES));
   });
 });

@@ -94,6 +94,9 @@ _PUBLIC_FOOTBALL_PROVENANCE_FIELDS = frozenset(
         "source",
         "provider",
         "provider_name",
+        "source_release_sha",
+        "runtime_data_sha",
+        "source_runtime_consistent",
         "source_sha",
         "research_sha",
         "model_artifact_hash",
@@ -120,6 +123,9 @@ _PUBLIC_TOP5_RELEASE_FIELDS = frozenset(
         "publication_enabled",
         "publication_authorization_id",
         "provider_authority",
+        "source_release_sha",
+        "runtime_data_sha",
+        "source_runtime_consistent",
         "result_authority",
         "candidate_id",
         "model_identity",
@@ -135,6 +141,38 @@ _PUBLIC_TOP5_RELEASE_FIELDS = frozenset(
     }
 )
 _TOP5_LEAGUES = frozenset({"EPL", "BL1", "LL", "SA", "L1"})
+TOP5_PUBLIC_PROVIDER_AUTHORITY = "the_odds_api"
+_TOP5_LEAGUE_ALIASES = {
+    "epl": "EPL",
+    "premier_league": "EPL",
+    "english_premier_league": "EPL",
+    "soccer_epl": "EPL",
+    "bl1": "BL1",
+    "bundesliga": "BL1",
+    "german_bundesliga": "BL1",
+    "soccer_germany_bundesliga": "BL1",
+    "ll": "LL",
+    "la_liga": "LL",
+    "laliga": "LL",
+    "spanish_la_liga": "LL",
+    "soccer_spain_la_liga": "LL",
+    "sa": "SA",
+    "serie_a": "SA",
+    "italian_serie_a": "SA",
+    "soccer_italy_serie_a": "SA",
+    "l1": "L1",
+    "ligue_1": "L1",
+    "ligue1": "L1",
+    "french_ligue_1": "L1",
+    "soccer_france_ligue_1": "L1",
+}
+
+
+def canonical_top5_league(value: object) -> object:
+    """Normalize accepted Top-5 ingestion aliases to one public identity."""
+    if not isinstance(value, str):
+        return value
+    return _TOP5_LEAGUE_ALIASES.get(value.strip().casefold(), value)
 
 
 def _normalize_top5_league_codes(value: object) -> list[str]:
@@ -144,7 +182,7 @@ def _normalize_top5_league_codes(value: object) -> list[str]:
             "top5_release league_codes must be a list"
         )
     normalized = [
-        code.strip().upper() if isinstance(code, str) else ""
+        canonical_top5_league(code) if isinstance(code, str) else ""
         for code in value
     ]
     if (
@@ -416,6 +454,10 @@ def _public_top5_release(value: object) -> dict[str, object]:
         )
     if result["no_bet"] is not True:
         raise PublicFootballCompatibilityError("top5_release must remain no-bet")
+    if result.get("provider_authority") != TOP5_PUBLIC_PROVIDER_AUTHORITY:
+        raise PublicFootballCompatibilityError(
+            "Top-5 public provider authority must remain the_odds_api"
+        )
     if not result["league_codes"]:
         raise PublicFootballCompatibilityError("top5_release requires leagues")
     return result
@@ -435,7 +477,7 @@ def _validate_top5_public_records(
         record
         for record in records
         if isinstance(record, Mapping)
-        and str(record.get("league", "")).upper() in _TOP5_LEAGUES
+        and canonical_top5_league(record.get("league")) in _TOP5_LEAGUES
     ]
     if not top5_records:
         if release is not None:
@@ -466,7 +508,7 @@ def _validate_top5_public_records(
         league: [] for league in _TOP5_LEAGUES
     }
     for record in top5_records:
-        by_league[str(record.get("league", "")).upper()].append(record)
+        by_league[str(canonical_top5_league(record.get("league")))].append(record)
     if any(len(items) != 3 for items in by_league.values()):
         raise PublicFootballCompatibilityError(
             "published Top-5 release requires three records per league"
@@ -525,6 +567,7 @@ def map_prediction_to_public_football_signals(
         _first_value(artifact, record, provenance, keys=("league_code", "league")),
         "league",
     )
+    league = str(canonical_top5_league(league))
     fixture_key = _required_text(
         _first_value(artifact, record, fixture, keys=("fixture_key", "fixture_id")),
         "fixture_key",
@@ -716,6 +759,15 @@ def map_prediction_to_public_football_signals(
         "snapshot_kind": snapshot_kind,
         "source": source or "",
         "provider": source or "",
+        "source_release_sha": _first_value(
+            record, artifact, provenance, health, keys=("source_release_sha",)
+        ),
+        "runtime_data_sha": _first_value(
+            record, artifact, provenance, health, keys=("runtime_data_sha",)
+        ),
+        "source_runtime_consistent": _first_value(
+            record, artifact, provenance, health, keys=("source_runtime_consistent",)
+        ),
         "source_age_seconds": source_age_seconds,
         "stale_state": stale_state,
         "activation_state": state.upper(),
@@ -926,6 +978,17 @@ def serialize_public_football_records(records: object) -> object:
             or ("prediction" in record and "market" not in record)
         ):
             output.extend(map_prediction_to_public_football_signals(record))
+        elif isinstance(record, Mapping):
+            # Legacy snapshots can arrive through an ingestion boundary with a
+            # descriptive Top-5 league alias.  Preserve every other field but
+            # emit one canonical identity in the public product.
+            canonical = canonical_top5_league(record.get("league"))
+            if canonical in _TOP5_LEAGUES and record.get("league") != canonical:
+                normalized = dict(record)
+                normalized["league"] = canonical
+                output.append(normalized)
+            else:
+                output.append(record)
         else:
             output.append(record)
     return output
