@@ -360,7 +360,8 @@ def _validate_synthetic_boundary(
     )
     if any(source.get(key) is True for source in sources for key in forbidden_true):
         raise PublicFootballCompatibilityError(
-            "synthetic football evidence cannot claim real observation, approval, or activation"
+            "synthetic football evidence cannot claim real observation, "
+            "approval, or activation"
         )
     if state == "live" or any(
         source.get("publication_enabled") is True
