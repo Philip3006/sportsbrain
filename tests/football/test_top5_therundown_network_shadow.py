@@ -227,6 +227,41 @@ def _quota_headroom(authorization):
     ), evidence
 
 
+def _run_live_network_stub(*, observed_at, response_factory=None, fail_closed=False):
+    configuration = _configuration(enabled=True)
+    authorization, headroom = _quota_headroom(_authorization(configuration))
+    headroom = replace(headroom, observed_at=observed_at, evidence_digest="0" * 64)
+    headroom = replace(headroom, evidence_digest=headroom.computed_evidence_digest)
+    authorization = replace(
+        authorization, quota_headroom_evidence_digest=headroom.evidence_digest
+    )
+    transport = _NetworkStubTransport(
+        response_factory
+        or (
+            lambda request: _response(
+                request,
+                evidence_kind=ObservationEvidenceKind.REAL_OBSERVED,
+                network_execution=True,
+                account_tier="free",
+                provider_delay_seconds=300.0,
+            )
+        )
+    )
+    pacing = []
+    result = TheRundownNetworkShadowExecutorV1(
+        clock=lambda: NOW,
+        pacer=pacing.append,
+        allow_live_network=True,
+        fail_closed_immediately=fail_closed,
+    ).run(
+        configuration,
+        authorization,
+        transport=transport,
+        quota_headroom=headroom,
+    )
+    return result, transport, pacing
+
+
 def _run(
     *,
     response_factory=None,
@@ -300,6 +335,73 @@ def test_successful_five_league_replay_is_sequential_and_complete():
         assert payload["response"]["rate_limit_remaining"] == 99
         assert payload["response"]["account_tier"] == "shadow-test-tier"
         assert payload["response"]["provider_delay_seconds"] == 0.0
+
+
+def test_live_first_request_waits_only_remaining_proof_interval():
+    result, transport, pacing = _run_live_network_stub(
+        observed_at=NOW - timedelta(milliseconds=400)
+    )
+
+    assert result.status is NetworkShadowRunStatus.COMPLETED_NETWORK
+    assert result.request_count == 5
+    assert result.datapoint_count == TOP5_CONTROLLED_SHADOW_DATAPOINT_BUDGET
+    assert [request.target.league for request in transport.calls] == [
+        "EPL",
+        "BL1",
+        "LL",
+        "SA",
+        "L1",
+    ]
+    assert pacing == pytest.approx(
+        [0.7] + [TOP5_CONTROLLED_SHADOW_MINIMUM_INTERVAL_SECONDS] * 4
+    )
+    assert TOP5_CONTROLLED_SHADOW_MINIMUM_INTERVAL_SECONDS == 1.1
+    assert result.authority_changed is False
+    assert result.publication is False
+    assert result.production_activation is False
+    assert result.monetary_spend_authorized is False
+    assert result.receipt_eligible is False
+    assert all(capture.candidate_only for capture in result.captures)
+    assert all(capture.response.no_bet for capture in result.captures)
+    assert all(capture.response.retry_count == 0 for capture in result.captures)
+    assert all(capture.response.account_tier == "free" for capture in result.captures)
+    assert all(not capture.response.ledger_mutated for capture in result.captures)
+
+
+def test_live_first_request_does_not_wait_after_proof_interval_elapsed():
+    result, transport, pacing = _run_live_network_stub(
+        observed_at=NOW - timedelta(seconds=2)
+    )
+
+    assert result.status is NetworkShadowRunStatus.COMPLETED_NETWORK
+    assert result.request_count == 5
+    assert [request.target.league for request in transport.calls] == [
+        "EPL",
+        "BL1",
+        "LL",
+        "SA",
+        "L1",
+    ]
+    assert pacing == [TOP5_CONTROLLED_SHADOW_MINIMUM_INTERVAL_SECONDS] * 4
+
+
+def test_live_rate_limit_fails_closed_without_retry():
+    result, transport, pacing = _run_live_network_stub(
+        observed_at=NOW - timedelta(seconds=2),
+        response_factory=lambda request: _response(
+            request,
+            outcome=CanaryOutcome.RATE_LIMITED,
+            http_status=429,
+        ),
+        fail_closed=True,
+    )
+
+    assert result.status is NetworkShadowRunStatus.PARTIAL
+    assert result.failures == ("EPL:RATE_LIMITED",)
+    assert result.request_count == 1
+    assert len(transport.calls) == 1
+    assert [request.target.league for request in transport.calls] == ["EPL"]
+    assert pacing == []
 
 
 def test_expired_authorization_is_rejected_before_transport():

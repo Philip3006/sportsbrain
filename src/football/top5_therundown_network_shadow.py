@@ -3218,6 +3218,18 @@ class TheRundownNetworkShadowExecutorV1:
                 failures.append(f"{target.league}:REQUEST_BUDGET_EXCEEDED")
                 break
             request = authorization.request_for(target, configuration)
+            if index == 0 and not test_only:
+                # The dedicated headroom proof is itself a provider request.
+                # Pace the first live Shadow request from its trusted response
+                # timestamp, but do not add delay if the interval already elapsed.
+                if quota_headroom is None:  # guarded above; keep the invariant local
+                    raise NetworkShadowExecutionBlocked(
+                        "quota headroom evidence is required before network execution"
+                    )
+                elapsed = (self.clock() - quota_headroom.observed_at).total_seconds()
+                remaining = configuration.minimum_interval_seconds - elapsed
+                if remaining > 0:
+                    self.pacer(remaining)
             request.validate(now=self.clock())
             try:
                 response = transport.execute(request)
