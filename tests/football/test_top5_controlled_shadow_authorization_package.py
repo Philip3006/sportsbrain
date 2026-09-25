@@ -1104,6 +1104,10 @@ def test_dedicated_shadow_headroom_proof_materializes_and_preflight_stays_networ
     assert headroom["schema_version"] == SHADOW_HEADROOM_ARTIFACT_SCHEMA_VERSION
     assert headroom["provenance_source"] == SHADOW_HEADROOM_PROVENANCE_SOURCE
     assert headroom["proof"]["raw_header_evidence"]["x-tier"] == "free"
+    assert headroom["proof"]["status_code"] == 200
+    assert headroom["headroom"]["observed_at"] == headroom["proof"][
+        "response_finished_at"
+    ]
     assert headroom["proof"]["raw_header_evidence"]["x-datapoints-period"] == (
         "daily"
     )
