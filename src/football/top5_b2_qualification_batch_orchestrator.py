@@ -158,6 +158,17 @@ def _digest(value: object, name: str) -> str:
     return text
 
 
+def _source_sha(value: object, name: str) -> str:
+    text = _text(value, name).lower()
+    if len(text) not in {40, 64} or any(
+        char not in "0123456789abcdef" for char in text
+    ):
+        raise Builder2QualificationBatchError(
+            f"{name} must be a 40-character commit SHA or 64-character source digest"
+        )
+    return text
+
+
 def _canonical_key(value: object) -> str:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
 
@@ -1062,6 +1073,9 @@ class Builder2FiveLeagueReceiptBindingV1:
                 "monetary_spend_authorized",
             }:
                 continue
+            if name == "adapter_source_sha":
+                _source_sha(value, f"binding.{name}")
+                continue
             if name.endswith(("digest", "_sha")):
                 _digest(value, f"binding.{name}")
             elif name in {
@@ -1292,11 +1306,8 @@ class Builder2FiveLeagueAuthorityInputDossierV1:
             ("ceo_authorization_id", self.ceo_authorization_id),
         ):
             _text(value, f"dossier.{name}")
-        for name, value in (
-            ("configuration_digest", self.configuration_digest),
-            ("adapter_source_sha", self.adapter_source_sha),
-        ):
-            _digest(value, f"dossier.{name}")
+        _digest(self.configuration_digest, "dossier.configuration_digest")
+        _source_sha(self.adapter_source_sha, "dossier.adapter_source_sha")
         if len(self.bindings) != len(TOP5_LEAGUES):
             raise Builder2QualificationBatchError(
                 "authority dossier must have five bindings"

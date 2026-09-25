@@ -466,6 +466,105 @@ def publication_precheck(
 
     acceptance = validate_public_bundle(payload, now=now)
     reasons: list[dict[str, str]] = []
+    if (
+        isinstance(accepted_evidence, Mapping)
+        and accepted_evidence.get("status") == "TOP5_FINAL_ACCEPTANCE_VERIFIED"
+    ):
+        from src.football.top5_final_acceptance import (
+            FINAL_ACCEPTANCE_SCHEMA_VERSION,
+            STATUS_VERIFIED,
+            canonical_digest,
+        )
+
+        manifest = accepted_evidence.get("manifest")
+        manifest_fields = {
+            "schema_version",
+            "source_main_sha",
+            "provider_authority",
+            "candidate_provider",
+            "leagues",
+            "research_sha",
+            "model_identity",
+            "b4_proof_id",
+            "b4_proof_evidence_digest",
+            "b4_headroom_digest",
+            "discovery_event_ids",
+            "controlled_shadow_run_id",
+            "qualification_session_id",
+            "ceo_authorization_id",
+            "adapter_source_sha",
+            "controlled_shadow_digest",
+            "capture_digests",
+            "public_generation_id",
+            "public_activation_id",
+            "public_product_digest",
+            "checks",
+            "readiness",
+            "manifest_digest",
+        }
+        check_fields = {
+            "five_leagues",
+            "b4_quota_proof",
+            "discovery",
+            "controlled_shadow",
+            "model_signal_time",
+            "public_delivery",
+            "runtime_provenance",
+            "candidate_not_authority",
+            "no_bet",
+        }
+        manifest_valid = False
+        if (
+            set(accepted_evidence) == {"status", "manifest"}
+            and isinstance(manifest, Mapping)
+            and set(manifest) == manifest_fields
+        ):
+            manifest_body = {
+                str(key): value
+                for key, value in manifest.items()
+                if key != "manifest_digest"
+            }
+            checks = manifest.get("checks")
+            checks_valid = (
+                isinstance(checks, Mapping)
+                and set(checks) == check_fields
+                and all(value is True for value in checks.values())
+                and checks.get("candidate_not_authority") is True
+            )
+            manifest_valid = (
+                acceptance.get("status") == TOP5_PUBLIC_DELIVERY_READY
+                and manifest.get("schema_version") == FINAL_ACCEPTANCE_SCHEMA_VERSION
+                and manifest.get("readiness") == STATUS_VERIFIED
+                and manifest.get("provider_authority") == TOP5_PUBLIC_PROVIDER_AUTHORITY
+                and manifest.get("candidate_provider") == "therundown_experimental"
+                and manifest.get("leagues") == sorted(TOP5_LEAGUES)
+                and checks_valid
+                and manifest.get("manifest_digest") == canonical_digest(manifest_body)
+                and manifest.get("public_generation_id")
+                == acceptance.get("generation_id")
+                and manifest.get("public_activation_id")
+                == acceptance.get("activation_id")
+                and manifest.get("public_product_digest")
+                == acceptance.get("bundle_digest")
+            )
+        if manifest_valid and isinstance(manifest, Mapping):
+            accepted_evidence = {
+                "schema_version": FINAL_ACCEPTANCE_SCHEMA_VERSION,
+                "status": "ACCEPTED",
+                "publication_ready": True,
+                "provider_authority": manifest["provider_authority"],
+                "generation_id": acceptance["generation_id"],
+                "activation_id": acceptance["activation_id"],
+                "source_release_sha": acceptance["source_release_sha"],
+                "runtime_data_sha": acceptance["runtime_data_sha"],
+                "evidence_digest": manifest["manifest_digest"],
+            }
+        else:
+            accepted_evidence = {
+                "schema_version": FINAL_ACCEPTANCE_SCHEMA_VERSION,
+                "status": "INVALID_B1_ACCEPTANCE",
+                "publication_ready": False,
+            }
     required = {
         "schema_version": "top5-final-acceptance-v1",
         "status": "ACCEPTED",

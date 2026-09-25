@@ -308,6 +308,17 @@ def _digest(value: object, name: str) -> str:
     return text
 
 
+def _source_sha(value: object, name: str) -> str:
+    text = _text(value, name).lower()
+    if len(text) not in {40, 64} or any(
+        char not in "0123456789abcdef" for char in text
+    ):
+        raise Builder2QualificationIntakeError(
+            f"{name} must be a 40-character commit SHA or 64-character source digest"
+        )
+    return text
+
+
 def _sequence(value: object, name: str) -> tuple[object, ...]:
     if not isinstance(value, Sequence) or isinstance(value, (str, bytes)):
         raise Builder2QualificationIntakeError(f"{name} must be a list")
@@ -697,7 +708,7 @@ class Builder2QualificationIntakeManifestV1:
                 raw["capture_attestation_digest"], "manifest.capture_attestation_digest"
             ),
             adapter_version=_text(raw["adapter_version"], "manifest.adapter_version"),
-            adapter_source_sha=_digest(
+            adapter_source_sha=_source_sha(
                 raw["adapter_source_sha"], "manifest.adapter_source_sha"
             ),
             timing_policy_reference=_text(
@@ -750,9 +761,9 @@ class Builder2QualificationIntakeManifestV1:
             ("normalized_record_digest", self.normalized_record_digest),
             ("cascade_evidence_digest", self.cascade_evidence_digest),
             ("capture_attestation_digest", self.capture_attestation_digest),
-            ("adapter_source_sha", self.adapter_source_sha),
         ):
             _digest(value, f"manifest.{name}")
+        _source_sha(self.adapter_source_sha, "manifest.adapter_source_sha")
         if not self.source_artifacts:
             raise Builder2QualificationIntakeError(
                 "manifest source_artifacts are required"
