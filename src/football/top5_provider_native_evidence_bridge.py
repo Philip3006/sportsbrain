@@ -634,6 +634,7 @@ class Top5B4EvidenceDossierV1:
     quota_proof: TheRundownB4QuotaProofV1
     native_provenance: ProviderNativeDiscoveryProvenanceV1
     legacy_discovery_evidence: tuple[TheRundownEventDiscoveryEvidenceV1, ...]
+    source_configuration: TheRundownNetworkConfigurationV1
     configuration: TheRundownNetworkConfigurationV1
     reconciliation: FiveLeagueReconciliationV1
     qualification: QualificationReadyArtifactsV1
@@ -653,6 +654,7 @@ class Top5B4EvidenceDossierV1:
             "legacy_discovery_evidence": [
                 item.as_payload() for item in self.legacy_discovery_evidence
             ],
+            "source_configuration": self.source_configuration.as_payload(),
             "configuration": self.configuration.as_payload(),
             "reconciliation": self.reconciliation.as_payload(),
             "qualification": self.qualification.as_payload(),
@@ -683,7 +685,31 @@ class Top5B4EvidenceDossierV1:
             self.native_provenance.as_payload(),
             tuple(item.as_payload() for item in self.legacy_discovery_evidence),
         )
+        self.source_configuration.validate()
         self.configuration.validate()
+        if self.source_configuration.enabled is not False:
+            raise ProviderNativeEvidenceBridgeError(
+                "source configuration must remain disabled"
+            )
+        expected_execution_configuration = replace(
+            self.source_configuration,
+            enabled=True,
+            configuration_digest="",
+        )
+        expected_execution_configuration = replace(
+            expected_execution_configuration,
+            configuration_digest=(
+                expected_execution_configuration.computed_configuration_digest
+            ),
+        )
+        if (
+            self.configuration.enabled is not True
+            or self.configuration.as_payload()
+            != expected_execution_configuration.as_payload()
+        ):
+            raise ProviderNativeEvidenceBridgeError(
+                "execution configuration is not the exact enabled projection"
+            )
         self.reconciliation.validate()
         self.qualification.validate()
         self.controlled_shadow_evidence.validate()
@@ -762,15 +788,28 @@ def assemble_top5_b4_evidence_dossier(
     expected_configuration = (
         materialize_prebound_network_configuration_from_provider_native(native_run)
     )
-    if configuration.as_payload() != expected_configuration.as_payload():
+    configuration.validate()
+    expected_execution_configuration = replace(
+        expected_configuration,
+        enabled=True,
+        configuration_digest="",
+    )
+    expected_execution_configuration = replace(
+        expected_execution_configuration,
+        configuration_digest=(
+            expected_execution_configuration.computed_configuration_digest
+        ),
+    )
+    if configuration.as_payload() != expected_execution_configuration.as_payload():
         raise ProviderNativeEvidenceBridgeError(
-            "supplied configuration is not native-derived"
+            "supplied configuration is not the exact native-derived execution projection"
         )
     dossier = Top5B4EvidenceDossierV1(
         source_main_sha=source_main_sha,
         quota_proof=quota_proof,
         native_provenance=provenance,
         legacy_discovery_evidence=legacy,
+        source_configuration=expected_configuration,
         configuration=configuration,
         reconciliation=reconciliation,
         qualification=reconciliation.artifacts,

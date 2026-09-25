@@ -202,8 +202,16 @@ The Builder 1 interface consumed by `precheck` is deliberately narrow:
 `schema_version=top5-final-acceptance-v1`, `status=ACCEPTED`,
 `publication_ready=true`, `provider_authority=the_odds_api`, and bound
 `generation_id`, `activation_id`, `source_release_sha`, `runtime_data_sha`,
-and `evidence_digest`. B3 does not recompute or replace Builder 1's evidence
-engine. Builder 2 supplies the runtime artifact and lifecycle state consumed
+and `evidence_digest`. The actual B1 CLI result (`status=
+TOP5_FINAL_ACCEPTANCE_VERIFIED` plus its nested manifest) is also accepted
+directly. B3 requires the exact B1 result shape, recomputes the manifest digest,
+checks readiness, Top-5 leagues, all acceptance checks, `the_odds_api` authority,
+and `therundown_experimental` candidate identity, then binds generation,
+activation, and product digests to the validated public payload. Only after
+those checks does it project source/runtime SHAs from that payload into its
+legacy read-only precheck shape. This is not authorization to publish, activate,
+or change provider authority. B3 does not replace Builder 1's evidence engine.
+Builder 2 supplies the runtime artifact and lifecycle state consumed
 by the upstream accepted manifest; disabled/degraded/incomplete runtime state
 therefore blocks the precheck rather than being published as a fallback.
 

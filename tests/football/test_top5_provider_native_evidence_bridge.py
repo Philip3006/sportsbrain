@@ -199,8 +199,13 @@ def test_b1_acceptance_accepts_bound_native_provenance_without_changing_authorit
 
 
 def test_typed_b4_dossier_binds_native_projection_and_reconciliation(native_run):
-    configuration = materialize_prebound_network_configuration_from_provider_native(
-        native_run
+    source_configuration = (
+        materialize_prebound_network_configuration_from_provider_native(native_run)
+    )
+    configuration = replace(source_configuration, enabled=True, configuration_digest="")
+    configuration = replace(
+        configuration,
+        configuration_digest=configuration.computed_configuration_digest,
     )
     artifacts = QualificationReadyArtifactsV1(
         provider="therundown_experimental",
@@ -251,3 +256,274 @@ def test_typed_b4_dossier_binds_native_projection_and_reconciliation(native_run)
     )
     assert dossier.as_payload()["schema_version"] == "top5-b4-evidence-dossier-v1"
     assert dossier.dossier_digest == dossier.computed_dossier_digest
+    assert dossier.source_configuration.enabled is False
+    assert dossier.source_configuration.configuration_digest == (
+        source_configuration.configuration_digest
+    )
+    assert dossier.configuration.enabled is True
+    assert dossier.configuration.configuration_digest == (
+        configuration.configuration_digest
+    )
+
+    drifted_configuration = replace(
+        configuration,
+        minimum_interval_seconds=configuration.minimum_interval_seconds + 0.5,
+        configuration_digest="",
+    )
+    drifted_configuration = replace(
+        drifted_configuration,
+        configuration_digest=drifted_configuration.computed_configuration_digest,
+    )
+    with pytest.raises(ProviderNativeEvidenceBridgeError):
+        assemble_top5_b4_evidence_dossier(
+            source_main_sha="a" * 40,
+            quota_proof=_proof(),
+            native_run=native_run,
+            configuration=drifted_configuration,
+            reconciliation=reconciliation,
+            shadow_headroom=None,
+            now=NOW,
+        )
+
+
+def test_complete_post_shadow_chain_accepts_native_five_league_artifacts_offline(
+    monkeypatch, tmp_path
+):
+    """Synthetic injected fixtures prove shape compatibility only; they are not evidence."""
+    from datetime import timedelta
+
+    from tests.football import test_top5_b2_five_league_receipt as b2_tests
+    from tests.football import (
+        test_top5_controlled_shadow_authorization_package as shadow_package_tests,
+    )
+    from tests.football import test_top5_final_acceptance as builder1_tests
+    from tests.football import test_top5_public_delivery as public_delivery_tests
+    from tests.football import test_top5_therundown_network_shadow as network_tests
+    from tests.football import (
+        test_top5_therundown_provider_native_discovery as discovery_tests,
+    )
+    from src.football.top5_b2_qualification_batch_orchestrator import (
+        Builder2FiveLeagueShadowPackageV1,
+        FIVE_LEAGUE_SHADOW_PACKAGE_SCHEMA_VERSION,
+        build_five_league_shadow_package,
+        consume_five_league_shadow_package,
+    )
+    from src.football.top5_controlled_shadow_authorization_package import (
+        CANONICAL_CANDIDATE_PROVIDER,
+        reconcile_controlled_shadow_run_with_b1_ll_artifact,
+    )
+    from src.football.top5_controlled_shadow_provider_qualification import (
+        ObservationEvidenceKind,
+    )
+    from src.football.top5_final_acceptance import verify_final_acceptance
+    from src.football.top5_public_acceptance import publication_precheck
+    from src.football.top5_runtime_operations import (
+        Top5ActivationPrecheckInput,
+        top5_activation_precheck,
+    )
+    from src.football.top5_therundown_network_shadow import (
+        NetworkShadowRunStatus,
+        TheRundownNetworkShadowExecutorV1,
+    )
+
+    base_now = public_delivery_tests.BASE
+    precheck_now = base_now + timedelta(minutes=1)
+    monkeypatch.setattr(discovery_tests, "NOW", base_now)
+    monkeypatch.setattr(network_tests, "NOW", base_now)
+    monkeypatch.setattr(builder1_tests, "NOW", base_now)
+    monkeypatch.setattr(builder1_tests, "NOW_ACCEPTANCE", precheck_now)
+    monkeypatch.setattr(
+        "src.football.top5_therundown_event_discovery.discovery_authorization_consumption_state_path",
+        lambda: tmp_path / "native-discovery-consumption.json",
+    )
+
+    # All transport responses below are deterministic in-process stubs. No
+    # provider client, credential file, socket, or external evidence is used.
+    native_run = discovery_tests.discover_five_league_events_provider_native(
+        discovery_tests._authorization(
+            issued_at=base_now - timedelta(minutes=1),
+            expires_at=base_now + timedelta(hours=1),
+        ),
+        proof=discovery_tests._proof(),
+        api_key="injected-test-only",
+        transport=discovery_tests.FakeNativeTransport(
+            [
+                discovery_tests._response(league)
+                for league in discovery_tests.DISCOVERY_LEAGUE_ORDER
+            ]
+        ),
+        now=base_now,
+        pacer=lambda _seconds: None,
+    )
+    provenance = build_provider_native_discovery_provenance(native_run)
+    projected_discovery = project_provider_native_discovery_evidence(native_run)
+    source_configuration = (
+        materialize_prebound_network_configuration_from_provider_native(native_run)
+    )
+    configuration = replace(source_configuration, enabled=True, configuration_digest="")
+    configuration = replace(
+        configuration,
+        configuration_digest=configuration.computed_configuration_digest,
+    )
+    authorization = network_tests._authorization(
+        configuration,
+        provider=CANONICAL_CANDIDATE_PROVIDER,
+    )
+    authorization, quota_headroom = network_tests._quota_headroom(authorization)
+    transport = network_tests._NetworkStubTransport(
+        lambda request: network_tests._response(
+            request,
+            evidence_kind=ObservationEvidenceKind.REAL_OBSERVED,
+            network_execution=True,
+            adapter_version=configuration.adapter_version,
+            adapter_source_sha=configuration.adapter_source_sha,
+        )
+    )
+    shadow_run = TheRundownNetworkShadowExecutorV1(
+        clock=lambda: base_now,
+        pacer=lambda _seconds: None,
+        allow_live_network=True,
+    ).run(
+        configuration,
+        authorization,
+        transport=transport,
+        quota_headroom=quota_headroom,
+    )
+    assert shadow_run.status is NetworkShadowRunStatus.COMPLETED_NETWORK
+    assert tuple(item.target.league for item in shadow_run.captures) == (
+        "EPL",
+        "BL1",
+        "LL",
+        "SA",
+        "L1",
+    )
+    assert configuration.provider_affiliate_ids == ("19",)
+    assert tuple(item.request_identity for item in configuration.request_scope) == (
+        provenance.request_identities
+    )
+
+    b1_ll_artifact = shadow_package_tests._b1_ll_artifact(shadow_run, authorization)
+    reconciliation = reconcile_controlled_shadow_run_with_b1_ll_artifact(
+        shadow_run,
+        configuration,
+        authorization,
+        b1_ll_artifact,
+        now=base_now,
+    )
+    monkeypatch.setattr(
+        b2_tests,
+        "_candidate_network_run",
+        lambda: (shadow_run, configuration),
+    )
+    b2_run, manifests = b2_tests._canonical_run_and_manifests()
+    b2_package = build_five_league_shadow_package(b2_run, manifests)
+    restored_package = Builder2FiveLeagueShadowPackageV1.from_payload(
+        b2_package.as_payload()
+    )
+    b2_receipt_package = consume_five_league_shadow_package(restored_package)
+    assert restored_package.schema_version == FIVE_LEAGUE_SHADOW_PACKAGE_SCHEMA_VERSION
+    assert len(restored_package.shadow_run.captures) == 5
+    assert len(restored_package.manifests) == 5
+    assert len(b2_receipt_package.receipts) == 5
+    assert all(
+        receipt.accepted and receipt.no_bet for receipt in b2_receipt_package.receipts
+    )
+    assert all(not receipt.publication for receipt in b2_receipt_package.receipts)
+    assert all(
+        not receipt.production_activation for receipt in b2_receipt_package.receipts
+    )
+    assert all(
+        not receipt.monetary_spend_authorized for receipt in b2_receipt_package.receipts
+    )
+
+    dossier = assemble_top5_b4_evidence_dossier(
+        source_main_sha="a" * 40,
+        quota_proof=discovery_tests._proof(),
+        native_run=native_run,
+        configuration=configuration,
+        reconciliation=reconciliation,
+        shadow_headroom=quota_headroom,
+        now=base_now,
+    )
+    assert dossier.dossier_digest == dossier.computed_dossier_digest
+    assert (
+        dossier.source_configuration.as_payload() == source_configuration.as_payload()
+    )
+    assert dossier.configuration.as_payload() == configuration.as_payload()
+    assert dossier.native_provenance.provider_affiliate_ids == ("19",)
+    assert (
+        dossier.native_provenance.provider_event_ids
+        == reconciliation.provider_event_ids
+    )
+    assert dossier.native_provenance.participant_ids == tuple(
+        participant
+        for capture in native_run.captures
+        for participant in (capture.home_participant_id, capture.away_participant_id)
+    )
+
+    monkeypatch.setattr(
+        builder1_tests, "_candidate_network_run", lambda: (shadow_run, configuration)
+    )
+    builder1_bundle = builder1_tests._bundle()
+    builder1_bundle["discovery_evidence"] = [
+        item.as_payload() for item in projected_discovery
+    ]
+    builder1_bundle["provider_native_discovery_provenance"] = provenance.as_payload()
+    public = builder1_bundle["public"]
+    release_values = {
+        "source_release_sha": builder1_bundle["model_runtime"]["source_sha"],
+        "runtime_data_sha": builder1_bundle["runtime_evidence"]["runtime_data_sha"],
+        "source_runtime_consistent": True,
+    }
+    public["worker_payload"]["top5_release"].update(release_values)
+    public["static_payload"]["top5_release"].update(release_values)
+    public_digest = builder1_tests.canonical_digest(public["worker_payload"])
+    public["delivery_manifest"].update(
+        {
+            "public_product_digest": public_digest,
+            "static_payload_digest": public_digest,
+            "worker_payload_digest": public_digest,
+        }
+    )
+    b1_result = verify_final_acceptance(builder1_bundle, now=precheck_now)
+    assert b1_result["status"] == "TOP5_FINAL_ACCEPTANCE_VERIFIED"
+    assert b1_result["manifest"]["provider_authority"] == "the_odds_api"
+    assert b1_result["manifest"]["candidate_provider"] == "therundown_experimental"
+    assert b1_result["manifest"]["checks"]["candidate_not_authority"] is True
+    assert b1_result["manifest"]["checks"]["no_bet"] is True
+
+    activation = top5_activation_precheck(
+        Top5ActivationPrecheckInput(
+            evidence_reference=b1_result["manifest"]["manifest_digest"],
+            five_league_evidence_valid=True,
+            builder1_acceptance_passed=True,
+            provider_authority_granted=True,
+            model_bound=True,
+            research_bound=True,
+            signal_time_approved=True,
+            scheduler_ready=True,
+            health_ready=True,
+            rollback_ready=True,
+            activation_authorized=True,
+            no_synthetic_evidence=True,
+        )
+    )
+    assert activation.status == "TOP5_RUNTIME_ACTIVATION_READY"
+    assert activation.activation_mode == "disabled"
+    assert activation.provider_authority == "the_odds_api"
+    assert activation.mutation_performed is False
+
+    publication = publication_precheck(
+        public["worker_payload"],
+        b1_result,
+        now=precheck_now,
+        delivery_manifest={
+            **public["delivery_manifest"],
+            "dry_run_status": "TOP5_DELIVERY_DRY_RUN",
+            "rollback_ready": True,
+        },
+    )
+    assert publication["status"] == "TOP5_PUBLICATION_PRECHECK_READY"
+    assert publication["publication_enabled"] is False
+    assert publication["production_mutation"] is False
+    assert publication["provider_requests"] == 0

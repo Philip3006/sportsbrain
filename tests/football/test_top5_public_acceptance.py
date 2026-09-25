@@ -4,11 +4,14 @@ from __future__ import annotations
 
 from datetime import timedelta
 
+import pytest
+
 from scripts.top5_public_acceptance import main as acceptance_cli
 from scripts.top5_public_production_verification import verify_public_captures
 from src.football.top5_public_acceptance import (
     TOP5_PUBLIC_DELIVERY_BLOCKED,
     TOP5_PUBLIC_DELIVERY_READY,
+    TOP5_PUBLICATION_PRECHECK_BLOCKED,
     TOP5_PUBLICATION_PRECHECK_READY,
     publication_precheck,
     validate_public_bundle,
@@ -200,6 +203,114 @@ def test_publication_precheck_requires_dry_run_and_rollback_manifest() -> None:
     assert any(
         reason["code"] == "PUBLIC_DELIVERY_MANIFEST_MISSING"
         for reason in result["reasons"]
+    )
+
+
+def _verified_b1_cli_evidence(monkeypatch):
+    from tests.football import (
+        test_top5_candidate_provider_eligibility as candidate_tests,
+    )
+    from tests.football import test_top5_final_acceptance as builder1_tests
+    from tests.football import test_top5_therundown_network_shadow as shadow_tests
+    from tests.football.test_top5_public_delivery import BASE as PUBLIC_BASE
+    from src.football.top5_final_acceptance import verify_final_acceptance
+
+    now = PUBLIC_BASE + timedelta(minutes=1)
+    monkeypatch.setattr(candidate_tests, "NOW", PUBLIC_BASE)
+    monkeypatch.setattr(shadow_tests, "NOW", PUBLIC_BASE)
+    monkeypatch.setattr(builder1_tests, "NOW", PUBLIC_BASE)
+    monkeypatch.setattr(builder1_tests, "NOW_ACCEPTANCE", now)
+    bundle = builder1_tests._bundle()
+    public = bundle["public"]
+    release_values = {
+        "source_release_sha": bundle["model_runtime"]["source_sha"],
+        "runtime_data_sha": bundle["runtime_evidence"]["runtime_data_sha"],
+        "source_runtime_consistent": True,
+    }
+    public["worker_payload"]["top5_release"].update(release_values)
+    public["static_payload"]["top5_release"].update(release_values)
+    public_digest = builder1_tests.canonical_digest(public["worker_payload"])
+    public["delivery_manifest"].update(
+        {
+            "public_product_digest": public_digest,
+            "static_payload_digest": public_digest,
+            "worker_payload_digest": public_digest,
+        }
+    )
+    result = verify_final_acceptance(bundle, now=now)
+    delivery_manifest = {
+        **public["delivery_manifest"],
+        "dry_run_status": "TOP5_DELIVERY_DRY_RUN",
+        "rollback_ready": True,
+    }
+    return public["worker_payload"], result, now, delivery_manifest
+
+
+def test_publication_precheck_accepts_actual_verified_b1_cli_shape_read_only(
+    monkeypatch,
+):
+    public_payload, b1_result, now, delivery_manifest = _verified_b1_cli_evidence(
+        monkeypatch
+    )
+
+    result = publication_precheck(
+        public_payload,
+        b1_result,
+        now=now,
+        delivery_manifest=delivery_manifest,
+    )
+
+    assert b1_result["status"] == "TOP5_FINAL_ACCEPTANCE_VERIFIED"
+    assert result["status"] == TOP5_PUBLICATION_PRECHECK_READY
+    assert result["publication_enabled"] is False
+    assert result["production_mutation"] is False
+    assert result["provider_requests"] == 0
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    (
+        "manifest_digest",
+        "candidate_authority",
+        "product_binding",
+        "public_payload",
+        "outer_shape",
+    ),
+)
+def test_publication_precheck_rejects_tampered_b1_cli_output(monkeypatch, mutation):
+    public_payload, b1_result, now, delivery_manifest = _verified_b1_cli_evidence(
+        monkeypatch
+    )
+    manifest = b1_result["manifest"]
+    if mutation == "manifest_digest":
+        manifest["manifest_digest"] = "0" * 64
+    elif mutation == "candidate_authority":
+        manifest["checks"]["candidate_not_authority"] = False
+        manifest["manifest_digest"] = builder1_manifest_digest(manifest)
+    elif mutation == "product_binding":
+        manifest["public_product_digest"] = "0" * 64
+        manifest["manifest_digest"] = builder1_manifest_digest(manifest)
+    elif mutation == "public_payload":
+        public_payload["top5_release"]["runtime_data_sha"] = "f" * 40
+    else:
+        b1_result["publication_authorized"] = True
+
+    result = publication_precheck(
+        public_payload,
+        b1_result,
+        now=now,
+        delivery_manifest=delivery_manifest,
+    )
+    assert result["status"] == TOP5_PUBLICATION_PRECHECK_BLOCKED
+    assert result["publication_enabled"] is False
+    assert result["provider_requests"] == 0
+
+
+def builder1_manifest_digest(manifest):
+    from src.football.top5_final_acceptance import canonical_digest
+
+    return canonical_digest(
+        {key: value for key, value in manifest.items() if key != "manifest_digest"}
     )
 
 

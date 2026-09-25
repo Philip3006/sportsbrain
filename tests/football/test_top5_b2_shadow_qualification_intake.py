@@ -116,6 +116,43 @@ def test_manifest_round_trip_and_unknown_or_missing_fields_are_rejected() -> Non
         Builder2QualificationIntakeManifestV1.from_payload(unknown)
 
 
+def test_manifest_preserves_forty_character_source_commit_sha() -> None:
+    base = _manifest()
+    source_sha = "d" * 40
+    attestation = replace(
+        base.capture_attestation,
+        adapter_source_sha=source_sha,
+    )
+    observation = replace(
+        base.observation,
+        adapter_source_sha=source_sha,
+        capture_attestation=attestation,
+    )
+    session = replace(base.session, adapter_source_sha=source_sha)
+    manifest = _manifest(
+        observation=observation,
+        session=session,
+        capture_attestation=attestation,
+    )
+
+    restored = Builder2QualificationIntakeManifestV1.from_payload(manifest.as_payload())
+    result = validate_intake(restored)
+
+    assert restored.adapter_source_sha == source_sha
+    assert result.receipt.adapter_source_sha == source_sha
+
+
+def test_manifest_rejects_malformed_source_commit_sha() -> None:
+    payload = _manifest().as_payload()
+    payload["adapter_source_sha"] = "z" * 40
+
+    with pytest.raises(
+        Builder2QualificationIntakeError,
+        match="40-character commit SHA or 64-character source digest",
+    ):
+        Builder2QualificationIntakeManifestV1.from_payload(payload)
+
+
 @pytest.mark.parametrize(
     "field",
     [
