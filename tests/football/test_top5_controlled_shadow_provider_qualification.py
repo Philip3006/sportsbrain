@@ -523,10 +523,15 @@ def test_stale_future_and_lead_timing_failures() -> None:
         request_started_at=KICKOFF - timedelta(seconds=32),
         request_finished_at=KICKOFF - timedelta(seconds=30),
     )
+    too_far_ahead = replace(
+        _observation(),
+        kickoff=CAPTURED + timedelta(seconds=TIMING.maximum_lead_seconds + 1),
+    )
     for observation, code in (
         (stale, QualificationCode.STALE_OBSERVATION),
         (future, QualificationCode.FUTURE_SOURCE_TIMESTAMP),
         (too_late, QualificationCode.MINIMUM_LEAD_NOT_MET),
+        (too_far_ahead, QualificationCode.MAXIMUM_LEAD_EXCEEDED),
     ):
         result = _qualify((observation,)).results[0]
         assert result.status is ProviderQualificationStatus.OBSERVED_REJECTED
