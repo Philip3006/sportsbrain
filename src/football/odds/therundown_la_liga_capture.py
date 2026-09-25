@@ -533,7 +533,8 @@ def validate_same_run_ll_capture(
         or captured_at > current
         or request_started_at > request_finished_at
         or request_finished_at > current
-        or (current - source_timestamp).total_seconds() > maximum_source_age_seconds
+        or (captured_at - source_timestamp).total_seconds()
+        > maximum_source_age_seconds
     ):
         raise ProductionContractError(
             "same-run LL timestamp/freshness validation failed"
