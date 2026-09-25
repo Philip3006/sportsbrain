@@ -49,6 +49,9 @@ from src.football.provider_cascade.contracts import (
     TransportCapability,
     digest_record,
 )
+from src.football.top5_builder2_qualification_receipt import (
+    LEGACY_RECEIPT_SCHEMA_VERSION,
+)
 from src.football.top5_controlled_shadow_provider_qualification import (
     CAPTURE_ATTESTATION_CONTRACT_VERSION,
     ObservationEvidenceKind,
@@ -359,8 +362,7 @@ class TheRundownQuotaHeadroomEvidenceV1:
                 "proof_quota_limit_datapoints",
             )
             if (
-                self.proof_quota_used_datapoints
-                + self.observed_remaining_datapoints
+                self.proof_quota_used_datapoints + self.observed_remaining_datapoints
                 != self.proof_quota_limit_datapoints
             ):
                 raise NetworkShadowExecutionBlocked(
@@ -424,26 +426,16 @@ class TheRundownQuotaHeadroomEvidenceV1:
                 raw.get("schema_version", QUOTA_HEADROOM_SCHEMA_VERSION)
             ),
             proof_authorization_id=str(raw.get("proof_authorization_id", "")),
-            proof_authorization_digest=str(
-                raw.get("proof_authorization_digest", "")
-            ),
+            proof_authorization_digest=str(raw.get("proof_authorization_digest", "")),
             proof_evidence_digest=str(raw.get("proof_evidence_digest", "")),
-            proof_request_shape_digest=str(
-                raw.get("proof_request_shape_digest", "")
-            ),
-            discovery_authorization_id=str(
-                raw.get("discovery_authorization_id", "")
-            ),
+            proof_request_shape_digest=str(raw.get("proof_request_shape_digest", "")),
+            discovery_authorization_id=str(raw.get("discovery_authorization_id", "")),
             discovery_artifact_digest=str(raw.get("discovery_artifact_digest", "")),
             proof_billed_datapoints=raw.get("proof_billed_datapoints", 0),  # type: ignore[arg-type]
             proof_status_code=raw.get("proof_status_code", 0),  # type: ignore[arg-type]
             proof_quota_period=str(raw.get("proof_quota_period", "")),
-            proof_quota_used_datapoints=raw.get(
-                "proof_quota_used_datapoints", 0
-            ),  # type: ignore[arg-type]
-            proof_quota_limit_datapoints=raw.get(
-                "proof_quota_limit_datapoints", 0
-            ),  # type: ignore[arg-type]
+            proof_quota_used_datapoints=raw.get("proof_quota_used_datapoints", 0),  # type: ignore[arg-type]
+            proof_quota_limit_datapoints=raw.get("proof_quota_limit_datapoints", 0),  # type: ignore[arg-type]
             proof_quota_reset_at=proof_reset,
         )
 
@@ -1653,12 +1645,8 @@ class TheRundownQuotaProofAuthorizationV1:
             shadow_qualification_session_id=str(
                 raw.get("shadow_qualification_session_id", "")
             ),
-            shadow_configuration_digest=str(
-                raw.get("shadow_configuration_digest", "")
-            ),
-            discovery_authorization_id=str(
-                raw.get("discovery_authorization_id", "")
-            ),
+            shadow_configuration_digest=str(raw.get("shadow_configuration_digest", "")),
+            discovery_authorization_id=str(raw.get("discovery_authorization_id", "")),
             discovery_artifact_digest=str(raw.get("discovery_artifact_digest", "")),
         )
 
@@ -1668,7 +1656,10 @@ class TheRundownQuotaProofAuthorizationV1:
         self.validate()
         _sha(proof_configuration_digest, "proof configuration digest")
         is_shadow_headroom = self.proof_purpose == SHADOW_HEADROOM_PROOF_PURPOSE
-        if is_shadow_headroom and proof_configuration_digest != self.shadow_configuration_digest:
+        if (
+            is_shadow_headroom
+            and proof_configuration_digest != self.shadow_configuration_digest
+        ):
             raise NetworkShadowExecutionBlocked(
                 "shadow headroom proof configuration binding does not match"
             )
@@ -2902,6 +2893,7 @@ class TheRundownNetworkShadowCaptureV1:
     failure_reason: str | None
     candidate_only: bool = True
     receipt_eligible: bool = False
+    builder2_receipt_schema_version: str = RECEIPT_SCHEMA_VERSION
 
     @property
     def canonical_capture_attestation(self) -> Mapping[str, object]:
@@ -2946,7 +2938,7 @@ class TheRundownNetworkShadowCaptureV1:
     @property
     def builder2_receipt_input(self) -> dict[str, object]:
         return {
-            "schema_version": RECEIPT_SCHEMA_VERSION,
+            "schema_version": self.builder2_receipt_schema_version,
             "eligible": False,
             "issuer_present": False,
             "reason": "transport emits evidence inputs only; Builder-2 remains the receipt authority",
@@ -3006,6 +2998,13 @@ class TheRundownNetworkShadowCaptureV1:
         )
         if self.candidate_only is not True or self.receipt_eligible is not False:
             raise NetworkShadowExecutionBlocked("capture cannot carry authority")
+        if self.builder2_receipt_schema_version not in {
+            LEGACY_RECEIPT_SCHEMA_VERSION,
+            RECEIPT_SCHEMA_VERSION,
+        }:
+            raise NetworkShadowExecutionBlocked(
+                "capture Builder-2 input schema is unsupported"
+            )
         if (
             self.network_execution
             and self.evidence_kind is not ObservationEvidenceKind.REAL_OBSERVED

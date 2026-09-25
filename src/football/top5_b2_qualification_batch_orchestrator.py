@@ -38,6 +38,8 @@ from src.football.top5_b2_shadow_qualification_intake import (
     validate_intake,
 )
 from src.football.top5_builder2_qualification_receipt import (
+    LEGACY_RECEIPT_SCHEMA_VERSION,
+    RECEIPT_SCHEMA_VERSION,
     Builder2QualificationReceiptError,
     Builder2QualificationReceiptV1,
     semantic_digest,
@@ -47,10 +49,12 @@ from src.football.top5_controlled_shadow_provider_qualification import (
     TOP5_LEAGUES,
     MinimumSamplePolicy,
     ObservationEvidenceKind,
+    ProviderQualificationPurpose,
     ProviderQualificationReport,
     QualificationContractError,
     RealProviderObservation,
     qualify_provider_observations,
+    qualify_structural_provider_observations,
 )
 from src.football.top5_provider_cascade_validation import ExpectedCascadeFixture
 from src.football.top5_qualification_sample_aggregator import (
@@ -712,6 +716,19 @@ def _shadow_capture_from_envelope(value: object) -> TheRundownNetworkShadowCaptu
     request = _shadow_request_from_payload(raw["request"])
     target = _shadow_target_from_payload(raw["target"])
     response = _shadow_response_from_payload(capture_raw["response"])
+    receipt_input = capture_raw.get("builder2_receipt_input")
+    if not isinstance(receipt_input, Mapping):
+        raise Builder2QualificationBatchError(
+            "capture Builder-2 receipt input is missing"
+        )
+    receipt_schema_version = receipt_input.get("schema_version")
+    if receipt_schema_version not in {
+        LEGACY_RECEIPT_SCHEMA_VERSION,
+        RECEIPT_SCHEMA_VERSION,
+    }:
+        raise Builder2QualificationBatchError(
+            "capture Builder-2 receipt input schema is unsupported"
+        )
     try:
         evidence_kind = ObservationEvidenceKind(capture_raw["evidence_kind"])
     except (TypeError, ValueError) as exc:
@@ -732,6 +749,7 @@ def _shadow_capture_from_envelope(value: object) -> TheRundownNetworkShadowCaptu
         failure_reason=capture_raw["failure_reason"],
         candidate_only=capture_raw["candidate_only"],
         receipt_eligible=capture_raw["receipt_eligible"],
+        builder2_receipt_schema_version=receipt_schema_version,
     )
     if capture.as_payload() != capture_raw:
         raise Builder2QualificationBatchError(
@@ -1852,7 +1870,15 @@ def _cross_item_findings(records: Sequence[_IdentityRecord]) -> _CrossItemFindin
             if lm.intake_id == rm.intake_id and not same_manifest:
                 findings.mixed_intake_identity_ids.add(lm.intake_id)
                 _mark_conflict(findings, left, right, "MIXED_INTAKE_IDENTITY")
-            if lm.controlled_shadow_run_id == rm.controlled_shadow_run_id:
+            same_run = lm.controlled_shadow_run_id == rm.controlled_shadow_run_id
+            same_capture = (
+                lm.observation_id == rm.observation_id
+                or lm.provider_request_id == rm.provider_request_id
+            )
+            # One governed five-league run intentionally has five distinct
+            # per-league captures. Reused run IDs and per-capture attestation
+            # digests are therefore expected across different leagues.
+            if same_run and lm.observation.league == rm.observation.league:
                 findings.duplicate_run_ids.add(lm.controlled_shadow_run_id)
                 if not same_manifest:
                     _mark_conflict(findings, left, right, "DUPLICATE_RUN_ID_CONFLICT")
@@ -1882,7 +1908,7 @@ def _cross_item_findings(records: Sequence[_IdentityRecord]) -> _CrossItemFindin
                 _mark_conflict(
                     findings, left, right, "CONFLICTING_CEO_AUTHORIZATION_BINDING"
                 )
-            if lm.controlled_shadow_run_id == rm.controlled_shadow_run_id:
+            if same_run:
                 if lm.ceo_authorization_id != rm.ceo_authorization_id:
                     findings.conflicting_ceo_authorization_ids.update(
                         (lm.ceo_authorization_id, rm.ceo_authorization_id)
@@ -1890,7 +1916,18 @@ def _cross_item_findings(records: Sequence[_IdentityRecord]) -> _CrossItemFindin
                     _mark_conflict(
                         findings, left, right, "CONFLICTING_CEO_AUTHORIZATION_BINDING"
                     )
-                if lm.capture_attestation_digest != rm.capture_attestation_digest:
+                if lm.qualification_session_id != rm.qualification_session_id:
+                    _mark_conflict(
+                        findings,
+                        left,
+                        right,
+                        "CONFLICTING_QUALIFICATION_SESSION_BINDING",
+                    )
+                if lm.capture_attestation_digest != rm.capture_attestation_digest and (
+                    same_capture
+                    or lm.ceo_authorization_id != rm.ceo_authorization_id
+                    or lm.qualification_session_id != rm.qualification_session_id
+                ):
                     findings.conflicting_capture_attestation_digests.update(
                         (lm.capture_attestation_digest, rm.capture_attestation_digest)
                     )
@@ -1955,11 +1992,25 @@ def _qualify_manifest(
 ) -> ProviderQualificationReport:
     """Call the existing pure qualification gate with manifest context."""
 
-    return qualify_provider_observations(
+    structural = (
+        ProviderQualificationPurpose(manifest.qualification_purpose)
+        is ProviderQualificationPurpose.STRUCTURAL_PROVIDER
+    )
+    policy = manifest.structural_policy if structural else manifest.timing_policy
+    if policy is None:
+        raise Builder2QualificationBatchError(
+            "manifest qualification policy is missing"
+        )
+    qualifier = (
+        qualify_structural_provider_observations
+        if structural
+        else qualify_provider_observations
+    )
+    return qualifier(
         (manifest.observation,),
         manifest.session,
         _expected_fixture(manifest),
-        manifest.timing_policy,
+        policy,
         manifest.provider_readiness,
         manifest.authorization,
     )

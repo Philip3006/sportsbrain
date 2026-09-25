@@ -27,6 +27,8 @@ from src.football.provider_cascade.candidate_eligibility import (
     CandidateProviderEligibilityV1,
 )
 from src.football.top5_builder2_qualification_receipt import (
+    LEGACY_RECEIPT_SCHEMA_VERSION,
+    RECEIPT_SCHEMA_VERSION,
     Builder2QualificationReceiptV1,
     issue_builder2_qualification_receipt,
     semantic_digest,
@@ -41,13 +43,16 @@ from src.football.top5_controlled_shadow_provider_qualification import (
     ControlledShadowCaptureAttestation,
     MinimumSamplePolicy,
     ObservationEvidenceKind,
+    ProviderQualificationPurpose,
     ProviderQualificationSession,
     ProviderQualificationStatus,
     ProviderReadinessState,
     QualificationContractError,
     QualificationTimingPolicy,
     RealProviderObservation,
+    StructuralProviderQualificationPolicy,
     qualify_provider_observations,
+    qualify_structural_provider_observations,
 )
 from src.football.top5_provider_cascade_validation import (
     CASCADE_PROVIDER_ORDER,
@@ -69,6 +74,7 @@ from src.football.top5_therundown_network_shadow import (
 from src.utils.atomic_io import atomic_write_json
 
 INTAKE_CONTRACT_VERSION = "top5-b2-shadow-qualification-intake-v1"
+STRUCTURAL_INTAKE_CONTRACT_VERSION = "top5-b2-shadow-qualification-intake-v2"
 RESULT_CONTRACT_VERSION = "top5-b2-shadow-qualification-intake-result-v1"
 NO_NETWORK_EXECUTION = "NO NETWORK EXECUTION"
 NO_BET = "NO BET"
@@ -106,6 +112,14 @@ _MANIFEST_REQUIRED = frozenset(
     }
 )
 _MANIFEST_OPTIONAL = frozenset({"candidate_provider_eligibility"})
+_STRUCTURAL_MANIFEST_REQUIRED = frozenset(
+    (_MANIFEST_REQUIRED - {"timing_policy", "timing_policy_reference"})
+    | {
+        "qualification_purpose",
+        "structural_policy",
+        "qualification_policy_reference",
+    }
+)
 
 _ARTIFACT_FIELDS = frozenset({"role", "path", "digest"})
 _SESSION_FIELDS = frozenset(
@@ -164,6 +178,16 @@ _TIMING_FIELDS = frozenset(
         "minimum_lead_seconds",
         "maximum_lead_seconds",
         "production_signal_time_values_approved",
+        "note",
+    }
+)
+_STRUCTURAL_POLICY_FIELDS = frozenset(
+    {
+        "schema_version",
+        "maximum_odds_age_seconds",
+        "kickoff_tolerance_seconds",
+        "production_signal_time_values_approved",
+        "signal_time_approved",
         "note",
     }
 )
@@ -533,6 +557,32 @@ def _timing_from_payload(payload: object) -> QualificationTimingPolicy:
     return policy
 
 
+def _structural_policy_from_payload(
+    payload: object,
+) -> StructuralProviderQualificationPolicy:
+    raw = _strict_mapping(
+        payload,
+        required=_STRUCTURAL_POLICY_FIELDS,
+        allowed=_STRUCTURAL_POLICY_FIELDS,
+        name="structural_policy",
+    )
+    if (
+        raw["schema_version"] != "top5-structural-provider-qualification-policy-v1"
+        or raw["production_signal_time_values_approved"] is not False
+        or raw["signal_time_approved"] is not False
+        or raw["note"] != NO_PRODUCTION_SIGNAL_TIME_VALUES
+    ):
+        raise Builder2QualificationIntakeError(
+            "structural qualification must keep signal-time approval false"
+        )
+    policy = StructuralProviderQualificationPolicy(
+        maximum_odds_age_seconds=raw["maximum_odds_age_seconds"],
+        kickoff_tolerance_seconds=raw["kickoff_tolerance_seconds"],
+    )
+    policy.validate()
+    return policy
+
+
 def _cascade_from_payload(payload: object) -> CascadeEvidence:
     raw = _strict_mapping(
         payload,
@@ -618,7 +668,7 @@ class Builder2QualificationIntakeManifestV1:
     capture_attestation_digest: str
     adapter_version: str
     adapter_source_sha: str
-    timing_policy_reference: str
+    timing_policy_reference: str | None
     readiness_reference: str
     source_artifacts: tuple[Builder2QualificationSourceArtifactV1, ...]
     observation: RealProviderObservation
@@ -626,18 +676,73 @@ class Builder2QualificationIntakeManifestV1:
     authorization: CEOAuthorization
     cascade_evidence: CascadeEvidence
     capture_attestation: ControlledShadowCaptureAttestation
-    timing_policy: QualificationTimingPolicy
+    timing_policy: QualificationTimingPolicy | None
     provider_readiness: Mapping[str, ProviderReadinessState | str]
     candidate_provider_eligibility: CandidateProviderEligibilityV1 | None = None
+    qualification_purpose: ProviderQualificationPurpose | str = (
+        ProviderQualificationPurpose.SIGNAL_TIME
+    )
+    structural_policy: StructuralProviderQualificationPolicy | None = None
+    qualification_policy_reference: str | None = None
 
     @classmethod
     def from_payload(cls, payload: object) -> Builder2QualificationIntakeManifestV1:
-        raw = _strict_mapping(
+        raw_payload = _strict_mapping(
             payload,
-            required=_MANIFEST_REQUIRED,
-            allowed=(*_MANIFEST_REQUIRED, *_MANIFEST_OPTIONAL, "manifest_digest"),
+            required={"schema_version"},
+            allowed=(
+                *_MANIFEST_REQUIRED,
+                *_STRUCTURAL_MANIFEST_REQUIRED,
+                *_MANIFEST_OPTIONAL,
+                "manifest_digest",
+            ),
             name="manifest",
         )
+        schema_version = _text(raw_payload["schema_version"], "manifest.schema_version")
+        if schema_version == INTAKE_CONTRACT_VERSION:
+            raw = _strict_mapping(
+                raw_payload,
+                required=_MANIFEST_REQUIRED,
+                allowed=(*_MANIFEST_REQUIRED, *_MANIFEST_OPTIONAL, "manifest_digest"),
+                name="manifest",
+            )
+            purpose = ProviderQualificationPurpose.SIGNAL_TIME
+            structural_policy = None
+            qualification_policy_reference = None
+            timing_policy_reference = _text(
+                raw["timing_policy_reference"], "manifest.timing_policy_reference"
+            )
+            timing_policy = _timing_from_payload(raw["timing_policy"])
+        elif schema_version == STRUCTURAL_INTAKE_CONTRACT_VERSION:
+            raw = _strict_mapping(
+                raw_payload,
+                required=_STRUCTURAL_MANIFEST_REQUIRED,
+                allowed=(
+                    *_STRUCTURAL_MANIFEST_REQUIRED,
+                    *_MANIFEST_OPTIONAL,
+                    "manifest_digest",
+                ),
+                name="manifest",
+            )
+            if (
+                raw["qualification_purpose"]
+                != ProviderQualificationPurpose.STRUCTURAL_PROVIDER.value
+            ):
+                raise Builder2QualificationIntakeError(
+                    "v2 intake requires explicit STRUCTURAL_PROVIDER purpose"
+                )
+            purpose = ProviderQualificationPurpose.STRUCTURAL_PROVIDER
+            structural_policy = _structural_policy_from_payload(
+                raw["structural_policy"]
+            )
+            qualification_policy_reference = _text(
+                raw["qualification_policy_reference"],
+                "manifest.qualification_policy_reference",
+            )
+            timing_policy_reference = None
+            timing_policy = None
+        else:
+            raise Builder2QualificationIntakeError("unsupported intake manifest schema")
         source_raw = raw["source_artifacts"]
         if not isinstance(source_raw, Sequence) or isinstance(source_raw, (str, bytes)):
             raise Builder2QualificationIntakeError("source_artifacts must be a list")
@@ -654,7 +759,6 @@ class Builder2QualificationIntakeManifestV1:
         )
         session = _session_from_payload(raw["session"])
         authorization = _authorization_from_payload(raw["authorization"])
-        timing_policy = _timing_from_payload(raw["timing_policy"])
         readiness_raw = raw["provider_readiness"]
         if not isinstance(readiness_raw, Mapping) or not readiness_raw:
             raise Builder2QualificationIntakeError(
@@ -711,9 +815,7 @@ class Builder2QualificationIntakeManifestV1:
             adapter_source_sha=_source_sha(
                 raw["adapter_source_sha"], "manifest.adapter_source_sha"
             ),
-            timing_policy_reference=_text(
-                raw["timing_policy_reference"], "manifest.timing_policy_reference"
-            ),
+            timing_policy_reference=timing_policy_reference,
             readiness_reference=_text(
                 raw["readiness_reference"], "manifest.readiness_reference"
             ),
@@ -726,6 +828,9 @@ class Builder2QualificationIntakeManifestV1:
             timing_policy=timing_policy,
             provider_readiness=provider_readiness,
             candidate_provider_eligibility=candidate_eligibility,
+            qualification_purpose=purpose,
+            structural_policy=structural_policy,
+            qualification_policy_reference=qualification_policy_reference,
         )
         manifest.validate()
         if (
@@ -738,8 +843,38 @@ class Builder2QualificationIntakeManifestV1:
         return manifest
 
     def validate(self) -> None:
-        if self.schema_version != INTAKE_CONTRACT_VERSION:
+        if self.schema_version not in {
+            INTAKE_CONTRACT_VERSION,
+            STRUCTURAL_INTAKE_CONTRACT_VERSION,
+        }:
             raise Builder2QualificationIntakeError("unsupported intake manifest schema")
+        try:
+            purpose = ProviderQualificationPurpose(self.qualification_purpose)
+        except (TypeError, ValueError) as exc:
+            raise Builder2QualificationIntakeError(
+                "qualification purpose is invalid"
+            ) from exc
+        if self.schema_version == INTAKE_CONTRACT_VERSION:
+            if (
+                purpose is not ProviderQualificationPurpose.SIGNAL_TIME
+                or self.timing_policy is None
+                or self.structural_policy is not None
+                or self.timing_policy_reference is None
+                or self.qualification_policy_reference is not None
+            ):
+                raise Builder2QualificationIntakeError(
+                    "v1 intake must retain its explicit signal-time policy"
+                )
+        elif (
+            purpose is not ProviderQualificationPurpose.STRUCTURAL_PROVIDER
+            or self.timing_policy is not None
+            or self.structural_policy is None
+            or self.timing_policy_reference is not None
+            or not self.qualification_policy_reference
+        ):
+            raise Builder2QualificationIntakeError(
+                "v2 intake requires structural policy and no signal-time policy"
+            )
         for name, value in (
             ("intake_id", self.intake_id),
             ("controlled_shadow_run_id", self.controlled_shadow_run_id),
@@ -751,10 +886,16 @@ class Builder2QualificationIntakeManifestV1:
             ("provider_request_id", self.provider_request_id),
             ("observation_id", self.observation_id),
             ("adapter_version", self.adapter_version),
-            ("timing_policy_reference", self.timing_policy_reference),
             ("readiness_reference", self.readiness_reference),
         ):
             _text(value, f"manifest.{name}")
+        if self.timing_policy_reference is not None:
+            _text(self.timing_policy_reference, "manifest.timing_policy_reference")
+        if self.qualification_policy_reference is not None:
+            _text(
+                self.qualification_policy_reference,
+                "manifest.qualification_policy_reference",
+            )
         _component(self.intake_id, "manifest.intake_id")
         for name, value in (
             ("observation_digest", self.observation_digest),
@@ -788,7 +929,10 @@ class Builder2QualificationIntakeManifestV1:
         self.cascade_evidence.validate_structural()
         self.capture_attestation.validate()
         self.observation.validate_structural()
-        self.timing_policy.validate()
+        if self.timing_policy is not None:
+            self.timing_policy.validate()
+        if self.structural_policy is not None:
+            self.structural_policy.validate()
         if self.provider_identity in CANDIDATE_PROVIDER_IDENTITIES:
             if self.candidate_provider_eligibility is None:
                 raise Builder2QualificationIntakeError(
@@ -963,7 +1107,7 @@ class Builder2QualificationIntakeManifestV1:
 
     def as_payload(self) -> dict[str, object]:
         self.validate()
-        payload = {
+        payload: dict[str, object] = {
             "schema_version": self.schema_version,
             "intake_id": self.intake_id,
             "controlled_shadow_run_id": self.controlled_shadow_run_id,
@@ -980,7 +1124,6 @@ class Builder2QualificationIntakeManifestV1:
             "capture_attestation_digest": self.capture_attestation_digest,
             "adapter_version": self.adapter_version,
             "adapter_source_sha": self.adapter_source_sha,
-            "timing_policy_reference": self.timing_policy_reference,
             "readiness_reference": self.readiness_reference,
             "source_artifacts": [item.as_payload() for item in self.source_artifacts],
             "observation": self.observation.as_payload(),
@@ -988,12 +1131,26 @@ class Builder2QualificationIntakeManifestV1:
             "authorization": self.authorization.as_payload(),
             "cascade_evidence": self.cascade_evidence.as_payload(),
             "capture_attestation": self.capture_attestation.as_payload(),
-            "timing_policy": self.timing_policy.as_payload(),
             "provider_readiness": {
                 key: ProviderReadinessState(value).value
                 for key, value in sorted(self.provider_readiness.items())
             },
         }
+        if self.schema_version == INTAKE_CONTRACT_VERSION:
+            assert self.timing_policy is not None
+            assert self.timing_policy_reference is not None
+            payload["timing_policy_reference"] = self.timing_policy_reference
+            payload["timing_policy"] = self.timing_policy.as_payload()
+        else:
+            assert self.structural_policy is not None
+            assert self.qualification_policy_reference is not None
+            payload["qualification_purpose"] = ProviderQualificationPurpose(
+                self.qualification_purpose
+            ).value
+            payload["structural_policy"] = self.structural_policy.as_payload()
+            payload["qualification_policy_reference"] = (
+                self.qualification_policy_reference
+            )
         if self.candidate_provider_eligibility is not None:
             payload["candidate_provider_eligibility"] = (
                 self.candidate_provider_eligibility.as_payload()
@@ -1003,6 +1160,68 @@ class Builder2QualificationIntakeManifestV1:
     @property
     def manifest_digest(self) -> str:
         return semantic_digest(self.as_payload())
+
+
+def project_manifest_to_structural_provider(
+    manifest: Builder2QualificationIntakeManifestV1,
+    *,
+    immutable_source_path: str,
+) -> Builder2QualificationIntakeManifestV1:
+    """Create an explicit structural projection without editing source evidence.
+
+    Only the source-age and kickoff-identity limits are carried into the new
+    structural policy. The source manifest, its authorization, observations,
+    timestamps, and digests remain unchanged and are bound as an input artifact.
+    """
+
+    if not isinstance(manifest, Builder2QualificationIntakeManifestV1):
+        raise Builder2QualificationIntakeError("canonical source manifest is required")
+    manifest.validate()
+    if (
+        manifest.schema_version != INTAKE_CONTRACT_VERSION
+        or manifest.timing_policy is None
+        or ProviderQualificationPurpose(manifest.qualification_purpose)
+        is not ProviderQualificationPurpose.SIGNAL_TIME
+    ):
+        raise Builder2QualificationIntakeError(
+            "only an original v1 signal-time manifest can be explicitly projected"
+        )
+    source_path = str(
+        _safe_external_path(immutable_source_path, "source manifest path")
+    )
+    source_artifact = Builder2QualificationSourceArtifactV1(
+        role="immutable-source-manifest",
+        path=source_path,
+        digest=manifest.manifest_digest,
+    )
+    existing_roles = {item.role for item in manifest.source_artifacts}
+    if source_artifact.role in existing_roles:
+        raise Builder2QualificationIntakeError(
+            "source manifest role is already present"
+        )
+    structural = StructuralProviderQualificationPolicy(
+        maximum_odds_age_seconds=manifest.timing_policy.maximum_odds_age_seconds,
+        kickoff_tolerance_seconds=manifest.timing_policy.kickoff_tolerance_seconds,
+    )
+    projected = replace(
+        manifest,
+        schema_version=STRUCTURAL_INTAKE_CONTRACT_VERSION,
+        source_artifacts=tuple(
+            sorted(
+                (*manifest.source_artifacts, source_artifact),
+                key=lambda item: (item.role, item.path),
+            )
+        ),
+        timing_policy_reference=None,
+        timing_policy=None,
+        qualification_purpose=ProviderQualificationPurpose.STRUCTURAL_PROVIDER,
+        structural_policy=structural,
+        qualification_policy_reference=(
+            "top5-structural-provider-qualification-policy-v1"
+        ),
+    )
+    projected.validate()
+    return projected
 
 
 @dataclass(frozen=True)
@@ -1075,11 +1294,22 @@ def validate_intake(
         away_team=manifest.observation.away_team,
         kickoff=manifest.observation.kickoff,
     )
-    report = qualify_provider_observations(
+    qualification_call = (
+        qualify_provider_observations
+        if ProviderQualificationPurpose(manifest.qualification_purpose)
+        is ProviderQualificationPurpose.SIGNAL_TIME
+        else qualify_structural_provider_observations
+    )
+    policy = manifest.timing_policy or manifest.structural_policy
+    if policy is None:
+        raise Builder2QualificationIntakeError(
+            "manifest qualification policy is missing"
+        )
+    report = qualification_call(
         (manifest.observation,),
         manifest.session,
         expected_fixture,
-        manifest.timing_policy,
+        policy,
         manifest.provider_readiness,
         manifest.authorization,
         candidate_eligibility=manifest.candidate_provider_eligibility,
@@ -1441,7 +1671,10 @@ def load_receipts_from_directory(
     receipts: list[Builder2QualificationReceiptV1] = []
     for candidate in paths:
         raw = _load_json(candidate, "receipt artifact")
-        if raw.get("schema_version") != "top5-builder2-qualification-receipt-v1":
+        if raw.get("schema_version") not in {
+            LEGACY_RECEIPT_SCHEMA_VERSION,
+            RECEIPT_SCHEMA_VERSION,
+        }:
             raise Builder2QualificationIntakeError(
                 f"non-canonical receipt artifact encountered: {candidate.name}"
             )
@@ -1640,14 +1873,14 @@ def _report_artifact_summary(raw: Mapping[str, object]) -> dict[str, object]:
 def inspect_artifact(path: str | Path) -> dict[str, object]:
     raw = _load_json(path, "artifact")
     schema = raw.get("schema_version") or raw.get("contract_version")
-    if schema == INTAKE_CONTRACT_VERSION:
+    if schema in {INTAKE_CONTRACT_VERSION, STRUCTURAL_INTAKE_CONTRACT_VERSION}:
         manifest = Builder2QualificationIntakeManifestV1.from_payload(raw)
         return {
             "artifact_type": "manifest",
             "digest": manifest.manifest_digest,
             "payload": manifest.as_payload(),
         }
-    if schema == "top5-builder2-qualification-receipt-v1":
+    if schema in {LEGACY_RECEIPT_SCHEMA_VERSION, RECEIPT_SCHEMA_VERSION}:
         receipt = Builder2QualificationReceiptV1.from_payload(raw)
         receipt.validate()
         return {
@@ -1816,6 +2049,7 @@ __all__ = [
     "NO_NETWORK_EXECUTION",
     "NO_PRODUCTION_ACTIVATION",
     "NO_PUBLICATION",
+    "STRUCTURAL_INTAKE_CONTRACT_VERSION",
     "Builder2QualificationIntakeError",
     "Builder2QualificationIntakeManifestV1",
     "Builder2QualificationIntakeResultV1",
@@ -1826,6 +2060,7 @@ __all__ = [
     "load_intake_manifest",
     "load_receipts_from_directory",
     "main",
+    "project_manifest_to_structural_provider",
     "qualify_five_league_shadow_run",
     "run_intake",
     "validate_intake",

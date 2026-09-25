@@ -858,6 +858,27 @@ def test_package_and_reconciliation_never_issue_receipt_or_change_authority():
     )
 
 
+def test_b4_materializes_structural_qualification_manifest_without_signal_lead_window():
+    result, configuration, authorization = _network_run()
+    _, manifest = b4_package._b2_manifest_for_capture(
+        _capture(result, "EPL"), configuration, authorization
+    )
+
+    assert manifest.qualification_purpose == "STRUCTURAL_PROVIDER"
+    assert manifest.timing_policy is None
+    assert manifest.structural_policy is not None
+    assert (
+        manifest.structural_policy.maximum_odds_age_seconds
+        == configuration.maximum_source_age_seconds
+    )
+    payload = manifest.as_payload()
+    assert "timing_policy" not in payload
+    assert payload["structural_policy"]["signal_time_approved"] is False
+    assert (
+        payload["structural_policy"]["production_signal_time_values_approved"] is False
+    )
+
+
 def _cli_input_files(tmp_path: Path):
     tmp_path.mkdir(parents=True, exist_ok=True)
     _, configuration, authorization = _network_run()
@@ -1023,9 +1044,7 @@ def _dedicated_headroom_files(tmp_path: Path, monkeypatch):
     )
     authorization = replace(
         authorization,
-        quota_headroom_evidence_digest=headroom_summary[
-            "headroom_evidence_digest"
-        ],
+        quota_headroom_evidence_digest=headroom_summary["headroom_evidence_digest"],
     )
     package_path = tmp_path / "authorization-package.json"
     package_path.write_text(json.dumps(package.as_payload()), encoding="utf-8")
@@ -1105,12 +1124,10 @@ def test_dedicated_shadow_headroom_proof_materializes_and_preflight_stays_networ
     assert headroom["provenance_source"] == SHADOW_HEADROOM_PROVENANCE_SOURCE
     assert headroom["proof"]["raw_header_evidence"]["x-tier"] == "free"
     assert headroom["proof"]["status_code"] == 200
-    assert headroom["headroom"]["observed_at"] == headroom["proof"][
-        "response_finished_at"
-    ]
-    assert headroom["proof"]["raw_header_evidence"]["x-datapoints-period"] == (
-        "daily"
+    assert (
+        headroom["headroom"]["observed_at"] == headroom["proof"]["response_finished_at"]
     )
+    assert headroom["proof"]["raw_header_evidence"]["x-datapoints-period"] == ("daily")
     preflight = run_guarded_network_preflight(
         inputs["package_path"],
         inputs["authorization_path"],

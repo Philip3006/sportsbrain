@@ -10,6 +10,7 @@ import pytest
 
 from src.football.provider_cascade.contracts import FOOTBALL_PROVIDER_REPERTOIRE
 from src.football.top5_builder2_qualification_receipt import (
+    RECEIPT_SCHEMA_VERSION,
     Builder2QualificationReceiptError,
     issue_builder2_qualification_receipt,
 )
@@ -517,7 +518,7 @@ def test_offline_real_shaped_lifecycle_preserves_exact_five_league_bindings(leag
     assert artifact.result.evidence.canonical_capture_attestation_digest
 
     receipt_input = artifact.builder2_receipt_input
-    assert receipt_input["schema_version"] == "top5-builder2-qualification-receipt-v1"
+    assert receipt_input["schema_version"] == RECEIPT_SCHEMA_VERSION
     assert receipt_input["issuer_present"] is False
     assert receipt_input["eligible"] is False
     assert (

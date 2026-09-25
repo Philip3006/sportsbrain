@@ -16,15 +16,18 @@ from src.football.top5_controlled_shadow_provider_qualification import (
     MinimumSamplePolicy,
     ObservationEvidenceKind,
     ProviderQualificationSession,
+    ProviderQualificationPurpose,
     ProviderQualificationStatus,
     ProviderTimestampProvenance,
     QualificationCode,
     QualificationContractError,
     QualificationTimingPolicy,
     RealProviderObservation,
+    StructuralProviderQualificationPolicy,
     bridge_real_observation_to_builder1_shadow_evidence,
     offline_fixture_catalog,
     qualify_provider_observations,
+    qualify_structural_provider_observations,
 )
 from src.football.top5_provider_cascade_validation import (
     BudgetDecision,
@@ -56,9 +59,7 @@ EXPECTED = ExpectedCascadeFixture(
     away_team="Arsenal",
     kickoff=KICKOFF,
 )
-ORDER = (
-    "the_odds_api",
-)
+ORDER = ("the_odds_api",)
 READY = {
     provider: ProviderReadinessState.LIVE_PATH_READY_FOR_OBSERVATION
     for provider in ORDER
@@ -437,6 +438,141 @@ def test_valid_real_observation_requires_proof_and_is_qualified() -> None:
     assert epl.freshness.n == 1
     assert report.signal_time_note == NO_PRODUCTION_SIGNAL_TIME_VALUES
     assert report.production_activation_authorized is False
+
+
+def test_structural_provider_qualification_accepts_far_future_real_observation():
+    kickoff = CAPTURED + timedelta(days=14, hours=12)
+    expected = replace(
+        EXPECTED,
+        kickoff=kickoff,
+        fixture_key=make_fixture_key(
+            EXPECTED.league, EXPECTED.home_team, EXPECTED.away_team, kickoff
+        ),
+    )
+    cascade = _cascade_for_expected(expected, suffix="structural")
+    observation = _observation_for_cascade(
+        cascade, cascade.attempts[0], expected=expected
+    )
+    session = _session(fixture_scope=(expected.fixture_key,))
+    authorization = _authorization(fixture_scope=(expected.fixture_key,))
+    structural_policy = StructuralProviderQualificationPolicy(
+        maximum_odds_age_seconds=TIMING.maximum_odds_age_seconds,
+        kickoff_tolerance_seconds=TIMING.kickoff_tolerance_seconds,
+    )
+
+    structural = qualify_structural_provider_observations(
+        (observation,), session, expected, structural_policy, READY, authorization
+    )
+    signal_time = qualify_provider_observations(
+        (observation,), session, expected, TIMING, READY, authorization
+    )
+
+    assert (
+        structural.qualification_status
+        is ProviderQualificationStatus.REAL_OBSERVATION_VALIDATED
+    )
+    assert structural.results[0].accepted is True
+    assert (
+        structural.qualification_purpose
+        is ProviderQualificationPurpose.STRUCTURAL_PROVIDER
+    )
+    payload = structural.as_payload()
+    assert payload["production_signal_time_values_approved"] is False
+    assert payload["signal_time_approved"] is False
+    assert payload["signal_time_note"] == NO_PRODUCTION_SIGNAL_TIME_VALUES
+    assert signal_time.results[0].accepted is False
+    assert (
+        QualificationCode.MAXIMUM_LEAD_EXCEEDED.value
+        in signal_time.results[0].failure_codes
+    )
+
+    with pytest.raises(
+        QualificationContractError, match="canonical receipt aggregation"
+    ):
+        qualify_structural_provider_observations(
+            (observation,),
+            session,
+            expected,
+            structural_policy,
+            READY,
+            authorization,
+            minimum_sample_policy=MinimumSamplePolicy(1, 1),
+        )
+
+
+def test_structural_provider_qualification_rejects_past_kickoff():
+    kickoff = CAPTURED - timedelta(seconds=1)
+    expected = replace(
+        EXPECTED,
+        kickoff=kickoff,
+        fixture_key=make_fixture_key(
+            EXPECTED.league, EXPECTED.home_team, EXPECTED.away_team, kickoff
+        ),
+    )
+    cascade = _cascade_for_expected(expected, suffix="past")
+    observation = _observation_for_cascade(
+        cascade, cascade.attempts[0], expected=expected
+    )
+    report = qualify_structural_provider_observations(
+        (observation,),
+        _session(fixture_scope=(expected.fixture_key,)),
+        expected,
+        StructuralProviderQualificationPolicy(900, 300),
+        READY,
+        _authorization(fixture_scope=(expected.fixture_key,)),
+    )
+
+    assert report.results[0].accepted is False
+    assert QualificationCode.KICKOFF_NOT_FUTURE.value in report.results[0].failure_codes
+
+
+def test_structural_provider_qualification_keeps_freshness_market_identity_and_provenance_checks():
+    kickoff = CAPTURED + timedelta(days=14)
+    expected = replace(
+        EXPECTED,
+        kickoff=kickoff,
+        fixture_key=make_fixture_key(
+            EXPECTED.league, EXPECTED.home_team, EXPECTED.away_team, kickoff
+        ),
+    )
+    cascade = _cascade_for_expected(expected, suffix="structural-checks")
+    base = _observation_for_cascade(cascade, cascade.attempts[0], expected=expected)
+    session = _session(fixture_scope=(expected.fixture_key,))
+    authorization = _authorization(fixture_scope=(expected.fixture_key,))
+    policy = StructuralProviderQualificationPolicy(900, 300)
+
+    rejected = (
+        (
+            replace(base, source_timestamp=CAPTURED - timedelta(seconds=901)),
+            QualificationCode.STALE_OBSERVATION,
+        ),
+        (
+            replace(base, source_timestamp=CAPTURED + timedelta(seconds=1)),
+            QualificationCode.FUTURE_SOURCE_TIMESTAMP,
+        ),
+        (replace(base, home_odds=1.0), QualificationCode.MALFORMED_ODDS),
+        (replace(base, draw_odds=None), QualificationCode.MISSING_DRAW),
+        (
+            replace(base, synthetic_reconstruction=True),
+            QualificationCode.SYNTHETIC_RECONSTRUCTION,
+        ),
+        (replace(base, league="BL1"), QualificationCode.WRONG_LEAGUE),
+        (replace(base, home_team="Wrong Team"), QualificationCode.TEAM_ALIAS_MISMATCH),
+        (
+            replace(base, raw_response_digest="f" * 64),
+            QualificationCode.RAW_DIGEST_MISMATCH,
+        ),
+    )
+    for observation, expected_code in rejected:
+        report = qualify_structural_provider_observations(
+            (observation,), session, expected, policy, READY, authorization
+        )
+        assert report.results[0].accepted is False
+        assert (
+            expected_code.value in report.results[0].failure_codes
+            or QualificationCode.INVALID_OBSERVATION.value
+            in report.results[0].failure_codes
+        )
 
 
 @pytest.mark.parametrize(

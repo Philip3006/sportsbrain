@@ -37,7 +37,7 @@ from src.football.top5_b2_qualification_batch_orchestrator import (
     load_five_league_shadow_package,
 )
 from src.football.top5_b2_shadow_qualification_intake import (
-    INTAKE_CONTRACT_VERSION,
+    STRUCTURAL_INTAKE_CONTRACT_VERSION,
     Builder2QualificationIntakeError,
     Builder2QualificationIntakeManifestV1,
     Builder2QualificationSourceArtifactV1,
@@ -49,10 +49,11 @@ from src.football.top5_controlled_shadow_provider_qualification import (
     CEOAuthorization,
     ControlledShadowCaptureAttestation,
     ObservationEvidenceKind,
+    ProviderQualificationPurpose,
     ProviderQualificationSession,
     ProviderReadinessState,
-    QualificationTimingPolicy,
     RealProviderObservation,
+    StructuralProviderQualificationPolicy,
 )
 from src.football.top5_provider_cascade_validation import (
     BudgetDecision,
@@ -101,9 +102,7 @@ RECONCILIATION_SCHEMA_VERSION = "top5-controlled-shadow-reconciliation-v1"
 QUALIFICATION_ARTIFACT_SCHEMA_VERSION = (
     "top5-controlled-shadow-qualification-artifacts-v1"
 )
-SHADOW_HEADROOM_ARTIFACT_SCHEMA_VERSION = (
-    "top5-therundown-shadow-headroom-evidence-v1"
-)
+SHADOW_HEADROOM_ARTIFACT_SCHEMA_VERSION = "top5-therundown-shadow-headroom-evidence-v1"
 FUTURE_EXECUTION_COMMAND = (
     "python -m src.football.top5_controlled_shadow_authorization_package "
     "--execute-network --package <authorization-package.json> "
@@ -126,9 +125,7 @@ SPEND_CONTROL_DASHBOARD_SCHEMA_VERSION = "top5-spend-control-dashboard-attestati
 SPEND_CONTROL_DASHBOARD_EVIDENCE_KIND = "operator_dashboard_attestation"
 QUOTA_PROOF_CONSUMPTION_SCHEMA_VERSION = "top5-therundown-quota-proof-consumption-v2"
 QUOTA_PROOF_FAILURE_SCHEMA_VERSION = "top5-therundown-quota-proof-failure-v1"
-B2_SHADOW_TIMING_KICKOFF_TOLERANCE_SECONDS = 60
-B2_SHADOW_TIMING_MINIMUM_LEAD_SECONDS = 0
-B2_SHADOW_TIMING_MAXIMUM_LEAD_SECONDS = 10_800
+B2_STRUCTURAL_KICKOFF_TOLERANCE_SECONDS = 60
 
 
 class ControlledShadowAuthorizationPackageError(NetworkShadowContractError):
@@ -746,7 +743,9 @@ def _load_quota_headroom(
             "shadow headroom provenance is not the dedicated provider proof"
         )
     package_source_id = package.configuration_payload.get("discovery_authorization_id")
-    package_source_digest = package.configuration_payload.get("discovery_artifact_digest")
+    package_source_digest = package.configuration_payload.get(
+        "discovery_artifact_digest"
+    )
     if not isinstance(package_source_id, str) or not isinstance(
         package_source_digest, str
     ):
@@ -771,8 +770,7 @@ def _load_quota_headroom(
     if (
         proof_authorization.shadow_authorization_package_digest
         != package.package_digest
-        or proof_authorization.shadow_authorization_id
-        != authorization.authorization_id
+        or proof_authorization.shadow_authorization_id != authorization.authorization_id
         or proof_authorization.shadow_controlled_shadow_run_id
         != authorization.controlled_shadow_run_id
         or proof_authorization.shadow_qualification_session_id
@@ -809,9 +807,7 @@ def _load_quota_headroom(
         proof_payload_container, proof_authorization, proof_evidence
     )
 
-    headroom = TheRundownQuotaHeadroomEvidenceV1.from_payload(
-        raw.get("headroom")
-    )
+    headroom = TheRundownQuotaHeadroomEvidenceV1.from_payload(raw.get("headroom"))
     try:
         headroom.validate(
             expected_package_digest=package.package_digest,
@@ -2099,14 +2095,15 @@ class ControlledShadowAuthorizationPackageV1:
             )
         discovery_authorization_id = configuration.get("discovery_authorization_id")
         discovery_artifact_digest = configuration.get("discovery_artifact_digest")
-        if (discovery_authorization_id is None) != (
-            discovery_artifact_digest is None
-        ):
+        if (discovery_authorization_id is None) != (discovery_artifact_digest is None):
             raise ControlledShadowAuthorizationPackageError(
                 "authorization package Discovery binding is incomplete"
             )
         if discovery_authorization_id is not None:
-            if not isinstance(discovery_authorization_id, str) or not discovery_authorization_id.strip():
+            if (
+                not isinstance(discovery_authorization_id, str)
+                or not discovery_authorization_id.strip()
+            ):
                 raise ControlledShadowAuthorizationPackageError(
                     "authorization package Discovery authorization binding is invalid"
                 )
@@ -2917,11 +2914,9 @@ def _b2_manifest_for_capture(
         now=response.captured_at,
         maximum_source_age_seconds=configuration.maximum_source_age_seconds,
     )
-    timing_policy = QualificationTimingPolicy(
+    structural_policy = StructuralProviderQualificationPolicy(
         maximum_odds_age_seconds=configuration.maximum_source_age_seconds,
-        kickoff_tolerance_seconds=B2_SHADOW_TIMING_KICKOFF_TOLERANCE_SECONDS,
-        minimum_lead_seconds=B2_SHADOW_TIMING_MINIMUM_LEAD_SECONDS,
-        maximum_lead_seconds=B2_SHADOW_TIMING_MAXIMUM_LEAD_SECONDS,
+        kickoff_tolerance_seconds=B2_STRUCTURAL_KICKOFF_TOLERANCE_SECONDS,
     )
     session = ProviderQualificationSession(
         qualification_session_id=request.qualification_session_id,
@@ -2960,7 +2955,7 @@ def _b2_manifest_for_capture(
         digest=response.raw_response_digest,
     )
     manifest = Builder2QualificationIntakeManifestV1(
-        schema_version=INTAKE_CONTRACT_VERSION,
+        schema_version=STRUCTURAL_INTAKE_CONTRACT_VERSION,
         intake_id=(
             f"top5-{target.league.lower()}-{_digest(request.request_identity)[:16]}"
         ),
@@ -2978,7 +2973,10 @@ def _b2_manifest_for_capture(
         capture_attestation_digest=semantic_digest(attestation_payload),
         adapter_version=response.adapter_version,
         adapter_source_sha=response.adapter_source_sha,
-        timing_policy_reference="top5-controlled-shadow-timing-v1",
+        timing_policy_reference=None,
+        qualification_policy_reference=(
+            "top5-structural-provider-qualification-policy-v1"
+        ),
         readiness_reference="top5-controlled-shadow-provider-readiness-v1",
         source_artifacts=(source_artifact,),
         observation=observation,
@@ -2986,11 +2984,13 @@ def _b2_manifest_for_capture(
         authorization=b2_authorization,
         cascade_evidence=cascade,
         capture_attestation=attestation,
-        timing_policy=timing_policy,
+        timing_policy=None,
         provider_readiness={
             CANONICAL_CANDIDATE_PROVIDER: ProviderReadinessState.LIVE_PATH_READY_FOR_OBSERVATION
         },
         candidate_provider_eligibility=eligibility,
+        qualification_purpose=ProviderQualificationPurpose.STRUCTURAL_PROVIDER,
+        structural_policy=structural_policy,
     )
     manifest.validate()
     return canonical_capture, manifest

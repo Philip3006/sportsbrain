@@ -226,6 +226,31 @@ def test_precheck_is_blocked_by_default_and_never_mutates() -> None:
     assert "explicit activation authorization is missing" in report.failures
 
 
+def test_structural_evidence_cannot_substitute_for_signal_time_activation_approval() -> (
+    None
+):
+    report = top5_activation_precheck(
+        Top5ActivationPrecheckInput(
+            evidence_reference="structural-provider-evidence:run-004",
+            five_league_evidence_valid=True,
+            builder1_acceptance_passed=True,
+            provider_authority_granted=True,
+            model_bound=True,
+            research_bound=True,
+            signal_time_approved=False,
+            scheduler_ready=True,
+            health_ready=True,
+            rollback_ready=True,
+            activation_authorized=True,
+            no_synthetic_evidence=True,
+        )
+    )
+
+    assert report.ready is False
+    assert "Signal-Time approval is missing" in report.failures
+    assert report.mutation_performed is False
+
+
 def test_precheck_can_report_ready_only_with_all_explicit_inputs() -> None:
     report = top5_activation_precheck(
         Top5ActivationPrecheckInput(

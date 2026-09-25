@@ -19,9 +19,12 @@ from src.football.production_contracts import ProductionContractError
 from src.football.top5_b2_shadow_qualification_intake import (
     INTAKE_CONTRACT_VERSION,
     RESULT_CONTRACT_VERSION,
+    STRUCTURAL_INTAKE_CONTRACT_VERSION,
     Builder2QualificationIntakeManifestV1,
 )
 from src.football.top5_builder2_qualification_receipt import (
+    LEGACY_RECEIPT_SCHEMA_VERSION,
+    RECEIPT_SCHEMA_VERSION,
     Builder2QualificationReceiptError,
     Builder2QualificationReceiptV1,
     semantic_digest,
@@ -30,6 +33,7 @@ from src.football.top5_controlled_shadow_provider_qualification import (
     NO_PRODUCTION_SIGNAL_TIME_VALUES,
     QUALIFICATION_CONTRACT_VERSION,
     MinimumSamplePolicy,
+    ProviderQualificationPurpose,
     ProviderQualificationReport,
     ProviderQualificationStatus,
     QualificationContractError,
@@ -61,7 +65,7 @@ MISSING_QUALIFICATION_REPORT = "MISSING_QUALIFICATION_REPORT"
 INTAKE_BINDING_MISMATCH = "INTAKE_BINDING_MISMATCH"
 SAMPLE_REPORT_MISMATCH = "SAMPLE_REPORT_MISMATCH"
 
-_REPORT_FIELDS = frozenset(
+_REPORT_REQUIRED_FIELDS = frozenset(
     {
         "contract_version",
         "qualification_status",
@@ -84,6 +88,14 @@ _REPORT_FIELDS = frozenset(
         "recommendation",
     }
 )
+_REPORT_OPTIONAL_FIELDS = frozenset(
+    {
+        "qualification_purpose",
+        "production_signal_time_values_approved",
+        "signal_time_approved",
+    }
+)
+_REPORT_FIELDS = _REPORT_REQUIRED_FIELDS | _REPORT_OPTIONAL_FIELDS
 _REPORT_RESULT_FIELDS = frozenset(
     {
         "observation_id",
@@ -290,6 +302,7 @@ class Builder2DecisionPacketReportSummaryV1:
     unresolved: tuple[str, ...]
     production_sample_sufficient: bool | None
     signal_time_note: str
+    qualification_purpose: str = ProviderQualificationPurpose.SIGNAL_TIME.value
 
     def validate(self) -> None:
         _digest(self.report_digest, "report_digest")
@@ -334,6 +347,12 @@ class Builder2DecisionPacketReportSummaryV1:
             raise Builder2QualificationDecisionPacketError(
                 "signal-time approval cannot be asserted"
             )
+        try:
+            ProviderQualificationPurpose(self.qualification_purpose)
+        except (TypeError, ValueError) as exc:
+            raise Builder2QualificationDecisionPacketError(
+                "qualification purpose is invalid"
+            ) from exc
 
     def as_payload(self) -> dict[str, object]:
         self.validate()
@@ -351,6 +370,9 @@ class Builder2DecisionPacketReportSummaryV1:
             "unresolved": list(self.unresolved),
             "production_sample_sufficient": self.production_sample_sufficient,
             "signal_time_note": self.signal_time_note,
+            "qualification_purpose": self.qualification_purpose,
+            "production_signal_time_values_approved": False,
+            "signal_time_approved": False,
         }
 
     @classmethod
@@ -380,9 +402,19 @@ class Builder2DecisionPacketReportSummaryV1:
                 "unresolved",
                 "production_sample_sufficient",
                 "signal_time_note",
+                "qualification_purpose",
+                "production_signal_time_values_approved",
+                "signal_time_approved",
             },
             name="report summary",
         )
+        if (
+            raw.get("production_signal_time_values_approved", False) is not False
+            or raw.get("signal_time_approved", False) is not False
+        ):
+            raise Builder2QualificationDecisionPacketError(
+                "report summary cannot approve production signal time"
+            )
         rejected_raw = raw["rejected_failure_codes"]
         counts_raw = raw["failure_counts"]
         if not isinstance(rejected_raw, Mapping) or not isinstance(counts_raw, Mapping):
@@ -411,6 +443,10 @@ class Builder2DecisionPacketReportSummaryV1:
             unresolved=_sorted_texts(raw["unresolved"], "unresolved"),
             production_sample_sufficient=raw["production_sample_sufficient"],
             signal_time_note=raw["signal_time_note"],
+            qualification_purpose=raw.get(
+                "qualification_purpose",
+                ProviderQualificationPurpose.SIGNAL_TIME.value,
+            ),
         )
         summary.validate()
         return summary
@@ -632,6 +668,7 @@ class _ReportSnapshot:
     unresolved: tuple[str, ...]
     production_sample_sufficient: bool | None
     signal_time_note: str
+    qualification_purpose: str
 
 
 def _receipt(value: object, name: str) -> Builder2QualificationReceiptV1:
@@ -723,7 +760,7 @@ def _report_snapshot(
     elif isinstance(value, Mapping):
         raw = _strict_mapping(
             value,
-            required=_REPORT_FIELDS,
+            required=_REPORT_REQUIRED_FIELDS,
             allowed=_REPORT_FIELDS,
             name="qualification report",
         )
@@ -746,6 +783,24 @@ def _report_snapshot(
         raise Builder2QualificationDecisionPacketError(
             "qualification report signal-time state is unsafe"
         )
+    if (
+        raw.get("production_signal_time_values_approved", False) is not False
+        or raw.get("signal_time_approved", False) is not False
+    ):
+        raise Builder2QualificationDecisionPacketError(
+            "qualification report cannot approve production signal time"
+        )
+    try:
+        qualification_purpose = ProviderQualificationPurpose(
+            raw.get(
+                "qualification_purpose",
+                ProviderQualificationPurpose.SIGNAL_TIME.value,
+            )
+        ).value
+    except (TypeError, ValueError) as exc:
+        raise Builder2QualificationDecisionPacketError(
+            "qualification report purpose is invalid"
+        ) from exc
     session = _strict_mapping(
         raw["session"],
         required=_SESSION_FIELDS,
@@ -859,6 +914,7 @@ def _report_snapshot(
         unresolved=unresolved,
         production_sample_sufficient=sufficient,
         signal_time_note=raw["signal_time_note"],
+        qualification_purpose=qualification_purpose,
     )
 
 
@@ -874,6 +930,7 @@ def _report_summary(snapshot: _ReportSnapshot) -> Builder2DecisionPacketReportSu
         unresolved=snapshot.unresolved,
         production_sample_sufficient=snapshot.production_sample_sufficient,
         signal_time_note=snapshot.signal_time_note,
+        qualification_purpose=snapshot.qualification_purpose,
     )
     summary.validate()
     return summary
@@ -1895,13 +1952,17 @@ def load_decision_packet_inputs(path: str | Path) -> dict[str, tuple[object, ...
             continue
         raw = _load_json(candidate, "canonical input artifact")
         schema = raw.get("schema_version") or raw.get("contract_version")
-        if schema == "top5-builder2-qualification-receipt-v1":
+        if schema in {LEGACY_RECEIPT_SCHEMA_VERSION, RECEIPT_SCHEMA_VERSION}:
             receipts.append(_receipt(raw, str(candidate)))
         elif schema == BUILDER2_QUALIFICATION_SAMPLE_AGGREGATOR_CONTRACT_VERSION:
             samples.append(_sample_report(raw, str(candidate)))
         elif schema == QUALIFICATION_CONTRACT_VERSION:
             reports.append(raw)
-        elif schema in {INTAKE_CONTRACT_VERSION, RESULT_CONTRACT_VERSION}:
+        elif schema in {
+            INTAKE_CONTRACT_VERSION,
+            STRUCTURAL_INTAKE_CONTRACT_VERSION,
+            RESULT_CONTRACT_VERSION,
+        }:
             raise Builder2QualificationDecisionPacketError(
                 f"orphan intake artifact is not a complete intake directory: {candidate.name}"
             )

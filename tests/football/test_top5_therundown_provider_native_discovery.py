@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime, timedelta, timezone
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -26,6 +27,7 @@ from src.football.top5_therundown_provider_native_discovery import (
     PROVIDER_NATIVE_BILLING_MODE_CUMULATIVE,
     PROVIDER_NATIVE_BILLING_MODE_PROVIDER,
     PROVIDER_NATIVE_DISCOVERY_AUTHORIZATION_SCHEMA_VERSION,
+    PROVIDER_NATIVE_DISCOVERY_STRUCTURAL_AUTHORIZATION_SCHEMA_VERSION,
     PROVIDER_NATIVE_DISCOVERY_TARGET_SOURCE,
     PROVIDER_NATIVE_INDEPENDENT_QUALIFICATION,
     PROVIDER_NATIVE_MAX_DATAPOINTS,
@@ -36,6 +38,7 @@ from src.football.top5_therundown_provider_native_discovery import (
     PROVIDER_NATIVE_MINIMUM_HEADROOM,
     PROVIDER_NATIVE_MINIMUM_INTERVAL_SECONDS,
     TheRundownProviderNativeDiscoveryAuthorizationV1,
+    ProviderNativeDiscoverySelectionPurpose,
     TheRundownProviderNativeDiscoveryRequestV1,
     _real_provider_execution_lock,
     _request_shape_payload,
@@ -269,6 +272,7 @@ def test_native_candidate_must_be_within_explicit_inclusive_lead_window(
         {"events": [_event("EPL", kickoff=NOW + timedelta(seconds=lead_seconds))]},
         league="EPL",
         now=NOW,
+        selection_purpose=ProviderNativeDiscoverySelectionPurpose.SIGNAL_TIME,
         minimum_lead_seconds=600,
         maximum_lead_seconds=3600,
     )
@@ -300,6 +304,7 @@ def test_native_candidate_chooses_earliest_eligible_not_earlier_out_of_window():
         },
         league="EPL",
         now=NOW,
+        selection_purpose=ProviderNativeDiscoverySelectionPurpose.SIGNAL_TIME,
         minimum_lead_seconds=600,
         maximum_lead_seconds=3600,
     )
@@ -309,9 +314,7 @@ def test_native_candidate_chooses_earliest_eligible_not_earlier_out_of_window():
 
 
 def test_native_candidate_keeps_deterministic_team_tie_breaking():
-    alpha = _event(
-        "EPL", event_id="tie-alpha", kickoff=NOW + timedelta(seconds=1200)
-    )
+    alpha = _event("EPL", event_id="tie-alpha", kickoff=NOW + timedelta(seconds=1200))
     alpha["teams"][0]["name"] = "Alpha Home"
     zulu = _event("EPL", event_id="tie-zulu", kickoff=NOW + timedelta(seconds=1200))
     zulu["teams"][0]["name"] = "Zulu Home"
@@ -321,6 +324,7 @@ def test_native_candidate_keeps_deterministic_team_tie_breaking():
         {"events": [zulu, alpha]},
         league="EPL",
         now=NOW,
+        selection_purpose=ProviderNativeDiscoverySelectionPurpose.SIGNAL_TIME,
         minimum_lead_seconds=600,
         maximum_lead_seconds=3600,
     )
@@ -363,6 +367,80 @@ def test_native_discovery_authorization_requires_explicit_window_and_binds_it():
         )
 
 
+def test_structural_discovery_authorization_is_typed_and_contains_no_lead_defaults():
+    authorization = replace(
+        _authorization(),
+        minimum_lead_seconds=None,
+        maximum_lead_seconds=None,
+        selection_purpose=ProviderNativeDiscoverySelectionPurpose.STRUCTURAL_PROVIDER,
+    )
+    payload = authorization.as_payload()
+
+    assert (
+        payload["schema_version"]
+        == PROVIDER_NATIVE_DISCOVERY_STRUCTURAL_AUTHORIZATION_SCHEMA_VERSION
+    )
+    assert payload["selection_purpose"] == "STRUCTURAL_PROVIDER"
+    assert "minimum_lead_seconds" not in payload
+    assert "maximum_lead_seconds" not in payload
+    restored = type(authorization).from_payload(payload)
+    assert restored == authorization
+    assert restored.authorization_digest == authorization.authorization_digest
+
+    malformed = dict(payload)
+    malformed["selection_purpose"] = "SIGNAL_TIME"
+    with pytest.raises(EventDiscoveryContractError, match="selection purpose"):
+        type(authorization).from_payload(malformed)
+
+
+def test_structural_discovery_selects_earliest_future_without_signal_window():
+    selected = _select_candidate(
+        TheRundownExperimentalAdapter(),
+        {
+            "events": [
+                _event("EPL", event_id="past", kickoff=NOW - timedelta(seconds=1)),
+                _event(
+                    "EPL",
+                    event_id="later",
+                    kickoff=NOW + timedelta(days=16),
+                ),
+                _event(
+                    "EPL",
+                    event_id="earliest-future",
+                    kickoff=NOW + timedelta(days=14),
+                ),
+            ]
+        },
+        league="EPL",
+        now=NOW,
+        selection_purpose=ProviderNativeDiscoverySelectionPurpose.STRUCTURAL_PROVIDER,
+        minimum_lead_seconds=None,
+        maximum_lead_seconds=None,
+    )
+
+    assert selected is not None
+    assert selected.provider_event_id == "earliest-future"
+
+
+def test_structural_discovery_does_not_select_past_or_in_play_events():
+    selected = _select_candidate(
+        TheRundownExperimentalAdapter(),
+        {
+            "events": [
+                _event("EPL", event_id="past", kickoff=NOW - timedelta(seconds=1)),
+                _event("EPL", event_id="now", kickoff=NOW),
+            ]
+        },
+        league="EPL",
+        now=NOW,
+        selection_purpose=ProviderNativeDiscoverySelectionPurpose.STRUCTURAL_PROVIDER,
+        minimum_lead_seconds=None,
+        maximum_lead_seconds=None,
+    )
+
+    assert selected is None
+
+
 def test_native_discovery_defers_without_falling_back_outside_the_window():
     transport = FakeNativeTransport(
         [
@@ -383,7 +461,7 @@ def test_native_discovery_defers_without_falling_back_outside_the_window():
 
     with pytest.raises(
         EventDiscoveryExecutionBlocked,
-        match="no target within the authorized qualification lead window for EPL",
+        match="no eligible target within the authorized search for EPL",
     ):
         discover_five_league_events_provider_native(
             _authorization(minimum_lead_seconds=600, maximum_lead_seconds=3600),
@@ -465,11 +543,10 @@ def test_native_request_shape_binds_each_league_to_its_verified_sport_endpoint()
             f"/events/{(NOW.date() + timedelta(days=date_offset)).isoformat()}"
         )
         assert dict(actual.query) == planned_request["query"]
-        assert actual.query["affiliate_ids"] == ",".join(
-            B4_QUOTA_PROOF_AFFILIATE_IDS
-        )
-    assert authorization.request_shape_digest == provider_native_discovery_request_shape_digest(
-        NOW.date()
+        assert actual.query["affiliate_ids"] == ",".join(B4_QUOTA_PROOF_AFFILIATE_IDS)
+    assert (
+        authorization.request_shape_digest
+        == provider_native_discovery_request_shape_digest(NOW.date())
     )
 
 
@@ -698,9 +775,7 @@ def test_missing_provider_datapoints_uses_cumulative_quota_delta():
     ]
     result = _run_with_cumulative_responses(responses, proof=proof)
     assert result.datapoint_total == 275
-    assert result.billing_modes == (
-        PROVIDER_NATIVE_BILLING_MODE_CUMULATIVE,
-    ) * 5
+    assert result.billing_modes == (PROVIDER_NATIVE_BILLING_MODE_CUMULATIVE,) * 5
     assert result.billing_datapoints == (55,) * 5
     assert all(
         capture.billing_mode == PROVIDER_NATIVE_BILLING_MODE_CUMULATIVE
@@ -802,8 +877,9 @@ def test_provider_datapoints_must_agree_with_cumulative_delta():
 def test_cumulative_fallback_requires_the_exclusive_real_provider_lock():
     proof = _proof_with_cumulative_baseline()
     response = _cumulative_response("EPL", used=155, remaining=19845)
-    with _real_provider_execution_lock(), pytest.raises(
-        EventDiscoveryExecutionBlocked, match="lock"
+    with (
+        _real_provider_execution_lock(),
+        pytest.raises(EventDiscoveryExecutionBlocked, match="lock"),
     ):
         _run_with_cumulative_responses([response], proof=proof)
 
