@@ -9,10 +9,12 @@ from src.football.odds.therundown import (
     THERUNDOWN_BASE_URL,
     THERUNDOWN_PROVIDER_NAME,
     THERUNDOWN_VERIFIED_LEAGUE_SPORT_IDS,
+    TheRundownExperimentalAdapter,
 )
 from src.football.top5_shadow_provider_redundancy import make_fixture_key
 from src.football.top5_therundown_event_discovery import (
     B4_QUOTA_PROOF_AFFILIATE_IDS,
+    EventDiscoveryContractError,
     EventDiscoveryExecutionBlocked,
     TheRundownB4QuotaProofV1,
 )
@@ -23,6 +25,7 @@ from src.football.top5_therundown_provider_native_discovery import (
     DISCOVERY_LEAGUE_ORDER,
     PROVIDER_NATIVE_BILLING_MODE_CUMULATIVE,
     PROVIDER_NATIVE_BILLING_MODE_PROVIDER,
+    PROVIDER_NATIVE_DISCOVERY_AUTHORIZATION_SCHEMA_VERSION,
     PROVIDER_NATIVE_DISCOVERY_TARGET_SOURCE,
     PROVIDER_NATIVE_INDEPENDENT_QUALIFICATION,
     PROVIDER_NATIVE_MAX_DATAPOINTS,
@@ -36,6 +39,7 @@ from src.football.top5_therundown_provider_native_discovery import (
     TheRundownProviderNativeDiscoveryRequestV1,
     _real_provider_execution_lock,
     _request_shape_payload,
+    _select_candidate,
     discover_five_league_events_provider_native,
     provider_native_discovery_request_shape_digest,
 )
@@ -81,6 +85,8 @@ def _proof() -> TheRundownB4QuotaProofV1:
 def _authorization(
     *,
     remaining_datapoints: int | None = None,
+    minimum_lead_seconds: int = 0,
+    maximum_lead_seconds: int = 22 * 24 * 60 * 60,
     issued_at: datetime = NOW - timedelta(minutes=1),
     expires_at: datetime = NOW + timedelta(hours=1),
     proof: TheRundownB4QuotaProofV1 | None = None,
@@ -111,13 +117,19 @@ def _authorization(
         quota_proof_reset_at=proof.quota_reset_at,
         issued_at=issued_at,
         expires_at=expires_at,
+        minimum_lead_seconds=minimum_lead_seconds,
+        maximum_lead_seconds=maximum_lead_seconds,
     )
 
 
 def _event(
-    league: str, *, event_id: str | None = None, day: int = 0
+    league: str,
+    *,
+    event_id: str | None = None,
+    day: int = 0,
+    kickoff: datetime | None = None,
 ) -> dict[str, object]:
-    kickoff = NOW + timedelta(days=day, hours=2)
+    kickoff = kickoff or NOW + timedelta(days=day, hours=2)
     return {
         "event_id": event_id or f"native-{league}-{day}",
         "sport_id": THERUNDOWN_VERIFIED_LEAGUE_SPORT_IDS[league],
@@ -237,6 +249,152 @@ class FakeNativeTransport:
         self.calls.append(request)
         response = self.responses.pop(0)
         return response(request) if callable(response) else response
+
+
+@pytest.mark.parametrize(
+    ("lead_seconds", "eligible"),
+    [
+        (599, False),
+        (600, True),
+        (1800, True),
+        (3600, True),
+        (3601, False),
+    ],
+)
+def test_native_candidate_must_be_within_explicit_inclusive_lead_window(
+    lead_seconds: int, eligible: bool
+):
+    candidate = _select_candidate(
+        TheRundownExperimentalAdapter(),
+        {"events": [_event("EPL", kickoff=NOW + timedelta(seconds=lead_seconds))]},
+        league="EPL",
+        now=NOW,
+        minimum_lead_seconds=600,
+        maximum_lead_seconds=3600,
+    )
+
+    assert (candidate is not None) is eligible
+
+
+def test_native_candidate_chooses_earliest_eligible_not_earlier_out_of_window():
+    selected = _select_candidate(
+        TheRundownExperimentalAdapter(),
+        {
+            "events": [
+                _event(
+                    "EPL",
+                    event_id="eligible-later",
+                    kickoff=NOW + timedelta(seconds=900),
+                ),
+                _event(
+                    "EPL",
+                    event_id="too-early",
+                    kickoff=NOW + timedelta(seconds=599),
+                ),
+                _event(
+                    "EPL",
+                    event_id="eligible-earliest",
+                    kickoff=NOW + timedelta(seconds=600),
+                ),
+            ]
+        },
+        league="EPL",
+        now=NOW,
+        minimum_lead_seconds=600,
+        maximum_lead_seconds=3600,
+    )
+
+    assert selected is not None
+    assert selected.provider_event_id == "eligible-earliest"
+
+
+def test_native_candidate_keeps_deterministic_team_tie_breaking():
+    alpha = _event(
+        "EPL", event_id="tie-alpha", kickoff=NOW + timedelta(seconds=1200)
+    )
+    alpha["teams"][0]["name"] = "Alpha Home"
+    zulu = _event("EPL", event_id="tie-zulu", kickoff=NOW + timedelta(seconds=1200))
+    zulu["teams"][0]["name"] = "Zulu Home"
+
+    selected = _select_candidate(
+        TheRundownExperimentalAdapter(),
+        {"events": [zulu, alpha]},
+        league="EPL",
+        now=NOW,
+        minimum_lead_seconds=600,
+        maximum_lead_seconds=3600,
+    )
+
+    assert selected is not None
+    assert selected.home_team == "Alpha Home"
+
+
+def test_native_discovery_authorization_requires_explicit_window_and_binds_it():
+    authorization = _authorization(
+        minimum_lead_seconds=600,
+        maximum_lead_seconds=3600,
+    )
+    payload = authorization.as_payload()
+
+    assert (
+        payload["schema_version"]
+        == PROVIDER_NATIVE_DISCOVERY_AUTHORIZATION_SCHEMA_VERSION
+    )
+    assert payload["minimum_lead_seconds"] == 600
+    assert payload["maximum_lead_seconds"] == 3600
+    restored = type(authorization).from_payload(payload)
+    assert restored == authorization
+    assert restored.authorization_digest == authorization.authorization_digest
+    different_window = _authorization(
+        minimum_lead_seconds=600,
+        maximum_lead_seconds=3601,
+    )
+    assert different_window.authorization_digest != authorization.authorization_digest
+    assert different_window.request_shape_digest == authorization.request_shape_digest
+
+    payload.pop("minimum_lead_seconds")
+    payload.pop("authorization_digest")
+    with pytest.raises(EventDiscoveryContractError, match="payload shape is invalid"):
+        type(authorization).from_payload(payload)
+
+    with pytest.raises(EventDiscoveryContractError, match="cannot exceed"):
+        _authorization(minimum_lead_seconds=3601, maximum_lead_seconds=3600).validate(
+            now=NOW
+        )
+
+
+def test_native_discovery_defers_without_falling_back_outside_the_window():
+    transport = FakeNativeTransport(
+        [
+            _response(
+                "EPL",
+                day=offset,
+                events=[
+                    _event(
+                        "EPL",
+                        event_id=f"too-soon-{offset}",
+                        kickoff=NOW + timedelta(seconds=100),
+                    )
+                ],
+            )
+            for offset in range(PROVIDER_NATIVE_MAX_DATES_PER_LEAGUE)
+        ]
+    )
+
+    with pytest.raises(
+        EventDiscoveryExecutionBlocked,
+        match="no target within the authorized qualification lead window for EPL",
+    ):
+        discover_five_league_events_provider_native(
+            _authorization(minimum_lead_seconds=600, maximum_lead_seconds=3600),
+            proof=_proof(),
+            api_key="injected-test-only",
+            transport=transport,
+            now=NOW,
+            pacer=lambda _: None,
+        )
+
+    assert len(transport.calls) == PROVIDER_NATIVE_MAX_DATES_PER_LEAGUE
 
 
 def test_native_discovery_searches_canonical_order_and_stops_after_first_valid_day():

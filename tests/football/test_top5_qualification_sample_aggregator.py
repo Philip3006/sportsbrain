@@ -40,7 +40,7 @@ from tests.football.test_top5_controlled_shadow_provider_qualification import (
 )
 
 
-def _receipt_for_fixture(index: int):
+def _receipt_for_fixture(index: int, *, controlled_run_id: str = "controlled-run-1"):
     expected = _expected_fixture(index)
     cascade = _cascade_for_expected(expected, suffix=str(index))
     observation = _observation_for_cascade(
@@ -49,13 +49,29 @@ def _receipt_for_fixture(index: int):
         expected=expected,
         observation_id=f"observation-fixture-{index}",
     )
+    authorization = _authorization(fixture_scope=(expected.fixture_key,))
+    if controlled_run_id != authorization.controlled_shadow_run_id:
+        authorization = replace(
+            authorization,
+            authorization_id=f"ceo-auth-{controlled_run_id}",
+            controlled_shadow_run_id=controlled_run_id,
+        )
+        assert observation.capture_attestation is not None
+        observation = replace(
+            observation,
+            capture_attestation=replace(
+                observation.capture_attestation,
+                controlled_shadow_run_id=controlled_run_id,
+                ceo_authorization_id=authorization.authorization_id,
+            ),
+        )
     report = qualify_provider_observations(
         (observation,),
         _session(fixture_scope=(expected.fixture_key,)),
         expected,
         TIMING,
         READY,
-        _authorization(fixture_scope=(expected.fixture_key,)),
+        authorization,
     )
     return issue_builder2_qualification_receipt(report, observation, report.results[0])
 
@@ -139,6 +155,27 @@ def test_valid_receipts_aggregate_counts_identities_provenance_and_safety() -> N
     assert report.freshness.denominator is None
     assert report.observation_coverage.supported is False
     assert report.observation_coverage.rate is None
+
+
+def test_qualification_samples_aggregate_across_distinct_controlled_runs():
+    first_report, first_observation, first_result = _accepted()
+    first = issue_builder2_qualification_receipt(
+        first_report, first_observation, first_result
+    )
+    second = _receipt_for_fixture(1, controlled_run_id="controlled-run-2")
+
+    sample = aggregate_builder2_qualification_samples(
+        [first, second], minimum_sample_policy=MinimumSamplePolicy(2, 2)
+    )
+
+    assert sample.sample_sufficient is True
+    assert sample.controlled_shadow_run_ids == (
+        "controlled-run-1",
+        "controlled-run-2",
+    )
+    assert sample.eligible_distinct_observation_count == 2
+    assert sample.eligible_distinct_fixture_count == 2
+    assert sample.production_activation_authorized is False
 
 
 def test_accepts_only_canonical_receipts_and_rejects_invalid_or_report_inputs() -> None:

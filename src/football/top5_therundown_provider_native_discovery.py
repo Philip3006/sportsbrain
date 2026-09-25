@@ -53,7 +53,7 @@ PROVIDER_NATIVE_DISCOVERY_SCHEMA_VERSION = (
     "top5-therundown-provider-native-discovery-v1"
 )
 PROVIDER_NATIVE_DISCOVERY_AUTHORIZATION_SCHEMA_VERSION = (
-    "top5-therundown-provider-native-discovery-authorization-v1"
+    "top5-therundown-provider-native-discovery-authorization-v2"
 )
 PROVIDER_NATIVE_DISCOVERY_TARGET_SOURCE = "therundown_provider_native"
 PROVIDER_NATIVE_INDEPENDENT_QUALIFICATION = "WAIVED"
@@ -471,6 +471,8 @@ class TheRundownProviderNativeDiscoveryAuthorizationV1:
     quota_proof_reset_at: datetime
     issued_at: datetime
     expires_at: datetime
+    minimum_lead_seconds: int
+    maximum_lead_seconds: int
     maximum_dates_per_league: int = PROVIDER_NATIVE_MAX_DATES_PER_LEAGUE
     maximum_request_count: int = PROVIDER_NATIVE_MAX_REQUEST_COUNT
     maximum_datapoints_per_request: int = PROVIDER_NATIVE_MAX_DATAPOINTS_PER_REQUEST
@@ -520,6 +522,8 @@ class TheRundownProviderNativeDiscoveryAuthorizationV1:
             ).isoformat(),
             "issued_at": _utc(self.issued_at, "issued_at").isoformat(),
             "expires_at": _utc(self.expires_at, "expires_at").isoformat(),
+            "minimum_lead_seconds": self.minimum_lead_seconds,
+            "maximum_lead_seconds": self.maximum_lead_seconds,
             "maximum_dates_per_league": self.maximum_dates_per_league,
             "maximum_request_count": self.maximum_request_count,
             "maximum_datapoints_per_request": self.maximum_datapoints_per_request,
@@ -568,6 +572,18 @@ class TheRundownProviderNativeDiscoveryAuthorizationV1:
             _text(value, name)
         _sha(self.quota_proof_evidence_digest, "quota_proof_evidence_digest")
         _sha(self.quota_proof_response_digest, "quota_proof_response_digest")
+        for name, value in (
+            ("minimum_lead_seconds", self.minimum_lead_seconds),
+            ("maximum_lead_seconds", self.maximum_lead_seconds),
+        ):
+            if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+                raise EventDiscoveryContractError(
+                    f"native discovery {name} must be a non-negative integer"
+                )
+        if self.minimum_lead_seconds > self.maximum_lead_seconds:
+            raise EventDiscoveryContractError(
+                "native discovery minimum lead cannot exceed maximum lead"
+            )
         if self.quota_proof_sport_id != PROVIDER_NATIVE_SPORT_ID:
             raise EventDiscoveryContractError("native proof sport binding is invalid")
         if self.quota_proof_remaining_datapoints < PROVIDER_NATIVE_MINIMUM_HEADROOM:
@@ -728,6 +744,8 @@ class TheRundownProviderNativeDiscoveryAuthorizationV1:
             "quota_proof_reset_at",
             "issued_at",
             "expires_at",
+            "minimum_lead_seconds",
+            "maximum_lead_seconds",
             "maximum_dates_per_league",
             "maximum_request_count",
             "maximum_datapoints_per_request",
@@ -818,6 +836,12 @@ class TheRundownProviderNativeDiscoveryAuthorizationV1:
             ),
             issued_at=_datetime_field(raw.get("issued_at"), "issued_at"),
             expires_at=_datetime_field(raw.get("expires_at"), "expires_at"),
+            minimum_lead_seconds=_int_field_required(
+                raw.get("minimum_lead_seconds"), "minimum_lead_seconds"
+            ),
+            maximum_lead_seconds=_int_field_required(
+                raw.get("maximum_lead_seconds"), "maximum_lead_seconds"
+            ),
             maximum_dates_per_league=_int_field_required(
                 raw.get("maximum_dates_per_league"), "maximum_dates_per_league"
             ),
@@ -1416,11 +1440,14 @@ def _select_candidate(
     *,
     league: str,
     now: datetime,
+    minimum_lead_seconds: int,
+    maximum_lead_seconds: int,
 ) -> TheRundownDiscoveryEventCandidateV1 | None:
     if not isinstance(payload, Mapping) or not isinstance(payload.get("events"), list):
         raise EventDiscoveryExecutionBlocked(
             "native discovery payload has no events list"
         )
+    selection_time = _utc(now, "native discovery now")
     candidates: list[TheRundownDiscoveryEventCandidateV1] = []
     seen_event_ids: set[str] = set()
     for raw_event in payload["events"]:
@@ -1447,7 +1474,11 @@ def _select_candidate(
             raise EventDiscoveryExecutionBlocked(
                 "native discovery event failed canonical provider validation"
             ) from exc
-        if candidate.kickoff <= _utc(now, "native discovery now"):
+        kickoff = _utc(candidate.kickoff, "candidate kickoff")
+        if kickoff <= selection_time:
+            continue
+        lead_seconds = (kickoff - selection_time).total_seconds()
+        if lead_seconds < minimum_lead_seconds or lead_seconds > maximum_lead_seconds:
             continue
         candidates.append(candidate)
     if not candidates:
@@ -1581,6 +1612,8 @@ def discover_five_league_events_provider_native(
                 response.payload,
                 league=league,
                 now=_utc(response.finished_at, "native response finished"),
+                minimum_lead_seconds=authorization.minimum_lead_seconds,
+                maximum_lead_seconds=authorization.maximum_lead_seconds,
             )
             last_request_finished = _utc(
                 response.finished_at, "native response finished"
@@ -1625,7 +1658,8 @@ def discover_five_league_events_provider_native(
             break
         if found is None:
             raise EventDiscoveryExecutionBlocked(
-                f"native discovery found no valid future event for {league}"
+                "native discovery found no target within the authorized "
+                f"qualification lead window for {league}"
             )
         captures.append(found)
     result = TheRundownProviderNativeDiscoveryRunResultV1(
