@@ -73,6 +73,12 @@ NETWORK_RESPONSE_SCHEMA_VERSION = "top5-therundown-network-response-v1"
 NETWORK_RUN_SCHEMA_VERSION = "top5-therundown-network-run-v1"
 QUOTA_HEADROOM_SCHEMA_VERSION = "top5-therundown-quota-headroom-v1"
 QUOTA_PROOF_SCHEMA_VERSION = "top5-therundown-quota-proof-v1"
+REQUEST_RATE_LIMIT_PROVENANCE_SCHEMA_VERSION = (
+    "top5-therundown-request-rate-limit-provenance-v1"
+)
+REQUEST_RATE_LIMIT_PROVENANCE_KIND = "PROVIDER_REPORTED_REQUESTS_PER_SECOND_CEILING"
+SHADOW_PROOF_PACING_ANCHOR = "SHADOW_HEADROOM_PROOF"
+PREVIOUS_RESPONSE_PACING_ANCHOR = "PREVIOUS_SHADOW_RESPONSE"
 QUOTA_PROOF_AUTHORIZATION_SCHEMA_VERSION = (
     "top5-therundown-dated-snapshot-quota-proof-authorization-v1"
 )
@@ -1076,6 +1082,194 @@ class TheRundownNetworkRequestV1:
 
 
 @dataclass(frozen=True)
+class TheRundownRequestRateLimitProvenanceV1:
+    """Digest-bound provider RPS ceiling and observed request pacing.
+
+    This is request-rate provenance only. Datapoint quota/reset evidence stays
+    in the separate ``provider_billing`` fields and is never mapped here.
+    """
+
+    provider: str
+    requests_per_second_ceiling: int
+    source_header: str
+    authorized_minimum_interval_seconds: float
+    pacing_anchor_kind: str
+    pacing_anchor_at: datetime
+    pacing_anchor_digest: str
+    request_started_at: datetime
+    request_finished_at: datetime
+    observed_pacing_interval_seconds: float
+    http_status: int
+    retry_count: int
+    rate_limit_response_observed: bool
+    provenance_digest: str
+    schema_version: str = REQUEST_RATE_LIMIT_PROVENANCE_SCHEMA_VERSION
+    provenance_kind: str = REQUEST_RATE_LIMIT_PROVENANCE_KIND
+
+    def _payload_without_digest(self) -> dict[str, object]:
+        return {
+            "schema_version": self.schema_version,
+            "provenance_kind": self.provenance_kind,
+            "provider": self.provider,
+            "requests_per_second_ceiling": self.requests_per_second_ceiling,
+            "source_header": self.source_header,
+            "authorized_minimum_interval_seconds": self.authorized_minimum_interval_seconds,
+            "pacing_anchor_kind": self.pacing_anchor_kind,
+            "pacing_anchor_at": _utc(
+                self.pacing_anchor_at, "pacing_anchor_at"
+            ).isoformat(),
+            "pacing_anchor_digest": self.pacing_anchor_digest,
+            "request_started_at": _utc(
+                self.request_started_at, "request_started_at"
+            ).isoformat(),
+            "request_finished_at": _utc(
+                self.request_finished_at, "request_finished_at"
+            ).isoformat(),
+            "observed_pacing_interval_seconds": self.observed_pacing_interval_seconds,
+            "http_status": self.http_status,
+            "retry_count": self.retry_count,
+            "rate_limit_response_observed": self.rate_limit_response_observed,
+        }
+
+    @property
+    def computed_provenance_digest(self) -> str:
+        return _digest(self._payload_without_digest())
+
+    def validate(self) -> None:
+        if self.schema_version != REQUEST_RATE_LIMIT_PROVENANCE_SCHEMA_VERSION:
+            raise NetworkShadowExecutionBlocked(
+                "request-rate provenance schema is unsupported"
+            )
+        if self.provenance_kind != REQUEST_RATE_LIMIT_PROVENANCE_KIND:
+            raise NetworkShadowExecutionBlocked(
+                "request-rate provenance kind is unsupported"
+            )
+        if self.provider not in THERUNDOWN_PROVIDER_IDENTITIES:
+            raise NetworkShadowExecutionBlocked(
+                "request-rate provenance provider is unsupported"
+            )
+        _positive_int(self.requests_per_second_ceiling, "requests_per_second_ceiling")
+        if self.source_header != "X-Rate-Limit":
+            raise NetworkShadowExecutionBlocked(
+                "request-rate provenance source header is unsupported"
+            )
+        minimum_interval = _number(
+            self.authorized_minimum_interval_seconds,
+            "authorized_minimum_interval_seconds",
+            positive=True,
+        )
+        if minimum_interval + 1e-6 < 1 / self.requests_per_second_ceiling:
+            raise NetworkShadowExecutionBlocked(
+                "authorized pacing conflicts with provider RPS ceiling"
+            )
+        if self.pacing_anchor_kind not in {
+            SHADOW_PROOF_PACING_ANCHOR,
+            PREVIOUS_RESPONSE_PACING_ANCHOR,
+        }:
+            raise NetworkShadowExecutionBlocked("request pacing anchor is unsupported")
+        _sha(self.pacing_anchor_digest, "pacing_anchor_digest")
+        anchor = _utc(self.pacing_anchor_at, "pacing_anchor_at")
+        started = _utc(self.request_started_at, "request_started_at")
+        finished = _utc(self.request_finished_at, "request_finished_at")
+        if finished < started or started < anchor:
+            raise NetworkShadowExecutionBlocked(
+                "request-rate pacing timestamps are not ordered"
+            )
+        observed = _number(
+            self.observed_pacing_interval_seconds,
+            "observed_pacing_interval_seconds",
+            positive=True,
+        )
+        actual_interval = (started - anchor).total_seconds()
+        if not isfinite(observed) or abs(observed - actual_interval) > 1e-6:
+            raise NetworkShadowExecutionBlocked(
+                "observed request pacing does not match its timestamps"
+            )
+        if observed + 1e-6 < minimum_interval:
+            raise NetworkShadowExecutionBlocked(
+                "observed request pacing is below the authorized minimum"
+            )
+        if observed + 1e-6 < 1 / self.requests_per_second_ceiling:
+            raise NetworkShadowExecutionBlocked(
+                "observed request pacing exceeds provider RPS ceiling"
+            )
+        if (
+            not isinstance(self.http_status, int)
+            or isinstance(self.http_status, bool)
+            or self.http_status != 200
+        ):
+            raise NetworkShadowExecutionBlocked(
+                "request-rate provenance requires HTTP 200"
+            )
+        if self.retry_count != 0:
+            raise NetworkShadowExecutionBlocked(
+                "request-rate provenance forbids retries"
+            )
+        if self.rate_limit_response_observed is not False:
+            raise NetworkShadowExecutionBlocked(
+                "request-rate provenance observed a rate-limit response"
+            )
+        _sha(self.provenance_digest, "request-rate provenance digest")
+        if self.provenance_digest.lower() != self.computed_provenance_digest:
+            raise NetworkShadowContractError("request-rate provenance digest mismatch")
+
+    def as_payload(self) -> dict[str, object]:
+        self.validate()
+        return {
+            **self._payload_without_digest(),
+            "provenance_digest": self.provenance_digest,
+        }
+
+    @classmethod
+    def from_payload(cls, payload: object) -> TheRundownRequestRateLimitProvenanceV1:
+        if not isinstance(payload, Mapping):
+            raise NetworkShadowContractError(
+                "request-rate provenance must be an object"
+            )
+        try:
+            timestamps = {
+                name: datetime.fromisoformat(
+                    str(payload.get(name, "")).replace("Z", "+00:00")
+                )
+                for name in (
+                    "pacing_anchor_at",
+                    "request_started_at",
+                    "request_finished_at",
+                )
+            }
+        except ValueError as exc:
+            raise NetworkShadowContractError(
+                "request-rate provenance timestamp is invalid"
+            ) from exc
+        record = cls(
+            provider=str(payload.get("provider", "")),
+            requests_per_second_ceiling=payload.get("requests_per_second_ceiling", 0),  # type: ignore[arg-type]
+            source_header=str(payload.get("source_header", "")),
+            authorized_minimum_interval_seconds=payload.get(
+                "authorized_minimum_interval_seconds", 0
+            ),  # type: ignore[arg-type]
+            pacing_anchor_kind=str(payload.get("pacing_anchor_kind", "")),
+            pacing_anchor_at=timestamps["pacing_anchor_at"],
+            pacing_anchor_digest=str(payload.get("pacing_anchor_digest", "")),
+            request_started_at=timestamps["request_started_at"],
+            request_finished_at=timestamps["request_finished_at"],
+            observed_pacing_interval_seconds=payload.get(
+                "observed_pacing_interval_seconds", 0
+            ),  # type: ignore[arg-type]
+            http_status=payload.get("http_status", 0),  # type: ignore[arg-type]
+            retry_count=payload.get("retry_count", -1),  # type: ignore[arg-type]
+            rate_limit_response_observed=payload.get(
+                "rate_limit_response_observed", True
+            ),  # type: ignore[arg-type]
+            provenance_digest=str(payload.get("provenance_digest", "")),
+            schema_version=str(payload.get("schema_version", "")),
+            provenance_kind=str(payload.get("provenance_kind", "")),
+        )
+        record.validate()
+        return record
+
+
+@dataclass(frozen=True)
 class TheRundownNetworkResponseV1:
     """Normalized response with provider-billed ``X-Datapoints`` accounting.
 
@@ -1114,10 +1308,9 @@ class TheRundownNetworkResponseV1:
     quota_after: int | None
     quota_cost_units: float
     datapoint_count: int
-    rate_limit_remaining: int | None
-    rate_limit_reset_at: datetime | None
     account_tier: str
     provider_delay_seconds: float | None
+    request_rate_limit_provenance: TheRundownRequestRateLimitProvenanceV1 | None = None
     provider_timestamp_provenance: str = (
         ProviderTimestampProvenance.PROVIDER_SOURCE_TIMESTAMP.value
     )
@@ -1138,6 +1331,15 @@ class TheRundownNetworkResponseV1:
     scheduler_registered: bool = False
     error_detail: str | None = None
     raw_metadata: Mapping[str, object] = field(default_factory=dict)
+    _legacy_rate_limit_remaining: int | None = field(
+        default=None, repr=False, compare=False
+    )
+    _legacy_rate_limit_reset_at: datetime | None = field(
+        default=None, repr=False, compare=False
+    )
+    _legacy_rate_contract_present: bool = field(
+        default=False, repr=False, compare=False
+    )
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -1147,6 +1349,16 @@ class TheRundownNetworkResponseV1:
     @classmethod
     def from_payload(cls, payload: object) -> TheRundownNetworkResponseV1:
         raw = payload if isinstance(payload, Mapping) else {}
+
+        try:
+            outcome = CanaryOutcome(raw.get("outcome", CanaryOutcome.MALFORMED))
+            evidence_kind = ObservationEvidenceKind(
+                raw.get("evidence_kind", ObservationEvidenceKind.TEST_FIXTURE)
+            )
+        except (TypeError, ValueError) as exc:
+            raise NetworkShadowContractError(
+                "network response enum provenance is invalid"
+            ) from exc
 
         def dt(name: str) -> datetime | None:
             value = raw.get(name)
@@ -1160,7 +1372,7 @@ class TheRundownNetworkResponseV1:
             return None
 
         return cls(
-            outcome=raw.get("outcome", CanaryOutcome.MALFORMED),
+            outcome=outcome,
             provider=raw.get("provider", ""),
             league=raw.get("league", ""),
             fixture_key=raw.get("fixture_key", ""),
@@ -1189,19 +1401,22 @@ class TheRundownNetworkResponseV1:
             quota_after=raw.get("quota_after"),
             quota_cost_units=raw.get("quota_cost_units", 0.0),
             datapoint_count=raw.get("datapoint_count", 0),
-            rate_limit_remaining=raw.get("rate_limit_remaining"),
-            rate_limit_reset_at=dt("rate_limit_reset_at"),
             account_tier=raw.get("account_tier", ""),
             provider_delay_seconds=raw.get("provider_delay_seconds"),
+            request_rate_limit_provenance=(
+                TheRundownRequestRateLimitProvenanceV1.from_payload(
+                    raw["request_rate_limit_provenance"]
+                )
+                if raw.get("request_rate_limit_provenance") is not None
+                else None
+            ),
             provider_timestamp_provenance=raw.get(
                 "provider_timestamp_provenance",
                 ProviderTimestampProvenance.PROVIDER_SOURCE_TIMESTAMP.value,
             ),
             http_status=raw.get("http_status"),
             retry_count=raw.get("retry_count", 0),
-            evidence_kind=raw.get(
-                "evidence_kind", ObservationEvidenceKind.TEST_FIXTURE
-            ),
+            evidence_kind=evidence_kind,
             network_execution=raw.get("network_execution", False),
             no_bet=raw.get("no_bet", True),
             publication=raw.get("publication", False),
@@ -1214,7 +1429,65 @@ class TheRundownNetworkResponseV1:
             scheduler_registered=raw.get("scheduler_registered", False),
             error_detail=raw.get("error_detail"),
             raw_metadata=raw.get("raw_metadata", {}),
+            _legacy_rate_limit_remaining=raw.get("rate_limit_remaining"),
+            _legacy_rate_limit_reset_at=dt("rate_limit_reset_at"),
+            _legacy_rate_contract_present=(
+                "rate_limit_remaining" in raw or "rate_limit_reset_at" in raw
+            ),
         )
+
+
+def bind_request_rate_limit_provenance(
+    response: TheRundownNetworkResponseV1,
+    *,
+    authorized_minimum_interval_seconds: float,
+    pacing_anchor_kind: str,
+    pacing_anchor_at: datetime,
+    pacing_anchor_digest: str,
+) -> TheRundownNetworkResponseV1:
+    """Attach validated RPS and pacing evidence to one successful response."""
+
+    billing = response.raw_metadata.get("provider_billing")
+    if not isinstance(billing, Mapping):
+        raise NetworkShadowExecutionBlocked(
+            "provider request-rate header evidence is missing"
+        )
+    ceiling = billing.get("x-rate-limit")
+    if not isinstance(ceiling, int) or isinstance(ceiling, bool) or ceiling <= 0:
+        raise NetworkShadowExecutionBlocked(
+            "provider X-Rate-Limit ceiling is missing or invalid"
+        )
+    if response.request_started_at is None or response.request_finished_at is None:
+        raise NetworkShadowExecutionBlocked(
+            "request-rate pacing timestamps are missing"
+        )
+    if response.http_status != 200:
+        raise NetworkShadowExecutionBlocked("request-rate provenance requires HTTP 200")
+    if response.retry_count != 0:
+        raise NetworkShadowExecutionBlocked("request-rate provenance forbids retries")
+    started = _utc(response.request_started_at, "request_started_at")
+    anchor = _utc(pacing_anchor_at, "pacing_anchor_at")
+    provenance = TheRundownRequestRateLimitProvenanceV1(
+        provider=response.provider,
+        requests_per_second_ceiling=ceiling,
+        source_header="X-Rate-Limit",
+        authorized_minimum_interval_seconds=authorized_minimum_interval_seconds,
+        pacing_anchor_kind=pacing_anchor_kind,
+        pacing_anchor_at=anchor,
+        pacing_anchor_digest=pacing_anchor_digest,
+        request_started_at=started,
+        request_finished_at=_utc(response.request_finished_at, "request_finished_at"),
+        observed_pacing_interval_seconds=(started - anchor).total_seconds(),
+        http_status=response.http_status,
+        retry_count=response.retry_count,
+        rate_limit_response_observed=False,
+        provenance_digest="0" * 64,
+    )
+    provenance = replace(
+        provenance, provenance_digest=provenance.computed_provenance_digest
+    )
+    provenance.validate()
+    return replace(response, request_rate_limit_provenance=provenance)
 
 
 @dataclass(frozen=True)
@@ -2242,11 +2515,6 @@ class TheRundownCanonicalPayloadAdapterV1:
             "x-history-access",
             "x-live-odds-access",
             "x-rate-limit",
-            "x-rate-limit-remaining",
-            "x-rate-limit-reset",
-            "x-ratelimit-limit",
-            "x-ratelimit-remaining",
-            "x-ratelimit-reset",
             "x-tier",
             "x-websocket-access",
         }
@@ -2260,11 +2528,6 @@ class TheRundownCanonicalPayloadAdapterV1:
             "x-datapoints-used",
             "x-data-delay-seconds",
             "x-rate-limit",
-            "x-rate-limit-remaining",
-            "x-rate-limit-reset",
-            "x-ratelimit-limit",
-            "x-ratelimit-remaining",
-            "x-ratelimit-reset",
         }
     )
 
@@ -2438,8 +2701,6 @@ class TheRundownCanonicalPayloadAdapterV1:
             quota_after=billing["x-datapoints-remaining"],
             quota_cost_units=float(billing["x-datapoints"]),
             datapoint_count=billing["x-datapoints"],
-            rate_limit_remaining=safe_headers.get("x-rate-limit-remaining"),
-            rate_limit_reset_at=None,
             account_tier=str(safe_headers.get("x-tier", "")),
             provider_delay_seconds=float(safe_headers["x-data-delay-seconds"]),
             http_status=response.status_code,
@@ -2756,8 +3017,6 @@ def _failure_response(
         quota_after=None,
         quota_cost_units=0.0,
         datapoint_count=0,
-        rate_limit_remaining=None,
-        rate_limit_reset_at=None,
         account_tier="",
         provider_delay_seconds=None,
         http_status=response.status_code,
@@ -2894,6 +3153,7 @@ class TheRundownNetworkShadowCaptureV1:
     candidate_only: bool = True
     receipt_eligible: bool = False
     builder2_receipt_schema_version: str = RECEIPT_SCHEMA_VERSION
+    shadow_capture_observation_digest: str | None = None
 
     @property
     def canonical_capture_attestation(self) -> Mapping[str, object]:
@@ -3021,10 +3281,15 @@ class TheRundownNetworkShadowCaptureV1:
             not self.observation_input or not self.capture_attestation_input
         ):
             raise NetworkShadowExecutionBlocked("real capture evidence is incomplete")
+        if self.shadow_capture_observation_digest is not None:
+            _sha(
+                self.shadow_capture_observation_digest,
+                "shadow_capture_observation_digest",
+            )
 
     def as_payload(self) -> dict[str, object]:
         self.validate()
-        return {
+        payload = {
             "schema_version": NETWORK_SHADOW_SCHEMA_VERSION,
             "provider": self.target.provider,
             "league": self.target.league,
@@ -3065,6 +3330,11 @@ class TheRundownNetworkShadowCaptureV1:
             },
             "response": _response_payload(self.response),
         }
+        if self.shadow_capture_observation_digest is not None:
+            payload["shadow_capture_observation_digest"] = (
+                self.shadow_capture_observation_digest
+            )
+        return payload
 
 
 @dataclass(frozen=True)
@@ -3136,20 +3406,70 @@ class TheRundownNetworkShadowRunResultV1:
 
 
 def _response_payload(response: TheRundownNetworkResponseV1) -> dict[str, object]:
-    payload = {key: getattr(response, key) for key in response.__dataclass_fields__}
+    legacy_fields = {
+        "_legacy_rate_limit_remaining",
+        "_legacy_rate_limit_reset_at",
+        "_legacy_rate_contract_present",
+        "request_rate_limit_provenance",
+    }
+    payload = {
+        key: getattr(response, key)
+        for key in response.__dataclass_fields__
+        if key not in legacy_fields
+    }
     payload["outcome"] = CanaryOutcome(response.outcome).value
     for key in (
         "source_timestamp",
         "captured_at",
         "request_started_at",
         "request_finished_at",
-        "rate_limit_reset_at",
     ):
         value = payload[key]
         payload[key] = value.isoformat() if isinstance(value, datetime) else value
+    provenance = response.request_rate_limit_provenance
+    if provenance is not None:
+        payload["request_rate_limit_provenance"] = provenance.as_payload()
+    if response._legacy_rate_contract_present:
+        payload["rate_limit_remaining"] = response._legacy_rate_limit_remaining
+        legacy_reset = response._legacy_rate_limit_reset_at
+        payload["rate_limit_reset_at"] = (
+            legacy_reset.isoformat() if legacy_reset is not None else None
+        )
     payload["evidence_kind"] = ObservationEvidenceKind(response.evidence_kind).value
     payload["raw_metadata"] = dict(response.raw_metadata)
     return payload
+
+
+def _validate_request_rate_limit_provenance(
+    response: TheRundownNetworkResponseV1,
+    authorization: TheRundownNetworkAuthorizationV1,
+) -> None:
+    provenance = response.request_rate_limit_provenance
+    if provenance is None:
+        raise NetworkShadowExecutionBlocked("request-rate provenance is missing")
+    provenance.validate()
+    billing = response.raw_metadata.get("provider_billing")
+    ceiling = billing.get("x-rate-limit") if isinstance(billing, Mapping) else None
+    if (
+        not isinstance(ceiling, int)
+        or isinstance(ceiling, bool)
+        or provenance.requests_per_second_ceiling != ceiling
+    ):
+        raise NetworkShadowExecutionBlocked(
+            "request-rate ceiling does not match X-Rate-Limit"
+        )
+    if (
+        provenance.provider != response.provider
+        or provenance.authorized_minimum_interval_seconds
+        != authorization.minimum_interval_seconds
+        or provenance.request_started_at != response.request_started_at
+        or provenance.request_finished_at != response.request_finished_at
+        or provenance.http_status != response.http_status
+        or provenance.retry_count != response.retry_count
+    ):
+        raise NetworkShadowExecutionBlocked(
+            "request-rate provenance does not match the authorized response"
+        )
 
 
 class TheRundownNetworkShadowExecutorV1:
@@ -3210,6 +3530,9 @@ class TheRundownNetworkShadowExecutorV1:
         request_count = 0
         datapoints = 0
         quota_units = 0.0
+        pacing_anchor_at = quota_headroom.observed_at if quota_headroom else None
+        pacing_anchor_digest = quota_headroom.evidence_digest if quota_headroom else ""
+        pacing_anchor_kind = SHADOW_PROOF_PACING_ANCHOR
         for index, target in enumerate(configuration.targets):
             if index:
                 self.pacer(configuration.minimum_interval_seconds)
@@ -3245,6 +3568,34 @@ class TheRundownNetworkShadowExecutorV1:
                 continue
             request_count += 1
             try:
+                if (
+                    not test_only
+                    and CanaryOutcome(response.outcome) is CanaryOutcome.SUCCESS
+                ):
+                    if pacing_anchor_at is None:
+                        raise NetworkShadowExecutionBlocked(
+                            "trusted request pacing anchor is missing"
+                        )
+                    response = bind_request_rate_limit_provenance(
+                        response,
+                        authorized_minimum_interval_seconds=(
+                            authorization.minimum_interval_seconds
+                        ),
+                        pacing_anchor_kind=pacing_anchor_kind,
+                        pacing_anchor_at=pacing_anchor_at,
+                        pacing_anchor_digest=pacing_anchor_digest,
+                    )
+            except Exception as exc:  # noqa: BLE001 - malformed rate evidence fails closed
+                failures.append(f"{target.league}:{exc}")
+                if (
+                    self.fail_closed_immediately
+                    or response.http_status == 429
+                    or "429" in str(exc)
+                ):
+                    break
+                captures.append(_failure_capture(target, request, response, str(exc)))
+                continue
+            try:
                 self._validate_response(
                     response,
                     request,
@@ -3255,6 +3606,11 @@ class TheRundownNetworkShadowExecutorV1:
             except Exception as exc:  # noqa: BLE001 - malformed provider data fails closed
                 failures.append(f"{target.league}:{exc}")
                 if self.fail_closed_immediately:
+                    break
+                if response.http_status == 429 or "429" in str(exc):
+                    captures.append(
+                        _failure_capture(target, request, response, str(exc))
+                    )
                     break
                 if "budget" in str(exc) or "overrun" in str(exc):
                     break
@@ -3293,6 +3649,10 @@ class TheRundownNetworkShadowExecutorV1:
                     failures.append(f"{target.league}:POST_CAPTURE_VALIDATION:{exc}")
                     break
             captures.append(capture)
+            if not test_only:
+                pacing_anchor_at = response.request_finished_at
+                pacing_anchor_digest = capture.observation_digest or ""
+                pacing_anchor_kind = PREVIOUS_RESPONSE_PACING_ANCHOR
         status = (
             NetworkShadowRunStatus.COMPLETED_REPLAY
             if test_only and not failures and len(captures) == len(TOP5_LEAGUE_CODES)
@@ -3333,6 +3693,10 @@ class TheRundownNetworkShadowExecutorV1:
             outcome = CanaryOutcome(response.outcome)
         except (TypeError, ValueError) as exc:
             raise NetworkShadowExecutionBlocked("response outcome is invalid") from exc
+        if response.http_status == 429 or outcome is CanaryOutcome.RATE_LIMITED:
+            raise NetworkShadowExecutionBlocked(
+                "provider returned HTTP 429 rate-limit response"
+            )
         if outcome is CanaryOutcome.SUCCESS and (
             response.home_participant_id != request.home_participant_id
             or response.away_participant_id != request.away_participant_id
@@ -3398,6 +3762,10 @@ class TheRundownNetworkShadowExecutorV1:
                     "replay cannot claim network execution"
                 )
             return
+        if response.http_status != 200:
+            raise NetworkShadowExecutionBlocked(
+                "successful Shadow response must be HTTP 200"
+            )
         try:
             evidence_kind = ObservationEvidenceKind(response.evidence_kind)
         except (TypeError, ValueError) as exc:
@@ -3474,22 +3842,8 @@ class TheRundownNetworkShadowExecutorV1:
             raise NetworkShadowExecutionBlocked(
                 "quota-before/after evidence is missing"
             )
-        if response.rate_limit_remaining is None:
-            provider_billing = response.raw_metadata.get("provider_billing")
-            if not isinstance(provider_billing, Mapping):
-                raise NetworkShadowExecutionBlocked("rate-limit evidence is missing")
-            limit = provider_billing.get("x-rate-limit")
-            if limit is None:
-                limit = provider_billing.get("x-ratelimit-limit")
-            if not isinstance(limit, int) or isinstance(limit, bool) or limit <= 0:
-                raise NetworkShadowExecutionBlocked("rate-limit evidence is missing")
-        else:
-            _nonnegative_int(response.rate_limit_remaining, "rate_limit_remaining")
-            if response.rate_limit_reset_at is None:
-                raise NetworkShadowExecutionBlocked(
-                    "rate-limit reset evidence is missing"
-                )
-            _utc(response.rate_limit_reset_at, "rate_limit_reset_at")
+        if not test_only or response.request_rate_limit_provenance is not None:
+            _validate_request_rate_limit_provenance(response, authorization)
         _text(response.account_tier, "account_tier")
         if response.provider_delay_seconds is None:
             raise NetworkShadowExecutionBlocked("provider delay evidence is missing")
@@ -3601,6 +3955,10 @@ def _build_capture(
         "capture_attestation": capture_attestation,
         "candidate_only": True,
     }
+    if response.request_rate_limit_provenance is not None:
+        observation["request_rate_limit_provenance"] = (
+            response.request_rate_limit_provenance.as_payload()
+        )
     observation_digest = _digest(observation)
     attestation_digest = _digest(capture_attestation)
     observation["observation_digest"] = observation_digest
@@ -3645,6 +4003,7 @@ __all__ = [
     "NETWORK_RESPONSE_SCHEMA_VERSION",
     "NETWORK_RUN_SCHEMA_VERSION",
     "NETWORK_SHADOW_SCHEMA_VERSION",
+    "PREVIOUS_RESPONSE_PACING_ANCHOR",
     "QUOTA_HEADROOM_SCHEMA_VERSION",
     "QUOTA_PROOF_AUTHORIZATION_SCHEMA_VERSION",
     "QUOTA_PROOF_MAXIMUM_AGE_SECONDS",
@@ -3652,6 +4011,9 @@ __all__ = [
     "QUOTA_PROOF_MAX_REQUEST_COUNT",
     "QUOTA_PROOF_MINIMUM_REMAINING_DATAPOINTS",
     "QUOTA_PROOF_SCHEMA_VERSION",
+    "REQUEST_RATE_LIMIT_PROVENANCE_KIND",
+    "REQUEST_RATE_LIMIT_PROVENANCE_SCHEMA_VERSION",
+    "SHADOW_PROOF_PACING_ANCHOR",
     "THERUNDOWN_DATED_SNAPSHOT_QUOTA_PROOF_DATAPOINTS_PER_REQUEST",
     "THERUNDOWN_OBSERVED_DATAPOINTS_PER_REQUEST",
     "TOP5_CONTROLLED_SHADOW_DATAPOINT_BUDGET",
@@ -3681,7 +4043,9 @@ __all__ = [
     "TheRundownQuotaProofEvidenceV1",
     "TheRundownQuotaProofRequestV1",
     "TheRundownReplayTransportV1",
+    "TheRundownRequestRateLimitProvenanceV1",
     "TheRundownRequestsHttpClientV1",
     "TheRundownUrlLibHttpClientV1",
+    "bind_request_rate_limit_provenance",
     "execute_therundown_quota_proof",
 ]

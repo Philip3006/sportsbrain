@@ -71,10 +71,13 @@ from src.football.top5_research_binding import FROZEN_RESEARCH_SHA
 from src.football.top5_shadow_provider_redundancy import make_fixture_key
 from src.football.top5_therundown_network_shadow import (
     NETWORK_SHADOW_SCHEMA_VERSION,
+    PREVIOUS_RESPONSE_PACING_ANCHOR,
     QUOTA_PROOF_AFFILIATE_IDS,
     SHADOW_HEADROOM_PROOF_PURPOSE,
     SHADOW_HEADROOM_PROVENANCE_SOURCE,
+    SHADOW_PROOF_PACING_ANCHOR,
     NetworkShadowContractError,
+    NetworkShadowExecutionBlocked,
     NetworkShadowRunStatus,
     TheRundownCanonicalPayloadAdapterV1,
     TheRundownHttpNetworkTransportV1,
@@ -89,6 +92,7 @@ from src.football.top5_therundown_network_shadow import (
     TheRundownQuotaProofAuthorizationV1,
     TheRundownQuotaProofEvidenceV1,
     TheRundownQuotaProofRequestV1,
+    _validate_request_rate_limit_provenance,
     execute_therundown_quota_proof,
 )
 from src.football.top5_therundown_shadow_canary import TheRundownCanaryTargetV1
@@ -2468,6 +2472,12 @@ def _validate_capture(
         raise ControlledShadowAuthorizationPackageError(
             "response network execution does not match capture"
         )
+    try:
+        _validate_request_rate_limit_provenance(response, authorization)
+    except NetworkShadowExecutionBlocked as exc:
+        raise ControlledShadowAuthorizationPackageError(
+            f"request-rate provenance rejected: {exc}"
+        ) from exc
     if response.provider != target.provider:
         raise ControlledShadowAuthorizationPackageError("provider mismatch")
     if response.league != target.league:
@@ -2613,6 +2623,41 @@ def reconcile_controlled_shadow_run(
         raise ControlledShadowAuthorizationPackageError(
             "completed run must preserve the canonical five-league order"
         )
+    previous_capture: TheRundownNetworkShadowCaptureV1 | None = None
+    for capture in result.captures:
+        provenance = capture.response.request_rate_limit_provenance
+        if provenance is None:  # checked above; retain a local invariant
+            raise ControlledShadowAuthorizationPackageError(
+                "request-rate provenance is missing"
+            )
+        if previous_capture is None:
+            if (
+                provenance.pacing_anchor_kind != SHADOW_PROOF_PACING_ANCHOR
+                or provenance.pacing_anchor_digest
+                != authorization.quota_headroom_evidence_digest
+            ):
+                raise ControlledShadowAuthorizationPackageError(
+                    "first request pacing is not bound to the authorized headroom proof"
+                )
+        else:
+            previous_provenance = (
+                previous_capture.response.request_rate_limit_provenance
+            )
+            if previous_provenance is None:
+                raise ControlledShadowAuthorizationPackageError(
+                    "previous request-rate provenance is missing"
+                )
+            if (
+                provenance.pacing_anchor_kind != PREVIOUS_RESPONSE_PACING_ANCHOR
+                or provenance.pacing_anchor_at
+                != previous_provenance.request_finished_at
+                or provenance.pacing_anchor_digest
+                != previous_capture.observation_digest
+            ):
+                raise ControlledShadowAuthorizationPackageError(
+                    "request pacing is not bound to the previous Shadow response"
+                )
+        previous_capture = capture
     if len(set(fixture_keys)) != len(fixture_keys):
         raise ControlledShadowAuthorizationPackageError("duplicate fixture identity")
     if len(set(event_ids)) != len(event_ids):
@@ -2907,6 +2952,9 @@ def _b2_manifest_for_capture(
         capture_attestation_digest=semantic_digest(attestation_payload),
         capture_attestation_input=attestation_payload,
         observation_input=observation.as_payload(),
+        shadow_capture_observation_digest=(
+            capture.shadow_capture_observation_digest or capture.observation_digest
+        ),
     )
     canonical_capture.validate()
     eligibility = CandidateProviderEligibilityV1.from_network_capture(
