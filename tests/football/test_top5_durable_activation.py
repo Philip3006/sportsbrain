@@ -30,7 +30,6 @@ from src.football.top5_controlled_shadow_provider_qualification import (
     MinimumSamplePolicy,
 )
 from src.football.top5_durable_activation import (
-    PRODUCTION_RUNTIME_BLOCKER,
     DurableActivationError,
     DurableTop5ActivationStore,
     activation_health_payload,
@@ -223,7 +222,10 @@ def test_execute_is_fail_closed_without_runtime_and_does_not_consume_or_activate
     store = DurableTop5ActivationStore(path)
     store.prepare(plan, now=NOW)
     before = path.read_bytes()
-    with pytest.raises(DurableActivationError, match=PRODUCTION_RUNTIME_BLOCKER):
+    with pytest.raises(
+        DurableActivationError,
+        match="cryptographic activation authorization and lifecycle binding are required",
+    ):
         store.execute(plan, now=NOW, explicit_execute=True)
     assert path.read_bytes() == before
     state = store.status(plan.activation_id)

@@ -23,6 +23,10 @@ model are outside this branch.
 - a cumulative ten-stage rollout state machine;
 - a future controlled activation envelope, fail-closed preflight, and durable
   external state/rollback control;
+- offline Ed25519 authorization verification bound to the exact activation
+  plan and canonical lifecycle stage;
+- a locked, atomic, owner-only external route-state journal with nonce replay
+  protection and exact saved-record restoration;
 - rollback-to-disabled contracts for every required failure class;
 - disabled Top-5 publisher, PWA, and health/observability contracts;
 - controlled activation and production verification runbooks.
@@ -115,18 +119,26 @@ explicit controlled-activation state.
 
 ## Controlled activation and rollback
 
-`ControlledActivationRequest` requires explicit CEO authorization, league and
-candidate scope, source/Research/model hashes, provider authority, signal-time
-contract, deterministic configuration snapshot, and rollback pointer.
-`ControlledActivationHarness` can prepare and validate a future plan but its
-execution method is disabled. `scripts/top5_controlled_activation.py` persists
-the validated plan and exposes status/rollback commands. Its execute command
-fails closed with `NO_PRODUCTION_ONE_SHOT_MODEL_PROVIDER_RUNTIME`. Durable
-rollback restores the exact saved control snapshot and retains evidence, but
-live route rollback cannot be claimed ready until a production route writer
-consumes this state. `RollbackController` continues to return the safe
-disabled, no-bet, unpublished, non-scheduled, ledger-untouched state for every
-trigger.
+The new offline Ed25519 contract verifies a detached signature over exact
+canonical claims, using only an explicit external owner-only public-key file.
+The signed activation identity is separate from the Signal-Time approval
+identity. It binds one league/fixture, B1/B2 evidence, source/Research/model,
+`the_odds_api`, the canonical lifecycle contract and explicitly selected due
+stage, timing limits, disabled route baseline, rollback digest, expiry, nonce,
+signer identity, and false publication/betting/ledger/scheduler flags. The
+route-state journal supports atomic PREPARED → AUTHORIZED → EXECUTING records,
+nonce replay rejection, and exact saved disabled-record restoration. These
+records are control evidence only, not a live route change.
+
+`scripts/top5_controlled_activation.py` still fails closed after the signature
+and evidence checks with `NO_PRODUCTION_ONE_SHOT_MODEL_PROVIDER_RUNTIME`.
+There is no genuine one-shot Top-5 inference runtime and no live route-state
+consumer. Consequently the required EXECUTING → ACTIVE/PRODUCTION_VERIFIED
+transition and a production-observed rollback cannot be truthfully implemented
+or tested here. Do not interpret a signed authorization, durable journal
+record, or file-level read-back as activation or production rollback.
+`RollbackController` continues to return the safe disabled, no-bet,
+unpublished, non-scheduled, ledger-untouched state for every trigger.
 
 ## Publisher, PWA, and health
 
