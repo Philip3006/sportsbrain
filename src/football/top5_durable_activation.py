@@ -872,11 +872,49 @@ class DurableTop5ActivationStore:
         *,
         now: datetime,
         explicit_execute: bool,
+        execution_binding: object | None = None,
+        verified_authorization: object | None = None,
     ) -> dict[str, object]:
-        """Fail closed until a separately reviewed real runtime adapter is wired."""
+        """Require the new signed exact-scope approval, then fail closed on runtime.
+
+        The legacy bearer token remains readable as evidence but is never an
+        execution credential. Current main still lacks the real Top-5 model
+        runtime and live route-state consumer, so even a valid signature does
+        not advance state or invoke a provider.
+        """
         if explicit_execute is not True:
             raise DurableActivationError("explicit execute flag is required")
         plan.validate(now=now)
+        from src.football.top5_activation_authorization import (
+            Top5ActivationExecutionBindingV1,
+            VerifiedTop5ActivationAuthorizationV1,
+        )
+
+        if not isinstance(
+            execution_binding, Top5ActivationExecutionBindingV1
+        ) or not isinstance(
+            verified_authorization, VerifiedTop5ActivationAuthorizationV1
+        ):
+            raise DurableActivationError(
+                "cryptographic activation authorization and lifecycle binding are required"
+            )
+        try:
+            verified_authorization.assert_valid_at(now)
+        except ProductionContractError as exc:
+            raise DurableActivationError(str(exc)) from exc
+        if (
+            execution_binding.durable_plan_digest != plan.plan_digest
+            or execution_binding.activation_id != plan.activation_id
+            or execution_binding.activation_league != plan.activation_league
+        ):
+            raise DurableActivationError(
+                "signed execution binding differs from the exact prepared plan"
+            )
+        for name, expected in execution_binding.expected_signed_claims().items():
+            if verified_authorization.payload.get(name) != expected:
+                raise DurableActivationError(
+                    f"signed authorization binding mismatch: {name}"
+                )
         with self._locked():
             state = self._read_unlocked()
             record = state["records"].get(plan.activation_id)

@@ -22,7 +22,11 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from src.football.production_contracts import SignalTimeContract
+from src.football.production_contracts import Fixture, SignalTimeContract
+from src.football.top5_activation_authorization import (
+    build_signed_activation_execution_binding,
+    verify_activation_authorization,
+)
 from src.football.top5_b2_qualification_batch_orchestrator import (
     Builder2FiveLeagueReceiptPackageV1,
 )
@@ -42,6 +46,10 @@ from src.football.top5_durable_activation import (
     prepare_top5_durable_activation_plan,
 )
 from src.football.top5_production_activation import Top5ProductionRoutingSnapshot
+from src.football.top5_signal_lifecycle import (
+    DEFAULT_SIGNAL_LIFECYCLE_CONTRACT,
+    Top5SignalLifecycle,
+)
 
 
 def _object(value: object, name: str) -> dict[str, Any]:
@@ -196,6 +204,13 @@ def main(argv: list[str] | None = None) -> int:
     execute = commands.add_parser("execute")
     execute.add_argument("--input", required=True, type=Path)
     execute.add_argument("--activation-id", required=True)
+    execute.add_argument("--authorization-envelope", required=True, type=Path)
+    execute.add_argument("--public-key-file", required=True, type=Path)
+    execute.add_argument("--signer-key-id", required=True)
+    execute.add_argument(
+        "--lifecycle-stage", required=True, choices=("INITIAL", "REFINEMENT")
+    )
+    execute.add_argument("--lifecycle-state", type=Path)
     execute.add_argument(
         "--execute",
         action="store_true",
@@ -246,9 +261,67 @@ def main(argv: list[str] | None = None) -> int:
                     "exact prepared activation plan is missing"
                 )
             plan = _match_prepared_plan_timestamp(plan, existing, now=now)
-            store.execute(plan, now=now, explicit_execute=True)
-            # Current main intentionally has no production one-shot runtime.
-            raise DurableActivationError(PRODUCTION_RUNTIME_BLOCKER)
+            package = Builder2FiveLeagueReceiptPackageV1.from_payload(
+                payload["five_league_receipt_package"]
+            )
+            selected = next(
+                (
+                    item
+                    for item in package.dossier.bindings
+                    if item.league == plan.activation_league
+                ),
+                None,
+            )
+            if selected is None:
+                raise DurableActivationError(
+                    "activation fixture is absent from canonical five-league evidence"
+                )
+            fixture = Fixture(
+                fixture_key=selected.fixture_key,
+                league_code=selected.league,
+                home_team=selected.home_team,
+                away_team=selected.away_team,
+                kickoff=selected.kickoff,
+            )
+            lifecycle = None
+            if args.lifecycle_state is not None:
+                lifecycle = Top5SignalLifecycle.from_payload(
+                    _read(args.lifecycle_state)
+                )
+            elif args.lifecycle_stage == "REFINEMENT":
+                raise DurableActivationError(
+                    "REFINEMENT requires the persisted canonical INITIAL lifecycle"
+                )
+            envelope = _read(args.authorization_envelope)
+            signed_payload = _object(envelope.get("payload"), "authorization payload")
+            binding = build_signed_activation_execution_binding(
+                plan=plan,
+                receipt_package=package,
+                b1_acceptance_bundle=_object(
+                    payload["b1_final_acceptance_bundle"],
+                    "b1_final_acceptance_bundle",
+                ),
+                fixture=fixture,
+                activation_authorization_id=signed_payload.get("authorization_id"),
+                lifecycle_contract=DEFAULT_SIGNAL_LIFECYCLE_CONTRACT,
+                lifecycle_stage=args.lifecycle_stage,
+                now=now,
+                lifecycle=lifecycle,
+            )
+            verified = verify_activation_authorization(
+                envelope,
+                public_key_file=args.public_key_file,
+                expected_signer_key_id=args.signer_key_id,
+                expected_binding=binding,
+                now=now,
+            )
+            store.execute(
+                plan,
+                now=now,
+                explicit_execute=True,
+                execution_binding=binding,
+                verified_authorization=verified,
+            )
         if args.command == "status":
             print(
                 json.dumps(
