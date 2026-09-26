@@ -14,7 +14,7 @@ import json
 import os
 import re
 import stat
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -48,10 +48,12 @@ from src.football.top5_final_acceptance import (
 from src.football.top5_signal_lifecycle import (
     DEFAULT_SIGNAL_LIFECYCLE_CONTRACT,
     LifecyclePlanStatus,
+    SignalLifecycleError,
     SignalLifecycleStage,
     Top5SignalLifecycle,
     Top5SignalLifecycleContract,
     _validate_snapshot_source_binding,
+    canonical_top5_h2h_lifecycle_set,
     plan_signal_lifecycle,
 )
 from src.runtime.paths import ROOT
@@ -112,6 +114,56 @@ def _source_sha(value: object, name: str) -> str:
     if any(character not in "0123456789abcdefABCDEF" for character in value):
         raise ActivationAuthorizationError(f"{name} must be a hexadecimal source SHA")
     return value.lower()
+
+
+def _validated_lifecycle_inputs(
+    *,
+    lifecycles: Sequence[Top5SignalLifecycle] | None,
+    lifecycle_stage: str,
+    fixture: Fixture,
+    lifecycle_contract: Top5SignalLifecycleContract,
+    model_identity: str,
+    source_sha: str,
+    research_sha: str,
+    model_artifact_hash: str,
+) -> tuple[dict[str, Top5SignalLifecycle], Top5SignalLifecycle | None]:
+    if lifecycle_stage == "INITIAL":
+        if lifecycles is not None:
+            raise ActivationAuthorizationError(
+                "INITIAL must not receive existing lifecycles"
+            )
+        return {}, None
+    if lifecycle_stage != "REFINEMENT" or lifecycles is None:
+        raise ActivationAuthorizationError(
+            "REFINEMENT requires the complete canonical lifecycle set"
+        )
+    try:
+        ordered = canonical_top5_h2h_lifecycle_set(lifecycles)
+    except SignalLifecycleError as exc:
+        raise ActivationAuthorizationError(str(exc)) from exc
+    for lifecycle in ordered.values():
+        initial = lifecycle.initial_version
+        current = lifecycle.current_version
+        if (
+            len(lifecycle.versions) != 1
+            or lifecycle.withdrawn
+            or current.version_number != 1
+            or current.stage is not SignalLifecycleStage.INITIAL
+            or lifecycle.contract.contract_id != lifecycle_contract.contract_id
+            or initial.fixture_key != fixture.fixture_key
+            or initial.league_code != fixture.league_code
+            or initial.kickoff != fixture.kickoff
+            or initial.market_id != "h2h"
+            or initial.model_identity != model_identity
+            or initial.candidate_id != model_identity
+            or initial.source_sha != source_sha
+            or initial.research_sha != research_sha
+            or initial.model_artifact_hash != model_artifact_hash
+        ):
+            raise ActivationAuthorizationError(
+                "REFINEMENT lifecycle set differs from the exact INITIAL scope"
+            )
+    return ordered, ordered["home"]
 
 
 def the_odds_api_one_shot_request_shape(league_code: str) -> dict[str, object]:
@@ -256,7 +308,7 @@ def build_activation_execution_binding(
     lifecycle_contract: Top5SignalLifecycleContract,
     lifecycle_stage: str,
     now: datetime,
-    lifecycle: Top5SignalLifecycle | None = None,
+    lifecycles: Sequence[Top5SignalLifecycle] | None = None,
 ) -> Top5ActivationExecutionBindingV1:
     """Bind one explicit canonical lifecycle stage to the existing B4/B1/B2 plan."""
     now_utc = _utc(now, "now")
@@ -320,8 +372,18 @@ def build_activation_execution_binding(
             "five-league candidate evidence identity mismatch"
         )
 
+    _, lifecycle_for_plan = _validated_lifecycle_inputs(
+        lifecycles=lifecycles,
+        lifecycle_stage=lifecycle_stage,
+        fixture=fixture,
+        lifecycle_contract=lifecycle_contract,
+        model_identity=plan.model_identity,
+        source_sha=plan.source_sha.lower(),
+        research_sha=plan.research_sha.lower(),
+        model_artifact_hash=plan.model_artifact_hash.lower(),
+    )
     lifecycle_plan = plan_signal_lifecycle(
-        fixture, now_utc, lifecycle, contract=lifecycle_contract
+        fixture, now_utc, lifecycle_for_plan, contract=lifecycle_contract
     )
     expected_status = (
         LifecyclePlanStatus.INITIAL_DUE
@@ -407,7 +469,7 @@ def build_signed_activation_execution_binding(
     lifecycle_contract: Top5SignalLifecycleContract,
     lifecycle_stage: str,
     now: datetime,
-    lifecycle: Top5SignalLifecycle | None = None,
+    lifecycles: Sequence[Top5SignalLifecycle] | None = None,
 ) -> Top5ActivationExecutionBindingV1:
     """Build the V2 signed intent without treating legacy bearer data as authority.
 
@@ -494,8 +556,18 @@ def build_signed_activation_execution_binding(
         raise ActivationAuthorizationError(
             "provider authority/candidate binding is invalid"
         )
+    _, lifecycle_for_plan = _validated_lifecycle_inputs(
+        lifecycles=lifecycles,
+        lifecycle_stage=lifecycle_stage,
+        fixture=fixture,
+        lifecycle_contract=lifecycle_contract,
+        model_identity=plan.model_identity,
+        source_sha=plan.source_sha.lower(),
+        research_sha=plan.research_sha.lower(),
+        model_artifact_hash=plan.model_artifact_hash.lower(),
+    )
     lifecycle_plan = plan_signal_lifecycle(
-        fixture, now_utc, lifecycle, contract=lifecycle_contract
+        fixture, now_utc, lifecycle_for_plan, contract=lifecycle_contract
     )
     expected_status = (
         LifecyclePlanStatus.INITIAL_DUE

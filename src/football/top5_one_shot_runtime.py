@@ -10,7 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Protocol
@@ -56,11 +56,14 @@ from src.football.top5_research_binding import (
 from src.football.top5_shadow_provider_redundancy import make_fixture_key
 from src.football.top5_signal_lifecycle import (
     DEFAULT_SIGNAL_LIFECYCLE_CONTRACT,
+    TOP5_H2H_OUTCOMES,
     LifecyclePlanStatus,
     RefinementClassification,
+    SignalLifecycleError,
     SignalLifecycleStage,
     Top5SignalLifecycle,
     Top5SignalLifecycleStore,
+    canonical_top5_h2h_lifecycle_set,
     create_initial_signal,
     plan_signal_lifecycle,
     refine_signal,
@@ -464,7 +467,7 @@ class Top5OneShotProductionRuntime:
         authorization: VerifiedTop5ActivationAuthorizationV1,
         *,
         fixture: Fixture,
-        lifecycle: Top5SignalLifecycle | None = None,
+        lifecycles: Sequence[Top5SignalLifecycle] | None = None,
     ) -> dict[str, object]:
         preflight_now = _utc(self.clock(), "preflight_now")
         plan.validate(now=preflight_now)
@@ -504,37 +507,58 @@ class Top5OneShotProductionRuntime:
             raise OneShotExecutionError("authorized M5 artifact is not canonical")
         if binding.lifecycle_stage not in {"INITIAL", "REFINEMENT"}:
             raise OneShotExecutionError("lifecycle stage is unsupported")
-        resolved_lifecycle = lifecycle
-        if binding.lifecycle_stage == "INITIAL" and lifecycle is not None:
-            raise OneShotExecutionError("INITIAL cannot replace an existing lifecycle")
-        if binding.lifecycle_stage == "REFINEMENT" and lifecycle is None:
-            raise OneShotExecutionError(
-                "REFINEMENT requires the exact existing lifecycle"
-            )
-        if lifecycle is not None:
-            lifecycle.validate()
-            current = lifecycle.current_version
-            if (
-                current.fixture_key != fixture.fixture_key
-                or current.league_code != fixture.league_code
-                or current.candidate_id != M5_CANDIDATE_ID
-                or current.model_identity != binding.model_identity
-                or current.source_sha != binding.source_sha
-                or current.research_sha != binding.research_sha
-                or current.model_artifact_hash != binding.model_artifact_hash
-            ):
+        if binding.lifecycle_stage == "INITIAL":
+            if lifecycles is not None:
                 raise OneShotExecutionError(
-                    "existing lifecycle differs from signed scope"
+                    "INITIAL cannot replace existing lifecycles"
                 )
-            stored = self.lifecycle_store.load(lifecycle.lifecycle_id)
-            if stored is None or stored.lifecycle_digest != lifecycle.lifecycle_digest:
+            resolved_lifecycles: dict[str, Top5SignalLifecycle] = {}
+            lifecycle_for_plan = None
+        else:
+            if lifecycles is None:
                 raise OneShotExecutionError(
-                    "persisted lifecycle differs from supplied state"
+                    "REFINEMENT requires the complete existing lifecycle set"
                 )
+            try:
+                resolved_lifecycles = canonical_top5_h2h_lifecycle_set(lifecycles)
+            except SignalLifecycleError as exc:
+                raise OneShotExecutionError(str(exc)) from exc
+            for outcome, existing in resolved_lifecycles.items():
+                current = existing.current_version
+                initial = existing.initial_version
+                if (
+                    len(existing.versions) != 1
+                    or existing.withdrawn
+                    or current.version_number != 1
+                    or current.stage is not SignalLifecycleStage.INITIAL
+                    or existing.contract.contract_id != binding.lifecycle_contract_id
+                    or initial.fixture_key != fixture.fixture_key
+                    or initial.league_code != fixture.league_code
+                    or initial.kickoff != fixture.kickoff
+                    or initial.market_id != "h2h"
+                    or initial.outcome_id != outcome
+                    or initial.candidate_id != M5_CANDIDATE_ID
+                    or initial.model_identity != binding.model_identity
+                    or initial.source_sha != binding.source_sha
+                    or initial.research_sha != binding.research_sha
+                    or initial.model_artifact_hash != binding.model_artifact_hash
+                ):
+                    raise OneShotExecutionError(
+                        "existing lifecycle set differs from signed INITIAL scope"
+                    )
+                stored = self.lifecycle_store.load(existing.lifecycle_id)
+                if (
+                    stored is None
+                    or stored.lifecycle_digest != existing.lifecycle_digest
+                ):
+                    raise OneShotExecutionError(
+                        "persisted lifecycle differs from supplied lifecycle set"
+                    )
+            lifecycle_for_plan = resolved_lifecycles["home"]
         lifecycle_plan = plan_signal_lifecycle(
             fixture,
             preflight_now,
-            resolved_lifecycle,
+            lifecycle_for_plan,
             contract=DEFAULT_SIGNAL_LIFECYCLE_CONTRACT,
         )
         expected_due = (
@@ -574,7 +598,7 @@ class Top5OneShotProductionRuntime:
             lifecycle_recheck = plan_signal_lifecycle(
                 fixture,
                 before_request,
-                resolved_lifecycle,
+                lifecycle_for_plan,
                 contract=DEFAULT_SIGNAL_LIFECYCLE_CONTRACT,
             )
             if (lifecycle_recheck.status, lifecycle_recheck.due_stage) != expected_due:
@@ -666,64 +690,109 @@ class Top5OneShotProductionRuntime:
             )
             prediction.validate()
             if binding.lifecycle_stage == "INITIAL":
-                chosen_outcome = max(
-                    ("home", "draw", "away"), key=lambda key: probabilities[key]
-                )
-                next_lifecycle = create_initial_signal(
-                    fixture=fixture,
-                    snapshot=snapshot,
-                    now=post_response_now,
-                    market_id="h2h",
-                    outcome_id=chosen_outcome,
-                    candidate_id=M5_CANDIDATE_ID,
-                    model_identity=binding.model_identity,
-                    probabilities=probabilities,
-                    source_sha=binding.source_sha,
-                    research_sha=binding.research_sha,
-                    model_artifact_hash=binding.model_artifact_hash,
-                    eligibility_decision=True,
-                    decision_id=binding.activation_authorization_id,
-                    decision_reason="signed manual canary; no wager/actionability threshold",
-                    contract=DEFAULT_SIGNAL_LIFECYCLE_CONTRACT,
-                    confidence_metadata={
-                        "canary_execution_id": binding.activation_id,
-                        "request_shape_digest": binding.request_shape_digest,
-                    },
-                )
+                next_lifecycles = {
+                    outcome: create_initial_signal(
+                        fixture=fixture,
+                        snapshot=snapshot,
+                        now=post_response_now,
+                        market_id="h2h",
+                        outcome_id=outcome,
+                        candidate_id=M5_CANDIDATE_ID,
+                        model_identity=binding.model_identity,
+                        probabilities=probabilities,
+                        source_sha=binding.source_sha,
+                        research_sha=binding.research_sha,
+                        model_artifact_hash=binding.model_artifact_hash,
+                        eligibility_decision=True,
+                        decision_id=binding.activation_authorization_id,
+                        decision_reason="signed manual canary; no wager/actionability threshold",
+                        contract=DEFAULT_SIGNAL_LIFECYCLE_CONTRACT,
+                        confidence_metadata={
+                            "canary_execution_id": binding.activation_id,
+                            "request_shape_digest": binding.request_shape_digest,
+                        },
+                    )
+                    for outcome in TOP5_H2H_OUTCOMES
+                }
             else:
-                assert resolved_lifecycle is not None
-                selected = resolved_lifecycle.initial_version.outcome_id
-                prior_probability = float(
-                    resolved_lifecycle.current_version.probabilities[selected]
+                next_lifecycles = {}
+                for outcome in TOP5_H2H_OUTCOMES:
+                    existing = resolved_lifecycles[outcome]
+                    prior_probability = float(
+                        existing.current_version.probabilities[outcome]
+                    )
+                    next_probability = probabilities[outcome]
+                    classification = (
+                        RefinementClassification.STRENGTHENED
+                        if next_probability > prior_probability
+                        else RefinementClassification.WEAKENED
+                        if next_probability < prior_probability
+                        else RefinementClassification.UNCHANGED
+                    )
+                    next_lifecycles[outcome] = refine_signal(
+                        existing,
+                        fixture=fixture,
+                        snapshot=snapshot,
+                        now=post_response_now,
+                        probabilities=probabilities,
+                        eligibility_decision=True,
+                        withdrawal_authorized=False,
+                        decision_id=binding.activation_authorization_id,
+                        decision_reason="signed manual canary; deterministic probability comparison",
+                        classification=classification,
+                        confidence_metadata={
+                            "canary_execution_id": binding.activation_id,
+                            "request_shape_digest": binding.request_shape_digest,
+                        },
+                    )
+            persisted_lifecycles: dict[str, Top5SignalLifecycle] = {}
+            for outcome in TOP5_H2H_OUTCOMES:
+                next_lifecycle = next_lifecycles[outcome]
+                persisted = self.lifecycle_store.save(next_lifecycle)
+                if persisted.lifecycle_digest != next_lifecycle.lifecycle_digest:
+                    raise OneShotExecutionError(
+                        f"{outcome} lifecycle persistence write-back differs"
+                    )
+                read_back = self.lifecycle_store.load(persisted.lifecycle_id)
+                if (
+                    read_back is None
+                    or read_back.lifecycle_digest != persisted.lifecycle_digest
+                ):
+                    raise OneShotExecutionError(
+                        f"{outcome} lifecycle persistence read-back differs"
+                    )
+                persisted_lifecycles[outcome] = read_back
+            # Re-read the complete set after all writes; no partial set may pass.
+            for outcome in TOP5_H2H_OUTCOMES:
+                read_back = self.lifecycle_store.load(
+                    persisted_lifecycles[outcome].lifecycle_id
                 )
-                next_probability = probabilities[selected]
-                classification = (
-                    RefinementClassification.STRENGTHENED
-                    if next_probability > prior_probability
-                    else RefinementClassification.WEAKENED
-                    if next_probability < prior_probability
-                    else RefinementClassification.UNCHANGED
-                )
-                next_lifecycle = refine_signal(
-                    resolved_lifecycle,
-                    fixture=fixture,
-                    snapshot=snapshot,
-                    now=post_response_now,
-                    probabilities=probabilities,
-                    eligibility_decision=True,
-                    withdrawal_authorized=False,
-                    decision_id=binding.activation_authorization_id,
-                    decision_reason="signed manual canary; deterministic probability comparison",
-                    classification=classification,
-                    confidence_metadata={
-                        "canary_execution_id": binding.activation_id,
-                        "request_shape_digest": binding.request_shape_digest,
-                    },
-                )
-            persisted = self.lifecycle_store.save(next_lifecycle)
-            if persisted.lifecycle_digest != next_lifecycle.lifecycle_digest:
-                raise OneShotExecutionError("lifecycle persistence read-back differs")
-            lifecycle_version = persisted.current_version
+                if (
+                    read_back is None
+                    or read_back.lifecycle_digest
+                    != persisted_lifecycles[outcome].lifecycle_digest
+                ):
+                    raise OneShotExecutionError(
+                        "complete lifecycle set persistence verification failed"
+                    )
+                persisted_lifecycles[outcome] = read_back
+            lifecycle_ids = {
+                outcome: persisted_lifecycles[outcome].lifecycle_id
+                for outcome in TOP5_H2H_OUTCOMES
+            }
+            lifecycle_versions = {
+                outcome: persisted_lifecycles[outcome].current_version.version_number
+                for outcome in TOP5_H2H_OUTCOMES
+            }
+            lifecycle_version_digests = {
+                outcome: persisted_lifecycles[outcome].current_version.version_digest
+                for outcome in TOP5_H2H_OUTCOMES
+            }
+            lifecycle_digests = {
+                outcome: persisted_lifecycles[outcome].lifecycle_digest
+                for outcome in TOP5_H2H_OUTCOMES
+            }
+            lifecycle_set_digest = _sha(lifecycle_digests)
             health_status = "HEALTHY"
             finished_at = _utc(self.clock(), "execution_finished_at")
             result_body: dict[str, object] = {
@@ -758,11 +827,14 @@ class Top5OneShotProductionRuntime:
                 "research_sha": binding.research_sha,
                 "inference_implementation": M5_INFERENCE_IMPLEMENTATION,
                 "prediction_id": prediction.prediction_id,
+                "candidate_id": M5_CANDIDATE_ID,
+                "prediction_timestamp": prediction.generated_at.isoformat(),
                 "probabilities": dict(prediction.probabilities),
-                "lifecycle_id": persisted.lifecycle_id,
-                "lifecycle_version": lifecycle_version.version_number,
-                "lifecycle_version_digest": lifecycle_version.version_digest,
-                "lifecycle_digest": persisted.lifecycle_digest,
+                "lifecycle_ids": lifecycle_ids,
+                "lifecycle_versions": lifecycle_versions,
+                "lifecycle_version_digests": lifecycle_version_digests,
+                "lifecycle_digests": lifecycle_digests,
+                "lifecycle_set_digest": lifecycle_set_digest,
                 "route_state_consumed": True,
                 "route_state_revision": route_evidence["state_revision"],
                 "route_state_digest": route_evidence["route_digest"],
@@ -800,7 +872,11 @@ class Top5OneShotProductionRuntime:
                     "http_status",
                     "provider_event_id",
                     "snapshot_id",
-                    "lifecycle_version_digest",
+                    "lifecycle_ids",
+                    "lifecycle_versions",
+                    "lifecycle_version_digests",
+                    "lifecycle_digests",
+                    "lifecycle_set_digest",
                     "response_digest",
                     "captured_at",
                     "request_started_at",

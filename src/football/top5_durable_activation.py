@@ -12,7 +12,7 @@ import fcntl
 import json
 import os
 import tempfile
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from hashlib import sha256
@@ -46,6 +46,11 @@ from src.football.top5_final_acceptance import (
 from src.football.top5_production_activation import (
     TOP5_CURRENT_PROVIDER_ORDER,
     Top5ProductionRoutingSnapshot,
+)
+from src.football.top5_signal_lifecycle import (
+    LIFECYCLE_SCHEMA_VERSION,
+    TOP5_H2H_OUTCOMES,
+    Top5SignalLifecycle,
 )
 from src.runtime.paths import ROOT, runtime_state_path
 
@@ -108,6 +113,92 @@ def _canonical_bytes(value: object) -> bytes:
 
 def _sha(value: object) -> str:
     return sha256(_canonical_bytes(value)).hexdigest()
+
+
+def _validate_runtime_lifecycle_evidence(
+    result: Mapping[str, object], lifecycle_stage: str
+) -> None:
+    if lifecycle_stage not in {"INITIAL", "REFINEMENT"}:
+        raise DurableActivationError("one-shot lifecycle stage is invalid")
+    expected = set(TOP5_H2H_OUTCOMES)
+    expected_version = 1 if lifecycle_stage == "INITIAL" else 2
+    mappings = {
+        name: result.get(name)
+        for name in (
+            "lifecycle_ids",
+            "lifecycle_versions",
+            "lifecycle_version_digests",
+            "lifecycle_digests",
+        )
+    }
+    if any(
+        not isinstance(value, Mapping) or set(value) != expected
+        for value in mappings.values()
+    ):
+        raise DurableActivationError(
+            "one-shot result does not prove the complete lifecycle set"
+        )
+    ids = mappings["lifecycle_ids"]
+    versions = mappings["lifecycle_versions"]
+    version_digests = mappings["lifecycle_version_digests"]
+    lifecycle_digests = mappings["lifecycle_digests"]
+    assert isinstance(ids, Mapping)
+    assert isinstance(versions, Mapping)
+    assert isinstance(version_digests, Mapping)
+    assert isinstance(lifecycle_digests, Mapping)
+    ordered_ids = [ids[outcome] for outcome in TOP5_H2H_OUTCOMES]
+    lifecycle_prefix = f"{LIFECYCLE_SCHEMA_VERSION}-"
+    if any(
+        not isinstance(value, str)
+        or len(value) != len(lifecycle_prefix) + 64
+        or not value.startswith(lifecycle_prefix)
+        or any(
+            char not in "0123456789abcdef" for char in value[len(lifecycle_prefix) :]
+        )
+        for value in ordered_ids
+    ) or len(set(ordered_ids)) != len(TOP5_H2H_OUTCOMES):
+        raise DurableActivationError("one-shot lifecycle IDs are invalid")
+    if any(
+        isinstance(versions[outcome], bool)
+        or not isinstance(versions[outcome], int)
+        or versions[outcome] != expected_version
+        for outcome in TOP5_H2H_OUTCOMES
+    ):
+        raise DurableActivationError("one-shot lifecycle versions are invalid")
+    for outcome in TOP5_H2H_OUTCOMES:
+        for digest_value, name in (
+            (version_digests[outcome], f"{outcome} lifecycle version digest"),
+            (lifecycle_digests[outcome], f"{outcome} lifecycle digest"),
+        ):
+            if (
+                not isinstance(digest_value, str)
+                or len(digest_value) != 64
+                or any(char not in "0123456789abcdef" for char in digest_value)
+            ):
+                raise DurableActivationError(f"{name} is invalid")
+    set_digest = result.get("lifecycle_set_digest")
+    if (
+        not isinstance(set_digest, str)
+        or len(set_digest) != 64
+        or any(char not in "0123456789abcdef" for char in set_digest)
+    ):
+        raise DurableActivationError("lifecycle set digest is invalid")
+    if set_digest != _sha(dict(lifecycle_digests)):
+        raise DurableActivationError("one-shot lifecycle set digest mismatch")
+    production_evidence = result.get("production_evidence")
+    if not isinstance(production_evidence, Mapping) or any(
+        production_evidence.get(name) != result.get(name)
+        for name in (
+            "lifecycle_ids",
+            "lifecycle_versions",
+            "lifecycle_version_digests",
+            "lifecycle_digests",
+            "lifecycle_set_digest",
+        )
+    ):
+        raise DurableActivationError(
+            "one-shot production evidence lifecycle set differs from result"
+        )
 
 
 def _snapshot_payload(snapshot: Top5ProductionRoutingSnapshot) -> dict[str, object]:
@@ -796,6 +887,9 @@ class DurableTop5ActivationStore:
                 or _sha(result) != result_digest
             ):
                 raise DurableActivationError("verified execution result is invalid")
+            _validate_runtime_lifecycle_evidence(
+                result, str(result.get("lifecycle_stage", ""))
+            )
 
     def _write_unlocked(self, state: dict[str, object]) -> None:
         self.path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -899,7 +993,7 @@ class DurableTop5ActivationStore:
         verified_authorization: object | None = None,
         runtime: object | None = None,
         fixture: object | None = None,
-        lifecycle: object | None = None,
+        lifecycles: Sequence[Top5SignalLifecycle] | None = None,
     ) -> dict[str, object]:
         """Execute one exact signed canary and retain its private evidence."""
         if explicit_execute is not True:
@@ -972,7 +1066,7 @@ class DurableTop5ActivationStore:
                 execution_binding,
                 verified_authorization,
                 fixture=fixture,
-                lifecycle=lifecycle,
+                lifecycles=lifecycles,
             )
             runtime_returned = True
             if not isinstance(result, Mapping):
@@ -1000,6 +1094,9 @@ class DurableTop5ActivationStore:
                 raise DurableActivationError(
                     "one-shot runtime result failed validation"
                 )
+            _validate_runtime_lifecycle_evidence(
+                result, execution_binding.lifecycle_stage
+            )
             with self._locked():
                 state = self._read_unlocked()
                 current = state["records"].get(plan.activation_id)

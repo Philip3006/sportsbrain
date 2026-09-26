@@ -57,7 +57,7 @@ from src.football.top5_one_shot_runtime import Top5OneShotProductionRuntime
 from src.football.top5_production_activation import Top5ProductionRoutingSnapshot
 from src.football.top5_signal_lifecycle import (
     DEFAULT_SIGNAL_LIFECYCLE_CONTRACT,
-    Top5SignalLifecycle,
+    parse_top5_h2h_lifecycle_set,
 )
 
 
@@ -219,7 +219,11 @@ def main(argv: list[str] | None = None) -> int:
     execute.add_argument(
         "--lifecycle-stage", required=True, choices=("INITIAL", "REFINEMENT")
     )
-    execute.add_argument("--lifecycle-state", type=Path)
+    execute.add_argument(
+        "--lifecycle-state",
+        type=Path,
+        help="owner-only top5-signal-lifecycle-set-v1 envelope (REFINEMENT only)",
+    )
     execute.add_argument(
         "--execute",
         action="store_true",
@@ -292,15 +296,18 @@ def main(argv: list[str] | None = None) -> int:
                 away_team=selected.away_team,
                 kickoff=selected.kickoff,
             )
-            lifecycle = None
-            if args.lifecycle_state is not None:
-                lifecycle = Top5SignalLifecycle.from_payload(
-                    _read(args.lifecycle_state)
-                )
+            lifecycles = None
+            if args.lifecycle_stage == "INITIAL":
+                if args.lifecycle_state is not None:
+                    raise DurableActivationError("INITIAL must omit --lifecycle-state")
             elif args.lifecycle_stage == "REFINEMENT":
-                raise DurableActivationError(
-                    "REFINEMENT requires the persisted canonical INITIAL lifecycle"
-                )
+                if args.lifecycle_state is None:
+                    raise DurableActivationError(
+                        "REFINEMENT requires the complete canonical lifecycle-set file"
+                    )
+                lifecycles = parse_top5_h2h_lifecycle_set(_read(args.lifecycle_state))
+            else:
+                raise DurableActivationError("lifecycle stage is unsupported")
             envelope = _read(args.authorization_envelope)
             signed_payload = _object(envelope.get("payload"), "authorization payload")
             binding = build_signed_activation_execution_binding(
@@ -315,7 +322,7 @@ def main(argv: list[str] | None = None) -> int:
                 lifecycle_contract=DEFAULT_SIGNAL_LIFECYCLE_CONTRACT,
                 lifecycle_stage=args.lifecycle_stage,
                 now=now,
-                lifecycle=lifecycle,
+                lifecycles=lifecycles,
             )
             verified = verify_activation_authorization(
                 envelope,
@@ -334,7 +341,7 @@ def main(argv: list[str] | None = None) -> int:
                 verified_authorization=verified,
                 runtime=runtime,
                 fixture=fixture,
-                lifecycle=lifecycle,
+                lifecycles=lifecycles,
             )
         if args.command == "status":
             route_store = DurableTop5ProductionRouteStateStore()

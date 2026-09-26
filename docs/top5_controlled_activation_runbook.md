@@ -65,13 +65,16 @@ The durable control commands are:
 chmod 600 <exact-evidence-and-authorization.json>
 python3 scripts/top5_controlled_activation.py prepare --input <absolute-path-to-exact-evidence-and-authorization.json>
 python3 scripts/top5_controlled_activation.py status [--activation-id <id>]
-python3 scripts/top5_controlled_activation.py execute --input <same-absolute-path> --activation-id <id> --authorization-envelope <absolute-signed-envelope.json> --public-key-file <absolute-owner-only-public-key.pem> --signer-key-id <trusted-key-id> --lifecycle-stage <INITIAL-or-REFINEMENT> [--lifecycle-state <absolute-canonical-lifecycle.json>] --execute
+python3 scripts/top5_controlled_activation.py execute --input <same-absolute-path> --activation-id <id> --authorization-envelope <absolute-signed-envelope.json> --public-key-file <absolute-owner-only-public-key.pem> --signer-key-id <trusted-key-id> --lifecycle-stage <INITIAL-or-REFINEMENT> [--lifecycle-state <absolute-top5-signal-lifecycle-set-v1.json>] --execute
 python3 scripts/top5_controlled_activation.py rollback --activation-id <id> --plan-digest <exact-plan-digest>
 ```
 
 The default path is non-executing. `execute` requires the explicit flag,
-explicit lifecycle stage, exact B1/B2 evidence, an INITIAL lifecycle record
-when selecting REFINEMENT, and a valid detached Ed25519 signature. A legacy
+explicit lifecycle stage, exact B1/B2 evidence, and a valid detached Ed25519
+signature. INITIAL must omit `--lifecycle-state`. REFINEMENT requires one
+owner-only `top5-signal-lifecycle-set-v1` envelope with exactly three
+canonical lifecycle payloads, whose outcome set is exactly `home`, `draw`,
+and `away`; a single-lifecycle file is not accepted. A legacy
 non-empty bearer token alone has zero execution authority. The two-stage
 contract is `DEFAULT_SIGNAL_LIFECYCLE_CONTRACT`; INITIAL and REFINEMENT use
 their exact stage contract IDs, planner due status, 900-second maximum

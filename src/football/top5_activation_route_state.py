@@ -32,7 +32,11 @@ from src.football.top5_activation_authorization import (
 from src.football.top5_controlled_shadow_provider_qualification import TOP5_LEAGUES
 from src.football.top5_durable_activation import _canonical_bytes, _sha
 from src.football.top5_production_activation import current_top5_routing_snapshot
-from src.football.top5_signal_lifecycle import DEFAULT_SIGNAL_LIFECYCLE_CONTRACT
+from src.football.top5_signal_lifecycle import (
+    DEFAULT_SIGNAL_LIFECYCLE_CONTRACT,
+    LIFECYCLE_SCHEMA_VERSION,
+    TOP5_H2H_OUTCOMES,
+)
 from src.runtime.paths import ROOT, runtime_state_path
 
 TOP5_ROUTE_STATE_SCHEMA = "top5-production-route-state-v1"
@@ -83,6 +87,63 @@ def _source_sha_text(value: object, name: str) -> str:
     ):
         raise Top5RouteStateError(f"{name} must be a 40- or 64-character source SHA")
     return value.lower()
+
+
+def _validate_lifecycle_evidence_maps(
+    evidence: Mapping[str, object], lifecycle_stage: object
+) -> None:
+    if lifecycle_stage not in {"INITIAL", "REFINEMENT"}:
+        raise Top5RouteStateError("production evidence lifecycle stage is invalid")
+    expected_version = 1 if lifecycle_stage == "INITIAL" else 2
+    maps = {
+        name: evidence.get(name)
+        for name in (
+            "lifecycle_ids",
+            "lifecycle_versions",
+            "lifecycle_version_digests",
+            "lifecycle_digests",
+        )
+    }
+    if any(
+        not isinstance(value, Mapping) or set(value) != set(TOP5_H2H_OUTCOMES)
+        for value in maps.values()
+    ):
+        raise Top5RouteStateError(
+            "production evidence must bind all three lifecycle outcomes"
+        )
+    ids = maps["lifecycle_ids"]
+    versions = maps["lifecycle_versions"]
+    version_digests = maps["lifecycle_version_digests"]
+    lifecycle_digests = maps["lifecycle_digests"]
+    assert isinstance(ids, Mapping)
+    assert isinstance(versions, Mapping)
+    assert isinstance(version_digests, Mapping)
+    assert isinstance(lifecycle_digests, Mapping)
+    ordered_ids = [ids[outcome] for outcome in TOP5_H2H_OUTCOMES]
+    lifecycle_prefix = f"{LIFECYCLE_SCHEMA_VERSION}-"
+    if any(
+        not isinstance(value, str)
+        or len(value) != len(lifecycle_prefix) + 64
+        or not value.startswith(lifecycle_prefix)
+        or any(
+            char not in "0123456789abcdef" for char in value[len(lifecycle_prefix) :]
+        )
+        for value in ordered_ids
+    ) or len(set(ordered_ids)) != len(TOP5_H2H_OUTCOMES):
+        raise Top5RouteStateError("production evidence lifecycle IDs are invalid")
+    if any(
+        isinstance(versions[outcome], bool)
+        or not isinstance(versions[outcome], int)
+        or versions[outcome] != expected_version
+        for outcome in TOP5_H2H_OUTCOMES
+    ):
+        raise Top5RouteStateError("production evidence lifecycle versions are invalid")
+    for outcome in TOP5_H2H_OUTCOMES:
+        _digest_text(version_digests[outcome], f"{outcome} lifecycle version digest")
+        _digest_text(lifecycle_digests[outcome], f"{outcome} lifecycle digest")
+    _digest_text(evidence.get("lifecycle_set_digest"), "lifecycle set digest")
+    if _sha(dict(lifecycle_digests)) != evidence.get("lifecycle_set_digest"):
+        raise Top5RouteStateError("production evidence lifecycle set digest mismatch")
 
 
 def _false_safety_fields(payload: Mapping[str, object]) -> None:
@@ -442,6 +503,7 @@ class DurableTop5ProductionRouteStateStore:
             )
             if _sha(evidence) != record.get("production_evidence_digest"):
                 raise Top5RouteStateError("production evidence digest mismatch")
+            _validate_lifecycle_evidence_maps(evidence, binding.get("lifecycle_stage"))
 
     def _write_unlocked(self, state: dict[str, object]) -> None:
         self.path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -814,7 +876,6 @@ class DurableTop5ProductionRouteStateStore:
         for name in (
             "provider_event_id",
             "snapshot_id",
-            "lifecycle_version_digest",
             "response_digest",
             "captured_at",
             "request_started_at",
@@ -823,6 +884,7 @@ class DurableTop5ProductionRouteStateStore:
         ):
             if not isinstance(evidence.get(name), str) or not evidence[name]:
                 raise Top5RouteStateError(f"production evidence {name} is missing")
+        _validate_lifecycle_evidence_maps(evidence, binding.lifecycle_stage)
         started = _utc(
             datetime.fromisoformat(str(evidence["request_started_at"])),
             "request_started_at",

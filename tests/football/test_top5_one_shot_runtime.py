@@ -32,8 +32,20 @@ from src.football.top5_one_shot_runtime import (
 from src.football.top5_research_binding import M5_CANDIDATE_ID, inventory_for
 from src.football.top5_signal_lifecycle import (
     DEFAULT_SIGNAL_LIFECYCLE_CONTRACT,
+    TOP5_H2H_OUTCOMES,
+    RefinementClassification,
+    SignalLifecycleError,
     SignalLifecycleStage,
+    Top5SignalLifecycleStore,
     create_initial_signal,
+    lifecycle_state_path,
+    parse_top5_h2h_lifecycle_set,
+    refine_signal,
+    top5_h2h_lifecycle_set_payload,
+)
+from src.football.top5_signal_lifecycle_public_adapter import (
+    Top5SignalLifecyclePublicAdapterError,
+    project_top5_signal_lifecycles,
 )
 from tests.football.test_top5_activation_authorization import (
     NOW,
@@ -57,20 +69,56 @@ def _freeze_route_consumer_wall_clock(monkeypatch):
 
 
 class MemoryLifecycleStore:
-    def __init__(self, lifecycle=None, *, fail_save=False):
-        self.value = lifecycle
+    def __init__(self, lifecycles=None, *, fail_save=False, fail_after_saves=None):
+        self.values = {item.lifecycle_id: item for item in (lifecycles or ())}
         self.fail_save = fail_save
+        self.fail_after_saves = fail_after_saves
+        self.save_calls = 0
 
     def load(self, lifecycle_id):
-        if self.value is None or self.value.lifecycle_id != lifecycle_id:
-            return None
-        return self.value
+        return self.values.get(lifecycle_id)
 
     def save(self, lifecycle):
-        if self.fail_save:
+        self.save_calls += 1
+        if self.fail_save or (
+            self.fail_after_saves is not None
+            and self.save_calls > self.fail_after_saves
+        ):
             raise OSError("offline persistence failure")
-        self.value = lifecycle
+        self.values[lifecycle.lifecycle_id] = lifecycle
         return lifecycle
+
+    def by_outcome(self):
+        return {
+            lifecycle.initial_version.outcome_id: lifecycle
+            for lifecycle in self.values.values()
+        }
+
+
+class InstrumentedCanonicalLifecycleStore:
+    """Track calls while exercising the real append-only external store."""
+
+    def __init__(self):
+        self.store = Top5SignalLifecycleStore()
+        self.save_calls = 0
+        self.load_calls = 0
+        self.lifecycle_ids_by_outcome = {}
+
+    def load(self, lifecycle_id):
+        self.load_calls += 1
+        return self.store.load(lifecycle_id)
+
+    def save(self, lifecycle):
+        self.save_calls += 1
+        outcome = lifecycle.initial_version.outcome_id
+        self.lifecycle_ids_by_outcome[outcome] = lifecycle.lifecycle_id
+        return self.store.save(lifecycle)
+
+    def by_outcome(self):
+        return {
+            outcome: self.store.load(lifecycle_id)
+            for outcome, lifecycle_id in self.lifecycle_ids_by_outcome.items()
+        }
 
 
 class FakeTransport:
@@ -235,36 +283,40 @@ def _bind_test_plan_to_canonical_m5(
     return rebound_plan, rebound_binding, verified, rebound_envelope
 
 
-def _canonical_m5_initial_lifecycle(lifecycle, fixture, model_hash):
-    initial = lifecycle.initial_version
+def _canonical_m5_initial_lifecycles(lifecycles, fixture, model_hash):
+    first = lifecycles[0].initial_version
     snapshot = MarketSnapshot(
-        fixture_key=initial.fixture_key,
-        captured_at=initial.odds_captured_at,
-        kind=initial.snapshot_kind,
-        source=initial.snapshot_source,
-        odds=initial.market_odds,
-        snapshot_id=initial.snapshot_id,
+        fixture_key=first.fixture_key,
+        captured_at=first.odds_captured_at,
+        kind=first.snapshot_kind,
+        source=first.snapshot_source,
+        odds=first.market_odds,
+        snapshot_id=first.snapshot_id,
     )
-    return create_initial_signal(
-        fixture=fixture,
-        snapshot=snapshot,
-        now=initial.prediction_generated_at,
-        market_id=initial.market_id,
-        outcome_id=initial.outcome_id,
-        candidate_id=initial.candidate_id,
-        model_identity=initial.model_identity,
-        provider_identity=initial.provider_identity,
-        probabilities=initial.probabilities,
-        source_sha=initial.source_sha,
-        research_sha=initial.research_sha,
-        model_artifact_hash=model_hash,
-        eligibility_decision=initial.eligibility_decision,
-        decision_id=initial.decision_id,
-        decision_reason=initial.decision_reason,
-        contract=DEFAULT_SIGNAL_LIFECYCLE_CONTRACT,
-        implied_probabilities=initial.implied_probabilities,
-        edges=initial.edges,
-        confidence_metadata=initial.confidence_metadata,
+    return tuple(
+        create_initial_signal(
+            fixture=fixture,
+            snapshot=snapshot,
+            now=initial.prediction_generated_at,
+            market_id=initial.market_id,
+            outcome_id=initial.outcome_id,
+            candidate_id=initial.candidate_id,
+            model_identity=initial.model_identity,
+            provider_identity=initial.provider_identity,
+            probabilities=initial.probabilities,
+            source_sha=initial.source_sha,
+            research_sha=initial.research_sha,
+            model_artifact_hash=model_hash,
+            eligibility_decision=initial.eligibility_decision,
+            decision_id=initial.decision_id,
+            decision_reason=initial.decision_reason,
+            contract=DEFAULT_SIGNAL_LIFECYCLE_CONTRACT,
+            implied_probabilities=initial.implied_probabilities,
+            edges=initial.edges,
+            confidence_metadata=initial.confidence_metadata,
+        )
+        for lifecycle in lifecycles
+        for initial in (lifecycle.initial_version,)
     )
 
 
@@ -276,6 +328,7 @@ def _runtime_context(
     status=200,
     payload_valid=True,
     fail_save=False,
+    fail_after_saves=None,
     budget=True,
 ):
     (
@@ -293,7 +346,7 @@ def _runtime_context(
     plan, binding, verified, _envelope = _bind_test_plan_to_canonical_m5(
         plan, binding, signer, public_path, envelope, now=NOW
     )
-    lifecycle = _canonical_m5_initial_lifecycle(
+    lifecycles = _canonical_m5_initial_lifecycles(
         lifecycle,
         fixture,
         inventory_for(binding.activation_league, M5_CANDIDATE_ID).model_artifact_hash,
@@ -301,7 +354,11 @@ def _runtime_context(
     selected = next(
         item for item in package.dossier.bindings if item.league == fixture.league_code
     )
-    store = MemoryLifecycleStore(lifecycle, fail_save=fail_save)
+    store = MemoryLifecycleStore(
+        lifecycles,
+        fail_save=fail_save,
+        fail_after_saves=fail_after_saves,
+    )
     transport = FakeTransport(
         fixture,
         NOW,
@@ -337,7 +394,7 @@ def _runtime_context(
         package,
         plan,
         fixture,
-        lifecycle,
+        lifecycles,
         binding,
         verified,
         selected,
@@ -350,12 +407,70 @@ def _runtime_context(
     )
 
 
+def _project_runtime_lifecycle_set(store, result, fixture, lifecycles=None):
+    if lifecycles is None:
+        lifecycles = tuple(store.by_outcome()[outcome] for outcome in TOP5_H2H_OUTCOMES)
+    return project_top5_signal_lifecycles(
+        lifecycles,
+        prediction_probabilities=result["probabilities"],
+        fixture_identity=fixture.fixture_key,
+        league_identity=fixture.league_code,
+        candidate_identity=result["candidate_id"],
+        model_identity=result["model_identity"],
+        provider_authority=result["provider_authority"],
+        prediction_timestamp=result["prediction_timestamp"],
+        signal_timestamp=result["captured_at"],
+        snapshot_id=result["snapshot_id"],
+        provenance={
+            "source_sha": result["source_sha"],
+            "research_sha": result["research_sha"],
+            "model_artifact_hash": result["model_artifact_hash"],
+        },
+        market_identity="h2h",
+    )
+
+
+def _clone_initial_lifecycle(lifecycle, fixture, **overrides):
+    initial = lifecycle.initial_version
+    snapshot = MarketSnapshot(
+        fixture_key=fixture.fixture_key,
+        captured_at=initial.odds_captured_at,
+        kind=initial.snapshot_kind,
+        source=initial.snapshot_source,
+        odds=initial.market_odds,
+        snapshot_id=initial.snapshot_id,
+    )
+    values = {
+        "fixture": fixture,
+        "snapshot": snapshot,
+        "now": initial.prediction_generated_at,
+        "market_id": initial.market_id,
+        "outcome_id": initial.outcome_id,
+        "candidate_id": initial.candidate_id,
+        "model_identity": initial.model_identity,
+        "provider_identity": initial.provider_identity,
+        "probabilities": initial.probabilities,
+        "source_sha": initial.source_sha,
+        "research_sha": initial.research_sha,
+        "model_artifact_hash": initial.model_artifact_hash,
+        "eligibility_decision": initial.eligibility_decision,
+        "decision_id": initial.decision_id,
+        "decision_reason": initial.decision_reason,
+        "contract": lifecycle.contract,
+        "implied_probabilities": initial.implied_probabilities,
+        "edges": initial.edges,
+        "confidence_metadata": initial.confidence_metadata,
+    }
+    values.update(overrides)
+    return create_initial_signal(**values)
+
+
 def test_signed_refinement_executes_one_request_and_persists_verified_route(tmp_path):
     (
         package,
         plan,
         fixture,
-        _lifecycle,
+        initial_lifecycles,
         binding,
         verified,
         selected,
@@ -372,12 +487,25 @@ def test_signed_refinement_executes_one_request_and_persists_verified_route(tmp_
     }
     assert candidate_evidence["provider_identity"] == "therundown_experimental"
     assert selected.provider_event_id != ODDS_API_PROVIDER_EVENT_ID
+    initial_ids = {
+        lifecycle.initial_version.outcome_id: lifecycle.lifecycle_id
+        for lifecycle in initial_lifecycles
+    }
+    initial_probabilities = {
+        lifecycle.initial_version.outcome_id: lifecycle.initial_version.probabilities[
+            lifecycle.initial_version.outcome_id
+        ]
+        for lifecycle in initial_lifecycles
+    }
+    initial_snapshot_ids = {
+        lifecycle.initial_version.snapshot_id for lifecycle in initial_lifecycles
+    }
     result = runtime.execute(
         plan,
         binding,
         verified,
         fixture=fixture,
-        lifecycle=lifecycle_store.value,
+        lifecycles=tuple(lifecycle_store.values.values()),
     )
     assert result["schema_version"] == "top5-one-shot-production-result-v1"
     assert result["provider_request_count"] == 1
@@ -397,6 +525,33 @@ def test_signed_refinement_executes_one_request_and_persists_verified_route(tmp_
     assert result["betting"] is False
     assert result["ledger_mutation"] is False
     assert len(transport.calls) == len(credential_calls) == 1
+    assert set(result["lifecycle_ids"]) == set(TOP5_H2H_OUTCOMES)
+    assert set(result["lifecycle_versions"]) == set(TOP5_H2H_OUTCOMES)
+    assert set(result["lifecycle_version_digests"]) == set(TOP5_H2H_OUTCOMES)
+    assert set(result["lifecycle_digests"]) == set(TOP5_H2H_OUTCOMES)
+    assert result["lifecycle_versions"] == dict.fromkeys(TOP5_H2H_OUTCOMES, 2)
+    assert result["lifecycle_ids"] == initial_ids
+    assert result["lifecycle_set_digest"] == _sha(result["lifecycle_digests"])
+    assert result["snapshot_id"] not in initial_snapshot_ids
+    public_lifecycles = _project_runtime_lifecycle_set(lifecycle_store, result, fixture)
+    assert set(public_lifecycles) == set(TOP5_H2H_OUTCOMES)
+    assert {public["lifecycle_version"] for public in public_lifecycles.values()} == {2}
+    assert all(
+        public["current_probability"] == result["probabilities"][outcome]
+        for outcome, public in public_lifecycles.items()
+    )
+    for outcome, public in public_lifecycles.items():
+        before = initial_probabilities[outcome]
+        after = result["probabilities"][outcome]
+        expected_classification = (
+            "STRENGTHENED"
+            if after > before
+            else "WEAKENED"
+            if after < before
+            else "UNCHANGED"
+        )
+        assert public["probability_delta"] == after - before
+        assert public["refinement_classification"] == expected_classification
     assert successes == [(1, 499)]
     assert result["production_evidence_digest"]
     assert (
@@ -418,8 +573,9 @@ def test_signed_refinement_executes_one_request_and_persists_verified_route(tmp_
     )
 
 
-def test_signed_initial_execution_uses_exact_due_stage_and_is_still_one_shot(
-    tmp_path, monkeypatch
+@pytest.mark.parametrize("fail_after_saves", [None, 1])
+def test_signed_initial_execution_persists_complete_outcome_set_or_rolls_back(
+    tmp_path, monkeypatch, fail_after_saves
 ):
     (
         _package,
@@ -486,24 +642,73 @@ def test_signed_initial_execution_uses_exact_due_stage_and_is_still_one_shot(
             initial_time + timedelta(seconds=4),
         )
     )
+    if fail_after_saves is None:
+        monkeypatch.setenv(
+            "SPORTSBRAIN_RUNTIME_STATE_DIR", str(tmp_path / "external-runtime-state")
+        )
+        lifecycle_store = InstrumentedCanonicalLifecycleStore()
+    else:
+        lifecycle_store = MemoryLifecycleStore(fail_after_saves=fail_after_saves)
     runtime = Top5OneShotProductionRuntime(
         route_store=DurableTop5ProductionRouteStateStore(
             tmp_path / "initial-route.json"
         ),
         transport=transport,
-        lifecycle_store=MemoryLifecycleStore(),
+        lifecycle_store=lifecycle_store,
         clock=lambda: next(clock_values),
         credential_loader=lambda: "injected-test-key",
         budget_available=lambda _now: True,
         budget_success=lambda *_args: None,
     )
-    result = runtime.execute(
-        plan,
-        initial_binding,
-        verified,
-        fixture=fixture,
+    if fail_after_saves is not None:
+        with pytest.raises(OneShotExecutionError):
+            runtime.execute(
+                plan,
+                initial_binding,
+                verified,
+                fixture=fixture,
+            )
+        assert len(transport.calls) == 1
+        assert len(lifecycle_store.values) == fail_after_saves
+        assert (
+            runtime.route_store.read()["records"][initial_binding.activation_id][
+                "status"
+            ]
+            == "ROLLED_BACK"
+        )
+        assert all(
+            record.get("status") != "PRODUCTION_VERIFIED"
+            for record in runtime.route_store.read()["records"].values()
+        )
+        return
+    result = runtime.execute(plan, initial_binding, verified, fixture=fixture)
+    assert result["lifecycle_versions"] == dict.fromkeys(TOP5_H2H_OUTCOMES, 1)
+    assert set(result["lifecycle_ids"]) == set(TOP5_H2H_OUTCOMES)
+    assert len(set(result["lifecycle_ids"].values())) == 3
+    persisted = tuple(
+        runtime.lifecycle_store.by_outcome()[outcome] for outcome in TOP5_H2H_OUTCOMES
     )
-    assert result["lifecycle_version"] == 1
+    assert lifecycle_store.save_calls == 3
+    assert lifecycle_store.load_calls >= 6
+    assert all(
+        lifecycle_state_path(lifecycle.lifecycle_id).is_file()
+        for lifecycle in persisted
+    )
+    assert all(
+        lifecycle.initial_version.snapshot_id == result["snapshot_id"]
+        and dict(lifecycle.initial_version.probabilities) == result["probabilities"]
+        for lifecycle in persisted
+    )
+    assert {item.initial_version.decision_id for item in persisted} == {
+        initial_binding.activation_authorization_id
+    }
+    assert set(
+        _project_runtime_lifecycle_set(runtime.lifecycle_store, result, fixture)
+    ) == set(TOP5_H2H_OUTCOMES)
+    with pytest.raises(Top5SignalLifecyclePublicAdapterError):
+        _project_runtime_lifecycle_set(
+            runtime.lifecycle_store, result, fixture, lifecycles=persisted[:1]
+        )
     assert transport.calls[0][0].lifecycle_stage == "INITIAL"
 
 
@@ -529,7 +734,7 @@ def test_provider_budget_block_refuses_before_credential_and_transport(tmp_path)
             binding,
             verified,
             fixture=fixture,
-            lifecycle=lifecycle,
+            lifecycles=lifecycle,
         )
     assert transport.calls == []
     assert credential_calls == []
@@ -594,11 +799,220 @@ def test_preflight_scope_failures_make_zero_provider_calls(tmp_path, tamper):
             binding,
             verified,
             fixture=fixture,
-            lifecycle=lifecycle,
+            lifecycles=lifecycle,
         )
     assert transport.calls == []
     assert credential_calls == []
     assert runtime.route_store.read()["current_route"]["activation_mode"] == "DISABLED"
+
+
+def test_lifecycle_state_cli_envelope_requires_exact_canonical_three_set(tmp_path):
+    (
+        *_,
+        lifecycles,
+        _binding,
+        _verified,
+        _selected,
+        _store,
+        _transport,
+        _runtime,
+        _creds,
+        _ok,
+        _fail,
+    ) = _runtime_context(tmp_path)
+    envelope = top5_h2h_lifecycle_set_payload(lifecycles)
+    parsed = parse_top5_h2h_lifecycle_set(envelope)
+    assert [item.initial_version.outcome_id for item in parsed] == list(
+        TOP5_H2H_OUTCOMES
+    )
+    for invalid in (
+        {**envelope, "schema_version": "wrong"},
+        {**envelope, "unexpected": True},
+        {**envelope, "lifecycles": envelope["lifecycles"][:2]},
+        {
+            **envelope,
+            "lifecycles": [
+                envelope["lifecycles"][0],
+                envelope["lifecycles"][0],
+                envelope["lifecycles"][2],
+            ],
+        },
+        {
+            **envelope,
+            "lifecycles": [*envelope["lifecycles"], envelope["lifecycles"][0]],
+        },
+    ):
+        with pytest.raises(SignalLifecycleError):
+            parse_top5_h2h_lifecycle_set(invalid)
+
+
+@pytest.mark.parametrize(
+    "mismatch",
+    [
+        "missing_home",
+        "missing_draw",
+        "missing_away",
+        "duplicate",
+        "extra",
+        "mixed_fixture",
+        "mixed_candidate",
+        "mixed_model",
+        "mixed_source",
+        "mixed_research",
+        "mixed_artifact",
+    ],
+)
+def test_incomplete_or_mixed_lifecycle_set_rejects_before_request(tmp_path, mismatch):
+    (
+        _package,
+        plan,
+        fixture,
+        lifecycles,
+        binding,
+        verified,
+        _selected,
+        store,
+        transport,
+        runtime,
+        credential_calls,
+        _successes,
+        _failures,
+    ) = _runtime_context(tmp_path)
+    supplied = list(lifecycles)
+    if mismatch.startswith("missing_"):
+        supplied = [
+            lifecycle
+            for lifecycle in supplied
+            if lifecycle.initial_version.outcome_id != mismatch.removeprefix("missing_")
+        ]
+    elif mismatch == "duplicate":
+        supplied[-1] = supplied[0]
+    elif mismatch == "extra":
+        supplied.append(supplied[0])
+    elif mismatch == "mixed_fixture":
+        other_fixture = replace(fixture, fixture_key=fixture.fixture_key + "-other")
+        supplied[0] = _clone_initial_lifecycle(supplied[0], other_fixture)
+    elif mismatch == "mixed_candidate":
+        supplied[0] = _clone_initial_lifecycle(
+            supplied[0], fixture, candidate_id="M5_other_candidate"
+        )
+    elif mismatch == "mixed_model":
+        supplied[0] = _clone_initial_lifecycle(
+            supplied[0], fixture, model_identity="M5_other_model"
+        )
+    elif mismatch == "mixed_source":
+        supplied[0] = _clone_initial_lifecycle(
+            supplied[0], fixture, source_sha="2" * 40
+        )
+    elif mismatch == "mixed_research":
+        supplied[0] = _clone_initial_lifecycle(
+            supplied[0], fixture, research_sha="3" * 40
+        )
+    elif mismatch == "mixed_artifact":
+        supplied[0] = _clone_initial_lifecycle(
+            supplied[0], fixture, model_artifact_hash="4" * 64
+        )
+    with pytest.raises(OneShotExecutionError):
+        runtime.execute(
+            plan,
+            binding,
+            verified,
+            fixture=fixture,
+            lifecycles=tuple(supplied),
+        )
+    assert transport.calls == []
+    assert credential_calls == []
+    assert store.save_calls == 0
+
+
+def test_supplied_lifecycle_must_match_durable_store_exactly(tmp_path):
+    (
+        _package,
+        plan,
+        fixture,
+        lifecycles,
+        binding,
+        verified,
+        _selected,
+        store,
+        transport,
+        runtime,
+        credential_calls,
+        _successes,
+        _failures,
+    ) = _runtime_context(tmp_path)
+    replacement = _clone_initial_lifecycle(
+        lifecycles[0], fixture, decision_reason="durable mismatch"
+    )
+    store.values[replacement.lifecycle_id] = replacement
+    with pytest.raises(OneShotExecutionError, match="persisted lifecycle"):
+        runtime.execute(
+            plan,
+            binding,
+            verified,
+            fixture=fixture,
+            lifecycles=lifecycles,
+        )
+    assert transport.calls == []
+    assert credential_calls == []
+
+
+@pytest.mark.parametrize("withdrawn", [False, True])
+def test_refinement_rejects_advanced_or_withdrawn_lifecycle_set_before_request(
+    tmp_path, withdrawn
+):
+    (
+        _package,
+        plan,
+        fixture,
+        initial_lifecycles,
+        binding,
+        verified,
+        _selected,
+        _store,
+        transport,
+        runtime,
+        credential_calls,
+        _successes,
+        _failures,
+    ) = _runtime_context(tmp_path)
+    snapshot = MarketSnapshot(
+        fixture.fixture_key,
+        NOW - timedelta(seconds=10),
+        initial_lifecycles[0].initial_version.snapshot_kind,
+        "the_odds_api:top5",
+        {"home": 2.1, "draw": 3.5, "away": 3.7},
+        "advanced-lifecycle-snapshot",
+    )
+    supplied = tuple(
+        refine_signal(
+            lifecycle,
+            fixture=fixture,
+            snapshot=snapshot,
+            now=NOW,
+            probabilities={"home": 0.4, "draw": 0.3, "away": 0.3},
+            eligibility_decision=not withdrawn,
+            withdrawal_authorized=withdrawn,
+            decision_id="offline-advanced-lifecycle",
+            decision_reason="offline lifecycle-set rejection test",
+            classification=(
+                RefinementClassification.WITHDRAWN
+                if withdrawn
+                else RefinementClassification.STRENGTHENED
+            ),
+        )
+        for lifecycle in initial_lifecycles
+    )
+    with pytest.raises(OneShotExecutionError):
+        runtime.execute(
+            plan,
+            binding,
+            verified,
+            fixture=fixture,
+            lifecycles=supplied,
+        )
+    assert transport.calls == []
+    assert credential_calls == []
 
 
 def test_not_due_refinement_refuses_before_credential_and_provider(tmp_path):
@@ -625,7 +1039,7 @@ def test_not_due_refinement_refuses_before_credential_and_provider(tmp_path):
         issued_at=NOW - timedelta(minutes=10),
         expires_at=NOW + timedelta(minutes=10),
     )
-    lifecycle = _canonical_m5_initial_lifecycle(
+    lifecycles = _canonical_m5_initial_lifecycles(
         lifecycle,
         fixture,
         inventory_for(binding.activation_league, M5_CANDIDATE_ID).model_artifact_hash,
@@ -635,7 +1049,7 @@ def test_not_due_refinement_refuses_before_credential_and_provider(tmp_path):
     runtime = Top5OneShotProductionRuntime(
         route_store=DurableTop5ProductionRouteStateStore(tmp_path / "not-due.json"),
         transport=transport,
-        lifecycle_store=MemoryLifecycleStore(lifecycle),
+        lifecycle_store=MemoryLifecycleStore(lifecycles),
         clock=lambda: NOW - timedelta(minutes=1),
         credential_loader=lambda: credential_calls.append(1) or "injected-test-key",
         budget_available=lambda _now: True,
@@ -646,7 +1060,7 @@ def test_not_due_refinement_refuses_before_credential_and_provider(tmp_path):
             binding,
             verified,
             fixture=fixture,
-            lifecycle=lifecycle,
+            lifecycles=lifecycles,
         )
     assert transport.calls == []
     assert credential_calls == []
@@ -688,7 +1102,7 @@ def test_post_route_failures_consume_at_most_one_request_and_roll_back(
     plan, binding, verified, _envelope = _bind_test_plan_to_canonical_m5(
         plan, binding, signer, public_path, envelope, now=NOW
     )
-    lifecycle = _canonical_m5_initial_lifecycle(
+    lifecycles = _canonical_m5_initial_lifecycles(
         lifecycle,
         fixture,
         inventory_for(binding.activation_league, M5_CANDIDATE_ID).model_artifact_hash,
@@ -737,7 +1151,7 @@ def test_post_route_failures_consume_at_most_one_request_and_roll_back(
                 for outcome in bookmaker["markets"][0]["outcomes"]
                 if outcome["name"] != "Draw"
             ]
-    lifecycle_store = MemoryLifecycleStore(lifecycle, fail_save=fail_save)
+    lifecycle_store = MemoryLifecycleStore(lifecycles, fail_save=fail_save)
     transport = FakeTransport(
         fixture,
         NOW,
@@ -800,7 +1214,7 @@ def test_post_route_failures_consume_at_most_one_request_and_roll_back(
             binding,
             verified,
             fixture=fixture,
-            lifecycle=lifecycle,
+            lifecycles=lifecycles,
         )
     assert len(transport.calls) == (0 if failure == "credential" else 1)
     assert len(credential_calls) == 1
@@ -879,7 +1293,7 @@ def test_odds_api_fixture_mismatch_fails_after_exactly_one_request(tmp_path, mis
             binding,
             verified,
             fixture=fixture,
-            lifecycle=lifecycle,
+            lifecycles=lifecycle,
         )
 
     assert len(transport.calls) == 1
@@ -929,7 +1343,7 @@ def test_route_transition_failure_after_persisted_executing_rolls_back(tmp_path)
             binding,
             verified,
             fixture=fixture,
-            lifecycle=lifecycle,
+            lifecycles=lifecycle,
         )
     assert transport.calls == []
     assert credential_calls == []
@@ -1016,7 +1430,7 @@ def test_durable_activation_store_verifies_one_shot_result_and_safety(tmp_path):
         verified_authorization=verified,
         runtime=runtime,
         fixture=fixture,
-        lifecycle=lifecycle,
+        lifecycles=lifecycle,
     )
     assert record["status"] == "PRODUCTION_VERIFIED"
     assert record["execution_result_digest"] == _sha(record["execution_result"])
@@ -1067,7 +1481,7 @@ def test_durable_result_validation_failure_rolls_back_route_consumer(tmp_path):
             verified_authorization=verified,
             runtime=InvalidResultRuntime(),
             fixture=fixture,
-            lifecycle=lifecycle,
+            lifecycles=lifecycle,
         )
     assert (
         runtime.consumer.verify_disabled_after_rollback(
@@ -1103,7 +1517,7 @@ def test_rolled_back_route_blocks_reexecution_before_credentials_or_request(tmp_
             binding,
             verified,
             fixture=fixture,
-            lifecycle=lifecycle,
+            lifecycles=lifecycle,
         )
     assert (
         runtime.consumer.verify_disabled_after_rollback(
@@ -1118,7 +1532,7 @@ def test_rolled_back_route_blocks_reexecution_before_credentials_or_request(tmp_
             binding,
             verified,
             fixture=fixture,
-            lifecycle=lifecycle,
+            lifecycles=lifecycle,
         )
     assert len(transport.calls) == 1
     assert len(credential_calls) == 1
