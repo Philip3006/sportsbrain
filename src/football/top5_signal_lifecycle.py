@@ -11,7 +11,7 @@ import fcntl
 import hashlib
 import json
 import os
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -33,6 +33,8 @@ from src.utils.atomic_io import atomic_write_json
 
 LIFECYCLE_SCHEMA_VERSION = "top5-signal-lifecycle-v1"
 LIFECYCLE_STORE_SCHEMA_VERSION = "top5-signal-lifecycle-store-v1"
+LIFECYCLE_SET_SCHEMA_VERSION = "top5-signal-lifecycle-set-v1"
+TOP5_H2H_OUTCOMES = ("home", "draw", "away")
 LIFECYCLE_STATE_RELATIVE_DIR = "football/top5/signal_lifecycle"
 EXPECTED_PROVIDER_IDENTITY = "the_odds_api"
 
@@ -943,6 +945,137 @@ class Top5SignalLifecycle:
         return lifecycle
 
 
+def canonical_top5_h2h_lifecycle_set(
+    lifecycles: object,
+) -> dict[str, Top5SignalLifecycle]:
+    """Validate and order the complete canonical home/draw/away lifecycle set."""
+    if not isinstance(lifecycles, Sequence) or isinstance(
+        lifecycles, (str, bytes, bytearray)
+    ):
+        raise SignalLifecycleError("Top-5 lifecycle set must be a sequence")
+    if len(lifecycles) != len(TOP5_H2H_OUTCOMES):
+        raise SignalLifecycleError("Top-5 lifecycle set must contain exactly three")
+    by_outcome: dict[str, Top5SignalLifecycle] = {}
+    for lifecycle in lifecycles:
+        if not isinstance(lifecycle, Top5SignalLifecycle):
+            raise SignalLifecycleError(
+                "Top-5 lifecycle set contains a non-canonical item"
+            )
+        lifecycle.validate()
+        initial = lifecycle.initial_version
+        outcome = initial.outcome_id
+        if outcome not in TOP5_H2H_OUTCOMES or outcome in by_outcome:
+            raise SignalLifecycleError(
+                "Top-5 lifecycle outcomes are duplicate or invalid"
+            )
+        if initial.market_id != "h2h":
+            raise SignalLifecycleError("Top-5 lifecycle market must be h2h")
+        by_outcome[outcome] = lifecycle
+    if set(by_outcome) != set(TOP5_H2H_OUTCOMES):
+        raise SignalLifecycleError("Top-5 lifecycle outcomes must be home/draw/away")
+
+    reference = by_outcome[TOP5_H2H_OUTCOMES[0]]
+    reference_initial = reference.initial_version
+    reference_current = reference.current_version
+    for outcome in TOP5_H2H_OUTCOMES[1:]:
+        lifecycle = by_outcome[outcome]
+        initial = lifecycle.initial_version
+        current = lifecycle.current_version
+        for field_name in (
+            "league_code",
+            "fixture_key",
+            "kickoff",
+            "candidate_id",
+            "model_identity",
+            "lifecycle_contract_id",
+            "provider_identity",
+            "source_sha",
+            "research_sha",
+            "model_artifact_hash",
+            "snapshot_id",
+            "snapshot_kind",
+            "snapshot_source",
+            "odds_captured_at",
+            "prediction_generated_at",
+            "probabilities",
+            "market_odds",
+            "implied_probabilities",
+            "edges",
+            "decision_id",
+            "decision_reason",
+            "eligibility_decision",
+            "withdrawal_authorized",
+            "confidence_metadata",
+        ):
+            if getattr(initial, field_name) != getattr(reference_initial, field_name):
+                raise SignalLifecycleError(
+                    f"Top-5 lifecycle initial {field_name} differs across outcomes"
+                )
+        for field_name in (
+            "league_code",
+            "fixture_key",
+            "kickoff",
+            "candidate_id",
+            "model_identity",
+            "lifecycle_contract_id",
+            "provider_identity",
+            "source_sha",
+            "research_sha",
+            "model_artifact_hash",
+            "snapshot_id",
+            "snapshot_kind",
+            "snapshot_source",
+            "odds_captured_at",
+            "prediction_generated_at",
+            "probabilities",
+            "market_odds",
+            "implied_probabilities",
+            "edges",
+            "decision_id",
+            "decision_reason",
+            "eligibility_decision",
+            "withdrawal_authorized",
+            "confidence_metadata",
+        ):
+            if getattr(current, field_name) != getattr(reference_current, field_name):
+                raise SignalLifecycleError(
+                    f"Top-5 lifecycle current {field_name} differs across outcomes"
+                )
+        if (
+            len(lifecycle.versions) != len(reference.versions)
+            or current.stage is not reference_current.stage
+            or current.version_number != reference_current.version_number
+        ):
+            raise SignalLifecycleError(
+                "Top-5 lifecycle versions/stages differ across outcomes"
+            )
+    return {outcome: by_outcome[outcome] for outcome in TOP5_H2H_OUTCOMES}
+
+
+def parse_top5_h2h_lifecycle_set(raw: object) -> tuple[Top5SignalLifecycle, ...]:
+    """Parse the sole supported CLI lifecycle-state envelope."""
+    if not isinstance(raw, Mapping) or set(raw) != {"schema_version", "lifecycles"}:
+        raise SignalLifecycleError("Top-5 lifecycle-set envelope fields are malformed")
+    if raw["schema_version"] != LIFECYCLE_SET_SCHEMA_VERSION:
+        raise SignalLifecycleError("unsupported Top-5 lifecycle-set schema")
+    payloads = raw["lifecycles"]
+    if not isinstance(payloads, (list, tuple)) or len(payloads) != 3:
+        raise SignalLifecycleError(
+            "Top-5 lifecycle-set envelope requires exactly three"
+        )
+    parsed = tuple(Top5SignalLifecycle.from_payload(item) for item in payloads)
+    ordered = canonical_top5_h2h_lifecycle_set(parsed)
+    return tuple(ordered[outcome] for outcome in TOP5_H2H_OUTCOMES)
+
+
+def top5_h2h_lifecycle_set_payload(lifecycles: object) -> dict[str, object]:
+    ordered = canonical_top5_h2h_lifecycle_set(lifecycles)
+    return {
+        "schema_version": LIFECYCLE_SET_SCHEMA_VERSION,
+        "lifecycles": [ordered[outcome].as_payload() for outcome in TOP5_H2H_OUTCOMES],
+    }
+
+
 def _build_version(
     *,
     fixture: Fixture,
@@ -1363,7 +1496,9 @@ __all__ = [
     "DEFAULT_SIGNAL_LIFECYCLE_CONTRACT",
     "EXPECTED_PROVIDER_IDENTITY",
     "LIFECYCLE_SCHEMA_VERSION",
+    "LIFECYCLE_SET_SCHEMA_VERSION",
     "LIFECYCLE_STATE_RELATIVE_DIR",
+    "TOP5_H2H_OUTCOMES",
     "LifecyclePlan",
     "LifecyclePlanStatus",
     "RefinementClassification",
@@ -1374,8 +1509,11 @@ __all__ = [
     "Top5SignalLifecycleContract",
     "Top5SignalLifecycleStore",
     "Top5SignalLifecycleVersion",
+    "canonical_top5_h2h_lifecycle_set",
     "create_initial_signal",
     "lifecycle_state_path",
+    "parse_top5_h2h_lifecycle_set",
     "plan_signal_lifecycle",
     "refine_signal",
+    "top5_h2h_lifecycle_set_payload",
 ]

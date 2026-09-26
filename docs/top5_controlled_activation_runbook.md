@@ -65,40 +65,38 @@ The durable control commands are:
 chmod 600 <exact-evidence-and-authorization.json>
 python3 scripts/top5_controlled_activation.py prepare --input <absolute-path-to-exact-evidence-and-authorization.json>
 python3 scripts/top5_controlled_activation.py status [--activation-id <id>]
-python3 scripts/top5_controlled_activation.py execute --input <same-absolute-path> --activation-id <id> --authorization-envelope <absolute-signed-envelope.json> --public-key-file <absolute-owner-only-public-key.pem> --signer-key-id <trusted-key-id> --lifecycle-stage <INITIAL-or-REFINEMENT> [--lifecycle-state <absolute-canonical-lifecycle.json>] --execute
+python3 scripts/top5_controlled_activation.py execute --input <same-absolute-path> --activation-id <id> --authorization-envelope <absolute-signed-envelope.json> --public-key-file <absolute-owner-only-public-key.pem> --signer-key-id <trusted-key-id> --lifecycle-stage <INITIAL-or-REFINEMENT> [--lifecycle-state <absolute-top5-signal-lifecycle-set-v1.json>] --execute
 python3 scripts/top5_controlled_activation.py rollback --activation-id <id> --plan-digest <exact-plan-digest>
 ```
 
 The default path is non-executing. `execute` requires the explicit flag,
-explicit lifecycle stage, exact B1/B2 evidence, an INITIAL lifecycle record
-when selecting REFINEMENT, and a valid detached Ed25519 signature. A legacy
+explicit lifecycle stage, exact B1/B2 evidence, and a valid detached Ed25519
+signature. INITIAL must omit `--lifecycle-state`. REFINEMENT requires one
+owner-only `top5-signal-lifecycle-set-v1` envelope with exactly three
+canonical lifecycle payloads, whose outcome set is exactly `home`, `draw`,
+and `away`; a single-lifecycle file is not accepted. A legacy
 non-empty bearer token alone has zero execution authority. The two-stage
 contract is `DEFAULT_SIGNAL_LIFECYCLE_CONTRACT`; INITIAL and REFINEMENT use
 their exact stage contract IDs, planner due status, 900-second maximum
 snapshot age, SIGNAL_TIME-only input, and zero retries. Closing odds are
-rejected. The offline route-state store is atomic, owner-only, locked,
-digest-checked, nonce-aware, and can restore/read back its saved disabled
-record. It is not connected to a live route consumer and is not proof of
-production routing or production rollback.
+rejected. The route-state store is atomic, owner-only, locked, digest-checked,
+nonce-aware, and can restore/read back its saved disabled record. The manual
+one-shot runner is its launch-specific live consumer; the store alone is not
+proof of activation. Only validated provider, M5, lifecycle, and post-run
+health evidence can move the route to `PRODUCTION_VERIFIED`.
 
-Even with valid signed authorization, current `main` has no genuine Top-5
-one-shot production model/provider runtime. The durable execute method
-therefore remains fail-closed with
-`NO_PRODUCTION_ONE_SHOT_MODEL_PROVIDER_RUNTIME` before a provider request or
-activation-state transition. There is also no live route-state consumer to
-verify activation or rollback. Do not run the command as a production canary;
-do not treat PREPARED, AUTHORIZED, or an EXECUTING route-state record as
-activation.
+This path is executable only with a fresh exact signed authorization and the
+explicit operator `--execute` flag. This implementation task did not run a
+canary. Do not treat PREPARED, AUTHORIZED, or EXECUTING as production-verified.
 
 No recurring scheduler is registered or required for a future manual
 one-shot canary. This PR does not add scheduler wiring.
 
 ## Activation
 
-After a genuine reviewed one-shot runtime and live route consumer exist, a
-separate task may execute one league only from the exact prepared snapshot and
-fresh signature. Before that dependency is supplied, there is no executable
-production path. This runbook does not authorize or perform activation.
+The one-shot production path executes one league only from the exact prepared
+snapshot and fresh signature. This runbook does not itself authorize or perform
+activation; a valid detached CEO authorization remains mandatory.
 
 Do not expand league scope, change cadence, bind a different model, add a
 provider, or enable publication in the same run.

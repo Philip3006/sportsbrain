@@ -2,15 +2,13 @@
 
 ## Current status
 
-Production-side readiness is implemented as offline, deterministic contracts
-and simulations from merged PR #56 (`8de9472644057656c50d900380a843909ff5a46b`)
-plus a durable external activation-control store. The store can persist a
-validated one-league `PREPARED` plan and exact rollback evidence; it does not
-activate production routing. The frozen Research reference remains
+Production-side readiness includes offline, deterministic contracts and
+simulations from merged PR #56 (`8de9472644057656c50d900380a843909ff5a46b`), a
+durable external activation-control store, and the manual one-shot runtime in
+this change. This task did not execute a canary: production route state remains
+disabled until the exact detached activation authorization and explicit
+operator execution are supplied. The frozen Research reference remains
 `6eaabbec7d0182103d815c72fae4976e261b40aa`.
-The five leagues remain disabled, no-bet, unpublished, and absent from the
-active league registry. Builder 1's shadow integration and the frozen Research
-model are outside this branch.
 
 ## What is ready
 
@@ -27,6 +25,11 @@ model are outside this branch.
   plan and canonical lifecycle stage;
 - a locked, atomic, owner-only external route-state journal with nonce replay
   protection and exact saved-record restoration;
+- a manual one-league The Odds API/M5 path with one request, zero retries,
+  canonical consensus parsing, lifecycle persistence, and evidence-bound
+  production verification;
+- a live route-state consumer and rollback read-back that proves the exact
+  canary route is disabled after rollback;
 - rollback-to-disabled contracts for every required failure class;
 - disabled Top-5 publisher, PWA, and health/observability contracts;
 - controlled activation and production verification runbooks.
@@ -40,19 +43,21 @@ The complete future chain is:
 `shadow evaluation` → `CEO approval` → `controlled activation` → `publication`
 → `settlement` → `monitoring` → `rollback`.
 
-The current readiness branch supplies only the injected/offline boundaries,
-evidence, and runbooks. Fixture/result authority, provider authority, model
-binding, signal-time numeric values, shadow observation duration, publication,
-settlement, scheduler, and rollback execution remain unresolved or disabled.
+The one-shot path supplies the manual, exact-scope runtime and executable
+rollback boundary, but does not supply or execute real evidence. Current
+fixture/evidence bindings, a fresh Signal-Time approval, due lifecycle stage,
+and a detached activation authorization remain mandatory inputs. Publication,
+settlement, recurring scheduler, and betting remain separate and disabled.
 
 ## What remains disabled
 
-The evidence/plan contract binds a model identity, but no production model
-runtime is installed. No provider client is imported or called. The route
-authority is constrained to `the_odds_api`; the candidate provider remains
-non-authoritative. No live route-state consumer, recurring scheduler, launchd
-job, Cloudflare Worker, publisher, or ledger writer is registered. Closing
-odds are benchmark-only and structurally excluded from signal-time inference.
+No provider client was called and no production model inference was executed in
+this implementation task. The manual runner binds the canonical M5 artifact
+and constrains provider authority to `the_odds_api`; the candidate provider
+remains non-authoritative. The route consumer is wired only into the manual
+one-shot runner invoked by the CLI; no recurring scheduler, launchd job,
+Cloudflare Worker, publisher, or ledger writer is registered. Closing odds are
+benchmark-only and structurally excluded from signal-time inference.
 
 ## Provider-validation framework
 
@@ -130,15 +135,13 @@ route-state journal supports atomic PREPARED → AUTHORIZED → EXECUTING record
 nonce replay rejection, and exact saved disabled-record restoration. These
 records are control evidence only, not a live route change.
 
-`scripts/top5_controlled_activation.py` still fails closed after the signature
-and evidence checks with `NO_PRODUCTION_ONE_SHOT_MODEL_PROVIDER_RUNTIME`.
-There is no genuine one-shot Top-5 inference runtime and no live route-state
-consumer. Consequently the required EXECUTING → ACTIVE/PRODUCTION_VERIFIED
-transition and a production-observed rollback cannot be truthfully implemented
-or tested here. Do not interpret a signed authorization, durable journal
-record, or file-level read-back as activation or production rollback.
-`RollbackController` continues to return the safe disabled, no-bet,
-unpublished, non-scheduled, ledger-untouched state for every trigger.
+`scripts/top5_controlled_activation.py` now routes exact signed execution
+through the manual one-shot inference runtime and live route-state consumer.
+No real canary evidence was produced by this implementation task; a fresh
+detached activation authorization remains mandatory. Do not interpret a
+PREPARED, AUTHORIZED, or EXECUTING journal record as production verification.
+The one-shot rollback restores and rereads the disabled route, while keeping
+publication, scheduling, betting and ledger effects disabled.
 
 ## Publisher, PWA, and health
 

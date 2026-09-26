@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Durable Top-5 one-league activation control commands.
 
-Preparation/status/rollback only touch the external Top-5 state store. The
-execute command is explicitly opt-in and fails closed while no reviewed real
-one-shot model/provider runtime is installed.
+Preparation/status/rollback operate on the external Top-5 state stores. The
+execute command is explicitly opt-in and delegates to the exact-scope manual
+one-shot runtime; a verified detached activation authorization is mandatory.
 """
 
 from __future__ import annotations
@@ -22,10 +22,18 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from src.football.production_contracts import Fixture, SignalTimeContract
+from src.football.production_contracts import (
+    Fixture,
+    ProductionContractError,
+    SignalTimeContract,
+)
 from src.football.top5_activation_authorization import (
     build_signed_activation_execution_binding,
     verify_activation_authorization,
+)
+from src.football.top5_activation_route_state import (
+    DurableTop5ProductionRouteStateStore,
+    Top5ProductionRouteConsumer,
 )
 from src.football.top5_b2_qualification_batch_orchestrator import (
     Builder2FiveLeagueReceiptPackageV1,
@@ -38,17 +46,18 @@ from src.football.top5_controlled_shadow_provider_qualification import (
     MinimumSamplePolicy,
 )
 from src.football.top5_durable_activation import (
-    PRODUCTION_RUNTIME_BLOCKER,
+    PRODUCTION_RUNTIME_REQUIRED,
     DurableActivationError,
     DurableTop5ActivationStore,
     Top5DurableActivationPlanV1,
     activation_health_payload,
     prepare_top5_durable_activation_plan,
 )
+from src.football.top5_one_shot_runtime import Top5OneShotProductionRuntime
 from src.football.top5_production_activation import Top5ProductionRoutingSnapshot
 from src.football.top5_signal_lifecycle import (
     DEFAULT_SIGNAL_LIFECYCLE_CONTRACT,
-    Top5SignalLifecycle,
+    parse_top5_h2h_lifecycle_set,
 )
 
 
@@ -210,7 +219,11 @@ def main(argv: list[str] | None = None) -> int:
     execute.add_argument(
         "--lifecycle-stage", required=True, choices=("INITIAL", "REFINEMENT")
     )
-    execute.add_argument("--lifecycle-state", type=Path)
+    execute.add_argument(
+        "--lifecycle-state",
+        type=Path,
+        help="owner-only top5-signal-lifecycle-set-v1 envelope (REFINEMENT only)",
+    )
     execute.add_argument(
         "--execute",
         action="store_true",
@@ -283,15 +296,18 @@ def main(argv: list[str] | None = None) -> int:
                 away_team=selected.away_team,
                 kickoff=selected.kickoff,
             )
-            lifecycle = None
-            if args.lifecycle_state is not None:
-                lifecycle = Top5SignalLifecycle.from_payload(
-                    _read(args.lifecycle_state)
-                )
+            lifecycles = None
+            if args.lifecycle_stage == "INITIAL":
+                if args.lifecycle_state is not None:
+                    raise DurableActivationError("INITIAL must omit --lifecycle-state")
             elif args.lifecycle_stage == "REFINEMENT":
-                raise DurableActivationError(
-                    "REFINEMENT requires the persisted canonical INITIAL lifecycle"
-                )
+                if args.lifecycle_state is None:
+                    raise DurableActivationError(
+                        "REFINEMENT requires the complete canonical lifecycle-set file"
+                    )
+                lifecycles = parse_top5_h2h_lifecycle_set(_read(args.lifecycle_state))
+            else:
+                raise DurableActivationError("lifecycle stage is unsupported")
             envelope = _read(args.authorization_envelope)
             signed_payload = _object(envelope.get("payload"), "authorization payload")
             binding = build_signed_activation_execution_binding(
@@ -306,7 +322,7 @@ def main(argv: list[str] | None = None) -> int:
                 lifecycle_contract=DEFAULT_SIGNAL_LIFECYCLE_CONTRACT,
                 lifecycle_stage=args.lifecycle_stage,
                 now=now,
-                lifecycle=lifecycle,
+                lifecycles=lifecycles,
             )
             verified = verify_activation_authorization(
                 envelope,
@@ -315,20 +331,63 @@ def main(argv: list[str] | None = None) -> int:
                 expected_binding=binding,
                 now=now,
             )
+            route_store = DurableTop5ProductionRouteStateStore()
+            runtime = Top5OneShotProductionRuntime(route_store=route_store)
             store.execute(
                 plan,
                 now=now,
                 explicit_execute=True,
                 execution_binding=binding,
                 verified_authorization=verified,
+                runtime=runtime,
+                fixture=fixture,
+                lifecycles=lifecycles,
             )
         if args.command == "status":
-            print(
-                json.dumps(
-                    activation_health_payload(store, args.activation_id), sort_keys=True
-                )
+            route_store = DurableTop5ProductionRouteStateStore()
+            route_state = route_store.read()
+            route_record = None
+            if args.activation_id:
+                route_record = route_state["records"].get(args.activation_id)
+            elif route_state["records"]:
+                route_record = next(reversed(route_state["records"].values()))
+            health = activation_health_payload(store, args.activation_id)
+            health["live_route_state"] = route_state["current_route"]
+            health["live_route_record_status"] = (
+                route_record.get("status") if isinstance(route_record, dict) else None
             )
+            health["live_routing_rollback_ready"] = isinstance(route_record, dict) and (
+                route_record.get("status")
+                in {"EXECUTING", "PRODUCTION_VERIFIED", "ROLLBACK", "ROLLED_BACK"}
+            )
+            print(json.dumps(health, sort_keys=True))
             return 0
+        route_store = DurableTop5ProductionRouteStateStore()
+        route_consumer = Top5ProductionRouteConsumer(route_store)
+        route_state = route_store.read()
+        route_record = route_state["records"].get(args.activation_id)
+        if isinstance(route_record, dict) and route_record.get("status") in {
+            "PREPARED",
+            "AUTHORIZED",
+            "EXECUTING",
+            "PRODUCTION_VERIFIED",
+            "ROLLBACK",
+        }:
+            route_store.rollback(
+                args.activation_id,
+                route_record["activation_plan_digest"],
+                now=now,
+            )
+            route_consumer.verify_disabled_after_rollback(
+                args.activation_id, route_record["activation_plan_digest"]
+            )
+        elif (
+            isinstance(route_record, dict)
+            and route_record.get("status") == "ROLLED_BACK"
+        ):
+            route_consumer.verify_disabled_after_rollback(
+                args.activation_id, route_record["activation_plan_digest"]
+            )
         record = store.rollback(args.activation_id, args.plan_digest, now=now)
         print(
             json.dumps(
@@ -346,12 +405,12 @@ def main(argv: list[str] | None = None) -> int:
             )
         )
         return 0
-    except (OSError, ValueError, KeyError, TypeError) as exc:
+    except (OSError, ValueError, KeyError, TypeError, ProductionContractError) as exc:
         # Do not include raw input or bearer-token fields in diagnostics.
         message = str(exc)
         safe = (
-            PRODUCTION_RUNTIME_BLOCKER
-            if PRODUCTION_RUNTIME_BLOCKER in message
+            PRODUCTION_RUNTIME_REQUIRED
+            if PRODUCTION_RUNTIME_REQUIRED in message
             else message
         )
         print(

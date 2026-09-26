@@ -1,9 +1,9 @@
-"""Durable, fail-closed control plane for a future one-league Top-5 canary.
+"""Durable, fail-closed control plane for the manual one-league Top-5 canary.
 
-This module persists verified preparation and rollback evidence outside the
-checkout.  It deliberately does not contain a production model, provider
-client, or live routing writer.  Consequently an execute request is rejected
-until a separately reviewed one-shot runtime adapter exists.
+This module persists verified preparation, execution and rollback evidence
+outside the checkout. Production execution is delegated to the narrow one-shot
+runtime and its live route consumer; no recurring scheduler or global routing
+writer is introduced.
 """
 
 from __future__ import annotations
@@ -12,7 +12,7 @@ import fcntl
 import json
 import os
 import tempfile
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from hashlib import sha256
@@ -47,12 +47,17 @@ from src.football.top5_production_activation import (
     TOP5_CURRENT_PROVIDER_ORDER,
     Top5ProductionRoutingSnapshot,
 )
+from src.football.top5_signal_lifecycle import (
+    LIFECYCLE_SCHEMA_VERSION,
+    TOP5_H2H_OUTCOMES,
+    Top5SignalLifecycle,
+)
 from src.runtime.paths import ROOT, runtime_state_path
 
 DURABLE_ACTIVATION_SCHEMA_VERSION = "top5-durable-activation-state-v1"
 ACTIVATION_PLAN_SCHEMA_VERSION = "top5-controlled-activation-plan-v1"
 ACTIVATION_RUNTIME_STATE_PATH = "football/top5/controlled-activation/state-v1.json"
-PRODUCTION_RUNTIME_BLOCKER = "NO_PRODUCTION_ONE_SHOT_MODEL_PROVIDER_RUNTIME"
+PRODUCTION_RUNTIME_REQUIRED = "VERIFIED_ONE_SHOT_RUNTIME_REQUIRED"
 
 
 class DurableActivationError(ProductionContractError):
@@ -108,6 +113,92 @@ def _canonical_bytes(value: object) -> bytes:
 
 def _sha(value: object) -> str:
     return sha256(_canonical_bytes(value)).hexdigest()
+
+
+def _validate_runtime_lifecycle_evidence(
+    result: Mapping[str, object], lifecycle_stage: str
+) -> None:
+    if lifecycle_stage not in {"INITIAL", "REFINEMENT"}:
+        raise DurableActivationError("one-shot lifecycle stage is invalid")
+    expected = set(TOP5_H2H_OUTCOMES)
+    expected_version = 1 if lifecycle_stage == "INITIAL" else 2
+    mappings = {
+        name: result.get(name)
+        for name in (
+            "lifecycle_ids",
+            "lifecycle_versions",
+            "lifecycle_version_digests",
+            "lifecycle_digests",
+        )
+    }
+    if any(
+        not isinstance(value, Mapping) or set(value) != expected
+        for value in mappings.values()
+    ):
+        raise DurableActivationError(
+            "one-shot result does not prove the complete lifecycle set"
+        )
+    ids = mappings["lifecycle_ids"]
+    versions = mappings["lifecycle_versions"]
+    version_digests = mappings["lifecycle_version_digests"]
+    lifecycle_digests = mappings["lifecycle_digests"]
+    assert isinstance(ids, Mapping)
+    assert isinstance(versions, Mapping)
+    assert isinstance(version_digests, Mapping)
+    assert isinstance(lifecycle_digests, Mapping)
+    ordered_ids = [ids[outcome] for outcome in TOP5_H2H_OUTCOMES]
+    lifecycle_prefix = f"{LIFECYCLE_SCHEMA_VERSION}-"
+    if any(
+        not isinstance(value, str)
+        or len(value) != len(lifecycle_prefix) + 64
+        or not value.startswith(lifecycle_prefix)
+        or any(
+            char not in "0123456789abcdef" for char in value[len(lifecycle_prefix) :]
+        )
+        for value in ordered_ids
+    ) or len(set(ordered_ids)) != len(TOP5_H2H_OUTCOMES):
+        raise DurableActivationError("one-shot lifecycle IDs are invalid")
+    if any(
+        isinstance(versions[outcome], bool)
+        or not isinstance(versions[outcome], int)
+        or versions[outcome] != expected_version
+        for outcome in TOP5_H2H_OUTCOMES
+    ):
+        raise DurableActivationError("one-shot lifecycle versions are invalid")
+    for outcome in TOP5_H2H_OUTCOMES:
+        for digest_value, name in (
+            (version_digests[outcome], f"{outcome} lifecycle version digest"),
+            (lifecycle_digests[outcome], f"{outcome} lifecycle digest"),
+        ):
+            if (
+                not isinstance(digest_value, str)
+                or len(digest_value) != 64
+                or any(char not in "0123456789abcdef" for char in digest_value)
+            ):
+                raise DurableActivationError(f"{name} is invalid")
+    set_digest = result.get("lifecycle_set_digest")
+    if (
+        not isinstance(set_digest, str)
+        or len(set_digest) != 64
+        or any(char not in "0123456789abcdef" for char in set_digest)
+    ):
+        raise DurableActivationError("lifecycle set digest is invalid")
+    if set_digest != _sha(dict(lifecycle_digests)):
+        raise DurableActivationError("one-shot lifecycle set digest mismatch")
+    production_evidence = result.get("production_evidence")
+    if not isinstance(production_evidence, Mapping) or any(
+        production_evidence.get(name) != result.get(name)
+        for name in (
+            "lifecycle_ids",
+            "lifecycle_versions",
+            "lifecycle_version_digests",
+            "lifecycle_digests",
+            "lifecycle_set_digest",
+        )
+    ):
+        raise DurableActivationError(
+            "one-shot production evidence lifecycle set differs from result"
+        )
 
 
 def _snapshot_payload(snapshot: Top5ProductionRoutingSnapshot) -> dict[str, object]:
@@ -626,6 +717,8 @@ class Top5DurableActivationRecordV1:
     betting_enabled: bool = False
     ledger_mutation_enabled: bool = False
     rollback_evidence_digest: str | None = None
+    execution_result: Mapping[str, object] | None = None
+    execution_result_digest: str | None = None
 
     def payload(self) -> dict[str, object]:
         value = {
@@ -640,6 +733,10 @@ class Top5DurableActivationRecordV1:
             "betting_enabled": self.betting_enabled,
             "ledger_mutation_enabled": self.ledger_mutation_enabled,
             "rollback_evidence_digest": self.rollback_evidence_digest,
+            "execution_result": dict(self.execution_result)
+            if self.execution_result is not None
+            else None,
+            "execution_result_digest": self.execution_result_digest,
         }
         value["record_digest"] = _sha(value)
         return value
@@ -732,7 +829,7 @@ class DurableTop5ActivationStore:
     def _validate_record(activation_id: object, record: object) -> None:
         if not isinstance(activation_id, str) or not isinstance(record, dict):
             raise DurableActivationError("activation record identity is invalid")
-        expected = {
+        legacy_expected = {
             "schema_version",
             "plan",
             "plan_digest",
@@ -746,8 +843,9 @@ class DurableTop5ActivationStore:
             "rollback_evidence_digest",
             "record_digest",
         }
+        expected = legacy_expected | {"execution_result", "execution_result_digest"}
         if (
-            set(record) != expected
+            set(record) not in (legacy_expected, expected)
             or record.get("schema_version") != DURABLE_ACTIVATION_SCHEMA_VERSION
         ):
             raise DurableActivationError("activation record schema is invalid")
@@ -762,6 +860,7 @@ class DurableTop5ActivationStore:
         if record["status"] not in {
             "PREPARED",
             "EXECUTING",
+            "PRODUCTION_VERIFIED",
             "ACTIVE",
             "ROLLED_BACK",
             "BLOCKED",
@@ -778,6 +877,18 @@ class DurableTop5ActivationStore:
         ):
             raise DurableActivationError(
                 "activation record contains an unsafe capability"
+            )
+        if record.get("status") == "PRODUCTION_VERIFIED":
+            result = record.get("execution_result")
+            result_digest = record.get("execution_result_digest")
+            if (
+                not isinstance(result, dict)
+                or not isinstance(result_digest, str)
+                or _sha(result) != result_digest
+            ):
+                raise DurableActivationError("verified execution result is invalid")
+            _validate_runtime_lifecycle_evidence(
+                result, str(result.get("lifecycle_stage", ""))
             )
 
     def _write_unlocked(self, state: dict[str, object]) -> None:
@@ -819,15 +930,20 @@ class DurableTop5ActivationStore:
                 "record": record,
                 "active_activation_id": state["active_activation_id"],
                 "revision": state["revision"],
-                "provider_health": "NOT_OBSERVED",
-                "model_health": "NOT_OBSERVED",
+                "provider_health": "HEALTHY"
+                if record and record.get("status") == "PRODUCTION_VERIFIED"
+                else "NOT_OBSERVED",
+                "model_health": "HEALTHY"
+                if record and record.get("status") == "PRODUCTION_VERIFIED"
+                else "NOT_OBSERVED",
                 "publication_enabled": False,
                 "scheduler_registered": False,
                 "betting_enabled": False,
                 "ledger_mutation_enabled": False,
                 "rollback_ready": bool(
                     record
-                    and record.get("status") in {"PREPARED", "EXECUTING", "ACTIVE"}
+                    and record.get("status")
+                    in {"PREPARED", "EXECUTING", "PRODUCTION_VERIFIED", "ACTIVE"}
                 ),
             }
 
@@ -853,7 +969,8 @@ class DurableTop5ActivationStore:
             if active_id is not None:
                 raise DurableActivationError("another Top-5 activation is active")
             if any(
-                item.get("status") in {"PREPARED", "EXECUTING", "ACTIVE"}
+                item.get("status")
+                in {"PREPARED", "EXECUTING", "PRODUCTION_VERIFIED", "ACTIVE"}
                 for item in records.values()
             ):
                 raise DurableActivationError(
@@ -874,14 +991,11 @@ class DurableTop5ActivationStore:
         explicit_execute: bool,
         execution_binding: object | None = None,
         verified_authorization: object | None = None,
+        runtime: object | None = None,
+        fixture: object | None = None,
+        lifecycles: Sequence[Top5SignalLifecycle] | None = None,
     ) -> dict[str, object]:
-        """Require the new signed exact-scope approval, then fail closed on runtime.
-
-        The legacy bearer token remains readable as evidence but is never an
-        execution credential. Current main still lacks the real Top-5 model
-        runtime and live route-state consumer, so even a valid signature does
-        not advance state or invoke a provider.
-        """
+        """Execute one exact signed canary and retain its private evidence."""
         if explicit_execute is not True:
             raise DurableActivationError("explicit execute flag is required")
         plan.validate(now=now)
@@ -915,6 +1029,14 @@ class DurableTop5ActivationStore:
                 raise DurableActivationError(
                     f"signed authorization binding mismatch: {name}"
                 )
+        if (
+            runtime is None
+            or not callable(getattr(runtime, "execute", None))
+            or not callable(getattr(runtime, "rollback_execution", None))
+        ):
+            raise DurableActivationError(PRODUCTION_RUNTIME_REQUIRED)
+        if fixture is None:
+            raise DurableActivationError("exact canonical fixture is required")
         with self._locked():
             state = self._read_unlocked()
             record = state["records"].get(plan.activation_id)
@@ -926,9 +1048,112 @@ class DurableTop5ActivationStore:
                 raise DurableActivationError(
                     "exact prepared activation plan is missing or changed"
                 )
-            # Do not consume or mutate activation state when the repository has
-            # no genuine model/provider one-shot runtime to invoke.
-            raise DurableActivationError(PRODUCTION_RUNTIME_BLOCKER)
+            record = dict(record)
+            record.update(
+                {"status": "EXECUTING", "updated_at": _utc(now, "now").isoformat()}
+            )
+            record["record_digest"] = _sha(
+                {key: value for key, value in record.items() if key != "record_digest"}
+            )
+            records = dict(state["records"])
+            records[plan.activation_id] = record
+            state.update({"records": records, "revision": int(state["revision"]) + 1})
+            self._write_unlocked(state)
+        runtime_returned = False
+        try:
+            result = runtime.execute(
+                plan,
+                execution_binding,
+                verified_authorization,
+                fixture=fixture,
+                lifecycles=lifecycles,
+            )
+            runtime_returned = True
+            if not isinstance(result, Mapping):
+                raise DurableActivationError("one-shot runtime result is malformed")
+            result = dict(result)
+            claimed_result_digest = result.get("result_digest")
+            if claimed_result_digest != _sha(
+                {key: value for key, value in result.items() if key != "result_digest"}
+            ):
+                raise DurableActivationError("one-shot result digest mismatch")
+            if (
+                result.get("schema_version") != "top5-one-shot-production-result-v1"
+                or result.get("activation_id") != plan.activation_id
+                or result.get("activation_plan_digest")
+                != execution_binding.activation_plan_digest
+                or result.get("provider_authority") != ACTIVE_PROVIDER
+                or result.get("provider_request_count") != 1
+                or result.get("retry_count") != 0
+                or result.get("no_bet") is not True
+                or result.get("publication") is not False
+                or result.get("recurring_scheduler") is not False
+                or result.get("betting") is not False
+                or result.get("ledger_mutation") is not False
+            ):
+                raise DurableActivationError(
+                    "one-shot runtime result failed validation"
+                )
+            _validate_runtime_lifecycle_evidence(
+                result, execution_binding.lifecycle_stage
+            )
+            with self._locked():
+                state = self._read_unlocked()
+                current = state["records"].get(plan.activation_id)
+                if (
+                    not isinstance(current, dict)
+                    or current.get("status") != "EXECUTING"
+                    or current.get("plan_digest") != plan.plan_digest
+                ):
+                    raise DurableActivationError("executing activation state changed")
+                current = dict(current)
+                current.update(
+                    {
+                        "status": "PRODUCTION_VERIFIED",
+                        "execution_result": result,
+                        "execution_result_digest": _sha(result),
+                        "updated_at": datetime.now(timezone.utc).isoformat(),
+                    }
+                )
+                current["record_digest"] = _sha(
+                    {
+                        key: value
+                        for key, value in current.items()
+                        if key != "record_digest"
+                    }
+                )
+                records = dict(state["records"])
+                records[plan.activation_id] = current
+                state.update(
+                    {
+                        "active_activation_id": plan.activation_id,
+                        "records": records,
+                        "revision": int(state["revision"]) + 1,
+                    }
+                )
+                self._write_unlocked(state)
+                return json.loads(json.dumps(current))
+        except Exception as exc:
+            if runtime_returned:
+                try:
+                    runtime.rollback_execution(execution_binding)
+                except Exception:  # noqa: BLE001 - rollback must cover every failure.
+                    raise DurableActivationError(
+                        "one-shot failed and route-consumer rollback could not be verified"
+                    ) from None
+            try:
+                self.rollback(
+                    plan.activation_id,
+                    plan.plan_digest,
+                    now=datetime.now(timezone.utc),
+                )
+            except Exception:  # noqa: BLE001 - fail closed if rollback itself fails.
+                raise DurableActivationError(
+                    "one-shot failed and activation rollback could not be verified"
+                ) from None
+            if isinstance(exc, DurableActivationError):
+                raise
+            raise DurableActivationError("one-shot runtime failed closed") from None
 
     def rollback(
         self, activation_id: str, plan_digest: str, *, now: datetime
@@ -944,7 +1169,12 @@ class DurableTop5ActivationStore:
                 raise DurableActivationError(
                     "rollback requires the exact activation plan digest"
                 )
-            if record.get("status") not in {"PREPARED", "EXECUTING", "ACTIVE"}:
+            if record.get("status") not in {
+                "PREPARED",
+                "EXECUTING",
+                "PRODUCTION_VERIFIED",
+                "ACTIVE",
+            }:
                 if record.get("status") == "ROLLED_BACK":
                     return record
                 raise DurableActivationError(
@@ -1102,7 +1332,7 @@ __all__ = [
     "ACTIVATION_PLAN_SCHEMA_VERSION",
     "ACTIVATION_RUNTIME_STATE_PATH",
     "DURABLE_ACTIVATION_SCHEMA_VERSION",
-    "PRODUCTION_RUNTIME_BLOCKER",
+    "PRODUCTION_RUNTIME_REQUIRED",
     "DurableActivationError",
     "DurableTop5ActivationStore",
     "Top5DurableActivationPlanV1",

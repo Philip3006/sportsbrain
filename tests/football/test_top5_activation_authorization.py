@@ -25,7 +25,7 @@ from src.football.top5_activation_authorization import (
     verify_activation_authorization,
 )
 from src.football.top5_durable_activation import (
-    PRODUCTION_RUNTIME_BLOCKER,
+    PRODUCTION_RUNTIME_REQUIRED,
     DurableActivationError,
     DurableTop5ActivationStore,
     prepare_top5_durable_activation_plan,
@@ -33,6 +33,7 @@ from src.football.top5_durable_activation import (
 from src.football.top5_production_activation import current_top5_routing_snapshot
 from src.football.top5_signal_lifecycle import (
     DEFAULT_SIGNAL_LIFECYCLE_CONTRACT,
+    TOP5_H2H_OUTCOMES,
     create_initial_signal,
 )
 from tests.football.test_top5_durable_activation import NOW, _inputs
@@ -76,22 +77,25 @@ def _signed_context(tmp_path, *, lifecycle_stage="REFINEMENT", key=None, nonce=N
         {"home": 2.1},
         "initial-lifecycle-snapshot",
     )
-    lifecycle = create_initial_signal(
-        fixture=fixture,
-        snapshot=initial_snapshot,
-        now=initial_time,
-        market_id="h2h",
-        outcome_id="home",
-        candidate_id=plan.model_identity,
-        model_identity=plan.model_identity,
-        probabilities={"home": 0.45, "draw": 0.25, "away": 0.30},
-        source_sha=plan.source_sha,
-        research_sha=plan.research_sha,
-        model_artifact_hash=plan.model_artifact_hash,
-        eligibility_decision=True,
-        decision_id="initial:test-decision",
-        decision_reason="offline contract test",
-        contract=DEFAULT_SIGNAL_LIFECYCLE_CONTRACT,
+    lifecycles = tuple(
+        create_initial_signal(
+            fixture=fixture,
+            snapshot=initial_snapshot,
+            now=initial_time,
+            market_id="h2h",
+            outcome_id=outcome,
+            candidate_id=plan.model_identity,
+            model_identity=plan.model_identity,
+            probabilities={"home": 0.45, "draw": 0.25, "away": 0.30},
+            source_sha=plan.source_sha,
+            research_sha=plan.research_sha,
+            model_artifact_hash=plan.model_artifact_hash,
+            eligibility_decision=True,
+            decision_id="initial:test-decision",
+            decision_reason="offline contract test",
+            contract=DEFAULT_SIGNAL_LIFECYCLE_CONTRACT,
+        )
+        for outcome in TOP5_H2H_OUTCOMES
     )
     binding = build_signed_activation_execution_binding(
         plan=plan,
@@ -102,7 +106,7 @@ def _signed_context(tmp_path, *, lifecycle_stage="REFINEMENT", key=None, nonce=N
         lifecycle_contract=DEFAULT_SIGNAL_LIFECYCLE_CONTRACT,
         lifecycle_stage=lifecycle_stage,
         now=NOW,
-        lifecycle=lifecycle,
+        lifecycles=lifecycles,
     )
     signer = key or Ed25519PrivateKey.generate()
     public_key = signer.public_key()
@@ -146,7 +150,7 @@ def _signed_context(tmp_path, *, lifecycle_stage="REFINEMENT", key=None, nonce=N
         bundle,
         plan,
         fixture,
-        lifecycle,
+        lifecycles,
         binding,
         signer,
         public_path,
@@ -397,7 +401,7 @@ def test_signal_snapshot_requires_fresh_signal_time_and_the_odds_api(tmp_path):
             )
 
 
-def test_signed_authorization_does_not_remove_real_runtime_hard_blocker(tmp_path):
+def test_durable_execution_requires_genuine_runtime_and_route_consumer(tmp_path):
     (
         _package,
         _bundle,
@@ -414,7 +418,7 @@ def test_signed_authorization_does_not_remove_real_runtime_hard_blocker(tmp_path
     store = DurableTop5ActivationStore(state_path)
     store.prepare(plan, now=NOW)
     before = state_path.read_bytes()
-    with pytest.raises(DurableActivationError, match=PRODUCTION_RUNTIME_BLOCKER):
+    with pytest.raises(DurableActivationError, match=PRODUCTION_RUNTIME_REQUIRED):
         store.execute(
             plan,
             now=NOW,

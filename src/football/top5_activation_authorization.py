@@ -14,7 +14,7 @@ import json
 import os
 import re
 import stat
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -31,6 +31,7 @@ from src.football.production_contracts import (
     ProductionContractError,
     _utc,
 )
+from src.football.top5_adapters import TOP5_LEAGUE_ADAPTERS
 from src.football.top5_b2_qualification_batch_orchestrator import (
     Builder2FiveLeagueReceiptPackageV1,
 )
@@ -47,10 +48,12 @@ from src.football.top5_final_acceptance import (
 from src.football.top5_signal_lifecycle import (
     DEFAULT_SIGNAL_LIFECYCLE_CONTRACT,
     LifecyclePlanStatus,
+    SignalLifecycleError,
     SignalLifecycleStage,
     Top5SignalLifecycle,
     Top5SignalLifecycleContract,
     _validate_snapshot_source_binding,
+    canonical_top5_h2h_lifecycle_set,
     plan_signal_lifecycle,
 )
 from src.runtime.paths import ROOT
@@ -113,6 +116,98 @@ def _source_sha(value: object, name: str) -> str:
     return value.lower()
 
 
+def _validated_lifecycle_inputs(
+    *,
+    lifecycles: Sequence[Top5SignalLifecycle] | None,
+    lifecycle_stage: str,
+    fixture: Fixture,
+    lifecycle_contract: Top5SignalLifecycleContract,
+    model_identity: str,
+    source_sha: str,
+    research_sha: str,
+    model_artifact_hash: str,
+) -> tuple[dict[str, Top5SignalLifecycle], Top5SignalLifecycle | None]:
+    if lifecycle_stage == "INITIAL":
+        if lifecycles is not None:
+            raise ActivationAuthorizationError(
+                "INITIAL must not receive existing lifecycles"
+            )
+        return {}, None
+    if lifecycle_stage != "REFINEMENT" or lifecycles is None:
+        raise ActivationAuthorizationError(
+            "REFINEMENT requires the complete canonical lifecycle set"
+        )
+    try:
+        ordered = canonical_top5_h2h_lifecycle_set(lifecycles)
+    except SignalLifecycleError as exc:
+        raise ActivationAuthorizationError(str(exc)) from exc
+    for lifecycle in ordered.values():
+        initial = lifecycle.initial_version
+        current = lifecycle.current_version
+        if (
+            len(lifecycle.versions) != 1
+            or lifecycle.withdrawn
+            or current.version_number != 1
+            or current.stage is not SignalLifecycleStage.INITIAL
+            or lifecycle.contract.contract_id != lifecycle_contract.contract_id
+            or initial.fixture_key != fixture.fixture_key
+            or initial.league_code != fixture.league_code
+            or initial.kickoff != fixture.kickoff
+            or initial.market_id != "h2h"
+            or initial.model_identity != model_identity
+            or initial.candidate_id != model_identity
+            or initial.source_sha != source_sha
+            or initial.research_sha != research_sha
+            or initial.model_artifact_hash != model_artifact_hash
+        ):
+            raise ActivationAuthorizationError(
+                "REFINEMENT lifecycle set differs from the exact INITIAL scope"
+            )
+    return ordered, ordered["home"]
+
+
+def the_odds_api_one_shot_request_shape(league_code: str) -> dict[str, object]:
+    """Return the one permitted production odds request shape for one league.
+
+    The only accepted region is the existing disabled Top-5 mapping's `eu`
+    region. The provider key is supplied by that canonical league config; no
+    credential or live provider client is imported here.
+    """
+    adapter = TOP5_LEAGUE_ADAPTERS.get(league_code)
+    if adapter is None:
+        raise ActivationAuthorizationError("one-shot request league is unsupported")
+    config = adapter.config
+    mapping = config.provider_mapping
+    if (
+        mapping is None
+        or mapping.provider_name != "the_odds_api"
+        or mapping.sport_key != config.provider_sport_key
+        or mapping.regions != ("eu",)
+    ):
+        raise ActivationAuthorizationError(
+            "one-shot request provider/region mapping is not canonical"
+        )
+    return {
+        "method": "GET",
+        "endpoint": (
+            f"https://api.the-odds-api.com/v4/sports/{config.provider_sport_key}/odds"
+        ),
+        "query": {
+            "regions": "eu",
+            "markets": "h2h",
+            "oddsFormat": "decimal",
+            "dateFormat": "iso",
+        },
+        "request_count": 1,
+        "retry_count": 0,
+    }
+
+
+def the_odds_api_one_shot_request_shape_digest(league_code: str) -> str:
+    """Digest the exact credential-free one-shot request contract."""
+    return _sha(the_odds_api_one_shot_request_shape(league_code))
+
+
 @dataclass(frozen=True)
 class Top5ActivationExecutionBindingV1:
     """Exact, non-authorizing execution plan derived from accepted evidence."""
@@ -129,6 +224,7 @@ class Top5ActivationExecutionBindingV1:
     model_identity: str
     model_artifact_hash: str
     provider_authority: str
+    request_shape_digest: str
     lifecycle_contract_id: str
     lifecycle_stage: str
     lifecycle_stage_contract_id: str
@@ -154,6 +250,7 @@ class Top5ActivationExecutionBindingV1:
             "model_identity": self.model_identity,
             "model_artifact_hash": self.model_artifact_hash,
             "provider_authority": self.provider_authority,
+            "request_shape_digest": self.request_shape_digest,
             "lifecycle_contract_id": self.lifecycle_contract_id,
             "lifecycle_stage": self.lifecycle_stage,
             "lifecycle_stage_contract_id": self.lifecycle_stage_contract_id,
@@ -185,6 +282,7 @@ class Top5ActivationExecutionBindingV1:
             "model_identity": self.model_identity,
             "model_artifact_hash": self.model_artifact_hash,
             "provider_authority": self.provider_authority,
+            "request_shape_digest": self.request_shape_digest,
             "lifecycle_contract_id": self.lifecycle_contract_id,
             "lifecycle_stage": self.lifecycle_stage,
             "lifecycle_stage_contract_id": self.lifecycle_stage_contract_id,
@@ -210,7 +308,7 @@ def build_activation_execution_binding(
     lifecycle_contract: Top5SignalLifecycleContract,
     lifecycle_stage: str,
     now: datetime,
-    lifecycle: Top5SignalLifecycle | None = None,
+    lifecycles: Sequence[Top5SignalLifecycle] | None = None,
 ) -> Top5ActivationExecutionBindingV1:
     """Bind one explicit canonical lifecycle stage to the existing B4/B1/B2 plan."""
     now_utc = _utc(now, "now")
@@ -274,8 +372,18 @@ def build_activation_execution_binding(
             "five-league candidate evidence identity mismatch"
         )
 
+    _, lifecycle_for_plan = _validated_lifecycle_inputs(
+        lifecycles=lifecycles,
+        lifecycle_stage=lifecycle_stage,
+        fixture=fixture,
+        lifecycle_contract=lifecycle_contract,
+        model_identity=plan.model_identity,
+        source_sha=plan.source_sha.lower(),
+        research_sha=plan.research_sha.lower(),
+        model_artifact_hash=plan.model_artifact_hash.lower(),
+    )
     lifecycle_plan = plan_signal_lifecycle(
-        fixture, now_utc, lifecycle, contract=lifecycle_contract
+        fixture, now_utc, lifecycle_for_plan, contract=lifecycle_contract
     )
     expected_status = (
         LifecyclePlanStatus.INITIAL_DUE
@@ -321,6 +429,9 @@ def build_activation_execution_binding(
         model_identity=plan.model_identity,
         model_artifact_hash=plan.model_artifact_hash.lower(),
         provider_authority="the_odds_api",
+        request_shape_digest=the_odds_api_one_shot_request_shape_digest(
+            plan.activation_league
+        ),
         lifecycle_contract_id=lifecycle_contract.contract_id,
         lifecycle_stage=lifecycle_stage,
         lifecycle_stage_contract_id=stage_id,
@@ -335,13 +446,14 @@ def build_activation_execution_binding(
         "durable_plan_digest",
         "five_league_evidence_digest",
         "b1_acceptance_manifest_digest",
-        "model_artifact_hash",
+        "request_shape_digest",
         "pre_activation_routing_configuration_digest",
         "rollback_snapshot_digest",
     ):
         _digest(getattr(binding, name), name)
     _source_sha(binding.source_sha, "source_sha")
     _source_sha(binding.research_sha, "research_sha")
+    _source_sha(binding.model_artifact_hash, "model_artifact_hash")
     if binding.retry_budget != 0 or binding.maximum_odds_age_seconds != 900:
         raise ActivationAuthorizationError("canonical lifecycle safety bounds changed")
     return binding
@@ -357,7 +469,7 @@ def build_signed_activation_execution_binding(
     lifecycle_contract: Top5SignalLifecycleContract,
     lifecycle_stage: str,
     now: datetime,
-    lifecycle: Top5SignalLifecycle | None = None,
+    lifecycles: Sequence[Top5SignalLifecycle] | None = None,
 ) -> Top5ActivationExecutionBindingV1:
     """Build the V2 signed intent without treating legacy bearer data as authority.
 
@@ -444,8 +556,18 @@ def build_signed_activation_execution_binding(
         raise ActivationAuthorizationError(
             "provider authority/candidate binding is invalid"
         )
+    _, lifecycle_for_plan = _validated_lifecycle_inputs(
+        lifecycles=lifecycles,
+        lifecycle_stage=lifecycle_stage,
+        fixture=fixture,
+        lifecycle_contract=lifecycle_contract,
+        model_identity=plan.model_identity,
+        source_sha=plan.source_sha.lower(),
+        research_sha=plan.research_sha.lower(),
+        model_artifact_hash=plan.model_artifact_hash.lower(),
+    )
     lifecycle_plan = plan_signal_lifecycle(
-        fixture, now_utc, lifecycle, contract=lifecycle_contract
+        fixture, now_utc, lifecycle_for_plan, contract=lifecycle_contract
     )
     expected_status = (
         LifecyclePlanStatus.INITIAL_DUE
@@ -478,6 +600,9 @@ def build_signed_activation_execution_binding(
         model_identity=plan.model_identity,
         model_artifact_hash=plan.model_artifact_hash.lower(),
         provider_authority=plan.provider_authority,
+        request_shape_digest=the_odds_api_one_shot_request_shape_digest(
+            plan.activation_league
+        ),
         lifecycle_contract_id=lifecycle_contract.contract_id,
         lifecycle_stage=lifecycle_stage,
         lifecycle_stage_contract_id=lifecycle_contract.stage_contract_id(expected_due),
@@ -495,13 +620,14 @@ def build_signed_activation_execution_binding(
         "durable_plan_digest",
         "five_league_evidence_digest",
         "b1_acceptance_manifest_digest",
-        "model_artifact_hash",
+        "request_shape_digest",
         "pre_activation_routing_configuration_digest",
         "rollback_snapshot_digest",
     ):
         _digest(getattr(binding, name), name)
     _source_sha(binding.source_sha, "source_sha")
     _source_sha(binding.research_sha, "research_sha")
+    _source_sha(binding.model_artifact_hash, "model_artifact_hash")
     if binding.maximum_odds_age_seconds != 900 or binding.retry_budget != 0:
         raise ActivationAuthorizationError("canonical lifecycle safety bounds changed")
     return binding
@@ -654,6 +780,7 @@ _PAYLOAD_FIELDS = frozenset(
         "model_identity",
         "model_artifact_hash",
         "provider_authority",
+        "request_shape_digest",
         "lifecycle_contract_id",
         "lifecycle_stage",
         "lifecycle_stage_contract_id",

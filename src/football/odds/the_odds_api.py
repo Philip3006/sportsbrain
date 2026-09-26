@@ -8,6 +8,7 @@ Primäre Datenquelle für 2.BL. Strategie:
 Liefert FootballOddsQuote mit allen Märkten (1X2 + AH + O/U + BTTS).
 Bookies_count_1x2 = Anzahl eindeutiger Bookies die 1X2 liefern → Coverage-Gate.
 """
+
 from __future__ import annotations
 
 import os
@@ -153,6 +154,23 @@ def _parse_bookmakers(
     return q
 
 
+def parse_top5_consensus_h2h(
+    bookmakers: list[dict], home_team: str, away_team: str
+) -> FootballOddsQuote:
+    """Expose the reviewed bookmaker-consensus parser for the Top-5 canary.
+
+    This is deliberately a thin validation wrapper around the same parser used
+    by the existing Football adapter; it does not introduce another odds
+    aggregation rule.
+    """
+    if not isinstance(bookmakers, list) or not bookmakers:
+        raise ValueError("The Odds API response has no bookmaker markets")
+    quote = _parse_bookmakers(bookmakers, home_team, away_team)
+    if not quote.sane_1x2():
+        raise ValueError("The Odds API consensus does not contain valid regulation 1X2")
+    return quote
+
+
 def fetch(match_hint: dict) -> Optional[FootballOddsQuote]:
     home_raw = match_hint.get("home_team", "")
     away_raw = match_hint.get("away_team", "")
@@ -176,11 +194,14 @@ def fetch(match_hint: dict) -> Optional[FootballOddsQuote]:
 
     sport_key = match_hint.get("sport_key", "soccer_germany_bundesliga2")
     try:
-        matches = fetch_upcoming_matches(
-            sport=sport_key,
-            markets=_MARKETS,
-            regions=_MULTI_REGIONS,
-        ) or []
+        matches = (
+            fetch_upcoming_matches(
+                sport=sport_key,
+                markets=_MARKETS,
+                regions=_MULTI_REGIONS,
+            )
+            or []
+        )
     except Exception:
         return None
 
