@@ -434,6 +434,61 @@ function _signalAgeHtml(s) {
   return '';
 }
 
+function _top5LifecycleAge(timestamp) {
+  const value = Date.parse(timestamp || '');
+  if (!Number.isFinite(value) || value > Date.now()) return '';
+  const minutes = Math.floor((Date.now() - value) / 60000);
+  if (minutes < 1) return 'unter 1 Min';
+  if (minutes < 60) return `${minutes} Min`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} Std`;
+  return `${Math.floor(hours / 24)} Tage`;
+}
+
+function _top5LifecycleMetaHtml(s) {
+  const lifecycle = s && s.lifecycle;
+  if (!lifecycle) return '';
+  const stage = String(lifecycle.lifecycle_stage || '').toUpperCase();
+  const stageLabel = stage === 'INITIAL' ? 'Initial'
+    : stage === 'REFINED' ? 'Refined'
+      : stage === 'WITHDRAWN' ? 'Zurückgezogen' : '';
+  if (!stageLabel) return '';
+  const details = [];
+  const updatedAge = _top5LifecycleAge(lifecycle.current_generated_at);
+  if (updatedAge) details.push(`Vorhersage aktualisiert: vor ${esc(updatedAge)}`);
+  const oddsAge = s.odds_ts ? _top5LifecycleAge(s.odds_ts) : '';
+  if (oddsAge) details.push(`Odds-Snapshot: vor ${esc(oddsAge)}`);
+  if (s.kickoff) {
+    const kickoff = new Date(s.kickoff);
+    if (Number.isFinite(kickoff.getTime())) {
+      details.push(`Anpfiff: ${esc(kickoff.toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }))}`);
+    }
+  }
+  const deltas = [];
+  if (['REFINED', 'WITHDRAWN'].includes(stage) && Number.isFinite(lifecycle.initial_probability) &&
+      Number.isFinite(lifecycle.current_probability) && Number.isFinite(lifecycle.probability_delta)) {
+    deltas.push(`${(lifecycle.initial_probability * 100).toFixed(1)}% → ${(lifecycle.current_probability * 100).toFixed(1)}%`);
+  }
+  if (['REFINED', 'WITHDRAWN'].includes(stage) && Number.isFinite(lifecycle.initial_edge_pp) &&
+      Number.isFinite(lifecycle.current_edge_pp) && Number.isFinite(lifecycle.edge_delta_pp)) {
+    const initial = lifecycle.initial_edge_pp;
+    const current = lifecycle.current_edge_pp;
+    deltas.push(`Edge ${initial >= 0 ? '+' : ''}${initial.toFixed(1)} → ${current >= 0 ? '+' : ''}${current.toFixed(1)} pp`);
+  }
+  const classification = {
+    STRENGTHENED: 'Gestärkt',
+    WEAKENED: 'Abgeschwächt',
+    UNCHANGED: 'Unverändert',
+    WITHDRAWN: 'Zurückgezogen',
+  }[lifecycle.refinement_classification];
+  if (stage === 'REFINED' && classification) deltas.push(classification);
+  return `<div class="top5-lifecycle-meta ${stage === 'WITHDRAWN' ? 'is-withdrawn' : ''}" data-lifecycle-id="${esc(lifecycle.lifecycle_id || '')}">
+    <span class="top5-lifecycle-badge">${stageLabel}</span>
+    <span class="top5-lifecycle-times">${details.join(' · ')}</span>
+    ${deltas.length ? `<span class="top5-lifecycle-delta">${deltas.map(esc).join(' · ')}</span>` : ''}
+  </div>`;
+}
+
 function _formBadgesHtml(form) {
   if (!form || !form.length) return '';
   return '<span style="display:inline-flex;align-items:center;gap:2px;margin-left:4px">' +
@@ -492,6 +547,7 @@ function _footballCompatMetaHtml(s) {
 }
 
 function sigCard(s, showMatch) {
+  const isWithdrawn = String(s.lifecycle?.lifecycle_stage || '').toUpperCase() === 'WITHDRAWN';
   const cls = s.confidence === 'HIGH' ? 'high' : 'medium';
   const evCls = s.ev_pct >= 10 ? 'ev-h' : 'ev-m';
   const [sh, sa] = s.match.split(' vs ').map(x => x.trim());
@@ -540,7 +596,7 @@ function sigCard(s, showMatch) {
   // Prob-Bars: visueller Vergleich Markt vs Modell (nur wenn fair_prob vorhanden)
   const _edge = s.fair_prob > 0 && s.model_prob > 0 ? s.model_prob - s.fair_prob : null;
   let probRow = '';
-  if (_edge !== null) {
+  if (_edge !== null && !isWithdrawn) {
     const mktPct = Math.max(0, Math.min(100, s.fair_prob));
     const mdlPct = Math.max(0, Math.min(100, s.model_prob));
     const edgeCls = _edge >= 0 ? 'pos' : 'neg';
@@ -575,7 +631,7 @@ function sigCard(s, showMatch) {
     : (['home','draw','away'].includes(s.market) ? _oddsSparkline(s.match, s.market, s.odds) : '');
   // M1+M2: Inline-Drawer „Warum diese Wette?" mit Plain-Language-Erklärung
   let whyInline = '';
-  if (_edge !== null) {
+  if (_edge !== null && !isWithdrawn) {
     const fpct = s.fair_prob.toFixed(1);
     const mpct = s.model_prob.toFixed(1);
     const edgePp = _edge.toFixed(1);
@@ -602,12 +658,14 @@ function sigCard(s, showMatch) {
     </details>`;
   }
   const _escA = s => s.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
-  return `<div class="sig-card ${cls}" style="cursor:pointer" data-match-home="${_escA(sh)}" data-match-away="${_escA(sa)}" onclick="if(!event.target.closest('.place-bet-btn,.why-inline,button,a'))_openMatchDetailFromSignal(this.dataset.matchHome,this.dataset.matchAway)">
+  const lifecycleMeta = _top5LifecycleMetaHtml(s);
+  return `<div class="sig-card ${cls}${isWithdrawn ? ' top5-lifecycle-card-withdrawn' : ''}" style="cursor:pointer" data-match-home="${_escA(sh)}" data-match-away="${_escA(sa)}" data-lifecycle-id="${esc(s.lifecycle?.lifecycle_id || '')}" onclick="if(!event.target.closest('.place-bet-btn,.why-inline,button,a'))_openMatchDetailFromSignal(this.dataset.matchHome,this.dataset.matchAway)">
     ${matchLine}
     ${compatMeta}
+    ${lifecycleMeta}
     <div class="card-market" ${['ah-1.5_a','ah+1.5_b'].includes(s.market)||s.market.match(/^ah[+-]/) ? 'title="Satz-Handicap (SET handicap) — beim Buchmacher \'Sätze-Handicap\' wählen, NICHT \'Games-Handicap\'!"' : ''}>${marketLabel(s.market, s.match)}</div>
     ${_signalAgeHtml(s)}
-    <div class="card-footer">
+    ${isWithdrawn ? '<div class="top5-lifecycle-withdrawn-note">Keine aktive Empfehlung — Signal wurde zurückgezogen.</div>' : `<div class="card-footer">
       ${(() => {
         // W2: label scan-time odds as stale when no current authoritative quote
         const _hasLive = s.current_odds != null && s.current_odds > 1;
@@ -630,17 +688,17 @@ function sigCard(s, showMatch) {
       ${s.odds_moved_against ? `<span style="padding:2px 6px;border-radius:4px;background:#7a3800;color:#ffb347;font-size:10px;font-weight:800" title="Quote ist ${Math.abs(s.odds_move_pct||0).toFixed(0)}% gefallen — Markt bewegt sich gegen Position">⚠ −${Math.abs(s.odds_move_pct||0).toFixed(0)}%</span>` : ''}
       ${s.no_bet_flag ? `<span style="padding:2px 6px;border-radius:4px;background:#4a1500;color:#ff8c69;font-size:10px;font-weight:800" title="${esc(s.conflict_reason||'Konflikt')}">⚠ Konflikt</span>` : ''}
       <span class="stake-val">${stakeLabel}</span>
-    </div>
+    </div>`}
     ${probRow}
     ${whyInline}
-    ${['h1_goals_2_4','h2_goals_2_4','h1_goals_2_4_no','h2_goals_2_4_no'].includes(s.market)
+    ${isWithdrawn ? '' : (['h1_goals_2_4','h2_goals_2_4','h1_goals_2_4_no','h2_goals_2_4_no'].includes(s.market)
       ? `<div style="font-size:10px;color:var(--muted);padding:2px 8px 6px">⚠ HZ-Settlement manuell — Quote beim Buchmacher prüfen</div>`
       : _isLegacySignal
         ? ''
         : (!_isValueActionable)
           ? ''
-          : `<button class="place-bet-btn" type="button" onclick="event.stopPropagation();_openBetModalFromBtn(this)" ${btnAttrs} aria-label="Wette platzieren">Wette platzieren · €${s.stake_eur.toFixed(0)}</button>`}
-    ${(['ah-1.5_a','ah+1.5_b'].includes(s.market)||s.market.match(/^ah[+-]/))
+          : `<button class="place-bet-btn" type="button" onclick="event.stopPropagation();_openBetModalFromBtn(this)" ${btnAttrs} aria-label="Wette platzieren">Wette platzieren · €${s.stake_eur.toFixed(0)}</button>`)}
+    ${!isWithdrawn && (['ah-1.5_a','ah+1.5_b'].includes(s.market)||s.market.match(/^ah[+-]/))
       ? `<div style="font-size:10px;color:#ffb347;background:rgba(58,44,0,0.6);padding:3px 8px 5px;border-top:1px solid rgba(90,70,0,0.5)">⚠ Satz-AH = SET Handicap — beim Buchmacher <strong>Sätze-Handicap</strong> wählen, NICHT Spiele-Handicap</div>`
       : ''}
   </div>`;
@@ -676,6 +734,7 @@ function _buildTopRecs24h(signals, nowMs) {
     return matchKey(bh, ba);
   }));
   const candidates = (signals || [])
+    .filter(s => String(s.lifecycle?.lifecycle_stage || '').toUpperCase() !== 'WITHDRAWN')
     .filter(s => _evScore(s) > 0)
     .filter(s => {
       // P1.5-H: explicit ACTIVE required — old-schema signals without status are
@@ -1215,6 +1274,8 @@ function renderSport(sport) {
       const evCls = s.ev_pct >= 10 ? '' : 'lo';
       const trCls = s.ev_pct >= 10 ? 'ev-h' : '';
       const lbl = marketLabel(s.market, s.match);
+      const isWithdrawn = String(s.lifecycle?.lifecycle_stage || '').toUpperCase() === 'WITHDRAWN';
+      const lifecycleMeta = _top5LifecycleMetaHtml(s);
       const isManual = ['h1_goals_2_4','h2_goals_2_4','h1_goals_2_4_no','h2_goals_2_4_no'].includes(s.market);
       // P0-A (item B): separate actual current values from scan-time values
       const _cHasCurrentOdds = s.current_odds != null && Number.isFinite(s.current_odds) && s.current_odds > 1;
@@ -1245,17 +1306,19 @@ function renderSport(sport) {
       ].join(' ');
       // FND-20260814-031 (P0A-012): compact bet action only when fully canonical/actionable Value.
       // Non-actionable signals are informational — no modal opener, no Manual fallback.
-      const btn = isManual
+      const btn = isWithdrawn
+        ? `<span class="top5-lifecycle-withdrawn-note">Zurückgezogen</span>`
+        : isManual
         ? `<span style="font-size:9px;color:var(--yellow)" title="HZ manuell">⚠ HZ</span>`
         : !_cIsValueActionable
           ? `<span style="font-size:11px;color:var(--muted)">—</span>`
           : `<button class="compact-place-btn" ${btnAttrs} aria-label="Wette platzieren">€${s.stake_eur.toFixed(0)}</button>`;
-      return `<tr class="${trCls}" onclick='openMatch(${JSON.stringify(s.match)})' role="button" tabindex="0" onkeydown='if(event.key==="Enter"||event.key===" "){event.preventDefault();openMatch(${JSON.stringify(s.match)});}'>
+      return `<tr class="${trCls}${isWithdrawn ? ' top5-lifecycle-row-withdrawn' : ''}" onclick='openMatch(${JSON.stringify(s.match)})' role="button" tabindex="0" onkeydown='if(event.key==="Enter"||event.key===" "){event.preventDefault();openMatch(${JSON.stringify(s.match)});}'>
         <td>${tKo}</td>
         <td>${esc(mh)} – ${esc(ma)}</td>
-        <td>${esc(lbl)}</td>
-        <td>${s.odds.toFixed(2)}</td>
-        <td><span class="compact-ev ${evCls}">+${s.ev_pct.toFixed(1)}%</span></td>
+        <td>${esc(lbl)}${lifecycleMeta}</td>
+        <td>${isWithdrawn ? '—' : s.odds.toFixed(2)}</td>
+        <td>${isWithdrawn ? '—' : `<span class="compact-ev ${evCls}">+${s.ev_pct.toFixed(1)}%</span>`}</td>
         <td>${btn}</td>
       </tr>`;
     }).join('');

@@ -24,7 +24,12 @@ const DATA_URL   = 'data/signals.json';
 const SQUADS_URL = 'data/squads.json';
 const _TOP5_LEAGUES = new Set(['EPL', 'BL1', 'LL', 'SA', 'L1']);
 const _TOP5_LAST_GENERATION_KEY = 'sb_top5_public_generation_v1';
+const _TOP5_LIFECYCLE_VERSIONS_KEY = 'sb_top5_lifecycle_versions_v1';
 const _TOP5_PUBLIC_PROVIDER_AUTHORITY = 'the_odds_api';
+const _TOP5_LIFECYCLE_SCHEMA = 'top5-lifecycle-public-v1';
+const _TOP5_LIFECYCLE_PROVENANCE_FIELDS = new Set([
+  'source_sha', 'research_sha', 'model_artifact_hash', 'evidence_digest', 'snapshot_id',
+]);
 const _TOP5_LEAGUE_ALIASES = new Map([
   ['epl', 'EPL'], ['premier_league', 'EPL'],
   ['english_premier_league', 'EPL'], ['soccer_epl', 'EPL'],
@@ -63,6 +68,258 @@ function _dropUntrustedTop5(payload) {
   return safe;
 }
 
+function _top5LifecycleError(message) {
+  throw new Error(`invalid public Top-5 lifecycle: ${message}`);
+}
+
+function _projectTop5Lifecycle(record, nowMs) {
+  if (!Object.prototype.hasOwnProperty.call(record, 'lifecycle')) return record;
+  const lifecycle = record.lifecycle;
+  if (!lifecycle || typeof lifecycle !== 'object' || Array.isArray(lifecycle)) {
+    _top5LifecycleError('expected an object');
+  }
+  if (lifecycle.provider != null || lifecycle.provider_authority != null) {
+    _top5LifecycleError('provider authority is not lifecycle metadata');
+  }
+  if (lifecycle.schema_version !== _TOP5_LIFECYCLE_SCHEMA) {
+    _top5LifecycleError('unsupported schema_version');
+  }
+  const text = (value, field) => {
+    if (typeof value !== 'string' || !value.trim()) _top5LifecycleError(`${field} is required`);
+    return value.trim();
+  };
+  const parseTime = (value, field) => {
+    const raw = text(value, field);
+    if (!/(Z|[+-]\d\d:\d\d)$/.test(raw)) _top5LifecycleError(`${field} needs a timezone`);
+    const parsed = Date.parse(raw);
+    if (!Number.isFinite(parsed) || parsed > nowMs) _top5LifecycleError(`${field} is invalid or future-dated`);
+    return { raw, parsed };
+  };
+  const lifecycleId = text(lifecycle.lifecycle_id, 'lifecycle_id');
+  const initialRecordId = text(lifecycle.initial_record_id, 'initial_record_id');
+  const version = lifecycle.lifecycle_version;
+  if (!Number.isSafeInteger(version) || version < 1) _top5LifecycleError('lifecycle_version must be positive');
+  const stage = text(lifecycle.lifecycle_stage, 'lifecycle_stage').toUpperCase();
+  if (!['INITIAL', 'REFINED', 'WITHDRAWN'].includes(stage)) _top5LifecycleError('unknown lifecycle_stage');
+  if ((stage === 'INITIAL') !== (version === 1)) _top5LifecycleError('stage/version ordering mismatch');
+  const initialTime = parseTime(lifecycle.initial_generated_at, 'initial_generated_at');
+  if (lifecycle.current_generated_at != null && lifecycle.updated_at != null &&
+      lifecycle.current_generated_at !== lifecycle.updated_at) {
+    _top5LifecycleError('current_generated_at and updated_at disagree');
+  }
+  const currentTime = parseTime(
+    lifecycle.current_generated_at != null ? lifecycle.current_generated_at : lifecycle.updated_at,
+    'current_generated_at',
+  );
+  if (currentTime.parsed < initialTime.parsed ||
+      (stage === 'INITIAL' && currentTime.parsed !== initialTime.parsed)) {
+    _top5LifecycleError('timestamps move backwards or INITIAL timestamps differ');
+  }
+  if (record.prediction_timestamp && currentTime.raw !== record.prediction_timestamp) {
+    _top5LifecycleError('current_generated_at disagrees with prediction_timestamp');
+  }
+  const fixtureIdentity = text(lifecycle.fixture_identity, 'fixture_identity');
+  const modelIdentity = text(lifecycle.model_identity, 'model_identity');
+  if (fixtureIdentity !== record.fixture_key || modelIdentity !== record.model_identity) {
+    _top5LifecycleError('fixture/model identity binding mismatch');
+  }
+  const provenanceBinding = lifecycle.provenance_binding;
+  const publicProvenance = record.provenance && typeof record.provenance === 'object'
+    ? record.provenance : {};
+  if (!provenanceBinding || typeof provenanceBinding !== 'object' || Array.isArray(provenanceBinding)) {
+    _top5LifecycleError('provenance_binding is required');
+  }
+  const safeBinding = {};
+  for (const [key, value] of Object.entries(provenanceBinding)) {
+    if (key === 'provider' || key === 'provider_authority') {
+      _top5LifecycleError('provider authority cannot be bound');
+    }
+    if (!_TOP5_LIFECYCLE_PROVENANCE_FIELDS.has(key)) continue;
+    if (typeof value !== 'string' || !value || publicProvenance[key] !== value) {
+      _top5LifecycleError(`provenance binding mismatch: ${key}`);
+    }
+    safeBinding[key] = value;
+  }
+  if (!Object.keys(safeBinding).length) _top5LifecycleError('no public provenance binding');
+
+  const numericFields = [
+    'initial_probability', 'current_probability', 'probability_delta',
+    'initial_market_probability', 'current_market_probability',
+    'initial_edge_pp', 'current_edge_pp', 'edge_delta_pp',
+  ];
+  const probabilityFields = new Set([
+    'initial_probability', 'current_probability',
+    'initial_market_probability', 'current_market_probability',
+  ]);
+  const numbers = {};
+  for (const field of numericFields) {
+    if (!Object.prototype.hasOwnProperty.call(lifecycle, field) || lifecycle[field] == null) continue;
+    const value = lifecycle[field];
+    if (typeof value !== 'number' || !Number.isFinite(value) ||
+        (probabilityFields.has(field) && (value < 0 || value > 1))) {
+      _top5LifecycleError(`${field} is invalid`);
+    }
+    numbers[field] = value;
+  }
+  if (numbers.probability_delta != null) {
+    if (numbers.initial_probability == null || numbers.current_probability == null ||
+        Math.abs(numbers.probability_delta - (numbers.current_probability - numbers.initial_probability)) > 1e-8) {
+      _top5LifecycleError('probability_delta is inconsistent');
+    }
+  }
+  if (numbers.edge_delta_pp != null) {
+    if (numbers.initial_edge_pp == null || numbers.current_edge_pp == null ||
+        Math.abs(numbers.edge_delta_pp - (numbers.current_edge_pp - numbers.initial_edge_pp)) > 1e-8) {
+      _top5LifecycleError('edge_delta_pp is inconsistent');
+    }
+  }
+  for (const [edgeField, probabilityField, marketField] of [
+    ['initial_edge_pp', 'initial_probability', 'initial_market_probability'],
+    ['current_edge_pp', 'current_probability', 'current_market_probability'],
+  ]) {
+    if (numbers[edgeField] == null) continue;
+    if (numbers[probabilityField] == null || numbers[marketField] == null ||
+        Math.abs(numbers[edgeField] - (numbers[probabilityField] - numbers[marketField]) * 100) > 0.01) {
+      _top5LifecycleError(`${edgeField} is inconsistent or lacks probability history`);
+    }
+  }
+  if (numbers.current_probability != null && Number.isFinite(record.model_prob) &&
+      Math.abs(numbers.current_probability * 100 - record.model_prob) > 0.01) {
+    _top5LifecycleError('current_probability disagrees with public signal');
+  }
+  if (numbers.current_market_probability != null && Number.isFinite(record.fair_prob) &&
+      record.fair_prob > 0 &&
+      Math.abs(numbers.current_market_probability * 100 - record.fair_prob) > 0.01) {
+    _top5LifecycleError('current_market_probability disagrees with public signal');
+  }
+  if (numbers.current_edge_pp != null && Number.isFinite(record.model_prob) &&
+      Number.isFinite(record.fair_prob) && record.fair_prob > 0 &&
+      Math.abs(numbers.current_edge_pp - (record.model_prob - record.fair_prob)) > 0.01) {
+    _top5LifecycleError('current_edge_pp disagrees with public signal');
+  }
+  if (stage === 'WITHDRAWN' && record.signal_status === 'ACTIVE') {
+    _top5LifecycleError('WITHDRAWN cannot be an active recommendation');
+  }
+  let classification;
+  if (lifecycle.refinement_classification != null) {
+    classification = text(lifecycle.refinement_classification, 'refinement_classification').toUpperCase();
+    if (!['STRENGTHENED', 'WEAKENED', 'UNCHANGED', 'WITHDRAWN'].includes(classification) ||
+        ((stage === 'WITHDRAWN') !== (classification === 'WITHDRAWN'))) {
+      _top5LifecycleError('refinement_classification does not match stage');
+    }
+  } else if (stage === 'REFINED' || stage === 'WITHDRAWN') {
+    _top5LifecycleError(`${stage} classification is required`);
+  }
+
+  const safe = {
+    schema_version: _TOP5_LIFECYCLE_SCHEMA,
+    lifecycle_id: lifecycleId,
+    initial_record_id: initialRecordId,
+    lifecycle_version: version,
+    lifecycle_stage: stage,
+    initial_generated_at: initialTime.raw,
+    current_generated_at: currentTime.raw,
+    provenance_binding: safeBinding,
+    model_identity: modelIdentity,
+    fixture_identity: fixtureIdentity,
+    ...numbers,
+  };
+  if (classification) safe.refinement_classification = classification;
+  return Object.assign({}, record, { lifecycle: safe });
+}
+
+function _sameTop5LifecycleBinding(a, b) {
+  const normalize = (value) => JSON.stringify(
+    Object.fromEntries(Object.entries(value || {}).sort(([left], [right]) => left.localeCompare(right)))
+  );
+  return normalize(a) === normalize(b);
+}
+
+function _collapseTop5LifecycleVersions(records, sourceIndexes) {
+  const chains = new Map();
+  const initialIds = new Map();
+  records.forEach((record, index) => {
+    const lifecycle = record.lifecycle;
+    if (!lifecycle) return;
+    if (initialIds.has(lifecycle.initial_record_id) &&
+        initialIds.get(lifecycle.initial_record_id) !== lifecycle.lifecycle_id) {
+      _top5LifecycleError('lifecycle_id changed within an initial record chain');
+    }
+    initialIds.set(lifecycle.initial_record_id, lifecycle.lifecycle_id);
+    if (!chains.has(lifecycle.lifecycle_id)) chains.set(lifecycle.lifecycle_id, []);
+    chains.get(lifecycle.lifecycle_id).push({ record, index });
+  });
+  const drop = new Set();
+  for (const [id, versions] of chains) {
+    if (versions.length < 2) continue;
+    versions.sort((a, b) => a.record.lifecycle.lifecycle_version - b.record.lifecycle.lifecycle_version);
+    if (new Set(versions.map(({ record }) => record.lifecycle.lifecycle_version)).size !== versions.length) {
+      _top5LifecycleError(`duplicate version in chain ${id}`);
+    }
+    const first = versions[0].record.lifecycle;
+    if (first.lifecycle_version !== 1 || first.lifecycle_stage !== 'INITIAL') {
+      _top5LifecycleError(`chain ${id} lacks version-1 INITIAL`);
+    }
+    let previous = versions[0].record;
+    for (let position = 1; position < versions.length; position += 1) {
+      const current = versions[position].record;
+      const life = current.lifecycle;
+      const prior = previous.lifecycle;
+      if (life.lifecycle_version <= prior.lifecycle_version ||
+          life.initial_record_id !== first.initial_record_id ||
+          life.initial_generated_at !== prior.initial_generated_at ||
+          ['initial_probability', 'initial_market_probability', 'initial_edge_pp'].some(
+            (key) => life[key] !== prior[key]
+          ) ||
+          ['fixture_key', 'league', 'market', 'model_identity'].some((key) => current[key] !== previous[key]) ||
+          !_sameTop5LifecycleBinding(life.provenance_binding, prior.provenance_binding) ||
+          Date.parse(life.current_generated_at) < Date.parse(prior.current_generated_at) ||
+          prior.lifecycle_stage === 'WITHDRAWN' || life.lifecycle_stage === 'INITIAL') {
+        _top5LifecycleError(`identity, version, stage, provenance, or time regressed in chain ${id}`);
+      }
+      previous = current;
+    }
+    versions.slice(0, -1).forEach(({ index }) => drop.add(index));
+  }
+  const keptRecords = records.filter((_, index) => !drop.has(index));
+  const keptIndexes = sourceIndexes.filter((_, index) => !drop.has(index));
+  return { records: keptRecords, sourceIndexes: keptIndexes };
+}
+
+function _checkTop5LifecycleProgress(records, nowMs) {
+  let previous = {};
+  try {
+    previous = JSON.parse(localStorage.getItem(_TOP5_LIFECYCLE_VERSIONS_KEY) || '{}') || {};
+  } catch {}
+  const current = Object.assign({}, previous);
+  for (const record of records) {
+    const lifecycle = record.lifecycle;
+    if (!lifecycle) continue;
+    const old = previous[lifecycle.initial_record_id];
+    const timestamp = Date.parse(lifecycle.current_generated_at);
+    if (old && (old.lifecycle_id !== lifecycle.lifecycle_id ||
+        lifecycle.lifecycle_version < old.lifecycle_version ||
+        timestamp < old.current_generated_at ||
+        old.lifecycle_stage === 'WITHDRAWN' && lifecycle.lifecycle_stage !== 'WITHDRAWN' ||
+        lifecycle.lifecycle_version === old.lifecycle_version &&
+        old.lifecycle_fingerprint !== JSON.stringify(lifecycle))) {
+      _top5LifecycleError('published lifecycle version regressed');
+    }
+    delete current[lifecycle.initial_record_id];
+    current[lifecycle.initial_record_id] = {
+      lifecycle_id: lifecycle.lifecycle_id,
+      lifecycle_version: lifecycle.lifecycle_version,
+      current_generated_at: timestamp,
+      lifecycle_stage: lifecycle.lifecycle_stage,
+      lifecycle_fingerprint: JSON.stringify(lifecycle),
+    };
+  }
+  const bounded = Object.fromEntries(Object.entries(current).slice(-60));
+  return () => {
+    try { localStorage.setItem(_TOP5_LIFECYCLE_VERSIONS_KEY, JSON.stringify(bounded)); } catch {}
+  };
+}
+
 function _top5ReleaseAgeMs(release, nowMs) {
   const raw = release.published_at || release.generated_at;
   const timestamp = Date.parse(raw || '');
@@ -73,9 +330,10 @@ function _top5ReleaseAgeMs(release, nowMs) {
 function _top5PublicReleaseGuard(payload, source, nowMs = Date.now()) {
   if (!payload || typeof payload !== 'object') throw new Error('invalid public payload');
   const football = Array.isArray(payload.football) ? payload.football : [];
-  const top5Records = football.filter((record) =>
-    _TOP5_LEAGUES.has(_canonicalTop5LeagueCode(record && record.league))
-  );
+  const top5SourceIndexes = football.map((record, index) =>
+    _TOP5_LEAGUES.has(_canonicalTop5LeagueCode(record && record.league)) ? index : -1
+  ).filter((index) => index >= 0);
+  let top5Records = top5SourceIndexes.map((index) => football[index]);
   if (!top5Records.length) {
     if (!payload.top5_release) return payload;
     if (!_normalizeTop5LeagueCodes(payload.top5_release.league_codes)) {
@@ -84,6 +342,16 @@ function _top5PublicReleaseGuard(payload, source, nowMs = Date.now()) {
     }
     if (source === 'static') return _dropUntrustedTop5(payload);
     throw new Error('public Top-5 release requires complete five-league records');
+  }
+
+  try {
+    const projected = top5Records.map((record) => _projectTop5Lifecycle(record, nowMs));
+    const collapsed = _collapseTop5LifecycleVersions(projected, top5SourceIndexes);
+    top5Records = collapsed.records;
+    top5SourceIndexes.splice(0, top5SourceIndexes.length, ...collapsed.sourceIndexes);
+  } catch (error) {
+    if (source === 'static') return _dropUntrustedTop5(payload);
+    throw error;
   }
 
   const release = payload.top5_release;
@@ -142,6 +410,7 @@ function _top5PublicReleaseGuard(payload, source, nowMs = Date.now()) {
         !Number.isFinite(signalTime) || signalTime > nowMs ||
         String(record.stale_state || '').toUpperCase() === 'STALE' ||
         nowMs - signalTime > maxAgeSeconds * 1000 ||
+        (record.lifecycle && nowMs - Date.parse(record.lifecycle.current_generated_at) > maxAgeSeconds * 1000) ||
         record.synthetic === true ||
         ['SYNTHETIC', 'TEST_FIXTURE'].includes(String(record.evidence_kind || '').toUpperCase())) {
       if (source === 'static') return _dropUntrustedTop5(payload);
@@ -161,6 +430,13 @@ function _top5PublicReleaseGuard(payload, source, nowMs = Date.now()) {
     if (source === 'static') return _dropUntrustedTop5(payload);
     throw new Error('public Top-5 release is stale');
   }
+  let persistLifecycleProgress;
+  try {
+    persistLifecycleProgress = _checkTop5LifecycleProgress(top5Records, nowMs);
+  } catch (error) {
+    if (source === 'static') return _dropUntrustedTop5(payload);
+    throw error;
+  }
 
   let previous = null;
   try { previous = JSON.parse(localStorage.getItem(_TOP5_LAST_GENERATION_KEY) || 'null'); } catch {}
@@ -178,12 +454,15 @@ function _top5PublicReleaseGuard(payload, source, nowMs = Date.now()) {
     }));
   } catch {}
   const normalizedPayload = Object.assign({}, payload);
-  normalizedPayload.football = football.map((record) => {
-    const canonical = _canonicalTop5LeagueCode(record && record.league);
-    return _TOP5_LEAGUES.has(canonical) && record.league !== canonical
-      ? Object.assign({}, record, { league: canonical })
-      : record;
+  const normalizedByIndex = new Map(top5SourceIndexes.map((index, position) => [index, top5Records[position]]));
+  normalizedPayload.football = football.flatMap((record, index) => {
+    if (!_TOP5_LEAGUES.has(_canonicalTop5LeagueCode(record && record.league))) return [record];
+    const normalized = normalizedByIndex.get(index);
+    if (!normalized) return [];
+    const canonical = _canonicalTop5LeagueCode(normalized.league);
+    return [canonical !== normalized.league ? Object.assign({}, normalized, { league: canonical }) : normalized];
   });
+  persistLifecycleProgress();
   return normalizedPayload;
 }
 let _signals = [];

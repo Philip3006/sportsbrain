@@ -119,6 +119,14 @@
     .ou-accordion.open .ou-accordion-body { display: block; background: var(--surface); padding: 4px 0 0; }
     .sig-card.high { border-left-color: var(--green); }
     .sig-card.medium { border-left-color: var(--yellow); }
+    .top5-lifecycle-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 7px; margin: -2px 0 8px; font-size: 9px; line-height: 1.4; color: var(--muted); }
+    .top5-lifecycle-badge { display: inline-block; border: 1px solid var(--border); border-radius: 10px; padding: 1px 6px; font-weight: 800; color: var(--text); white-space: nowrap; }
+    .top5-lifecycle-delta { color: var(--text); font-weight: 700; }
+    .top5-lifecycle-meta.is-withdrawn .top5-lifecycle-badge,
+    .top5-lifecycle-withdrawn-note { color: var(--muted); border-color: var(--border); }
+    .top5-lifecycle-card-withdrawn { opacity: .78; border-left-color: var(--muted) !important; }
+    .top5-lifecycle-withdrawn-note { display: inline-block; border: 1px solid var(--border); border-radius: var(--r-sm); padding: 4px 8px; font-size: 10px; font-weight: 700; }
+    .top5-lifecycle-row-withdrawn { opacity: .72; }
     .card-market { font-size: 12px; color: var(--muted); margin-bottom: 11px; padding: 4px 9px; background: rgba(255,255,255,0.05); border-radius: var(--r-sm); display: inline-block; border: 1px solid rgba(255,255,255,0.07); }
     .card-footer { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .odds-btn { background: rgba(0,200,83,0.1); border: 1.5px solid var(--green); border-radius: var(--r-base); padding: 7px 18px; font-size: 20px; font-weight: 900; color: var(--green); flex-shrink: 0; }

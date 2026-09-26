@@ -122,7 +122,12 @@ def test_candidate_provider_and_synthetic_records_never_become_public_ready() ->
     result = validate_public_bundle(synthetic, now=BASE + timedelta(minutes=1))
     assert result["status"] == TOP5_PUBLIC_DELIVERY_BLOCKED
     assert any(
-        reason["code"] == "PUBLIC_TEST_DATA_REJECTED" for reason in result["reasons"]
+        reason["code"] == "PUBLIC_TEST_DATA_REJECTED"
+        or (
+            reason["code"] == "PUBLIC_SCHEMA_INVALID"
+            and "synthetic football evidence" in reason["message"]
+        )
+        for reason in result["reasons"]
     )
 
 
@@ -207,13 +212,13 @@ def test_publication_precheck_requires_dry_run_and_rollback_manifest() -> None:
 
 
 def _verified_b1_cli_evidence(monkeypatch):
+    from src.football.top5_final_acceptance import verify_final_acceptance
     from tests.football import (
         test_top5_candidate_provider_eligibility as candidate_tests,
     )
     from tests.football import test_top5_final_acceptance as builder1_tests
     from tests.football import test_top5_therundown_network_shadow as shadow_tests
     from tests.football.test_top5_public_delivery import BASE as PUBLIC_BASE
-    from src.football.top5_final_acceptance import verify_final_acceptance
 
     now = PUBLIC_BASE + timedelta(minutes=1)
     monkeypatch.setattr(candidate_tests, "NOW", PUBLIC_BASE)
