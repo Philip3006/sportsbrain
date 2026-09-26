@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-25",
+  "updated": "2026-09-26",
   "teams": {
     "Algeria": {
       "source": "wikipedia",
@@ -2129,7 +2129,8 @@
       "availability_score": 1.0,
       "ampel": "🟢",
       "suspended": [
-        "Mohamed Salah"
+        "Mohamed Salah",
+        "Haissem Hassan"
       ],
       "players": [
         {
@@ -2190,7 +2191,7 @@
         {
           "name": "Haissem Hassan",
           "pos": "FWD",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Ahmed Fatouh",
