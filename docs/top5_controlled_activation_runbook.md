@@ -8,17 +8,27 @@ The only approved name for a manually authorized execution is **CONTROLLED
 ACTIVATION RUNS**. Do not call these runs a natural canary or a natural
 scheduled run.
 
-## Prerequisites
+## Scope and prerequisites
+
+The evidence package remains exactly five leagues (`BL1`, `EPL`, `LL`, `SA`,
+`L1`); a controlled activation plan selects exactly one of those leagues.
+Evidence for fewer than all five leagues is rejected. The production authority
+remains `the_odds_api`; `therundown_experimental` is never a production route.
 
 - Confirm the exact production source SHA and the frozen Research SHA.
 - The currently referenced frozen Research SHA is
   `6eaabbec7d0182103d815c72fae4976e261b40aa`; it is not modified here.
 - Confirm the exact model artifact hash and candidate/model identity.
-- Confirm the league-scoped provider authority for fixtures, odds, and results.
+- Confirm the selected league-scoped provider authority for fixtures, odds, and
+  results; odds authority must be exactly `the_odds_api`.
 - Confirm the approved signal-time contract, markets, regions, cadence, and
   retry budget.
 - Confirm the cumulative rollout evidence through CEO approval.
 - Confirm the immutable configuration snapshot and rollback pointer.
+- Revalidate the full B2 five-league receipt package and the original B1 final
+  acceptance bundle; do not rely on operator-supplied readiness booleans.
+- Supply a separate Signal-Time approval identity and verify it against the
+  exact approved contract.
 - Confirm that the model adapter, provider client, scheduler, publisher, and
   ledger boundaries are the intended explicitly injected dependencies.
 
@@ -42,15 +52,39 @@ closed. Authorization is not inferred from a passing shadow metric.
 6. Confirm no-bet behavior, rollback readiness, and external runtime-state
    ownership.
 
-The prepared plan must remain an in-memory `PreparedActivation` with
-`executed=false`. The current readiness harness rejects execution.
+The durable control commands are:
+
+```text
+chmod 600 <exact-evidence-and-authorization.json>
+python3 scripts/top5_controlled_activation.py prepare --input <absolute-path-to-exact-evidence-and-authorization.json>
+python3 scripts/top5_controlled_activation.py status [--activation-id <id>]
+python3 scripts/top5_controlled_activation.py execute --input <same-absolute-path> --activation-id <id> --execute
+python3 scripts/top5_controlled_activation.py rollback --activation-id <id> --plan-digest <exact-plan-digest>
+```
+
+The default path is non-executing; `execute` requires the explicit flag and
+revalidates the exact B2 package, B1 bundle, activation authorization, Signal-
+Time identity, and pre-activation snapshot. The state file is external,
+owner-only, atomically replaced, digest-checked, and idempotent. The token in
+the authorization input is never persisted. Current `main` has no genuine
+one-shot production model/provider runtime, so `execute --execute` fails
+closed with `NO_PRODUCTION_ONE_SHOT_MODEL_PROVIDER_RUNTIME` before state or
+provider access. The current authorization contract validates the supplied
+authorization fields but has no separate cryptographic Philip-signature
+verifier; no execution path may rely on this control record as authenticated
+authorization until that verifier and the production runtime are reviewed.
+Do not treat a PREPARED record as an activation.
+
+No recurring scheduler is registered or required for a future manual
+one-shot canary. This PR does not add scheduler wiring.
 
 ## Activation
 
-If and only if a future implementation is separately authorized, activate one
-league and one candidate/model scope from the deterministic snapshot. Record
-the exact source SHA, Research SHA, model hash, provider authority,
-signal-time contract, and rollback pointer before the first production cycle.
+If a separately reviewed production runtime is later wired and a fresh explicit
+authorization is supplied, execute one league only from the exact prepared
+snapshot. Record the source SHA, Research SHA, model hash, `the_odds_api`
+authority, Signal-Time approval identity, and rollback pointer before the
+first production cycle. This runbook does not authorize or perform that step.
 
 Do not expand league scope, change cadence, bind a different model, add a
 provider, or enable publication in the same run.
@@ -86,8 +120,13 @@ controller. The required result is the last known safe disabled state:
 - scheduler `false`;
 - ledger mutation `false`.
 
-Rollback is a state decision and evidence record. It does not delete files,
-reset Git, or mutate the financial ledger.
+The durable rollback command is scoped to the exact activation ID and plan
+digest. It retains the evidence record and restores the saved disabled state
+with publication, scheduler, betting, and ledger flags false. It does not
+delete files, reset Git, or mutate the financial ledger. Because `main` has no
+live Top-5 route writer/consumer, this is a verified durable control-state
+rollback only; live routing rollback cannot yet be claimed ready. The missing
+route writer must be reviewed together with the one-shot production runtime.
 
 ## Production verification and evidence capture
 

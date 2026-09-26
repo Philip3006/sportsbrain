@@ -71,6 +71,12 @@ def main(argv: list[str] | None = None) -> int:
             model_bound=payload.get("model_bound", False),
             research_bound=payload.get("research_bound", False),
             signal_time_approved=payload.get("signal_time_approved", False),
+            one_shot_operator_path_ready=payload.get(
+                "one_shot_operator_path_ready", False
+            ),
+            recurring_scheduler_registered=payload.get(
+                "recurring_scheduler_registered", False
+            ),
             scheduler_ready=payload.get("scheduler_ready", False),
             health_ready=payload.get("health_ready", False),
             rollback_ready=payload.get("rollback_ready", False),
