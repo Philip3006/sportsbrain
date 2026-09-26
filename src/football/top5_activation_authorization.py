@@ -31,6 +31,7 @@ from src.football.production_contracts import (
     ProductionContractError,
     _utc,
 )
+from src.football.top5_adapters import TOP5_LEAGUE_ADAPTERS
 from src.football.top5_b2_qualification_batch_orchestrator import (
     Builder2FiveLeagueReceiptPackageV1,
 )
@@ -113,6 +114,48 @@ def _source_sha(value: object, name: str) -> str:
     return value.lower()
 
 
+def the_odds_api_one_shot_request_shape(league_code: str) -> dict[str, object]:
+    """Return the one permitted production odds request shape for one league.
+
+    The only accepted region is the existing disabled Top-5 mapping's `eu`
+    region. The provider key is supplied by that canonical league config; no
+    credential or live provider client is imported here.
+    """
+    adapter = TOP5_LEAGUE_ADAPTERS.get(league_code)
+    if adapter is None:
+        raise ActivationAuthorizationError("one-shot request league is unsupported")
+    config = adapter.config
+    mapping = config.provider_mapping
+    if (
+        mapping is None
+        or mapping.provider_name != "the_odds_api"
+        or mapping.sport_key != config.provider_sport_key
+        or mapping.regions != ("eu",)
+    ):
+        raise ActivationAuthorizationError(
+            "one-shot request provider/region mapping is not canonical"
+        )
+    return {
+        "method": "GET",
+        "endpoint": (
+            f"https://api.the-odds-api.com/v4/sports/{config.provider_sport_key}/odds"
+        ),
+        "query": {
+            "regions": "eu",
+            "markets": "h2h",
+            "oddsFormat": "decimal",
+            "dateFormat": "iso",
+        },
+        "request_count": 1,
+        "retry_count": 0,
+    }
+
+
+def the_odds_api_one_shot_request_shape_digest(league_code: str) -> str:
+    """Digest the exact credential-free one-shot request contract."""
+    return _sha(the_odds_api_one_shot_request_shape(league_code))
+
+
 @dataclass(frozen=True)
 class Top5ActivationExecutionBindingV1:
     """Exact, non-authorizing execution plan derived from accepted evidence."""
@@ -129,6 +172,7 @@ class Top5ActivationExecutionBindingV1:
     model_identity: str
     model_artifact_hash: str
     provider_authority: str
+    request_shape_digest: str
     lifecycle_contract_id: str
     lifecycle_stage: str
     lifecycle_stage_contract_id: str
@@ -154,6 +198,7 @@ class Top5ActivationExecutionBindingV1:
             "model_identity": self.model_identity,
             "model_artifact_hash": self.model_artifact_hash,
             "provider_authority": self.provider_authority,
+            "request_shape_digest": self.request_shape_digest,
             "lifecycle_contract_id": self.lifecycle_contract_id,
             "lifecycle_stage": self.lifecycle_stage,
             "lifecycle_stage_contract_id": self.lifecycle_stage_contract_id,
@@ -185,6 +230,7 @@ class Top5ActivationExecutionBindingV1:
             "model_identity": self.model_identity,
             "model_artifact_hash": self.model_artifact_hash,
             "provider_authority": self.provider_authority,
+            "request_shape_digest": self.request_shape_digest,
             "lifecycle_contract_id": self.lifecycle_contract_id,
             "lifecycle_stage": self.lifecycle_stage,
             "lifecycle_stage_contract_id": self.lifecycle_stage_contract_id,
@@ -321,6 +367,9 @@ def build_activation_execution_binding(
         model_identity=plan.model_identity,
         model_artifact_hash=plan.model_artifact_hash.lower(),
         provider_authority="the_odds_api",
+        request_shape_digest=the_odds_api_one_shot_request_shape_digest(
+            plan.activation_league
+        ),
         lifecycle_contract_id=lifecycle_contract.contract_id,
         lifecycle_stage=lifecycle_stage,
         lifecycle_stage_contract_id=stage_id,
@@ -335,13 +384,14 @@ def build_activation_execution_binding(
         "durable_plan_digest",
         "five_league_evidence_digest",
         "b1_acceptance_manifest_digest",
-        "model_artifact_hash",
+        "request_shape_digest",
         "pre_activation_routing_configuration_digest",
         "rollback_snapshot_digest",
     ):
         _digest(getattr(binding, name), name)
     _source_sha(binding.source_sha, "source_sha")
     _source_sha(binding.research_sha, "research_sha")
+    _source_sha(binding.model_artifact_hash, "model_artifact_hash")
     if binding.retry_budget != 0 or binding.maximum_odds_age_seconds != 900:
         raise ActivationAuthorizationError("canonical lifecycle safety bounds changed")
     return binding
@@ -478,6 +528,9 @@ def build_signed_activation_execution_binding(
         model_identity=plan.model_identity,
         model_artifact_hash=plan.model_artifact_hash.lower(),
         provider_authority=plan.provider_authority,
+        request_shape_digest=the_odds_api_one_shot_request_shape_digest(
+            plan.activation_league
+        ),
         lifecycle_contract_id=lifecycle_contract.contract_id,
         lifecycle_stage=lifecycle_stage,
         lifecycle_stage_contract_id=lifecycle_contract.stage_contract_id(expected_due),
@@ -495,13 +548,14 @@ def build_signed_activation_execution_binding(
         "durable_plan_digest",
         "five_league_evidence_digest",
         "b1_acceptance_manifest_digest",
-        "model_artifact_hash",
+        "request_shape_digest",
         "pre_activation_routing_configuration_digest",
         "rollback_snapshot_digest",
     ):
         _digest(getattr(binding, name), name)
     _source_sha(binding.source_sha, "source_sha")
     _source_sha(binding.research_sha, "research_sha")
+    _source_sha(binding.model_artifact_hash, "model_artifact_hash")
     if binding.maximum_odds_age_seconds != 900 or binding.retry_budget != 0:
         raise ActivationAuthorizationError("canonical lifecycle safety bounds changed")
     return binding
@@ -654,6 +708,7 @@ _PAYLOAD_FIELDS = frozenset(
         "model_identity",
         "model_artifact_hash",
         "provider_authority",
+        "request_shape_digest",
         "lifecycle_contract_id",
         "lifecycle_stage",
         "lifecycle_stage_contract_id",

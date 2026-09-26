@@ -1,9 +1,9 @@
-"""Durable external route-state records for a future controlled Top-5 canary.
+"""Durable route-state records for the manual one-shot Top-5 canary.
 
-The store is atomic, owner-only, locked and digest validated. It records and
-restores route configuration exactly, but is not wired to a live production
-route consumer on current main; callers must not interpret a file read-back as
-production activation or verified production rollback.
+The store is atomic, owner-only, locked and digest validated. The one-shot
+runtime is its sole launch-specific consumer; no recurring scheduler or global
+routing rewrite is introduced. Production verification requires the runtime's
+provider, inference, lifecycle and health evidence, not a file mutation alone.
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ import os
 import stat
 import tempfile
 from collections.abc import Mapping
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from types import TracebackType
 from typing import Self
@@ -38,11 +38,32 @@ from src.runtime.paths import ROOT, runtime_state_path
 TOP5_ROUTE_STATE_SCHEMA = "top5-production-route-state-v1"
 TOP5_ROUTE_STORE_SCHEMA = "top5-production-route-store-v1"
 TOP5_ROUTE_STATE_PATH = "football/top5/controlled_activation/route-state-v1.json"
-TOP5_ROUTE_CONSUMER_BLOCKER = "NO_LIVE_TOP5_PRODUCTION_ROUTE_STATE_CONSUMER"
+PRODUCTION_EVIDENCE_SCHEMA = "top5-one-shot-production-evidence-v1"
 
 
 class Top5RouteStateError(ProductionContractError):
     """Invalid durable route record or unsafe transition."""
+
+
+def executing_route_configuration_digest(
+    binding: Top5ActivationExecutionBindingV1,
+) -> str:
+    """Digest the complete exact-scope one-shot route, including request shape."""
+    return _sha(
+        {
+            "activation_plan_digest": binding.activation_plan_digest,
+            "provider_authority": "the_odds_api",
+            "activation_league": binding.activation_league,
+            "fixture_key": binding.fixture_key,
+            "request_shape_digest": binding.request_shape_digest,
+            "lifecycle_contract_id": binding.lifecycle_contract_id,
+            "lifecycle_stage": binding.lifecycle_stage,
+            "model_identity": binding.model_identity,
+            "model_artifact_hash": binding.model_artifact_hash,
+            "source_sha": binding.source_sha,
+            "research_sha": binding.research_sha,
+        }
+    )
 
 
 def _digest_text(value: object, name: str) -> str:
@@ -51,6 +72,17 @@ def _digest_text(value: object, name: str) -> str:
     if any(char not in "0123456789abcdef" for char in value):
         raise Top5RouteStateError(f"{name} must be a lowercase SHA-256 digest")
     return value
+
+
+def _source_sha_text(value: object, name: str) -> str:
+    """Validate source/artifact identity without treating it as a content digest."""
+    if (
+        not isinstance(value, str)
+        or len(value) not in (40, 64)
+        or any(char not in "0123456789abcdefABCDEF" for char in value)
+    ):
+        raise Top5RouteStateError(f"{name} must be a 40- or 64-character source SHA")
+    return value.lower()
 
 
 def _false_safety_fields(payload: Mapping[str, object]) -> None:
@@ -204,7 +236,10 @@ class DurableTop5ProductionRouteStateStore:
                 raise Top5RouteStateError(
                     "disabled route cannot have an active fixture"
                 )
-        elif mode == "CONTROLLED_ONE_SHOT_EXECUTING":
+        elif mode in {
+            "CONTROLLED_ONE_SHOT_EXECUTING",
+            "CONTROLLED_ONE_SHOT_PRODUCTION_VERIFIED",
+        }:
             required = (
                 "activation_id",
                 "active_league",
@@ -240,7 +275,7 @@ class DurableTop5ProductionRouteStateStore:
             _digest_text(
                 route.get("signed_authorization_digest"), "signed authorization digest"
             )
-            _digest_text(route.get("model_artifact_hash"), "model artifact hash")
+            _source_sha_text(route.get("model_artifact_hash"), "model artifact SHA")
             for name in ("source_sha", "research_sha"):
                 value = route.get(name)
                 if (
@@ -318,7 +353,7 @@ class DurableTop5ProductionRouteStateStore:
 
     @staticmethod
     def _validate_record(activation_id: object, record: object) -> None:
-        expected = {
+        legacy_expected = {
             "schema_version",
             "activation_id",
             "activation_plan_digest",
@@ -337,10 +372,14 @@ class DurableTop5ProductionRouteStateStore:
             "rollback_readback_digest",
             "record_digest",
         }
+        expected = legacy_expected | {
+            "production_evidence",
+            "production_evidence_digest",
+        }
         if (
             not isinstance(activation_id, str)
             or not isinstance(record, dict)
-            or set(record) != expected
+            or set(record) not in (legacy_expected, expected)
         ):
             raise Top5RouteStateError("activation route record schema is malformed")
         if (
@@ -367,29 +406,42 @@ class DurableTop5ProductionRouteStateStore:
             "PREPARED",
             "AUTHORIZED",
             "EXECUTING",
+            "PRODUCTION_VERIFIED",
             "ROLLBACK",
             "ROLLED_BACK",
         }:
             raise Top5RouteStateError("activation route record status is invalid")
         _false_safety_fields(record)
-        if record.get("status") in {
-            "AUTHORIZED",
-            "EXECUTING",
-            "ROLLBACK",
-            "ROLLED_BACK",
-        }:
-            _digest_text(
-                record.get("signed_authorization_digest"), "signed authorization digest"
-            )
-            if (
-                not isinstance(record.get("authorization_nonce"), str)
-                or not record["authorization_nonce"]
-            ):
+        status = record.get("status")
+        signed_digest = record.get("signed_authorization_digest")
+        nonce = record.get("authorization_nonce")
+        if status in {"AUTHORIZED", "EXECUTING", "PRODUCTION_VERIFIED"}:
+            _digest_text(signed_digest, "signed authorization digest")
+            if not isinstance(nonce, str) or not nonce:
                 raise Top5RouteStateError("authorized route record nonce is missing")
+        elif status in {"ROLLBACK", "ROLLED_BACK"}:
+            if signed_digest is None and nonce is None:
+                pass  # A prepared-but-never-authorized route may be discarded.
+            else:
+                _digest_text(signed_digest, "signed authorization digest")
+                if not isinstance(nonce, str) or not nonce:
+                    raise Top5RouteStateError(
+                        "authorized route record nonce is missing"
+                    )
         if record.get("status") == "ROLLED_BACK":
             _digest_text(
                 record.get("rollback_readback_digest"), "rollback read-back digest"
             )
+        if record.get("status") == "PRODUCTION_VERIFIED":
+            evidence = record.get("production_evidence")
+            if not isinstance(evidence, dict):
+                raise Top5RouteStateError("production evidence is missing")
+            _digest_text(
+                record.get("production_evidence_digest"),
+                "production evidence digest",
+            )
+            if _sha(evidence) != record.get("production_evidence_digest"):
+                raise Top5RouteStateError("production evidence digest mismatch")
 
     def _write_unlocked(self, state: dict[str, object]) -> None:
         self.path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -444,19 +496,13 @@ class DurableTop5ProductionRouteStateStore:
             "durable_plan_digest",
             "five_league_evidence_digest",
             "b1_acceptance_manifest_digest",
-            "model_artifact_hash",
             "pre_activation_routing_configuration_digest",
             "rollback_snapshot_digest",
         ):
             _digest_text(getattr(binding, name), name)
-        for name in ("source_sha", "research_sha"):
+        for name in ("source_sha", "research_sha", "model_artifact_hash"):
             value = getattr(binding, name)
-            if (
-                not isinstance(value, str)
-                or len(value) not in (40, 64)
-                or any(character not in "0123456789abcdefABCDEF" for character in value)
-            ):
-                raise Top5RouteStateError(f"{name} is not a source SHA")
+            _source_sha_text(value, name)
         with self._locked():
             state = self._read_unlocked()
             current = state["current_route"]
@@ -509,6 +555,8 @@ class DurableTop5ProductionRouteStateStore:
                 "betting": False,
                 "ledger_mutation": False,
                 "rollback_readback_digest": None,
+                "production_evidence": None,
+                "production_evidence_digest": None,
             }
             record["record_digest"] = _sha(record)
             records = dict(state["records"])
@@ -657,20 +705,7 @@ class DurableTop5ProductionRouteStateStore:
                 raise Top5RouteStateError(
                     "production route baseline changed after preparation"
                 )
-            bound_configuration = _sha(
-                {
-                    "activation_plan_digest": binding.activation_plan_digest,
-                    "provider_authority": "the_odds_api",
-                    "activation_league": binding.activation_league,
-                    "fixture_key": binding.fixture_key,
-                    "lifecycle_contract_id": binding.lifecycle_contract_id,
-                    "lifecycle_stage": binding.lifecycle_stage,
-                    "model_identity": binding.model_identity,
-                    "model_artifact_hash": binding.model_artifact_hash,
-                    "source_sha": binding.source_sha,
-                    "research_sha": binding.research_sha,
-                }
-            )
+            bound_configuration = executing_route_configuration_digest(binding)
             executing = dict(current)
             executing.update(
                 {
@@ -718,9 +753,155 @@ class DurableTop5ProductionRouteStateStore:
             self._write_unlocked(state)
             return json.loads(json.dumps(record))
 
-    def mark_production_verified(self, *_args: object, **_kwargs: object) -> None:
-        """Do not synthesize the missing live provider/model/health evidence."""
-        raise Top5RouteStateError(TOP5_ROUTE_CONSUMER_BLOCKER)
+    def mark_production_verified(
+        self,
+        binding: Top5ActivationExecutionBindingV1,
+        authorization: VerifiedTop5ActivationAuthorizationV1,
+        evidence: Mapping[str, object],
+        *,
+        now: datetime,
+    ) -> dict[str, object]:
+        """Persist verified execution evidence after the real one-shot runtime."""
+        now_utc = _utc(now, "now")
+        if not isinstance(authorization, VerifiedTop5ActivationAuthorizationV1):
+            raise Top5RouteStateError("verified authorization is required")
+        authorization.assert_valid_at(now_utc)
+        for field, expected in binding.expected_signed_claims().items():
+            if authorization.payload.get(field) != expected:
+                raise Top5RouteStateError(f"signed route binding mismatch: {field}")
+        if not isinstance(evidence, Mapping):
+            raise Top5RouteStateError("production evidence must be an object")
+        evidence = dict(evidence)
+        required = {
+            "schema_version": "top5-one-shot-production-evidence-v1",
+            "activation_id": binding.activation_id,
+            "activation_plan_digest": binding.activation_plan_digest,
+            "signed_authorization_digest": authorization.authorization_digest,
+            "authorization_nonce": authorization.nonce,
+            "league": binding.activation_league,
+            "fixture_key": binding.fixture_key,
+            "lifecycle_contract_id": binding.lifecycle_contract_id,
+            "lifecycle_stage": binding.lifecycle_stage,
+            "model_identity": binding.model_identity,
+            "model_artifact_hash": binding.model_artifact_hash,
+            "source_sha": binding.source_sha,
+            "research_sha": binding.research_sha,
+            "provider_authority": "the_odds_api",
+            "request_shape_digest": binding.request_shape_digest,
+            "provider_request_count": 1,
+            "retry_count": 0,
+            "snapshot_valid": True,
+            "snapshot_fresh": True,
+            "model_inference_succeeded": True,
+            "lifecycle_persisted": True,
+            "route_state_consumed": True,
+            "health_status": "HEALTHY",
+            "no_bet": True,
+            "publication": False,
+            "recurring_scheduler": False,
+            "betting": False,
+            "ledger_mutation": False,
+        }
+        if any(evidence.get(name) != value for name, value in required.items()):
+            raise Top5RouteStateError("production evidence binding/safety mismatch")
+        status = evidence.get("http_status")
+        if (
+            not isinstance(status, int)
+            or isinstance(status, bool)
+            or not 200 <= status < 300
+        ):
+            raise Top5RouteStateError("production evidence HTTP result is invalid")
+        for name in (
+            "provider_event_id",
+            "snapshot_id",
+            "lifecycle_version_digest",
+            "response_digest",
+            "captured_at",
+            "request_started_at",
+            "response_finished_at",
+            "execution_finished_at",
+        ):
+            if not isinstance(evidence.get(name), str) or not evidence[name]:
+                raise Top5RouteStateError(f"production evidence {name} is missing")
+        started = _utc(
+            datetime.fromisoformat(str(evidence["request_started_at"])),
+            "request_started_at",
+        )
+        response_finished = _utc(
+            datetime.fromisoformat(str(evidence["response_finished_at"])),
+            "response_finished_at",
+        )
+        execution_finished = _utc(
+            datetime.fromisoformat(str(evidence["execution_finished_at"])),
+            "execution_finished_at",
+        )
+        captured_at = _utc(
+            datetime.fromisoformat(str(evidence["captured_at"])), "captured_at"
+        )
+        if (
+            not started <= response_finished <= execution_finished
+            or captured_at > response_finished
+        ):
+            raise Top5RouteStateError("production evidence timestamps are invalid")
+        _digest_text(evidence.get("response_digest"), "response digest")
+        evidence_digest = _sha(evidence)
+        with self._locked():
+            state = self._read_unlocked()
+            current = state["current_route"]
+            record = state["records"].get(binding.activation_id)
+            if (
+                not isinstance(record, dict)
+                or record.get("status") != "EXECUTING"
+                or record.get("activation_plan_digest")
+                != binding.activation_plan_digest
+                or record.get("signed_authorization_digest")
+                != authorization.authorization_digest
+                or current.get("activation_mode") != "CONTROLLED_ONE_SHOT_EXECUTING"
+                or current.get("current_configuration_digest")
+                != executing_route_configuration_digest(binding)
+            ):
+                raise Top5RouteStateError("exact executing route is not current")
+            verified = dict(current)
+            verified.update(
+                {
+                    "activation_mode": "CONTROLLED_ONE_SHOT_PRODUCTION_VERIFIED",
+                    "last_transition_time": now_utc.isoformat(),
+                }
+            )
+            self._validate_route(verified)
+            record = dict(record)
+            record.update(
+                {
+                    "status": "PRODUCTION_VERIFIED",
+                    "production_evidence": evidence,
+                    "production_evidence_digest": evidence_digest,
+                    "updated_at": now_utc.isoformat(),
+                }
+            )
+            record["record_digest"] = _sha(
+                {key: value for key, value in record.items() if key != "record_digest"}
+            )
+            records = dict(state["records"])
+            records[binding.activation_id] = record
+            history = list(state["audit_history"])
+            history.append(
+                {
+                    "transition": "PRODUCTION_VERIFIED",
+                    "activation_id": binding.activation_id,
+                    "production_evidence_digest": evidence_digest,
+                    "at": now_utc.isoformat(),
+                }
+            )
+            state.update(
+                {
+                    "current_route": verified,
+                    "records": records,
+                    "audit_history": history,
+                    "revision": int(state["revision"]) + 1,
+                }
+            )
+            self._write_unlocked(state)
+            return json.loads(json.dumps(record))
 
     def rollback(
         self,
@@ -748,7 +929,13 @@ class DurableTop5ProductionRouteStateStore:
                 raise Top5RouteStateError("rollback requires the exact activation plan")
             if record.get("status") == "ROLLED_BACK":
                 return json.loads(json.dumps(record))
-            if record.get("status") not in {"EXECUTING", "ROLLBACK"}:
+            if record.get("status") not in {
+                "PREPARED",
+                "AUTHORIZED",
+                "EXECUTING",
+                "PRODUCTION_VERIFIED",
+                "ROLLBACK",
+            }:
                 raise Top5RouteStateError("route is not in a rollback-capable state")
             baseline = record.get("pre_activation_snapshot")
             if not isinstance(baseline, dict) or _sha(baseline) != record.get(
@@ -819,11 +1006,169 @@ class DurableTop5ProductionRouteStateStore:
             return json.loads(json.dumps(record))
 
 
+class Top5ProductionRouteConsumer:
+    """Read-only live consumer used by the manual one-shot runner only."""
+
+    def __init__(self, store: DurableTop5ProductionRouteStateStore) -> None:
+        self.store = store
+
+    def consume_exact(
+        self,
+        binding: Top5ActivationExecutionBindingV1,
+        authorization: VerifiedTop5ActivationAuthorizationV1,
+    ) -> dict[str, object]:
+        """Reread and prove the current durable route matches signed scope."""
+        now = datetime.now().astimezone()
+        authorization.assert_valid_at(now)
+        for field, expected in binding.expected_signed_claims().items():
+            if authorization.payload.get(field) != expected:
+                raise Top5RouteStateError(f"signed route binding mismatch: {field}")
+        state = self.store.read()
+        route = state["current_route"]
+        record = state["records"].get(binding.activation_id)
+        expected_route = {
+            "activation_mode": "CONTROLLED_ONE_SHOT_EXECUTING",
+            "activation_id": binding.activation_id,
+            "active_league": binding.activation_league,
+            "active_fixture": binding.fixture_key,
+            "lifecycle_contract_id": binding.lifecycle_contract_id,
+            "lifecycle_stage": binding.lifecycle_stage,
+            "model_identity": binding.model_identity,
+            "model_artifact_hash": binding.model_artifact_hash,
+            "source_sha": binding.source_sha,
+            "research_sha": binding.research_sha,
+            "provider_authority": "the_odds_api",
+            "activation_plan_digest": binding.activation_plan_digest,
+            "signed_authorization_digest": authorization.authorization_digest,
+            "current_configuration_digest": executing_route_configuration_digest(
+                binding
+            ),
+            "publication": False,
+            "recurring_scheduler": False,
+            "betting": False,
+            "ledger_mutation": False,
+        }
+        if any(route.get(name) != value for name, value in expected_route.items()):
+            raise Top5RouteStateError("live route does not match exact signed scope")
+        if (
+            not isinstance(record, dict)
+            or record.get("status") != "EXECUTING"
+            or record.get("execution_binding") != binding._core_payload()
+            or record.get("authorization_nonce") != authorization.nonce
+            or state["consumed_nonces"].get(authorization.nonce)
+            != authorization.authorization_digest
+        ):
+            raise Top5RouteStateError("live route record/nonce is not exact")
+        return {
+            "route": route,
+            "state_revision": state["revision"],
+            "route_digest": _sha(route),
+            "record_digest": record["record_digest"],
+        }
+
+    def verify_disabled_after_rollback(
+        self, activation_id: str, activation_plan_digest: str
+    ) -> dict[str, object]:
+        """Reread through the real consumer and prove rollback is disabled."""
+        state = self.store.read()
+        route = state["current_route"]
+        record = state["records"].get(activation_id)
+        if (
+            route.get("activation_mode") != "DISABLED"
+            or route.get("active_league") is not None
+            or route.get("active_fixture") is not None
+            or route.get("provider_authority") != "the_odds_api"
+            or any(
+                route.get(field) is not False
+                for field in (
+                    "publication",
+                    "recurring_scheduler",
+                    "betting",
+                    "ledger_mutation",
+                )
+            )
+            or not isinstance(record, dict)
+            or record.get("activation_plan_digest") != activation_plan_digest
+            or record.get("status") != "ROLLED_BACK"
+            or record.get("rollback_readback_digest") != _sha(route)
+        ):
+            raise Top5RouteStateError(
+                "route consumer did not observe disabled rollback"
+            )
+        return {
+            "activation_mode": "DISABLED",
+            "active_league": None,
+            "active_fixture": None,
+            "publication": False,
+            "recurring_scheduler": False,
+            "betting": False,
+            "ledger_mutation": False,
+            "route_digest": _sha(route),
+            "state_revision": state["revision"],
+        }
+
+    def verify_production_verified(
+        self,
+        binding: Top5ActivationExecutionBindingV1,
+        authorization: VerifiedTop5ActivationAuthorizationV1,
+    ) -> dict[str, object]:
+        """Reread the verified route/evidence through the live consumer."""
+        authorization.assert_valid_at(datetime.now(timezone.utc))
+        state = self.store.read()
+        route = state["current_route"]
+        record = state["records"].get(binding.activation_id)
+        expected_route = {
+            "activation_mode": "CONTROLLED_ONE_SHOT_PRODUCTION_VERIFIED",
+            "activation_id": binding.activation_id,
+            "active_league": binding.activation_league,
+            "active_fixture": binding.fixture_key,
+            "lifecycle_contract_id": binding.lifecycle_contract_id,
+            "lifecycle_stage": binding.lifecycle_stage,
+            "model_identity": binding.model_identity,
+            "model_artifact_hash": binding.model_artifact_hash,
+            "source_sha": binding.source_sha,
+            "research_sha": binding.research_sha,
+            "provider_authority": "the_odds_api",
+            "activation_plan_digest": binding.activation_plan_digest,
+            "signed_authorization_digest": authorization.authorization_digest,
+            "current_configuration_digest": executing_route_configuration_digest(
+                binding
+            ),
+            "publication": False,
+            "recurring_scheduler": False,
+            "betting": False,
+            "ledger_mutation": False,
+        }
+        if (
+            any(route.get(name) != value for name, value in expected_route.items())
+            or not isinstance(record, dict)
+            or record.get("status") != "PRODUCTION_VERIFIED"
+            or record.get("activation_plan_digest") != binding.activation_plan_digest
+            or record.get("signed_authorization_digest")
+            != authorization.authorization_digest
+            or route.get("activation_mode") != "CONTROLLED_ONE_SHOT_PRODUCTION_VERIFIED"
+            or route.get("current_configuration_digest")
+            != executing_route_configuration_digest(binding)
+            or not isinstance(record.get("production_evidence"), dict)
+            or _sha(record["production_evidence"])
+            != record.get("production_evidence_digest")
+        ):
+            raise Top5RouteStateError("production-verified route read-back is invalid")
+        return {
+            "route_digest": _sha(route),
+            "record_digest": record["record_digest"],
+            "production_evidence_digest": record["production_evidence_digest"],
+            "state_revision": state["revision"],
+        }
+
+
 __all__ = [
-    "TOP5_ROUTE_CONSUMER_BLOCKER",
+    "PRODUCTION_EVIDENCE_SCHEMA",
     "TOP5_ROUTE_STATE_PATH",
     "TOP5_ROUTE_STATE_SCHEMA",
     "TOP5_ROUTE_STORE_SCHEMA",
     "DurableTop5ProductionRouteStateStore",
+    "Top5ProductionRouteConsumer",
     "Top5RouteStateError",
+    "executing_route_configuration_digest",
 ]

@@ -25,7 +25,7 @@ from src.football.top5_activation_authorization import (
     verify_activation_authorization,
 )
 from src.football.top5_durable_activation import (
-    PRODUCTION_RUNTIME_BLOCKER,
+    PRODUCTION_RUNTIME_REQUIRED,
     DurableActivationError,
     DurableTop5ActivationStore,
     prepare_top5_durable_activation_plan,
@@ -397,7 +397,7 @@ def test_signal_snapshot_requires_fresh_signal_time_and_the_odds_api(tmp_path):
             )
 
 
-def test_signed_authorization_does_not_remove_real_runtime_hard_blocker(tmp_path):
+def test_durable_execution_requires_genuine_runtime_and_route_consumer(tmp_path):
     (
         _package,
         _bundle,
@@ -414,7 +414,7 @@ def test_signed_authorization_does_not_remove_real_runtime_hard_blocker(tmp_path
     store = DurableTop5ActivationStore(state_path)
     store.prepare(plan, now=NOW)
     before = state_path.read_bytes()
-    with pytest.raises(DurableActivationError, match=PRODUCTION_RUNTIME_BLOCKER):
+    with pytest.raises(DurableActivationError, match=PRODUCTION_RUNTIME_REQUIRED):
         store.execute(
             plan,
             now=NOW,

@@ -130,15 +130,13 @@ route-state journal supports atomic PREPARED → AUTHORIZED → EXECUTING record
 nonce replay rejection, and exact saved disabled-record restoration. These
 records are control evidence only, not a live route change.
 
-`scripts/top5_controlled_activation.py` still fails closed after the signature
-and evidence checks with `NO_PRODUCTION_ONE_SHOT_MODEL_PROVIDER_RUNTIME`.
-There is no genuine one-shot Top-5 inference runtime and no live route-state
-consumer. Consequently the required EXECUTING → ACTIVE/PRODUCTION_VERIFIED
-transition and a production-observed rollback cannot be truthfully implemented
-or tested here. Do not interpret a signed authorization, durable journal
-record, or file-level read-back as activation or production rollback.
-`RollbackController` continues to return the safe disabled, no-bet,
-unpublished, non-scheduled, ledger-untouched state for every trigger.
+`scripts/top5_controlled_activation.py` now routes exact signed execution
+through the manual one-shot inference runtime and live route-state consumer.
+No real canary evidence was produced by this implementation task; a fresh
+detached activation authorization remains mandatory. Do not interpret a
+PREPARED, AUTHORIZED, or EXECUTING journal record as production verification.
+The one-shot rollback restores and rereads the disabled route, while keeping
+publication, scheduling, betting and ledger effects disabled.
 
 ## Publisher, PWA, and health
 
