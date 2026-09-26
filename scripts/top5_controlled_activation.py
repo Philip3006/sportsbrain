@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Durable Top-5 one-league activation control commands.
 
-Preparation/status/rollback only touch the external Top-5 state store. The
-execute command is explicitly opt-in and fails closed while no reviewed real
-one-shot model/provider runtime is installed.
+Preparation/status/rollback operate on the external Top-5 state stores. The
+execute command is explicitly opt-in and delegates to the exact-scope manual
+one-shot runtime; a verified detached activation authorization is mandatory.
 """
 
 from __future__ import annotations
