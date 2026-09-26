@@ -3,8 +3,11 @@
 ## Current status
 
 Production-side readiness is implemented as offline, deterministic contracts
-and simulations from merged PR #56 (`8de9472644057656c50d900380a843909ff5a46b`).
-The frozen Research reference remains `6eaabbec7d0182103d815c72fae4976e261b40aa`.
+and simulations from merged PR #56 (`8de9472644057656c50d900380a843909ff5a46b`)
+plus a durable external activation-control store. The store can persist a
+validated one-league `PREPARED` plan and exact rollback evidence; it does not
+activate production routing. The frozen Research reference remains
+`6eaabbec7d0182103d815c72fae4976e261b40aa`.
 The five leagues remain disabled, no-bet, unpublished, and absent from the
 active league registry. Builder 1's shadow integration and the frozen Research
 model are outside this branch.
@@ -18,7 +21,8 @@ model are outside this branch.
 - event-relative signal-time candidate comparisons with no automatic winner;
 - shadow-performance metrics and explicit operational gates;
 - a cumulative ten-stage rollout state machine;
-- a future controlled activation envelope and fail-closed preflight;
+- a future controlled activation envelope, fail-closed preflight, and durable
+  external state/rollback control;
 - rollback-to-disabled contracts for every required failure class;
 - disabled Top-5 publisher, PWA, and health/observability contracts;
 - controlled activation and production verification runbooks.
@@ -39,10 +43,12 @@ settlement, scheduler, and rollback execution remain unresolved or disabled.
 
 ## What remains disabled
 
-No model is bound. No provider client is imported or called. No live authority
-is selected. No scheduler, launchd job, Cloudflare Worker, publisher, ledger,
-or runtime-state writer is registered. Closing odds are benchmark-only and are
-structurally excluded from signal-time inference.
+The evidence/plan contract binds a model identity, but no production model
+runtime is installed. No provider client is imported or called. The route
+authority is constrained to `the_odds_api`; the candidate provider remains
+non-authoritative. No live route-state consumer, recurring scheduler, launchd
+job, Cloudflare Worker, publisher, or ledger writer is registered. Closing
+odds are benchmark-only and structurally excluded from signal-time inference.
 
 ## Provider-validation framework
 
@@ -113,8 +119,14 @@ explicit controlled-activation state.
 candidate scope, source/Research/model hashes, provider authority, signal-time
 contract, deterministic configuration snapshot, and rollback pointer.
 `ControlledActivationHarness` can prepare and validate a future plan but its
-execution method is disabled. `RollbackController` returns the safe disabled,
-no-bet, unpublished, non-scheduled, ledger-untouched state for every trigger.
+execution method is disabled. `scripts/top5_controlled_activation.py` persists
+the validated plan and exposes status/rollback commands. Its execute command
+fails closed with `NO_PRODUCTION_ONE_SHOT_MODEL_PROVIDER_RUNTIME`. Durable
+rollback restores the exact saved control snapshot and retains evidence, but
+live route rollback cannot be claimed ready until a production route writer
+consumes this state. `RollbackController` continues to return the safe
+disabled, no-bet, unpublished, non-scheduled, ledger-untouched state for every
+trigger.
 
 ## Publisher, PWA, and health
 
