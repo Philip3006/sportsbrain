@@ -77,7 +77,8 @@ explicitly supplied:
 - `the_odds_api` provider authority;
 - model and frozen Research bindings;
 - approved Signal-Time configuration;
-- scheduler/workflow and health readiness;
+- one-shot operator execution-path and health readiness (a recurring
+  scheduler is not required for the manual canary);
 - rollback readiness;
 - explicit activation authorization; and
 - non-synthetic evidence.
@@ -99,6 +100,8 @@ Example input shape (values are deliberately not fabricated here):
   "model_bound": false,
   "research_bound": false,
   "signal_time_approved": false,
+  "one_shot_operator_path_ready": false,
+  "recurring_scheduler_registered": false,
   "scheduler_ready": false,
   "health_ready": false,
   "rollback_ready": false,
@@ -119,6 +122,15 @@ Example input shape (values are deliberately not fabricated here):
   }
 }
 ```
+
+The precheck remains an operator-supplied, side-effect-free checklist. The
+durable activation CLI independently revalidates the canonical B2 five-league
+receipt package and B1 final-acceptance bundle before persisting a `PREPARED`
+record. Its status health reports activation-control state only; provider and
+model health remain `NOT_OBSERVED`. Execution currently stops with
+`NO_PRODUCTION_ONE_SHOT_MODEL_PROVIDER_RUNTIME` because no actual production
+Top-5 model/provider one-shot runtime or route-state consumer exists. No
+recurring scheduler is introduced by the durable substrate.
 
 ## Operational decisions
 

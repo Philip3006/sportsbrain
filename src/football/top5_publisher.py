@@ -133,9 +133,7 @@ class Top5PublisherPayload:
     no_bet: bool = True
     publication_enabled: bool = False
     activation_gate_passed: bool = False
-    provenance: Mapping[str, str] = field(
-        default_factory=lambda: MappingProxyType({})
-    )
+    provenance: Mapping[str, str] = field(default_factory=lambda: MappingProxyType({}))
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -497,9 +495,7 @@ class ControlledTop5PublicationPayload:
                     or self.evidence_digest,
                     "controlled_shadow_run_id": record.get("controlled_shadow_run_id")
                     or self.controlled_shadow_run_id,
-                    "qualification_session_id": record.get(
-                        "qualification_session_id"
-                    )
+                    "qualification_session_id": record.get("qualification_session_id")
                     or self.qualification_session_id,
                     "snapshot_id": record.get("snapshot_id")
                     or self.signal_time_experiment_id,
@@ -523,6 +519,11 @@ class ControlledTop5PublicationPayload:
                 "session_id": record.get("qualification_session_id")
                 or self.qualification_session_id,
             }
+            lifecycle_by_market = record.get("lifecycle_by_market")
+            if lifecycle_by_market is not None:
+                envelope["prediction_artifact"]["lifecycle_by_market"] = (
+                    lifecycle_by_market
+                )
             public_records.extend(map_prediction_to_public_football_signals(envelope))
         return public_records
 
@@ -709,7 +710,9 @@ class ControlledTop5PublicationBatch:
         first = ordered_payloads[0]
         return serialize_public_product(
             {
-                "updated": max(payload.generated_at for payload in self.payloads).isoformat(),
+                "updated": max(
+                    payload.generated_at for payload in self.payloads
+                ).isoformat(),
                 "football": public_records,
                 "top5_release": _top5_public_release(
                     ordered_payloads,
@@ -1588,11 +1591,8 @@ class InMemoryTop5PublicationStore:
             and payload.generated_at <= self._current.payload.generated_at
         ):
             raise ProductionContractError("stale Top-5 publication artifact rejected")
-        if (
-            self._current_batch is not None
-            and payload.generated_at <= max(
-                item.generated_at for item in self._current_batch.payloads
-            )
+        if self._current_batch is not None and payload.generated_at <= max(
+            item.generated_at for item in self._current_batch.payloads
         ):
             raise ProductionContractError("stale Top-5 publication artifact rejected")
         public_product = payload.as_public_product(
@@ -1671,11 +1671,8 @@ class InMemoryTop5PublicationStore:
                 authorization.publication_authorization_id
             )
         latest_generated_at = max(payload.generated_at for payload in batch.payloads)
-        if (
-            self._current_batch is not None
-            and latest_generated_at <= max(
-                payload.generated_at for payload in self._current_batch.payloads
-            )
+        if self._current_batch is not None and latest_generated_at <= max(
+            payload.generated_at for payload in self._current_batch.payloads
         ):
             raise ProductionContractError("stale Top-5 batch publication rejected")
         aggregate_authorization_id = "top5-batch-publication-v1:" + _digest(

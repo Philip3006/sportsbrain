@@ -292,19 +292,9 @@ def test_complete_post_shadow_chain_accepts_native_five_league_artifacts_offline
     """Synthetic injected fixtures prove shape compatibility only; they are not evidence."""
     from datetime import timedelta
 
-    from tests.football import test_top5_b2_five_league_receipt as b2_tests
-    from tests.football import (
-        test_top5_controlled_shadow_authorization_package as shadow_package_tests,
-    )
-    from tests.football import test_top5_final_acceptance as builder1_tests
-    from tests.football import test_top5_public_delivery as public_delivery_tests
-    from tests.football import test_top5_therundown_network_shadow as network_tests
-    from tests.football import (
-        test_top5_therundown_provider_native_discovery as discovery_tests,
-    )
     from src.football.top5_b2_qualification_batch_orchestrator import (
-        Builder2FiveLeagueShadowPackageV1,
         FIVE_LEAGUE_SHADOW_PACKAGE_SCHEMA_VERSION,
+        Builder2FiveLeagueShadowPackageV1,
         build_five_league_shadow_package,
         consume_five_league_shadow_package,
     )
@@ -324,6 +314,16 @@ def test_complete_post_shadow_chain_accepts_native_five_league_artifacts_offline
     from src.football.top5_therundown_network_shadow import (
         NetworkShadowRunStatus,
         TheRundownNetworkShadowExecutorV1,
+    )
+    from tests.football import test_top5_b2_five_league_receipt as b2_tests
+    from tests.football import (
+        test_top5_controlled_shadow_authorization_package as shadow_package_tests,
+    )
+    from tests.football import test_top5_final_acceptance as builder1_tests
+    from tests.football import test_top5_public_delivery as public_delivery_tests
+    from tests.football import test_top5_therundown_network_shadow as network_tests
+    from tests.football import (
+        test_top5_therundown_provider_native_discovery as discovery_tests,
     )
 
     base_now = public_delivery_tests.BASE
@@ -501,7 +501,8 @@ def test_complete_post_shadow_chain_accepts_native_five_league_artifacts_offline
             model_bound=True,
             research_bound=True,
             signal_time_approved=True,
-            scheduler_ready=True,
+            one_shot_operator_path_ready=True,
+            scheduler_ready=False,
             health_ready=True,
             rollback_ready=True,
             activation_authorized=True,

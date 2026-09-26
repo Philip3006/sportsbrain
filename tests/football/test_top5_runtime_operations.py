@@ -261,7 +261,8 @@ def test_precheck_can_report_ready_only_with_all_explicit_inputs() -> None:
             model_bound=True,
             research_bound=True,
             signal_time_approved=True,
-            scheduler_ready=True,
+            one_shot_operator_path_ready=True,
+            scheduler_ready=False,
             health_ready=True,
             rollback_ready=True,
             activation_authorized=True,
@@ -273,7 +274,25 @@ def test_precheck_can_report_ready_only_with_all_explicit_inputs() -> None:
     assert report.activation_mode == "disabled"
     assert report.provider_authority == TOP5_PRODUCTION_PROVIDER
     assert report.mutation_performed is False
+    payload = report.as_payload()
+    assert payload["one_shot_operator_path_ready"] is True
+    assert payload["recurring_scheduler_registered"] is False
+    assert payload["recurring_scheduler_readiness_required"] is False
     assert report.warnings
+
+
+def test_precheck_distinguishes_one_shot_readiness_from_recurring_scheduler():
+    blocked = top5_activation_precheck(
+        Top5ActivationPrecheckInput(scheduler_ready=True)
+    )
+    assert "one-shot operator execution path is not ready" in blocked.failures
+
+    unsafe = top5_activation_precheck(
+        Top5ActivationPrecheckInput(recurring_scheduler_registered=True)
+    )
+    assert unsafe.ready is False
+    assert "must not register a recurring scheduler" in unsafe.failures[0]
+    assert unsafe.as_payload()["recurring_scheduler_registered"] is True
 
 
 def test_precheck_rejects_candidate_authority() -> None:

@@ -21,6 +21,12 @@ from collections.abc import Mapping, Sequence
 from math import isfinite
 from typing import Any
 
+from src.football.top5_lifecycle_public import (
+    Top5LifecyclePublicError,
+    collapse_top5_lifecycle_versions,
+    project_top5_lifecycle,
+)
+
 
 class PublicFootballCompatibilityError(ValueError):
     """Malformed or unsafe league-neutral football publication input."""
@@ -182,8 +188,7 @@ def _normalize_top5_league_codes(value: object) -> list[str]:
             "top5_release league_codes must be a list"
         )
     normalized = [
-        canonical_top5_league(code) if isinstance(code, str) else ""
-        for code in value
+        canonical_top5_league(code) if isinstance(code, str) else "" for code in value
     ]
     if (
         len(normalized) != len(_TOP5_LEAGUES)
@@ -399,6 +404,24 @@ def _public_provenance(
     return result
 
 
+def _project_public_top5_lifecycle(
+    value: object,
+    *,
+    fixture_identity: object,
+    model_identity: object,
+    provenance: Mapping[str, object],
+) -> dict[str, object]:
+    try:
+        return project_top5_lifecycle(
+            value,
+            fixture_identity=fixture_identity,
+            model_identity=model_identity,
+            provenance=provenance,
+        )
+    except Top5LifecyclePublicError as exc:
+        raise PublicFootballCompatibilityError(str(exc)) from exc
+
+
 def _public_top5_release(value: object) -> dict[str, object]:
     """Project the controlled Top-5 release envelope through an allowlist.
 
@@ -420,9 +443,7 @@ def _public_top5_release(value: object) -> dict[str, object]:
                 raise PublicFootballCompatibilityError(
                     "top5_release evidence_digests must be an object"
                 )
-            result[key] = {
-                str(league): str(digest) for league, digest in item.items()
-            }
+            result[key] = {str(league): str(digest) for league, digest in item.items()}
         elif isinstance(item, (str, int, float, bool)) or item is None:
             result[key] = item
         else:
@@ -448,10 +469,11 @@ def _public_top5_release(value: object) -> dict[str, object]:
         raise PublicFootballCompatibilityError(
             "top5_release must be bound to CONTROLLED activation"
         )
-    if result["publication_status"] != "PUBLISHED" or result["publication_enabled"] is not True:
-        raise PublicFootballCompatibilityError(
-            "top5_release is not published"
-        )
+    if (
+        result["publication_status"] != "PUBLISHED"
+        or result["publication_enabled"] is not True
+    ):
+        raise PublicFootballCompatibilityError("top5_release is not published")
     if result["no_bet"] is not True:
         raise PublicFootballCompatibilityError("top5_release must remain no-bet")
     if result.get("provider_authority") != TOP5_PUBLIC_PROVIDER_AUTHORITY:
@@ -540,6 +562,13 @@ def _validate_top5_public_records(
             raise PublicFootballCompatibilityError(
                 "Top-5 public record/release binding mismatch"
             )
+        if "lifecycle" in record:
+            _project_public_top5_lifecycle(
+                record["lifecycle"],
+                fixture_identity=record.get("fixture_key"),
+                model_identity=record.get("model_identity"),
+                provenance=provenance,
+            )
 
 
 def map_prediction_to_public_football_signals(
@@ -600,12 +629,16 @@ def map_prediction_to_public_football_signals(
     synthetic = _validate_synthetic_boundary(
         record, provenance, state, artifact, health
     )
-    evidence_kind = str(
-        _first_value(
-            record, provenance, artifact, health, keys=("evidence_kind", "marker")
+    evidence_kind = (
+        str(
+            _first_value(
+                record, provenance, artifact, health, keys=("evidence_kind", "marker")
+            )
+            or ""
         )
-        or ""
-    ).strip().upper()
+        .strip()
+        .upper()
+    )
 
     fixture_key_text = fixture_key
     home = (
@@ -742,6 +775,19 @@ def map_prediction_to_public_football_signals(
         snapshot_kind=snapshot_kind,
         source_age_seconds=source_age_seconds,
     )
+    raw_lifecycle_by_market = _first_value(
+        record, artifact, keys=("lifecycle_by_market",)
+    )
+    raw_lifecycle = _first_value(record, artifact, keys=("lifecycle",))
+    if isinstance(raw_lifecycle_by_market, Mapping):
+        if set(raw_lifecycle_by_market) != set(probabilities):
+            raise PublicFootballCompatibilityError(
+                "Top-5 lifecycle_by_market must cover every predicted outcome"
+            )
+    elif raw_lifecycle is not None and len(probabilities) > 1:
+        raise PublicFootballCompatibilityError(
+            "multi-outcome Top-5 predictions require lifecycle_by_market"
+        )
     common: dict[str, object] = {
         "sport": "football",
         "league": league,
@@ -791,7 +837,9 @@ def map_prediction_to_public_football_signals(
         )
         or "",
         "evidence_digest": _optional_text(
-            _first_value(record, artifact, provenance, health, keys=("evidence_digest",))
+            _first_value(
+                record, artifact, provenance, health, keys=("evidence_digest",)
+            )
         )
         or "",
         "controlled_shadow_run_id": _optional_text(
@@ -855,6 +903,64 @@ def map_prediction_to_public_football_signals(
         # downgrade without enabling betting.
         item["current_odds"] = item["odds"]
         item["current_ev_pct"] = item["ev_pct"]
+        lifecycle_value = (
+            raw_lifecycle_by_market.get(outcome)
+            if isinstance(raw_lifecycle_by_market, Mapping)
+            else raw_lifecycle
+        )
+        if lifecycle_value is not None:
+            lifecycle = _project_public_top5_lifecycle(
+                lifecycle_value,
+                fixture_identity=fixture_key_text,
+                model_identity=model_identity,
+                provenance=public_provenance,
+            )
+            if (
+                "current_probability" in lifecycle
+                and abs(
+                    float(lifecycle["current_probability"]) * 100 - item["model_prob"]
+                )
+                > 0.01
+            ):
+                raise PublicFootballCompatibilityError(
+                    "Top-5 lifecycle current_probability disagrees with public signal"
+                )
+            if (
+                "current_market_probability" in lifecycle
+                and item["fair_prob"] > 0
+                and abs(
+                    float(lifecycle["current_market_probability"]) * 100
+                    - item["fair_prob"]
+                )
+                > 0.01
+            ):
+                raise PublicFootballCompatibilityError(
+                    "Top-5 lifecycle current_market_probability disagrees with public signal"
+                )
+            if (
+                "current_edge_pp" in lifecycle
+                and item["fair_prob"] > 0
+                and abs(
+                    float(lifecycle["current_edge_pp"])
+                    - (item["model_prob"] - item["fair_prob"])
+                )
+                > 0.01
+            ):
+                raise PublicFootballCompatibilityError(
+                    "Top-5 lifecycle current_edge_pp disagrees with public signal"
+                )
+            if lifecycle["current_generated_at"] != generated_at:
+                raise PublicFootballCompatibilityError(
+                    "Top-5 lifecycle current_generated_at disagrees with prediction timestamp"
+                )
+            if (
+                lifecycle["lifecycle_stage"] == "WITHDRAWN"
+                and item["signal_status"] == "ACTIVE"
+            ):
+                raise PublicFootballCompatibilityError(
+                    "WITHDRAWN Top-5 lifecycle cannot be an active recommendation"
+                )
+            item["lifecycle"] = lifecycle
         if signal_timestamp:
             item["odds_ts"] = signal_timestamp
         output.append(item)
@@ -986,12 +1092,83 @@ def serialize_public_football_records(records: object) -> object:
             if canonical in _TOP5_LEAGUES and record.get("league") != canonical:
                 normalized = dict(record)
                 normalized["league"] = canonical
-                output.append(normalized)
             else:
-                output.append(record)
+                normalized = dict(record)
+            if canonical_top5_league(record.get("league")) in _TOP5_LEAGUES:
+                source_provenance = _mapping(record.get("provenance"))
+                public_state = _normalize_public_state(record, source_provenance)
+                _validate_synthetic_boundary(record, source_provenance, public_state)
+            if "lifecycle" in record:
+                provenance = _mapping(record.get("provenance"))
+                lifecycle = _project_public_top5_lifecycle(
+                    record["lifecycle"],
+                    fixture_identity=record.get("fixture_key"),
+                    model_identity=record.get("model_identity"),
+                    provenance=provenance,
+                )
+                if (
+                    record.get("prediction_timestamp")
+                    and lifecycle["current_generated_at"]
+                    != record["prediction_timestamp"]
+                ):
+                    raise PublicFootballCompatibilityError(
+                        "Top-5 lifecycle current_generated_at disagrees with prediction timestamp"
+                    )
+                if (
+                    "current_probability" in lifecycle
+                    and isinstance(record.get("model_prob"), (int, float))
+                    and abs(
+                        float(lifecycle["current_probability"]) * 100
+                        - float(record["model_prob"])
+                    )
+                    > 0.01
+                ):
+                    raise PublicFootballCompatibilityError(
+                        "Top-5 lifecycle current_probability disagrees with public signal"
+                    )
+                if (
+                    "current_market_probability" in lifecycle
+                    and isinstance(record.get("fair_prob"), (int, float))
+                    and float(record["fair_prob"]) > 0
+                    and abs(
+                        float(lifecycle["current_market_probability"]) * 100
+                        - float(record["fair_prob"])
+                    )
+                    > 0.01
+                ):
+                    raise PublicFootballCompatibilityError(
+                        "Top-5 lifecycle current_market_probability disagrees with public signal"
+                    )
+                if (
+                    "current_edge_pp" in lifecycle
+                    and isinstance(record.get("model_prob"), (int, float))
+                    and isinstance(record.get("fair_prob"), (int, float))
+                    and float(record["fair_prob"]) > 0
+                    and abs(
+                        float(lifecycle["current_edge_pp"])
+                        - (float(record["model_prob"]) - float(record["fair_prob"]))
+                    )
+                    > 0.01
+                ):
+                    raise PublicFootballCompatibilityError(
+                        "Top-5 lifecycle current_edge_pp disagrees with public signal"
+                    )
+                if (
+                    lifecycle["lifecycle_stage"] == "WITHDRAWN"
+                    and record.get("signal_status") == "ACTIVE"
+                ):
+                    raise PublicFootballCompatibilityError(
+                        "WITHDRAWN Top-5 lifecycle cannot be an active recommendation"
+                    )
+                normalized["lifecycle"] = lifecycle
+            normalized.pop("lifecycle_by_market", None)
+            output.append(normalized)
         else:
             output.append(record)
-    return output
+    try:
+        return collapse_top5_lifecycle_versions(output)
+    except Top5LifecyclePublicError as exc:
+        raise PublicFootballCompatibilityError(str(exc)) from exc
 
 
 def _public_meta(meta: dict | None) -> dict:
