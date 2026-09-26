@@ -11,10 +11,12 @@ import pytest
 import src.football.top5_b2_shadow_qualification_intake as intake
 from src.football.top5_b2_shadow_qualification_intake import (
     INTAKE_CONTRACT_VERSION,
+    STRUCTURAL_INTAKE_CONTRACT_VERSION,
     Builder2QualificationIntakeError,
     Builder2QualificationIntakeManifestV1,
     Builder2QualificationSourceArtifactV1,
     main,
+    project_manifest_to_structural_provider,
     run_intake,
     validate_intake,
 )
@@ -22,6 +24,7 @@ from src.football.top5_builder2_qualification_receipt import semantic_digest
 from src.football.top5_controlled_shadow_provider_qualification import (
     MinimumSamplePolicy,
     ObservationEvidenceKind,
+    ProviderQualificationPurpose,
     QualificationContractError,
 )
 from src.football.top5_provider_cascade_validation import evidence_digest
@@ -97,6 +100,60 @@ def test_valid_intake_derives_one_receipt_without_network_or_activation() -> Non
     assert result.qualification_report.production_activation_authorized is False
     assert result.qualification_report.signal_time_note
     assert result.sample_report is None
+
+
+def test_explicit_structural_projection_keeps_source_immutable_and_issues_typed_receipt():
+    source = _manifest()
+    source_payload = source.as_payload()
+    projected = project_manifest_to_structural_provider(
+        source,
+        immutable_source_path="/private/tmp/shadow-artifact-004.json",
+    )
+
+    assert source.as_payload() == source_payload
+    assert projected.schema_version == STRUCTURAL_INTAKE_CONTRACT_VERSION
+    assert (
+        projected.qualification_purpose
+        is ProviderQualificationPurpose.STRUCTURAL_PROVIDER
+    )
+    assert projected.timing_policy is None
+    assert projected.structural_policy is not None
+    payload = projected.as_payload()
+    assert "timing_policy" not in payload
+    assert "timing_policy_reference" not in payload
+    assert payload["qualification_purpose"] == "STRUCTURAL_PROVIDER"
+    assert (
+        payload["qualification_policy_reference"]
+        == "top5-structural-provider-qualification-policy-v1"
+    )
+    assert (
+        payload["structural_policy"]["production_signal_time_values_approved"] is False
+    )
+    assert payload["structural_policy"]["signal_time_approved"] is False
+    assert (
+        projected.authorization.authorization_id
+        == source.authorization.authorization_id
+    )
+    assert projected.observation.as_payload() == source.observation.as_payload()
+    source_binding = next(
+        item
+        for item in projected.source_artifacts
+        if item.role == "immutable-source-manifest"
+    )
+    assert source_binding.digest == source.manifest_digest
+
+    restored = Builder2QualificationIntakeManifestV1.from_payload(payload)
+    result = validate_intake(restored)
+    assert (
+        result.receipt.qualification_purpose
+        == ProviderQualificationPurpose.STRUCTURAL_PROVIDER
+    )
+    assert result.receipt.production_signal_time_values_approved is False
+    assert result.receipt.signal_time_approved is False
+    assert (
+        result.qualification_report.as_payload()["qualification_purpose"]
+        == "STRUCTURAL_PROVIDER"
+    )
 
 
 def test_manifest_round_trip_and_unknown_or_missing_fields_are_rejected() -> None:

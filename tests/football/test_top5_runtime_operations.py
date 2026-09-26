@@ -226,6 +226,31 @@ def test_precheck_is_blocked_by_default_and_never_mutates() -> None:
     assert "explicit activation authorization is missing" in report.failures
 
 
+def test_structural_evidence_cannot_substitute_for_signal_time_activation_approval() -> (
+    None
+):
+    report = top5_activation_precheck(
+        Top5ActivationPrecheckInput(
+            evidence_reference="structural-provider-evidence:run-004",
+            five_league_evidence_valid=True,
+            builder1_acceptance_passed=True,
+            provider_authority_granted=True,
+            model_bound=True,
+            research_bound=True,
+            signal_time_approved=False,
+            scheduler_ready=True,
+            health_ready=True,
+            rollback_ready=True,
+            activation_authorized=True,
+            no_synthetic_evidence=True,
+        )
+    )
+
+    assert report.ready is False
+    assert "Signal-Time approval is missing" in report.failures
+    assert report.mutation_performed is False
+
+
 def test_precheck_can_report_ready_only_with_all_explicit_inputs() -> None:
     report = top5_activation_precheck(
         Top5ActivationPrecheckInput(
@@ -236,7 +261,8 @@ def test_precheck_can_report_ready_only_with_all_explicit_inputs() -> None:
             model_bound=True,
             research_bound=True,
             signal_time_approved=True,
-            scheduler_ready=True,
+            one_shot_operator_path_ready=True,
+            scheduler_ready=False,
             health_ready=True,
             rollback_ready=True,
             activation_authorized=True,
@@ -248,7 +274,25 @@ def test_precheck_can_report_ready_only_with_all_explicit_inputs() -> None:
     assert report.activation_mode == "disabled"
     assert report.provider_authority == TOP5_PRODUCTION_PROVIDER
     assert report.mutation_performed is False
+    payload = report.as_payload()
+    assert payload["one_shot_operator_path_ready"] is True
+    assert payload["recurring_scheduler_registered"] is False
+    assert payload["recurring_scheduler_readiness_required"] is False
     assert report.warnings
+
+
+def test_precheck_distinguishes_one_shot_readiness_from_recurring_scheduler():
+    blocked = top5_activation_precheck(
+        Top5ActivationPrecheckInput(scheduler_ready=True)
+    )
+    assert "one-shot operator execution path is not ready" in blocked.failures
+
+    unsafe = top5_activation_precheck(
+        Top5ActivationPrecheckInput(recurring_scheduler_registered=True)
+    )
+    assert unsafe.ready is False
+    assert "must not register a recurring scheduler" in unsafe.failures[0]
+    assert unsafe.as_payload()["recurring_scheduler_registered"] is True
 
 
 def test_precheck_rejects_candidate_authority() -> None:

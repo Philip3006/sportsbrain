@@ -885,6 +885,8 @@ class Top5ActivationPrecheckInput:
     model_bound: bool = False
     research_bound: bool = False
     signal_time_approved: bool = False
+    one_shot_operator_path_ready: bool = False
+    recurring_scheduler_registered: bool = False
     scheduler_ready: bool = False
     health_ready: bool = False
     rollback_ready: bool = False
@@ -906,6 +908,10 @@ class Top5ActivationPrecheckInput:
             raise Top5RuntimeError(
                 "activation precheck requires the canonical five-league order"
             )
+        if self.recurring_scheduler_registered is not False:
+            raise Top5RuntimeError(
+                "controlled activation must not register a recurring scheduler"
+            )
         for name, value in self.__dict__.items():
             if name.endswith(
                 (
@@ -916,6 +922,7 @@ class Top5ActivationPrecheckInput:
                     "approved",
                     "ready",
                     "authorized",
+                    "registered",
                 )
             ):
                 _bool(name, value)
@@ -933,6 +940,8 @@ class Top5ActivationPrecheckReport:
     provider_authority: str = TOP5_PRODUCTION_PROVIDER
     league_scope: tuple[str, ...] = TOP5_RUNTIME_LEAGUES
     mutation_performed: bool = False
+    one_shot_operator_path_ready: bool = False
+    recurring_scheduler_registered: bool = False
 
     @property
     def ready(self) -> bool:
@@ -950,6 +959,9 @@ class Top5ActivationPrecheckReport:
             "provider_authority": self.provider_authority,
             "league_scope": list(self.league_scope),
             "mutation_performed": False,
+            "one_shot_operator_path_ready": self.one_shot_operator_path_ready,
+            "recurring_scheduler_registered": self.recurring_scheduler_registered,
+            "recurring_scheduler_readiness_required": False,
         }
 
 
@@ -968,6 +980,8 @@ def top5_activation_precheck(
             (),
             provider_authority=values.provider_authority,
             league_scope=values.league_scope,
+            one_shot_operator_path_ready=values.one_shot_operator_path_ready,
+            recurring_scheduler_registered=values.recurring_scheduler_registered,
         )
 
     checks = (
@@ -981,7 +995,10 @@ def top5_activation_precheck(
         ("model binding is missing", values.model_bound),
         ("Research binding is missing", values.research_bound),
         ("Signal-Time approval is missing", values.signal_time_approved),
-        ("scheduler/workflow readiness is missing", values.scheduler_ready),
+        (
+            "one-shot operator execution path is not ready",
+            values.one_shot_operator_path_ready,
+        ),
         ("health/readiness infrastructure is not ready", values.health_ready),
         ("rollback readiness is missing", values.rollback_ready),
         ("explicit activation authorization is missing", values.activation_authorized),
@@ -1005,7 +1022,14 @@ def top5_activation_precheck(
         if not failures
         else Top5RuntimeStatus.BLOCKED_BY_EVIDENCE
     )
-    return Top5ActivationPrecheckReport(status, runtime_status, failures, warnings)
+    return Top5ActivationPrecheckReport(
+        status,
+        runtime_status,
+        failures,
+        warnings,
+        one_shot_operator_path_ready=values.one_shot_operator_path_ready,
+        recurring_scheduler_registered=values.recurring_scheduler_registered,
+    )
 
 
 __all__ = [

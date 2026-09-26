@@ -27,6 +27,9 @@ from src.football.top5_shadow_provider_redundancy import make_fixture_key
 
 CANDIDATE_PROVIDER_IDENTITIES = CANDIDATE_ONLY_PROVIDER_IDENTITIES
 CANDIDATE_PROVIDER_REPERTOIRE = tuple(sorted(CANDIDATE_PROVIDER_IDENTITIES))
+THERUNDOWN_RPS_PROVIDER_IDENTITIES = frozenset(
+    {"therundown", "therundown_experimental"}
+)
 PREMATCH_MARKET_PHASE = "PRE_MATCH"
 REAL_OBSERVED = "REAL_OBSERVED"
 CAPTURE_TIME_ONLY = "CAPTURE_TIME_ONLY"
@@ -151,6 +154,7 @@ class CandidateProviderEligibilityV1:
     production_activation: bool = False
     monetary_spend_authorized: bool = False
     rate_limit_limit: int | None = None
+    schema_version: str | None = None
 
     @classmethod
     def from_network_capture(
@@ -219,8 +223,8 @@ class CandidateProviderEligibilityV1:
             quota_before=response.quota_before,
             quota_after=response.quota_after,
             quota_cost_units=response.quota_cost_units,
-            rate_limit_remaining=response.rate_limit_remaining,
-            rate_limit_reset_at=response.rate_limit_reset_at,
+            rate_limit_remaining=None,
+            rate_limit_reset_at=None,
             account_tier=response.account_tier,
             provider_delay_seconds=response.provider_delay_seconds,
             evidence_kind=capture.evidence_kind,
@@ -230,18 +234,44 @@ class CandidateProviderEligibilityV1:
             production_activation=response.production_activation,
             monetary_spend_authorized=response.monetary_spend_authorized,
             rate_limit_limit=rate_limit_limit,
+            schema_version=(
+                "top5-candidate-provider-eligibility-v2"
+                if target.provider in THERUNDOWN_RPS_PROVIDER_IDENTITIES
+                else "top5-candidate-provider-eligibility-v1"
+            ),
         )
         candidate.validate(now=now)
         if getattr(capture, "candidate_only", None) is not True:
-            raise CandidateEligibilityError("candidate capture must remain candidate-only")
+            raise CandidateEligibilityError(
+                "candidate capture must remain candidate-only"
+            )
         if getattr(capture, "receipt_eligible", None) is not False:
-            raise CandidateEligibilityError("candidate capture cannot be receipt-eligible")
+            raise CandidateEligibilityError(
+                "candidate capture cannot be receipt-eligible"
+            )
         return candidate
 
     def validate(self, *, now: datetime | None = None) -> None:
         if self.provider_identity not in CANDIDATE_PROVIDER_IDENTITIES:
             raise CandidateEligibilityError(
                 "provider is not explicitly candidate-eligible"
+            )
+        schema_version = self.schema_version or (
+            "top5-candidate-provider-eligibility-v2"
+            if self.provider_identity in THERUNDOWN_RPS_PROVIDER_IDENTITIES
+            else "top5-candidate-provider-eligibility-v1"
+        )
+        if self.provider_identity in THERUNDOWN_RPS_PROVIDER_IDENTITIES:
+            if schema_version not in {
+                "top5-candidate-provider-eligibility-v1",
+                "top5-candidate-provider-eligibility-v2",
+            }:
+                raise CandidateEligibilityError(
+                    "TheRundown candidate eligibility schema is unsupported"
+                )
+        elif schema_version != "top5-candidate-provider-eligibility-v1":
+            raise CandidateEligibilityError(
+                "candidate eligibility schema is unsupported"
             )
         for name, value, expected in (
             ("candidate_capability", self.candidate_capability, True),
@@ -292,7 +322,9 @@ class CandidateProviderEligibilityV1:
         if self.market_type != MARKET_PREMATCH_1X2:
             raise CandidateEligibilityError("candidate market is not pre-match 1X2")
         if self.market_phase != PREMATCH_MARKET_PHASE:
-            raise CandidateEligibilityError("in-play/post-kickoff evidence is forbidden")
+            raise CandidateEligibilityError(
+                "in-play/post-kickoff evidence is forbidden"
+            )
         _odds(self.home_odds, "home_odds")
         _odds(self.draw_odds, "draw_odds")
         _odds(self.away_odds, "away_odds")
@@ -313,7 +345,9 @@ class CandidateProviderEligibilityV1:
             CAPTURE_TIME_ONLY,
             UNKNOWN_TIMESTAMP,
         }:
-            raise CandidateEligibilityError("source timestamp provenance is insufficient")
+            raise CandidateEligibilityError(
+                "source timestamp provenance is insufficient"
+            )
         for name, value in (
             ("raw_response_digest", self.raw_response_digest),
             ("provider_record_digest", self.provider_record_digest),
@@ -331,35 +365,58 @@ class CandidateProviderEligibilityV1:
             raise CandidateEligibilityError("quota-after exceeds quota-before")
         if not isfinite(float(self.quota_cost_units)) or self.quota_cost_units < 0:
             raise CandidateEligibilityError("quota cost evidence is invalid")
-        _optional_nonnegative_int(self.rate_limit_remaining, "rate_limit_remaining")
-        if self.rate_limit_reset_at is None:
+        if self.provider_identity in THERUNDOWN_RPS_PROVIDER_IDENTITIES:
+            if (
+                self.rate_limit_remaining is not None
+                or self.rate_limit_reset_at is not None
+            ):
+                raise CandidateEligibilityError(
+                    "TheRundown exposes an RPS ceiling, not remaining/reset state"
+                )
             if self.rate_limit_limit is None:
                 raise CandidateEligibilityError("rate-limit evidence is missing")
             _optional_nonnegative_int(self.rate_limit_limit, "rate_limit_limit")
             if self.rate_limit_limit == 0:
                 raise CandidateEligibilityError("rate_limit_limit must be positive")
         else:
-            _utc(self.rate_limit_reset_at, "rate_limit_reset_at")
-            if self.rate_limit_remaining is None:
-                raise CandidateEligibilityError(
-                    "rate_limit_reset_at requires rate_limit_remaining"
-                )
+            _optional_nonnegative_int(self.rate_limit_remaining, "rate_limit_remaining")
+            if self.rate_limit_reset_at is None:
+                if self.rate_limit_limit is None:
+                    raise CandidateEligibilityError("rate-limit evidence is missing")
+                _optional_nonnegative_int(self.rate_limit_limit, "rate_limit_limit")
+                if self.rate_limit_limit == 0:
+                    raise CandidateEligibilityError("rate_limit_limit must be positive")
+            else:
+                _utc(self.rate_limit_reset_at, "rate_limit_reset_at")
+                if self.rate_limit_remaining is None:
+                    raise CandidateEligibilityError(
+                        "rate_limit_reset_at requires rate_limit_remaining"
+                    )
+            if (
+                self.rate_limit_limit is not None
+                and self.rate_limit_remaining is not None
+                and self.rate_limit_remaining > self.rate_limit_limit
+            ):
+                raise CandidateEligibilityError("rate-limit counters do not reconcile")
         if (
-            self.rate_limit_limit is not None
-            and self.rate_limit_remaining is not None
-            and self.rate_limit_remaining > self.rate_limit_limit
+            not isfinite(float(self.provider_delay_seconds))
+            or self.provider_delay_seconds < 0
         ):
-            raise CandidateEligibilityError("rate-limit counters do not reconcile")
-        if not isfinite(float(self.provider_delay_seconds)) or self.provider_delay_seconds < 0:
             raise CandidateEligibilityError("provider delay evidence is invalid")
         try:
             evidence_kind = _enum_value(self.evidence_kind)
         except (TypeError, ValueError) as exc:
-            raise CandidateEligibilityError("candidate evidence kind is invalid") from exc
+            raise CandidateEligibilityError(
+                "candidate evidence kind is invalid"
+            ) from exc
         if evidence_kind != REAL_OBSERVED:
-            raise CandidateEligibilityError("candidate qualification requires real evidence")
+            raise CandidateEligibilityError(
+                "candidate qualification requires real evidence"
+            )
         if self.network_execution is not True:
-            raise CandidateEligibilityError("candidate real evidence requires network execution")
+            raise CandidateEligibilityError(
+                "candidate real evidence requires network execution"
+            )
         if now is not None and captured > _utc(now, "eligibility now"):
             raise CandidateEligibilityError("capture timestamp is in the future")
 
@@ -388,8 +445,12 @@ class CandidateProviderEligibilityV1:
                     f"{name} must be an ISO timestamp"
                 ) from exc
 
+        provider_identity = required("provider_identity")
+        uses_therundown_rps_contract = (
+            provider_identity in THERUNDOWN_RPS_PROVIDER_IDENTITIES
+        )
         return cls(
-            provider_identity=required("provider_identity"),
+            provider_identity=provider_identity,
             candidate_capability=required("candidate_capability"),
             shadow_capability=required("shadow_capability"),
             qualification_capability=required("qualification_capability"),
@@ -434,10 +495,15 @@ class CandidateProviderEligibilityV1:
             quota_before=payload.get("quota_before"),
             quota_after=payload.get("quota_after"),
             quota_cost_units=required("quota_cost_units"),
-            rate_limit_remaining=payload.get("rate_limit_remaining"),
+            rate_limit_remaining=(
+                None
+                if uses_therundown_rps_contract
+                else payload.get("rate_limit_remaining")
+            ),
             rate_limit_reset_at=(
                 timestamp("rate_limit_reset_at")
-                if payload.get("rate_limit_reset_at") is not None
+                if not uses_therundown_rps_contract
+                and payload.get("rate_limit_reset_at") is not None
                 else None
             ),
             account_tier=required("account_tier"),
@@ -447,10 +513,11 @@ class CandidateProviderEligibilityV1:
             no_bet=payload.get("no_bet", True),
             publication=payload.get("publication", False),
             production_activation=payload.get("production_activation", False),
-            monetary_spend_authorized=payload.get(
-                "monetary_spend_authorized", False
-            ),
+            monetary_spend_authorized=payload.get("monetary_spend_authorized", False),
             rate_limit_limit=payload.get("rate_limit_limit"),
+            schema_version=payload.get(
+                "schema_version", "top5-candidate-provider-eligibility-v1"
+            ),
         )
 
     def matches_observation(self, observation: object) -> None:
@@ -499,7 +566,9 @@ class CandidateProviderEligibilityV1:
             )
         attestation = getattr(observation, "capture_attestation", None)
         if attestation is None:
-            raise CandidateEligibilityError("candidate observation attestation is missing")
+            raise CandidateEligibilityError(
+                "candidate observation attestation is missing"
+            )
         for name, expected in (
             ("controlled_shadow_run_id", self.controlled_shadow_run_id),
             ("ceo_authorization_id", self.authorization_id),
@@ -510,11 +579,24 @@ class CandidateProviderEligibilityV1:
                     f"candidate eligibility binding mismatch: {name}"
                 )
         if _enum_value(observation.evidence_kind) != REAL_OBSERVED:
-            raise CandidateEligibilityError("candidate observation is not REAL_OBSERVED")
+            raise CandidateEligibilityError(
+                "candidate observation is not REAL_OBSERVED"
+            )
 
     def as_payload(self) -> dict[str, object]:
         self.validate()
         payload = dict(self.__dict__)
+        uses_therundown_rps_contract = (
+            self.provider_identity in THERUNDOWN_RPS_PROVIDER_IDENTITIES
+        )
+        schema_version = self.schema_version or (
+            "top5-candidate-provider-eligibility-v2"
+            if uses_therundown_rps_contract
+            else "top5-candidate-provider-eligibility-v1"
+        )
+        if uses_therundown_rps_contract and schema_version.endswith("-v2"):
+            payload.pop("rate_limit_remaining")
+            payload.pop("rate_limit_reset_at")
         for name in (
             "authorization_expires_at",
             "kickoff",
@@ -532,7 +614,7 @@ class CandidateProviderEligibilityV1:
             self.provider_timestamp_provenance
         )
         payload["evidence_kind"] = _enum_value(self.evidence_kind)
-        payload["schema_version"] = "top5-candidate-provider-eligibility-v1"
+        payload["schema_version"] = schema_version
         return payload
 
 

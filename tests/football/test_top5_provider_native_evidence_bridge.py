@@ -292,19 +292,9 @@ def test_complete_post_shadow_chain_accepts_native_five_league_artifacts_offline
     """Synthetic injected fixtures prove shape compatibility only; they are not evidence."""
     from datetime import timedelta
 
-    from tests.football import test_top5_b2_five_league_receipt as b2_tests
-    from tests.football import (
-        test_top5_controlled_shadow_authorization_package as shadow_package_tests,
-    )
-    from tests.football import test_top5_final_acceptance as builder1_tests
-    from tests.football import test_top5_public_delivery as public_delivery_tests
-    from tests.football import test_top5_therundown_network_shadow as network_tests
-    from tests.football import (
-        test_top5_therundown_provider_native_discovery as discovery_tests,
-    )
     from src.football.top5_b2_qualification_batch_orchestrator import (
-        Builder2FiveLeagueShadowPackageV1,
         FIVE_LEAGUE_SHADOW_PACKAGE_SCHEMA_VERSION,
+        Builder2FiveLeagueShadowPackageV1,
         build_five_league_shadow_package,
         consume_five_league_shadow_package,
     )
@@ -323,7 +313,16 @@ def test_complete_post_shadow_chain_accepts_native_five_league_artifacts_offline
     )
     from src.football.top5_therundown_network_shadow import (
         NetworkShadowRunStatus,
-        TheRundownNetworkShadowExecutorV1,
+    )
+    from tests.football import test_top5_b2_five_league_receipt as b2_tests
+    from tests.football import (
+        test_top5_controlled_shadow_authorization_package as shadow_package_tests,
+    )
+    from tests.football import test_top5_final_acceptance as builder1_tests
+    from tests.football import test_top5_public_delivery as public_delivery_tests
+    from tests.football import test_top5_therundown_network_shadow as network_tests
+    from tests.football import (
+        test_top5_therundown_provider_native_discovery as discovery_tests,
     )
 
     base_now = public_delivery_tests.BASE
@@ -369,25 +368,23 @@ def test_complete_post_shadow_chain_accepts_native_five_league_artifacts_offline
         configuration,
         provider=CANONICAL_CANDIDATE_PROVIDER,
     )
-    authorization, quota_headroom = network_tests._quota_headroom(authorization)
-    transport = network_tests._NetworkStubTransport(
-        lambda request: network_tests._response(
-            request,
-            evidence_kind=ObservationEvidenceKind.REAL_OBSERVED,
-            network_execution=True,
-            adapter_version=configuration.adapter_version,
-            adapter_source_sha=configuration.adapter_source_sha,
-        )
+    authorization, quota_headroom = network_tests._quota_headroom(
+        authorization, observed_at=base_now - timedelta(seconds=10)
     )
-    shadow_run = TheRundownNetworkShadowExecutorV1(
-        clock=lambda: base_now,
-        pacer=lambda _seconds: None,
-        allow_live_network=True,
-    ).run(
-        configuration,
-        authorization,
-        transport=transport,
-        quota_headroom=quota_headroom,
+    shadow_run, _transport, _pacing, shadow_clock = (
+        network_tests._run_live_network_fixture(
+            configuration,
+            authorization,
+            quota_headroom,
+            lambda request: network_tests._response(
+                request,
+                evidence_kind=ObservationEvidenceKind.REAL_OBSERVED,
+                network_execution=True,
+                adapter_version=configuration.adapter_version,
+                adapter_source_sha=configuration.adapter_source_sha,
+            ),
+            start_at=base_now - timedelta(seconds=10),
+        )
     )
     assert shadow_run.status is NetworkShadowRunStatus.COMPLETED_NETWORK
     assert tuple(item.target.league for item in shadow_run.captures) == (
@@ -425,6 +422,20 @@ def test_complete_post_shadow_chain_accepts_native_five_league_artifacts_offline
     assert len(restored_package.shadow_run.captures) == 5
     assert len(restored_package.manifests) == 5
     assert len(b2_receipt_package.receipts) == 5
+    assert tuple(binding.league for binding in b2_receipt_package.dossier.bindings) == (
+        "BL1",
+        "EPL",
+        "LL",
+        "SA",
+        "L1",
+    )
+    assert tuple(
+        binding.league
+        for binding in sorted(
+            b2_receipt_package.dossier.bindings,
+            key=lambda item: item.request_rate_limit_provenance.request_started_at,
+        )
+    ) == ("EPL", "BL1", "LL", "SA", "L1")
     assert all(
         receipt.accepted and receipt.no_bet for receipt in b2_receipt_package.receipts
     )
@@ -500,15 +511,17 @@ def test_complete_post_shadow_chain_accepts_native_five_league_artifacts_offline
             provider_authority_granted=True,
             model_bound=True,
             research_bound=True,
-            signal_time_approved=True,
-            scheduler_ready=True,
+            signal_time_approved=False,
+            one_shot_operator_path_ready=True,
+            scheduler_ready=False,
             health_ready=True,
             rollback_ready=True,
             activation_authorized=True,
             no_synthetic_evidence=True,
         )
     )
-    assert activation.status == "TOP5_RUNTIME_ACTIVATION_READY"
+    assert activation.status == "TOP5_RUNTIME_ACTIVATION_BLOCKED"
+    assert "Signal-Time approval is missing" in activation.failures
     assert activation.activation_mode == "disabled"
     assert activation.provider_authority == "the_odds_api"
     assert activation.mutation_performed is False

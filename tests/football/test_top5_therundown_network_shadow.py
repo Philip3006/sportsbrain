@@ -48,6 +48,9 @@ from src.football.top5_therundown_network_shadow import (
     TheRundownNetworkShadowExecutorV1,
     TheRundownQuotaHeadroomEvidenceV1,
     TheRundownReplayTransportV1,
+    bind_request_rate_limit_provenance,
+    PREVIOUS_RESPONSE_PACING_ANCHOR,
+    SHADOW_PROOF_PACING_ANCHOR,
 )
 from src.football.top5_therundown_shadow_canary import (
     CanaryContractError,
@@ -188,8 +191,6 @@ def _response(request, **changes: object) -> TheRundownNetworkResponseV1:
         "quota_after": 99,
         "quota_cost_units": float(THERUNDOWN_OBSERVED_DATAPOINTS_PER_REQUEST),
         "datapoint_count": THERUNDOWN_OBSERVED_DATAPOINTS_PER_REQUEST,
-        "rate_limit_remaining": 99,
-        "rate_limit_reset_at": NOW + timedelta(hours=1),
         "account_tier": "shadow-test-tier",
         "provider_delay_seconds": 0.0,
         "http_status": 200,
@@ -200,17 +201,23 @@ def _response(request, **changes: object) -> TheRundownNetworkResponseV1:
         "publication": False,
         "production_activation": False,
         "monetary_spend_authorized": False,
+        "raw_metadata": {
+            "provider_billing": {
+                "x-rate-limit": 1,
+                "x-datapoints-reset": "2026-09-26T00:00:00Z",
+            }
+        },
     }
     values.update(changes)
     return TheRundownNetworkResponseV1(**values)  # type: ignore[arg-type]
 
 
-def _quota_headroom(authorization):
+def _quota_headroom(authorization, *, observed_at=NOW):
     evidence = TheRundownQuotaHeadroomEvidenceV1(
         provider=authorization.provider,
         account_scope="network-test-account",
         observed_remaining_datapoints=275,
-        observed_at=NOW,
+        observed_at=observed_at,
         provenance_source="offline-test-fixture",
         provenance_digest="e" * 64,
         authorization_package_digest="f" * 64,
@@ -235,7 +242,10 @@ def _run_live_network_stub(*, observed_at, response_factory=None, fail_closed=Fa
     authorization = replace(
         authorization, quota_headroom_evidence_digest=headroom.evidence_digest
     )
-    transport = _NetworkStubTransport(
+    result, transport, pacing, _clock = _run_live_network_fixture(
+        configuration,
+        authorization,
+        headroom,
         response_factory
         or (
             lambda request: _response(
@@ -245,19 +255,8 @@ def _run_live_network_stub(*, observed_at, response_factory=None, fail_closed=Fa
                 account_tier="free",
                 provider_delay_seconds=300.0,
             )
-        )
-    )
-    pacing = []
-    result = TheRundownNetworkShadowExecutorV1(
-        clock=lambda: NOW,
-        pacer=pacing.append,
-        allow_live_network=True,
-        fail_closed_immediately=fail_closed,
-    ).run(
-        configuration,
-        authorization,
-        transport=transport,
-        quota_headroom=headroom,
+        ),
+        fail_closed=fail_closed,
     )
     return result, transport, pacing
 
@@ -298,10 +297,76 @@ class _UntrustedReplayTransport(TheRundownCanaryNetworkTransport):
         return self.response_factory(request)
 
 
+class _MutableClock:
+    def __init__(self, current: datetime | None = None):
+        self.current = current if current is not None else NOW
+
+    def __call__(self) -> datetime:
+        return self.current
+
+    def advance(self, seconds: float) -> None:
+        self.current += timedelta(seconds=seconds)
+
+
 class _NetworkStubTransport(_UntrustedReplayTransport):
     """In-memory HTTP-equivalent transport; it never opens a socket."""
 
     test_only = False
+
+    def __init__(self, response_factory, *, clock: _MutableClock | None = None):
+        super().__init__(response_factory)
+        self.clock = clock
+
+    def execute(self, request):
+        response = super().execute(request)
+        if (
+            self.clock is not None
+            and CanaryOutcome(response.outcome) is CanaryOutcome.SUCCESS
+        ):
+            started = self.clock()
+            finished = started + timedelta(milliseconds=240)
+            self.clock.current = finished
+            response = replace(
+                response,
+                source_timestamp=started - timedelta(seconds=5),
+                captured_at=finished,
+                request_started_at=started,
+                request_finished_at=finished,
+            )
+        return response
+
+
+def _run_live_network_fixture(
+    configuration,
+    authorization,
+    quota_headroom,
+    response_factory,
+    *,
+    fail_closed=False,
+    post_capture_validator=None,
+    start_at=None,
+):
+    clock = _MutableClock(start_at)
+    transport = _NetworkStubTransport(response_factory, clock=clock)
+    pacing = []
+
+    def pace(seconds):
+        pacing.append(seconds)
+        clock.advance(seconds)
+
+    result = TheRundownNetworkShadowExecutorV1(
+        clock=clock,
+        pacer=pace,
+        allow_live_network=True,
+        fail_closed_immediately=fail_closed,
+    ).run(
+        configuration,
+        authorization,
+        transport=transport,
+        quota_headroom=quota_headroom,
+        post_capture_validator=post_capture_validator,
+    )
+    return result, transport, pacing, clock
 
 
 def test_successful_five_league_replay_is_sequential_and_complete():
@@ -332,7 +397,8 @@ def test_successful_five_league_replay_is_sequential_and_complete():
         assert payload["participant_scope"]["home_participant_id"].startswith(
             "home-id-"
         )
-        assert payload["response"]["rate_limit_remaining"] == 99
+        assert "rate_limit_remaining" not in payload["response"]
+        assert "rate_limit_reset_at" not in payload["response"]
         assert payload["response"]["account_tier"] == "shadow-test-tier"
         assert payload["response"]["provider_delay_seconds"] == 0.0
 
@@ -366,6 +432,31 @@ def test_live_first_request_waits_only_remaining_proof_interval():
     assert all(capture.response.retry_count == 0 for capture in result.captures)
     assert all(capture.response.account_tier == "free" for capture in result.captures)
     assert all(not capture.response.ledger_mutated for capture in result.captures)
+    assert [
+        capture.response.request_rate_limit_provenance.observed_pacing_interval_seconds
+        for capture in result.captures
+    ] == pytest.approx([1.1] * 5)
+    assert [
+        capture.response.request_rate_limit_provenance.pacing_anchor_kind
+        for capture in result.captures
+    ] == [SHADOW_PROOF_PACING_ANCHOR] + [PREVIOUS_RESPONSE_PACING_ANCHOR] * 4
+    assert all(
+        capture.response.request_rate_limit_provenance.requests_per_second_ceiling == 1
+        for capture in result.captures
+    )
+
+
+def test_serialized_live_response_restores_enum_types_for_offline_reconciliation():
+    result, _transport, _pacing = _run_live_network_stub(
+        observed_at=NOW - timedelta(seconds=10)
+    )
+
+    response = TheRundownNetworkResponseV1.from_payload(
+        result.captures[0].as_payload()["response"]
+    )
+
+    assert response.outcome is CanaryOutcome.SUCCESS
+    assert response.evidence_kind is ObservationEvidenceKind.REAL_OBSERVED
 
 
 def test_live_first_request_does_not_wait_after_proof_interval_elapsed():
@@ -397,11 +488,101 @@ def test_live_rate_limit_fails_closed_without_retry():
     )
 
     assert result.status is NetworkShadowRunStatus.PARTIAL
-    assert result.failures == ("EPL:RATE_LIMITED",)
+    assert result.failures == ("EPL:provider returned HTTP 429 rate-limit response",)
     assert result.request_count == 1
     assert len(transport.calls) == 1
     assert [request.target.league for request in transport.calls] == ["EPL"]
     assert pacing == []
+
+
+def _bind_rate_provenance(
+    *,
+    ceiling=1,
+    gap_seconds=1.1,
+    minimum_interval=1.1,
+    status=200,
+    retries=0,
+    provider_billing=None,
+):
+    configuration = _configuration(enabled=True)
+    authorization = _authorization(configuration)
+    request = authorization.request_for(configuration.targets[0], configuration)
+    response = _response(
+        request,
+        request_started_at=NOW,
+        request_finished_at=NOW + timedelta(milliseconds=240),
+        captured_at=NOW + timedelta(milliseconds=240),
+        http_status=status,
+        retry_count=retries,
+        raw_metadata={
+            "provider_billing": provider_billing
+            if provider_billing is not None
+            else {
+                "x-rate-limit": ceiling,
+                "x-datapoints-reset": "2026-09-26T00:00:00Z",
+            }
+        },
+    )
+    return bind_request_rate_limit_provenance(
+        response,
+        authorized_minimum_interval_seconds=minimum_interval,
+        pacing_anchor_kind=SHADOW_PROOF_PACING_ANCHOR,
+        pacing_anchor_at=NOW - timedelta(seconds=gap_seconds),
+        pacing_anchor_digest="f" * 64,
+    )
+
+
+def test_provider_rps_provenance_is_typed_digest_bound_and_has_no_fake_remaining_reset():
+    response = _bind_rate_provenance()
+    record = response.request_rate_limit_provenance
+    assert record is not None
+    assert record.provenance_kind == ("PROVIDER_REPORTED_REQUESTS_PER_SECOND_CEILING")
+    assert record.source_header == "X-Rate-Limit"
+    assert record.requests_per_second_ceiling == 1
+    assert record.authorized_minimum_interval_seconds == 1.1
+    assert record.provenance_digest == record.computed_provenance_digest
+    payload = response.request_rate_limit_provenance.as_payload()
+    assert payload["schema_version"].endswith("-v1")
+    assert "rate_limit_remaining" not in payload
+    assert "rate_limit_reset_at" not in payload
+    assert response.raw_metadata["provider_billing"]["x-datapoints-reset"]
+    other_ceiling = _bind_rate_provenance(ceiling=2)
+    assert (
+        other_ceiling.request_rate_limit_provenance.provenance_digest
+        != record.provenance_digest
+    )
+
+
+@pytest.mark.parametrize(
+    "billing",
+    [
+        {"x-datapoints-reset": "2026-09-26T00:00:00Z"},
+        {"x-rate-limit": 0},
+        {"x-rate-limit": -1},
+        {"x-rate-limit": "invalid"},
+        {"x-rate-limit": True},
+    ],
+)
+def test_invalid_or_missing_provider_rps_header_fails_closed(billing):
+    with pytest.raises(NetworkShadowExecutionBlocked, match="X-Rate-Limit"):
+        _bind_rate_provenance(provider_billing=billing)
+
+
+def test_pacing_faster_than_provider_rps_ceiling_fails_closed():
+    with pytest.raises(NetworkShadowExecutionBlocked, match="pacing"):
+        _bind_rate_provenance(ceiling=2, gap_seconds=0.4, minimum_interval=0.6)
+
+
+@pytest.mark.parametrize(
+    "changes, pattern",
+    [
+        ({"status": 429}, "HTTP 200"),
+        ({"retries": 1}, "forbids retries"),
+    ],
+)
+def test_request_rate_provenance_rejects_429_and_retries(changes, pattern):
+    with pytest.raises(NetworkShadowExecutionBlocked, match=pattern):
+        _bind_rate_provenance(**changes)
 
 
 def test_expired_authorization_is_rejected_before_transport():
@@ -667,7 +848,9 @@ def test_actual_run006_payload_is_bridged_through_reviewed_adapter():
     assert decoded.provider == THERUNDOWN_PROVIDER_NAME
     assert decoded.datapoint_count == 55
     assert decoded.quota_cost_units == 55.0
-    assert decoded.rate_limit_remaining is None
+    assert "rate_limit_remaining" not in decoded.__dataclass_fields__
+    assert "rate_limit_reset_at" not in decoded.__dataclass_fields__
+    assert decoded.raw_metadata["provider_billing"]["x-rate-limit"] == 1
     assert decoded.raw_response_digest == (
         "6df5aa61479bbeaa85f46b4a1f66c7c3a40d88736b9b7f08555f9eb0e0f276c4"
     )
@@ -693,8 +876,6 @@ def test_actual_run006_payload_is_bridged_through_reviewed_adapter():
         ({"bookmaker_identity": ""}, "bookmaker/source"),
         ({"source_identity": ""}, "bookmaker/source"),
         ({"source_timestamp": None}, "source/capture timestamp"),
-        ({"rate_limit_remaining": None}, "rate-limit evidence"),
-        ({"rate_limit_reset_at": None}, "rate-limit reset"),
         ({"account_tier": ""}, "account_tier"),
         ({"provider_delay_seconds": None}, "provider delay"),
     ],
@@ -721,9 +902,15 @@ def test_one_league_failure_returns_partial_without_retry_or_fallback():
 
     result, transport = _run(response_factory=response)
     assert result.status is NetworkShadowRunStatus.PARTIAL
-    assert any("LL:RATE_LIMITED" in failure for failure in result.failures)
-    assert len(transport.calls) == 5
-    assert [request.sequence for request in transport.calls] == [0] * 5
+    assert any(
+        "LL:provider returned HTTP 429" in failure for failure in result.failures
+    )
+    assert [request.target.league for request in transport.calls] == [
+        "EPL",
+        "BL1",
+        "LL",
+    ]
+    assert [request.sequence for request in transport.calls] == [0] * 3
 
 
 def test_partial_five_league_run_transport_error_is_recorded():
@@ -794,21 +981,15 @@ def test_shadow_success_never_implies_receipt_authority_or_active_provider():
 def test_network_shaped_five_league_output_matches_downstream_input_shapes():
     configuration = _configuration(enabled=True)
     authorization, quota_headroom = _quota_headroom(_authorization(configuration))
-    transport = _NetworkStubTransport(
+    result, transport, _pacing, _clock = _run_live_network_fixture(
+        configuration,
+        authorization,
+        quota_headroom,
         lambda request: _response(
             request,
             evidence_kind=ObservationEvidenceKind.REAL_OBSERVED,
             network_execution=True,
-        )
-    )
-    result = TheRundownNetworkShadowExecutorV1(
-        clock=lambda: NOW,
-        allow_live_network=True,
-    ).run(
-        configuration,
-        authorization,
-        transport=transport,
-        quota_headroom=quota_headroom,
+        ),
     )
 
     assert result.status is NetworkShadowRunStatus.COMPLETED_NETWORK

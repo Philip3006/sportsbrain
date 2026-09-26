@@ -1118,6 +1118,18 @@ def aggregate_builder2_qualification_samples(
         minimum_sample_policy.validate()
 
     validated = _validated_receipts(receipts)
+    purposes = {
+        str(
+            getattr(
+                receipt.qualification_purpose, "value", receipt.qualification_purpose
+            )
+        )
+        for receipt in validated
+    }
+    if len(purposes) > 1:
+        raise Builder2QualificationSampleAggregatorError(
+            "signal-time and structural-provider receipts cannot be mixed"
+        )
     by_variant: dict[tuple[str, str], list[Builder2QualificationReceiptV1]] = (
         defaultdict(list)
     )
