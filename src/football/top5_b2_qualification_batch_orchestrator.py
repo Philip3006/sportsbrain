@@ -38,6 +38,8 @@ from src.football.top5_b2_shadow_qualification_intake import (
     validate_intake,
 )
 from src.football.top5_builder2_qualification_receipt import (
+    LEGACY_RECEIPT_SCHEMA_VERSION,
+    RECEIPT_SCHEMA_VERSION,
     Builder2QualificationReceiptError,
     Builder2QualificationReceiptV1,
     semantic_digest,
@@ -47,10 +49,12 @@ from src.football.top5_controlled_shadow_provider_qualification import (
     TOP5_LEAGUES,
     MinimumSamplePolicy,
     ObservationEvidenceKind,
+    ProviderQualificationPurpose,
     ProviderQualificationReport,
     QualificationContractError,
     RealProviderObservation,
     qualify_provider_observations,
+    qualify_structural_provider_observations,
 )
 from src.football.top5_provider_cascade_validation import ExpectedCascadeFixture
 from src.football.top5_qualification_sample_aggregator import (
@@ -64,6 +68,7 @@ from src.football.top5_therundown_network_shadow import (
     TheRundownNetworkResponseV1,
     TheRundownNetworkShadowCaptureV1,
     TheRundownNetworkShadowRunResultV1,
+    TheRundownRequestRateLimitProvenanceV1,
 )
 from src.football.top5_therundown_shadow_canary import TheRundownCanaryTargetV1
 from src.utils.atomic_io import atomic_write_json, atomic_write_text
@@ -71,8 +76,8 @@ from src.utils.atomic_io import atomic_write_json, atomic_write_text
 BATCH_CONTRACT_VERSION = "top5-b2-qualification-batch-orchestrator-v1"
 BATCH_SCHEMA_VERSION = BATCH_CONTRACT_VERSION
 FIVE_LEAGUE_SHADOW_PACKAGE_SCHEMA_VERSION = "top5-b2-five-league-shadow-package-v1"
-FIVE_LEAGUE_RECEIPT_PACKAGE_SCHEMA_VERSION = "top5-b2-five-league-receipt-package-v1"
-FIVE_LEAGUE_AUTHORITY_DOSSIER_SCHEMA_VERSION = "top5-b2-authority-input-dossier-v1"
+FIVE_LEAGUE_RECEIPT_PACKAGE_SCHEMA_VERSION = "top5-b2-five-league-receipt-package-v2"
+FIVE_LEAGUE_AUTHORITY_DOSSIER_SCHEMA_VERSION = "top5-b2-authority-input-dossier-v2"
 
 QUALIFIED = "QUALIFIED"
 ALREADY_QUALIFIED = "ALREADY_QUALIFIED"
@@ -690,9 +695,20 @@ def _shadow_request_from_payload(value: object) -> TheRundownNetworkRequestV1:
 
 
 def _shadow_response_from_payload(value: object) -> TheRundownNetworkResponseV1:
+    optional_legacy_fields = {"rate_limit_remaining", "rate_limit_reset_at"}
+    optional_provenance_field = {"request_rate_limit_provenance"}
+    internal_fields = {
+        "_legacy_rate_limit_remaining",
+        "_legacy_rate_limit_reset_at",
+        "_legacy_rate_contract_present",
+    }
+    required_fields = set(TheRundownNetworkResponseV1.__dataclass_fields__) - (
+        optional_legacy_fields | optional_provenance_field | internal_fields
+    )
     raw = _package_mapping(
         value,
-        required=set(TheRundownNetworkResponseV1.__dataclass_fields__),
+        required=required_fields,
+        allowed=(required_fields | optional_legacy_fields | optional_provenance_field),
         name="capture response",
     )
     return TheRundownNetworkResponseV1.from_payload(raw)
@@ -707,11 +723,25 @@ def _shadow_capture_from_envelope(value: object) -> TheRundownNetworkShadowCaptu
     capture_raw = _package_mapping(
         raw["capture"],
         required=_SHADOW_CAPTURE_FIELDS,
+        allowed=_SHADOW_CAPTURE_FIELDS | {"shadow_capture_observation_digest"},
         name="capture envelope.capture",
     )
     request = _shadow_request_from_payload(raw["request"])
     target = _shadow_target_from_payload(raw["target"])
     response = _shadow_response_from_payload(capture_raw["response"])
+    receipt_input = capture_raw.get("builder2_receipt_input")
+    if not isinstance(receipt_input, Mapping):
+        raise Builder2QualificationBatchError(
+            "capture Builder-2 receipt input is missing"
+        )
+    receipt_schema_version = receipt_input.get("schema_version")
+    if receipt_schema_version not in {
+        LEGACY_RECEIPT_SCHEMA_VERSION,
+        RECEIPT_SCHEMA_VERSION,
+    }:
+        raise Builder2QualificationBatchError(
+            "capture Builder-2 receipt input schema is unsupported"
+        )
     try:
         evidence_kind = ObservationEvidenceKind(capture_raw["evidence_kind"])
     except (TypeError, ValueError) as exc:
@@ -732,6 +762,10 @@ def _shadow_capture_from_envelope(value: object) -> TheRundownNetworkShadowCaptu
         failure_reason=capture_raw["failure_reason"],
         candidate_only=capture_raw["candidate_only"],
         receipt_eligible=capture_raw["receipt_eligible"],
+        builder2_receipt_schema_version=receipt_schema_version,
+        shadow_capture_observation_digest=capture_raw.get(
+            "shadow_capture_observation_digest"
+        ),
     )
     if capture.as_payload() != capture_raw:
         raise Builder2QualificationBatchError(
@@ -966,6 +1000,7 @@ class Builder2FiveLeagueReceiptBindingV1:
     raw_response_digest: str
     provider_record_digest: str
     observation_digest: str
+    shadow_capture_observation_digest: str
     normalized_record_digest: str
     cascade_evidence_digest: str
     capture_attestation_digest: str
@@ -979,8 +1014,7 @@ class Builder2FiveLeagueReceiptBindingV1:
     quota_after: int
     quota_cost_units: float
     datapoint_count: int
-    rate_limit_remaining: int
-    rate_limit_reset_at: datetime
+    request_rate_limit_provenance: TheRundownRequestRateLimitProvenanceV1
     account_tier: str
     provider_delay_seconds: float
     http_status: int
@@ -1018,6 +1052,9 @@ class Builder2FiveLeagueReceiptBindingV1:
             "raw_response_digest": self.raw_response_digest,
             "provider_record_digest": self.provider_record_digest,
             "observation_digest": self.observation_digest,
+            "shadow_capture_observation_digest": (
+                self.shadow_capture_observation_digest
+            ),
             "normalized_record_digest": self.normalized_record_digest,
             "cascade_evidence_digest": self.cascade_evidence_digest,
             "capture_attestation_digest": self.capture_attestation_digest,
@@ -1031,10 +1068,9 @@ class Builder2FiveLeagueReceiptBindingV1:
             "quota_after": self.quota_after,
             "quota_cost_units": self.quota_cost_units,
             "datapoint_count": self.datapoint_count,
-            "rate_limit_remaining": self.rate_limit_remaining,
-            "rate_limit_reset_at": self.rate_limit_reset_at.astimezone(
-                timezone.utc
-            ).isoformat(),
+            "request_rate_limit_provenance": (
+                self.request_rate_limit_provenance.as_payload()
+            ),
             "account_tier": self.account_tier,
             "provider_delay_seconds": self.provider_delay_seconds,
             "http_status": self.http_status,
@@ -1062,7 +1098,6 @@ class Builder2FiveLeagueReceiptBindingV1:
                 "quota_after",
                 "quota_cost_units",
                 "datapoint_count",
-                "rate_limit_remaining",
                 "provider_delay_seconds",
                 "http_status",
                 "retry_count",
@@ -1071,6 +1106,7 @@ class Builder2FiveLeagueReceiptBindingV1:
                 "publication",
                 "production_activation",
                 "monetary_spend_authorized",
+                "request_rate_limit_provenance",
             }:
                 continue
             if name == "adapter_source_sha":
@@ -1082,7 +1118,6 @@ class Builder2FiveLeagueReceiptBindingV1:
                 "kickoff",
                 "source_timestamp",
                 "captured_at",
-                "rate_limit_reset_at",
             }:
                 _package_timestamp(value, f"binding.{name}")
             else:
@@ -1116,7 +1151,6 @@ class Builder2FiveLeagueReceiptBindingV1:
             ("quota_before", self.quota_before),
             ("quota_after", self.quota_after),
             ("datapoint_count", self.datapoint_count),
-            ("rate_limit_remaining", self.rate_limit_remaining),
         ):
             if not isinstance(value, int) or isinstance(value, bool) or value < 0:
                 raise Builder2QualificationBatchError(
@@ -1129,6 +1163,17 @@ class Builder2FiveLeagueReceiptBindingV1:
         if self.http_status != 200 or self.retry_count != 0:
             raise Builder2QualificationBatchError(
                 "binding requires HTTP 200 and zero retries"
+            )
+        self.request_rate_limit_provenance.validate()
+        if (
+            self.request_rate_limit_provenance.provider != self.provider_identity
+            or self.request_rate_limit_provenance.http_status != self.http_status
+            or self.request_rate_limit_provenance.retry_count != self.retry_count
+            or self.request_rate_limit_provenance.request_finished_at
+            != self.captured_at
+        ):
+            raise Builder2QualificationBatchError(
+                "binding request-rate provenance does not match capture"
             )
         if self.evidence_kind != ObservationEvidenceKind.REAL_OBSERVED.value:
             raise Builder2QualificationBatchError(
@@ -1190,6 +1235,7 @@ class Builder2FiveLeagueReceiptBindingV1:
             raw_response_digest=raw["raw_response_digest"],
             provider_record_digest=raw["provider_record_digest"],
             observation_digest=raw["observation_digest"],
+            shadow_capture_observation_digest=raw["shadow_capture_observation_digest"],
             normalized_record_digest=raw["normalized_record_digest"],
             cascade_evidence_digest=raw["cascade_evidence_digest"],
             capture_attestation_digest=raw["capture_attestation_digest"],
@@ -1203,9 +1249,10 @@ class Builder2FiveLeagueReceiptBindingV1:
             quota_after=raw["quota_after"],
             quota_cost_units=raw["quota_cost_units"],
             datapoint_count=raw["datapoint_count"],
-            rate_limit_remaining=raw["rate_limit_remaining"],
-            rate_limit_reset_at=_package_timestamp(
-                raw["rate_limit_reset_at"], "binding.rate_limit_reset_at"
+            request_rate_limit_provenance=(
+                TheRundownRequestRateLimitProvenanceV1.from_payload(
+                    raw["request_rate_limit_provenance"]
+                )
             ),
             account_tier=raw["account_tier"],
             provider_delay_seconds=raw["provider_delay_seconds"],
@@ -1316,6 +1363,11 @@ class Builder2FiveLeagueAuthorityInputDossierV1:
             raise Builder2QualificationBatchError(
                 "authority dossier bindings are not canonical"
             )
+        from src.football.top5_therundown_network_shadow import (
+            PREVIOUS_RESPONSE_PACING_ANCHOR,
+            SHADOW_PROOF_PACING_ANCHOR,
+        )
+
         for binding in self.bindings:
             binding.validate()
             if binding.provider_identity != self.provider_identity:
@@ -1330,6 +1382,41 @@ class Builder2FiveLeagueAuthorityInputDossierV1:
                 raise Builder2QualificationBatchError(
                     "adapter source SHA drift in dossier"
                 )
+        # Receipt order is a qualification contract and can differ from the
+        # serialized Shadow request order. Validate the pacing chain by the
+        # actual request-start timestamps, not by canonical league ordering.
+        request_order = sorted(
+            self.bindings,
+            key=lambda binding: (
+                binding.request_rate_limit_provenance.request_started_at
+            ),
+        )
+        previous_binding: Builder2FiveLeagueReceiptBindingV1 | None = None
+        authorized_interval: float | None = None
+        for binding in request_order:
+            rate = binding.request_rate_limit_provenance
+            if authorized_interval is None:
+                authorized_interval = rate.authorized_minimum_interval_seconds
+                if rate.pacing_anchor_kind != SHADOW_PROOF_PACING_ANCHOR:
+                    raise Builder2QualificationBatchError(
+                        "first request pacing is not anchored to Shadow headroom proof"
+                    )
+            elif rate.authorized_minimum_interval_seconds != authorized_interval:
+                raise Builder2QualificationBatchError(
+                    "request pacing authorization drift in dossier"
+                )
+            if previous_binding is not None:
+                previous_rate = previous_binding.request_rate_limit_provenance
+                if (
+                    rate.pacing_anchor_kind != PREVIOUS_RESPONSE_PACING_ANCHOR
+                    or rate.pacing_anchor_at != previous_rate.request_finished_at
+                    or rate.pacing_anchor_digest
+                    != previous_binding.shadow_capture_observation_digest
+                ):
+                    raise Builder2QualificationBatchError(
+                        "request pacing is not bound to the previous Shadow response"
+                    )
+            previous_binding = binding
         expected_ids = tuple(binding.receipt_id for binding in self.bindings)
         expected_digests = tuple(binding.receipt_digest for binding in self.bindings)
         expected_results = tuple(
@@ -1468,10 +1555,9 @@ def _build_five_league_dossier(
         required_response_fields = (
             response.source_timestamp,
             response.captured_at,
-            response.rate_limit_reset_at,
             response.quota_before,
             response.quota_after,
-            response.rate_limit_remaining,
+            response.request_rate_limit_provenance,
             response.home_odds,
             response.draw_odds,
             response.away_odds,
@@ -1501,6 +1587,9 @@ def _build_five_league_dossier(
             raw_response_digest=response.raw_response_digest,
             provider_record_digest=response.provider_record_digest,
             observation_digest=manifest.observation_digest,
+            shadow_capture_observation_digest=(
+                capture.shadow_capture_observation_digest or capture.observation_digest
+            ),
             normalized_record_digest=manifest.normalized_record_digest,
             cascade_evidence_digest=manifest.cascade_evidence_digest,
             capture_attestation_digest=manifest.capture_attestation_digest,
@@ -1514,8 +1603,7 @@ def _build_five_league_dossier(
             quota_after=response.quota_after,
             quota_cost_units=response.quota_cost_units,
             datapoint_count=response.datapoint_count,
-            rate_limit_remaining=response.rate_limit_remaining,
-            rate_limit_reset_at=response.rate_limit_reset_at,
+            request_rate_limit_provenance=(response.request_rate_limit_provenance),
             account_tier=response.account_tier,
             provider_delay_seconds=response.provider_delay_seconds,
             http_status=response.http_status,
@@ -1852,7 +1940,15 @@ def _cross_item_findings(records: Sequence[_IdentityRecord]) -> _CrossItemFindin
             if lm.intake_id == rm.intake_id and not same_manifest:
                 findings.mixed_intake_identity_ids.add(lm.intake_id)
                 _mark_conflict(findings, left, right, "MIXED_INTAKE_IDENTITY")
-            if lm.controlled_shadow_run_id == rm.controlled_shadow_run_id:
+            same_run = lm.controlled_shadow_run_id == rm.controlled_shadow_run_id
+            same_capture = (
+                lm.observation_id == rm.observation_id
+                or lm.provider_request_id == rm.provider_request_id
+            )
+            # One governed five-league run intentionally has five distinct
+            # per-league captures. Reused run IDs and per-capture attestation
+            # digests are therefore expected across different leagues.
+            if same_run and lm.observation.league == rm.observation.league:
                 findings.duplicate_run_ids.add(lm.controlled_shadow_run_id)
                 if not same_manifest:
                     _mark_conflict(findings, left, right, "DUPLICATE_RUN_ID_CONFLICT")
@@ -1882,7 +1978,7 @@ def _cross_item_findings(records: Sequence[_IdentityRecord]) -> _CrossItemFindin
                 _mark_conflict(
                     findings, left, right, "CONFLICTING_CEO_AUTHORIZATION_BINDING"
                 )
-            if lm.controlled_shadow_run_id == rm.controlled_shadow_run_id:
+            if same_run:
                 if lm.ceo_authorization_id != rm.ceo_authorization_id:
                     findings.conflicting_ceo_authorization_ids.update(
                         (lm.ceo_authorization_id, rm.ceo_authorization_id)
@@ -1890,7 +1986,18 @@ def _cross_item_findings(records: Sequence[_IdentityRecord]) -> _CrossItemFindin
                     _mark_conflict(
                         findings, left, right, "CONFLICTING_CEO_AUTHORIZATION_BINDING"
                     )
-                if lm.capture_attestation_digest != rm.capture_attestation_digest:
+                if lm.qualification_session_id != rm.qualification_session_id:
+                    _mark_conflict(
+                        findings,
+                        left,
+                        right,
+                        "CONFLICTING_QUALIFICATION_SESSION_BINDING",
+                    )
+                if lm.capture_attestation_digest != rm.capture_attestation_digest and (
+                    same_capture
+                    or lm.ceo_authorization_id != rm.ceo_authorization_id
+                    or lm.qualification_session_id != rm.qualification_session_id
+                ):
                     findings.conflicting_capture_attestation_digests.update(
                         (lm.capture_attestation_digest, rm.capture_attestation_digest)
                     )
@@ -1955,11 +2062,25 @@ def _qualify_manifest(
 ) -> ProviderQualificationReport:
     """Call the existing pure qualification gate with manifest context."""
 
-    return qualify_provider_observations(
+    structural = (
+        ProviderQualificationPurpose(manifest.qualification_purpose)
+        is ProviderQualificationPurpose.STRUCTURAL_PROVIDER
+    )
+    policy = manifest.structural_policy if structural else manifest.timing_policy
+    if policy is None:
+        raise Builder2QualificationBatchError(
+            "manifest qualification policy is missing"
+        )
+    qualifier = (
+        qualify_structural_provider_observations
+        if structural
+        else qualify_provider_observations
+    )
+    return qualifier(
         (manifest.observation,),
         manifest.session,
         _expected_fixture(manifest),
-        manifest.timing_policy,
+        policy,
         manifest.provider_readiness,
         manifest.authorization,
     )

@@ -46,6 +46,7 @@ from tests.football.test_top5_therundown_network_shadow import (
     _NetworkStubTransport,
     _quota_headroom,
     _response,
+    _run_live_network_fixture,
     _targets,
 )
 from tests.football.test_top5_therundown_network_shadow import (
@@ -59,22 +60,19 @@ def _candidate_network_run():
     targets = tuple(replace(target, provider=CANDIDATE) for target in _targets())
     configuration = _configuration(targets=targets, enabled=True)
     authorization = network_authorization(configuration, provider=CANDIDATE)
-    transport = _NetworkStubTransport(
+    authorization, quota_headroom = _quota_headroom(
+        authorization, observed_at=NOW - timedelta(seconds=10)
+    )
+    result, _transport, _pacing, _clock = _run_live_network_fixture(
+        configuration,
+        authorization,
+        quota_headroom,
         lambda request: _response(
             request,
             evidence_kind=ObservationEvidenceKind.REAL_OBSERVED,
             network_execution=True,
-        )
-    )
-    authorization, quota_headroom = _quota_headroom(authorization)
-    result = TheRundownNetworkShadowExecutorV1(
-        clock=lambda: NOW,
-        allow_live_network=True,
-    ).run(
-        configuration,
-        authorization,
-        transport=transport,
-        quota_headroom=quota_headroom,
+        ),
+        start_at=NOW - timedelta(seconds=10),
     )
     return result, configuration
 
@@ -161,8 +159,9 @@ def _candidate_qualification_inputs():
         quota_before=10,
         quota_after=9,
         quota_cost_units=1.0,
-        rate_limit_remaining=99,
-        rate_limit_reset_at=observation.captured_at + timedelta(hours=1),
+        rate_limit_remaining=None,
+        rate_limit_reset_at=None,
+        rate_limit_limit=1,
         account_tier="shadow-test-tier",
         provider_delay_seconds=0.0,
     )
@@ -198,6 +197,39 @@ def test_network_capture_can_bind_all_five_candidate_leagues_without_authority()
         assert restored.publication_capability is False
         assert restored.scheduler_capability is False
         assert restored.betting_capability is False
+
+
+def test_therundown_candidate_wire_schema_uses_only_rps_ceiling_semantics():
+    run, _configuration = _candidate_network_run()
+    eligibility = CandidateProviderEligibilityV1.from_network_capture(
+        run.captures[0], now=NOW
+    )
+
+    payload = eligibility.as_payload()
+
+    assert payload["schema_version"] == "top5-candidate-provider-eligibility-v2"
+    assert payload["rate_limit_limit"] == 1
+    assert "rate_limit_remaining" not in payload
+    assert "rate_limit_reset_at" not in payload
+
+    legacy_payload = {
+        **payload,
+        "schema_version": "top5-candidate-provider-eligibility-v1",
+        "rate_limit_remaining": 12,
+        "rate_limit_reset_at": (NOW + timedelta(hours=1)).isoformat(),
+    }
+    restored = CandidateProviderEligibilityV1.from_payload(legacy_payload)
+    restored.validate(now=NOW)
+    assert restored.rate_limit_remaining is None
+    assert restored.rate_limit_reset_at is None
+    assert restored.as_payload()["schema_version"] == (
+        "top5-candidate-provider-eligibility-v1"
+    )
+    assert restored.as_payload()["rate_limit_remaining"] is None
+    assert restored.as_payload()["rate_limit_reset_at"] is None
+
+    with pytest.raises(CandidateEligibilityError, match="RPS ceiling"):
+        replace(eligibility, rate_limit_remaining=1).validate(now=NOW)
 
 
 def test_candidate_real_observation_requires_explicit_eligibility_and_qualifies():

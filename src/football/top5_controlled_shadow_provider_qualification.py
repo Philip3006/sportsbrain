@@ -85,6 +85,13 @@ class ProviderQualificationStatus(str, Enum):
     REAL_OBSERVATION_VALIDATED = "REAL_OBSERVATION_VALIDATED"
 
 
+class ProviderQualificationPurpose(str, Enum):
+    """Explicitly distinguish evidence structure from production signal timing."""
+
+    SIGNAL_TIME = "SIGNAL_TIME"
+    STRUCTURAL_PROVIDER = "STRUCTURAL_PROVIDER"
+
+
 class QualificationCode(str, Enum):
     INVALID_OBSERVATION = "INVALID_OBSERVATION"
     CANDIDATE_ELIGIBILITY_REQUIRED = "CANDIDATE_ELIGIBILITY_REQUIRED"
@@ -114,6 +121,7 @@ class QualificationCode(str, Enum):
     FUTURE_SOURCE_TIMESTAMP = "FUTURE_SOURCE_TIMESTAMP"
     MINIMUM_LEAD_NOT_MET = "MINIMUM_LEAD_NOT_MET"
     MAXIMUM_LEAD_EXCEEDED = "MAXIMUM_LEAD_EXCEEDED"
+    KICKOFF_NOT_FUTURE = "KICKOFF_NOT_FUTURE"
     KICKOFF_OUTSIDE_TOLERANCE = "KICKOFF_OUTSIDE_TOLERANCE"
     WRONG_LEAGUE = "WRONG_LEAGUE"
     WRONG_FIXTURE = "WRONG_FIXTURE"
@@ -262,6 +270,39 @@ class QualificationTimingPolicy:
             "minimum_lead_seconds": self.minimum_lead_seconds,
             "maximum_lead_seconds": self.maximum_lead_seconds,
             "production_signal_time_values_approved": False,
+            "note": NO_PRODUCTION_SIGNAL_TIME_VALUES,
+        }
+
+
+@dataclass(frozen=True)
+class StructuralProviderQualificationPolicy:
+    """Freshness and fixture matching only; contains no signal-time window."""
+
+    maximum_odds_age_seconds: int
+    kickoff_tolerance_seconds: int
+
+    def validate(self) -> None:
+        for name, value in (
+            ("maximum_odds_age_seconds", self.maximum_odds_age_seconds),
+            ("kickoff_tolerance_seconds", self.kickoff_tolerance_seconds),
+        ):
+            if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+                raise QualificationContractError(
+                    f"{name} must be a non-negative integer"
+                )
+        if self.maximum_odds_age_seconds == 0:
+            raise QualificationContractError(
+                "maximum_odds_age_seconds must be positive"
+            )
+
+    def as_payload(self) -> dict[str, object]:
+        self.validate()
+        return {
+            "schema_version": "top5-structural-provider-qualification-policy-v1",
+            "maximum_odds_age_seconds": self.maximum_odds_age_seconds,
+            "kickoff_tolerance_seconds": self.kickoff_tolerance_seconds,
+            "production_signal_time_values_approved": False,
+            "signal_time_approved": False,
             "note": NO_PRODUCTION_SIGNAL_TIME_VALUES,
         }
 
@@ -1036,6 +1077,9 @@ class ProviderQualificationReport:
     signal_time_note: str = NO_PRODUCTION_SIGNAL_TIME_VALUES
     production_activation_authorized: bool = False
     recommendation: None = None
+    qualification_purpose: ProviderQualificationPurpose | str = (
+        ProviderQualificationPurpose.SIGNAL_TIME
+    )
 
     @property
     def accepted_observation_ids(self) -> tuple[str, ...]:
@@ -1064,6 +1108,19 @@ class ProviderQualificationReport:
         if self.signal_time_note != NO_PRODUCTION_SIGNAL_TIME_VALUES:
             raise QualificationContractError(
                 "production signal-time approval cannot be asserted"
+            )
+        try:
+            purpose = ProviderQualificationPurpose(self.qualification_purpose)
+        except (TypeError, ValueError) as exc:
+            raise QualificationContractError(
+                "report qualification purpose is invalid"
+            ) from exc
+        if (
+            purpose is ProviderQualificationPurpose.STRUCTURAL_PROVIDER
+            and self.production_sample_sufficient is not None
+        ):
+            raise QualificationContractError(
+                "structural qualification cannot assert production sample sufficiency"
             )
         if self.production_activation_authorized or self.recommendation is not None:
             raise QualificationContractError(
@@ -1125,6 +1182,11 @@ class ProviderQualificationReport:
             "selected_observation_network_request_count": self.selected_observation_network_request_count,
             "quota_units_observed": self.quota_units_observed,
             "signal_time_note": self.signal_time_note,
+            "qualification_purpose": ProviderQualificationPurpose(
+                self.qualification_purpose
+            ).value,
+            "production_signal_time_values_approved": False,
+            "signal_time_approved": False,
             "production_activation_authorized": False,
             "recommendation": None,
         }
@@ -1133,7 +1195,7 @@ class ProviderQualificationReport:
 def _fixture_codes(
     observation: RealProviderObservation,
     expected: ExpectedCascadeFixture,
-    timing: QualificationTimingPolicy,
+    timing: QualificationTimingPolicy | StructuralProviderQualificationPolicy,
 ) -> list[QualificationCode]:
     errors: list[QualificationCode] = []
     if observation.league != expected.league:
@@ -1162,7 +1224,9 @@ def _fixture_codes(
 
 
 def _quality_codes(
-    observation: RealProviderObservation, timing: QualificationTimingPolicy
+    observation: RealProviderObservation,
+    timing: QualificationTimingPolicy | StructuralProviderQualificationPolicy,
+    purpose: ProviderQualificationPurpose,
 ) -> tuple[list[QualificationCode], float | None, float, float]:
     errors: list[QualificationCode] = []
     if observation.market_type != "h2h_1x2":
@@ -1204,10 +1268,17 @@ def _quality_codes(
         _utc(observation.kickoff, "kickoff")
         - _utc(observation.captured_at, "captured_at")
     ).total_seconds()
-    if lead < timing.minimum_lead_seconds:
-        errors.append(QualificationCode.MINIMUM_LEAD_NOT_MET)
-    if lead > timing.maximum_lead_seconds:
-        errors.append(QualificationCode.MAXIMUM_LEAD_EXCEEDED)
+    if purpose is ProviderQualificationPurpose.SIGNAL_TIME:
+        if not isinstance(timing, QualificationTimingPolicy):
+            raise QualificationContractError(
+                "signal-time qualification requires QualificationTimingPolicy"
+            )
+        if lead < timing.minimum_lead_seconds:
+            errors.append(QualificationCode.MINIMUM_LEAD_NOT_MET)
+        if lead > timing.maximum_lead_seconds:
+            errors.append(QualificationCode.MAXIMUM_LEAD_EXCEEDED)
+    elif lead <= 0:
+        errors.append(QualificationCode.KICKOFF_NOT_FUTURE)
     capture_latency = (
         _utc(observation.request_finished_at, "request_finished_at")
         - _utc(observation.request_started_at, "request_started_at")
@@ -1323,7 +1394,7 @@ def _attestation_binding(
 def _cascade_codes(
     observation: RealProviderObservation,
     expected: ExpectedCascadeFixture,
-    timing: QualificationTimingPolicy,
+    timing: QualificationTimingPolicy | StructuralProviderQualificationPolicy,
     provider_readiness: Mapping[str, ProviderReadinessState],
 ) -> tuple[object, list[str], list[QualificationCode], int, float]:
     record = (
@@ -1420,10 +1491,11 @@ def _validate_one(
     observation: RealProviderObservation,
     session: ProviderQualificationSession,
     expected: ExpectedCascadeFixture,
-    timing: QualificationTimingPolicy,
+    timing: QualificationTimingPolicy | StructuralProviderQualificationPolicy,
     provider_readiness: Mapping[str, ProviderReadinessState],
     authorization: CEOAuthorization | None,
     candidate_eligibility: CandidateProviderEligibilityV1 | None = None,
+    purpose: ProviderQualificationPurpose = ProviderQualificationPurpose.SIGNAL_TIME,
 ) -> ObservationValidationResult:
     errors: list[QualificationCode] = []
     cascade_errors: list[str] = []
@@ -1463,7 +1535,7 @@ def _validate_one(
                     errors.append(QualificationCode.CANDIDATE_ELIGIBILITY_MISMATCH)
         errors.extend(_fixture_codes(observation, expected, timing))
         timing_errors, source_age, capture_latency, lead = _quality_codes(
-            observation, timing
+            observation, timing, purpose
         )
         errors.extend(timing_errors)
         errors.extend(
@@ -1648,14 +1720,16 @@ def _expected_fixture_map(
     return {expected_fixture.fixture_key: expected_fixture}
 
 
-def qualify_provider_observations(
+def _qualify_provider_observations(
     observations: Sequence[RealProviderObservation | Mapping[str, object]],
     session: ProviderQualificationSession,
     expected_fixture: ExpectedCascadeFixture | Mapping[str, ExpectedCascadeFixture],
-    timing_policy: QualificationTimingPolicy,
+    qualification_policy: QualificationTimingPolicy
+    | StructuralProviderQualificationPolicy,
     provider_readiness: Mapping[str, ProviderReadinessState],
     authorization: CEOAuthorization | None = None,
     *,
+    qualification_purpose: ProviderQualificationPurpose,
     minimum_sample_policy: MinimumSamplePolicy | None = None,
     authorization_usage: Mapping[str, object] | None = None,
     consumed_authorization_ids: Collection[str] = (),
@@ -1666,9 +1740,23 @@ def qualify_provider_observations(
     session.validate()
     expected_fixtures = _expected_fixture_map(expected_fixture)
     default_expected_fixture = next(iter(expected_fixtures.values()))
-    timing_policy.validate()
+    qualification_purpose = ProviderQualificationPurpose(qualification_purpose)
+    if qualification_purpose is ProviderQualificationPurpose.SIGNAL_TIME:
+        if not isinstance(qualification_policy, QualificationTimingPolicy):
+            raise QualificationContractError(
+                "signal-time qualification requires QualificationTimingPolicy"
+            )
+    elif not isinstance(qualification_policy, StructuralProviderQualificationPolicy):
+        raise QualificationContractError(
+            "structural provider qualification requires StructuralProviderQualificationPolicy"
+        )
+    qualification_policy.validate()
     if minimum_sample_policy is not None:
         minimum_sample_policy.validate()
+        if qualification_purpose is ProviderQualificationPurpose.STRUCTURAL_PROVIDER:
+            raise QualificationContractError(
+                "structural qualification cannot evaluate sample sufficiency; use canonical receipt aggregation"
+            )
     if isinstance(consumed_authorization_ids, (str, bytes)):
         raise QualificationContractError(
             "consumed_authorization_ids must be a collection of IDs"
@@ -1783,10 +1871,11 @@ def qualify_provider_observations(
                 previous,
                 session,
                 duplicate_expected_fixture,
-                timing_policy,
+                qualification_policy,
                 provider_readiness,
                 authorization,
                 candidate_eligibility,
+                qualification_purpose,
             )
             duplicate_results.append(
                 replace(
@@ -1839,10 +1928,11 @@ def qualify_provider_observations(
             observation,
             session,
             observation_expected_fixture,
-            timing_policy,
+            qualification_policy,
             provider_readiness,
             authorization,
             candidate_eligibility,
+            qualification_purpose,
         )
         if observation.observation_id in conflicting_duplicate_ids:
             result = replace(
@@ -2025,9 +2115,70 @@ def qualify_provider_observations(
         cascade_network_count,
         selected_network_count,
         quota_units,
+        qualification_purpose=qualification_purpose,
     )
     report.validate()
     return report
+
+
+def qualify_provider_observations(
+    observations: Sequence[RealProviderObservation | Mapping[str, object]],
+    session: ProviderQualificationSession,
+    expected_fixture: ExpectedCascadeFixture | Mapping[str, ExpectedCascadeFixture],
+    timing_policy: QualificationTimingPolicy,
+    provider_readiness: Mapping[str, ProviderReadinessState],
+    authorization: CEOAuthorization | None = None,
+    *,
+    minimum_sample_policy: MinimumSamplePolicy | None = None,
+    authorization_usage: Mapping[str, object] | None = None,
+    consumed_authorization_ids: Collection[str] = (),
+    candidate_eligibility: CandidateProviderEligibilityV1 | None = None,
+) -> ProviderQualificationReport:
+    """Validate evidence under the unchanged caller-supplied signal-time policy."""
+
+    return _qualify_provider_observations(
+        observations,
+        session,
+        expected_fixture,
+        timing_policy,
+        provider_readiness,
+        authorization,
+        qualification_purpose=ProviderQualificationPurpose.SIGNAL_TIME,
+        minimum_sample_policy=minimum_sample_policy,
+        authorization_usage=authorization_usage,
+        consumed_authorization_ids=consumed_authorization_ids,
+        candidate_eligibility=candidate_eligibility,
+    )
+
+
+def qualify_structural_provider_observations(
+    observations: Sequence[RealProviderObservation | Mapping[str, object]],
+    session: ProviderQualificationSession,
+    expected_fixture: ExpectedCascadeFixture | Mapping[str, ExpectedCascadeFixture],
+    structural_policy: StructuralProviderQualificationPolicy,
+    provider_readiness: Mapping[str, ProviderReadinessState],
+    authorization: CEOAuthorization | None = None,
+    *,
+    minimum_sample_policy: MinimumSamplePolicy | None = None,
+    authorization_usage: Mapping[str, object] | None = None,
+    consumed_authorization_ids: Collection[str] = (),
+    candidate_eligibility: CandidateProviderEligibilityV1 | None = None,
+) -> ProviderQualificationReport:
+    """Validate structural provider evidence without signal-time lead windows."""
+
+    return _qualify_provider_observations(
+        observations,
+        session,
+        expected_fixture,
+        structural_policy,
+        provider_readiness,
+        authorization,
+        qualification_purpose=ProviderQualificationPurpose.STRUCTURAL_PROVIDER,
+        minimum_sample_policy=minimum_sample_policy,
+        authorization_usage=authorization_usage,
+        consumed_authorization_ids=consumed_authorization_ids,
+        candidate_eligibility=candidate_eligibility,
+    )
 
 
 def validate_provider_qualification(
@@ -2125,6 +2276,7 @@ __all__ = [
     "ObservationEvidenceKind",
     "ObservationValidationResult",
     "ProviderLeagueMetrics",
+    "ProviderQualificationPurpose",
     "ProviderQualificationReport",
     "ProviderQualificationSession",
     "ProviderQualificationStatus",
@@ -2135,9 +2287,11 @@ __all__ = [
     "QualificationContractError",
     "QualificationTimingPolicy",
     "RealProviderObservation",
+    "StructuralProviderQualificationPolicy",
     "bridge_real_observation_to_builder1_shadow_evidence",
     "offline_fixture_catalog",
     "qualify_provider_observations",
+    "qualify_structural_provider_observations",
     "run_offline_qualification",
     "validate_provider_qualification",
 ]
