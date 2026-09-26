@@ -12,7 +12,10 @@ from src.football.top5_builder2_qualification_receipt import (
 )
 from src.football.top5_controlled_shadow_provider_qualification import (
     MinimumSamplePolicy,
+    ProviderQualificationPurpose,
+    StructuralProviderQualificationPolicy,
     qualify_provider_observations,
+    qualify_structural_provider_observations,
 )
 from src.football.top5_qualification_sample_aggregator import (
     FAILURE_DIVERGENT_RECEIPT_ID_CONFLICT,
@@ -70,6 +73,48 @@ def _receipt_for_fixture(index: int, *, controlled_run_id: str = "controlled-run
         _session(fixture_scope=(expected.fixture_key,)),
         expected,
         TIMING,
+        READY,
+        authorization,
+    )
+    return issue_builder2_qualification_receipt(report, observation, report.results[0])
+
+
+def _structural_receipt_for_fixture(index: int, *, controlled_run_id: str):
+    expected = _expected_fixture(index)
+    cascade = _cascade_for_expected(expected, suffix=f"structural-{index}")
+    observation = _observation_for_cascade(
+        cascade,
+        cascade.attempts[0],
+        expected=expected,
+        observation_id=f"structural-observation-{index}",
+    )
+    session_id = f"structural-session-{controlled_run_id}"
+    authorization = replace(
+        _authorization(fixture_scope=(expected.fixture_key,)),
+        authorization_id=f"structural-auth-{controlled_run_id}",
+        controlled_shadow_run_id=controlled_run_id,
+        qualification_session_id=session_id,
+    )
+    session = replace(
+        _session(fixture_scope=(expected.fixture_key,)),
+        qualification_session_id=session_id,
+    )
+    assert observation.capture_attestation is not None
+    observation = replace(
+        observation,
+        qualification_session_id=session_id,
+        capture_attestation=replace(
+            observation.capture_attestation,
+            controlled_shadow_run_id=controlled_run_id,
+            ceo_authorization_id=authorization.authorization_id,
+            qualification_session_id=session_id,
+        ),
+    )
+    report = qualify_structural_provider_observations(
+        (observation,),
+        session,
+        expected,
+        StructuralProviderQualificationPolicy(900, 300),
         READY,
         authorization,
     )
@@ -155,6 +200,24 @@ def test_valid_receipts_aggregate_counts_identities_provenance_and_safety() -> N
     assert report.freshness.denominator is None
     assert report.observation_coverage.supported is False
     assert report.observation_coverage.rate is None
+
+
+def test_structural_and_signal_time_receipts_cannot_be_mixed():
+    structural = _structural_receipt_for_fixture(
+        3, controlled_run_id="controlled-run-a"
+    )
+    signal_time = _receipt_for_fixture(4, controlled_run_id="controlled-run-a")
+
+    assert (
+        structural.qualification_purpose
+        == ProviderQualificationPurpose.STRUCTURAL_PROVIDER
+    )
+    assert signal_time.qualification_purpose == ProviderQualificationPurpose.SIGNAL_TIME
+    with pytest.raises(
+        Builder2QualificationSampleAggregatorError,
+        match="cannot be mixed",
+    ):
+        aggregate_builder2_qualification_samples((structural, signal_time))
 
 
 def test_qualification_samples_aggregate_across_distinct_controlled_runs():

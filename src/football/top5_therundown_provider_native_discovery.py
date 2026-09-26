@@ -17,6 +17,7 @@ from collections.abc import Callable, Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
+from enum import Enum
 from functools import wraps
 from hashlib import sha256
 from typing import Protocol
@@ -55,6 +56,9 @@ PROVIDER_NATIVE_DISCOVERY_SCHEMA_VERSION = (
 PROVIDER_NATIVE_DISCOVERY_AUTHORIZATION_SCHEMA_VERSION = (
     "top5-therundown-provider-native-discovery-authorization-v2"
 )
+PROVIDER_NATIVE_DISCOVERY_STRUCTURAL_AUTHORIZATION_SCHEMA_VERSION = (
+    "top5-therundown-provider-native-discovery-authorization-v3"
+)
 PROVIDER_NATIVE_DISCOVERY_TARGET_SOURCE = "therundown_provider_native"
 PROVIDER_NATIVE_INDEPENDENT_QUALIFICATION = "WAIVED"
 PROVIDER_NATIVE_MAX_DATES_PER_LEAGUE = 21
@@ -74,6 +78,11 @@ _PROVIDER_NATIVE_BILLING_MODES = frozenset(
         PROVIDER_NATIVE_BILLING_MODE_CUMULATIVE,
     }
 )
+
+
+class ProviderNativeDiscoverySelectionPurpose(str, Enum):
+    SIGNAL_TIME = "SIGNAL_TIME"
+    STRUCTURAL_PROVIDER = "STRUCTURAL_PROVIDER"
 
 
 def _utc(value: datetime, name: str) -> datetime:
@@ -471,8 +480,11 @@ class TheRundownProviderNativeDiscoveryAuthorizationV1:
     quota_proof_reset_at: datetime
     issued_at: datetime
     expires_at: datetime
-    minimum_lead_seconds: int
-    maximum_lead_seconds: int
+    minimum_lead_seconds: int | None
+    maximum_lead_seconds: int | None
+    selection_purpose: ProviderNativeDiscoverySelectionPurpose | str = (
+        ProviderNativeDiscoverySelectionPurpose.SIGNAL_TIME
+    )
     maximum_dates_per_league: int = PROVIDER_NATIVE_MAX_DATES_PER_LEAGUE
     maximum_request_count: int = PROVIDER_NATIVE_MAX_REQUEST_COUNT
     maximum_datapoints_per_request: int = PROVIDER_NATIVE_MAX_DATAPOINTS_PER_REQUEST
@@ -493,8 +505,13 @@ class TheRundownProviderNativeDiscoveryAuthorizationV1:
 
     @property
     def _payload_without_digest(self) -> dict[str, object]:
-        return {
-            "schema_version": PROVIDER_NATIVE_DISCOVERY_AUTHORIZATION_SCHEMA_VERSION,
+        purpose = ProviderNativeDiscoverySelectionPurpose(self.selection_purpose)
+        payload: dict[str, object] = {
+            "schema_version": (
+                PROVIDER_NATIVE_DISCOVERY_AUTHORIZATION_SCHEMA_VERSION
+                if purpose is ProviderNativeDiscoverySelectionPurpose.SIGNAL_TIME
+                else PROVIDER_NATIVE_DISCOVERY_STRUCTURAL_AUTHORIZATION_SCHEMA_VERSION
+            ),
             "discovery_authorization_id": self.discovery_authorization_id,
             "ceo_discovery_authorization_identity": self.ceo_discovery_authorization_identity,
             "provider": self.provider,
@@ -522,8 +539,6 @@ class TheRundownProviderNativeDiscoveryAuthorizationV1:
             ).isoformat(),
             "issued_at": _utc(self.issued_at, "issued_at").isoformat(),
             "expires_at": _utc(self.expires_at, "expires_at").isoformat(),
-            "minimum_lead_seconds": self.minimum_lead_seconds,
-            "maximum_lead_seconds": self.maximum_lead_seconds,
             "maximum_dates_per_league": self.maximum_dates_per_league,
             "maximum_request_count": self.maximum_request_count,
             "maximum_datapoints_per_request": self.maximum_datapoints_per_request,
@@ -540,6 +555,12 @@ class TheRundownProviderNativeDiscoveryAuthorizationV1:
             "ledger_mutation": self.ledger_mutation,
             "monetary_spend_authorized": self.monetary_spend_authorized,
         }
+        if purpose is ProviderNativeDiscoverySelectionPurpose.SIGNAL_TIME:
+            payload["minimum_lead_seconds"] = self.minimum_lead_seconds
+            payload["maximum_lead_seconds"] = self.maximum_lead_seconds
+        else:
+            payload["selection_purpose"] = purpose.value
+        return payload
 
     @property
     def authorization_digest(self) -> str:
@@ -572,17 +593,33 @@ class TheRundownProviderNativeDiscoveryAuthorizationV1:
             _text(value, name)
         _sha(self.quota_proof_evidence_digest, "quota_proof_evidence_digest")
         _sha(self.quota_proof_response_digest, "quota_proof_response_digest")
-        for name, value in (
-            ("minimum_lead_seconds", self.minimum_lead_seconds),
-            ("maximum_lead_seconds", self.maximum_lead_seconds),
-        ):
-            if not isinstance(value, int) or isinstance(value, bool) or value < 0:
-                raise EventDiscoveryContractError(
-                    f"native discovery {name} must be a non-negative integer"
-                )
-        if self.minimum_lead_seconds > self.maximum_lead_seconds:
+        try:
+            selection_purpose = ProviderNativeDiscoverySelectionPurpose(
+                self.selection_purpose
+            )
+        except (TypeError, ValueError) as exc:
             raise EventDiscoveryContractError(
-                "native discovery minimum lead cannot exceed maximum lead"
+                "native discovery selection purpose is invalid"
+            ) from exc
+        if selection_purpose is ProviderNativeDiscoverySelectionPurpose.SIGNAL_TIME:
+            for name, value in (
+                ("minimum_lead_seconds", self.minimum_lead_seconds),
+                ("maximum_lead_seconds", self.maximum_lead_seconds),
+            ):
+                if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+                    raise EventDiscoveryContractError(
+                        f"native discovery {name} must be a non-negative integer"
+                    )
+            if self.minimum_lead_seconds > self.maximum_lead_seconds:
+                raise EventDiscoveryContractError(
+                    "native discovery minimum lead cannot exceed maximum lead"
+                )
+        elif (
+            self.minimum_lead_seconds is not None
+            or self.maximum_lead_seconds is not None
+        ):
+            raise EventDiscoveryContractError(
+                "structural discovery cannot carry signal-time lead limits"
             )
         if self.quota_proof_sport_id != PROVIDER_NATIVE_SPORT_ID:
             raise EventDiscoveryContractError("native proof sport binding is invalid")
@@ -744,8 +781,6 @@ class TheRundownProviderNativeDiscoveryAuthorizationV1:
             "quota_proof_reset_at",
             "issued_at",
             "expires_at",
-            "minimum_lead_seconds",
-            "maximum_lead_seconds",
             "maximum_dates_per_league",
             "maximum_request_count",
             "maximum_datapoints_per_request",
@@ -763,14 +798,25 @@ class TheRundownProviderNativeDiscoveryAuthorizationV1:
             "monetary_spend_authorized",
             "authorization_digest",
         }
-        _require_payload_keys(raw, required, "native discovery authorization")
-        if (
-            raw.get("schema_version")
-            != PROVIDER_NATIVE_DISCOVERY_AUTHORIZATION_SCHEMA_VERSION
+        schema_version = raw.get("schema_version")
+        if schema_version == PROVIDER_NATIVE_DISCOVERY_AUTHORIZATION_SCHEMA_VERSION:
+            required = required | {"minimum_lead_seconds", "maximum_lead_seconds"}
+            purpose = ProviderNativeDiscoverySelectionPurpose.SIGNAL_TIME
+        elif (
+            schema_version
+            == PROVIDER_NATIVE_DISCOVERY_STRUCTURAL_AUTHORIZATION_SCHEMA_VERSION
         ):
+            required = required | {"selection_purpose"}
+            purpose = ProviderNativeDiscoverySelectionPurpose.STRUCTURAL_PROVIDER
+            if raw.get("selection_purpose") != purpose.value:
+                raise EventDiscoveryContractError(
+                    "structural discovery selection purpose is invalid"
+                )
+        else:
             raise EventDiscoveryContractError(
                 "native discovery authorization schema is unsupported"
             )
+        _require_payload_keys(raw, required, "native discovery authorization")
         league_order = raw.get("league_order")
         if (
             not isinstance(league_order, list)
@@ -836,12 +882,21 @@ class TheRundownProviderNativeDiscoveryAuthorizationV1:
             ),
             issued_at=_datetime_field(raw.get("issued_at"), "issued_at"),
             expires_at=_datetime_field(raw.get("expires_at"), "expires_at"),
-            minimum_lead_seconds=_int_field_required(
-                raw.get("minimum_lead_seconds"), "minimum_lead_seconds"
+            minimum_lead_seconds=(
+                _int_field_required(
+                    raw.get("minimum_lead_seconds"), "minimum_lead_seconds"
+                )
+                if purpose is ProviderNativeDiscoverySelectionPurpose.SIGNAL_TIME
+                else None
             ),
-            maximum_lead_seconds=_int_field_required(
-                raw.get("maximum_lead_seconds"), "maximum_lead_seconds"
+            maximum_lead_seconds=(
+                _int_field_required(
+                    raw.get("maximum_lead_seconds"), "maximum_lead_seconds"
+                )
+                if purpose is ProviderNativeDiscoverySelectionPurpose.SIGNAL_TIME
+                else None
             ),
+            selection_purpose=purpose,
             maximum_dates_per_league=_int_field_required(
                 raw.get("maximum_dates_per_league"), "maximum_dates_per_league"
             ),
@@ -902,14 +957,23 @@ class TheRundownProviderNativeDiscoveryRequestV1:
 
     @property
     def request_identity(self) -> str:
-        return _digest(
-            {
-                "authorization": self.authorization.discovery_authorization_id,
-                "league": self.league,
-                "snapshot_date": self.snapshot_date.isoformat(),
-                "sequence": self.sequence,
-            }
-        )
+        payload: dict[str, object] = {
+            "authorization": self.authorization.discovery_authorization_id,
+            "league": self.league,
+            "snapshot_date": self.snapshot_date.isoformat(),
+            "sequence": self.sequence,
+        }
+        if (
+            ProviderNativeDiscoverySelectionPurpose(
+                self.authorization.selection_purpose
+            )
+            is ProviderNativeDiscoverySelectionPurpose.STRUCTURAL_PROVIDER
+        ):
+            payload["authorization_digest"] = self.authorization.authorization_digest
+            payload["selection_purpose"] = ProviderNativeDiscoverySelectionPurpose(
+                self.authorization.selection_purpose
+            ).value
+        return _digest(payload)
 
     @property
     def endpoint(self) -> str:
@@ -1440,8 +1504,9 @@ def _select_candidate(
     *,
     league: str,
     now: datetime,
-    minimum_lead_seconds: int,
-    maximum_lead_seconds: int,
+    selection_purpose: ProviderNativeDiscoverySelectionPurpose,
+    minimum_lead_seconds: int | None,
+    maximum_lead_seconds: int | None,
 ) -> TheRundownDiscoveryEventCandidateV1 | None:
     if not isinstance(payload, Mapping) or not isinstance(payload.get("events"), list):
         raise EventDiscoveryExecutionBlocked(
@@ -1478,8 +1543,20 @@ def _select_candidate(
         if kickoff <= selection_time:
             continue
         lead_seconds = (kickoff - selection_time).total_seconds()
-        if lead_seconds < minimum_lead_seconds or lead_seconds > maximum_lead_seconds:
-            continue
+        if selection_purpose is ProviderNativeDiscoverySelectionPurpose.SIGNAL_TIME:
+            if minimum_lead_seconds is None or maximum_lead_seconds is None:
+                raise EventDiscoveryExecutionBlocked(
+                    "signal-time discovery requires explicit lead limits"
+                )
+            if (
+                lead_seconds < minimum_lead_seconds
+                or lead_seconds > maximum_lead_seconds
+            ):
+                continue
+        elif minimum_lead_seconds is not None or maximum_lead_seconds is not None:
+            raise EventDiscoveryExecutionBlocked(
+                "structural discovery cannot use signal-time lead limits"
+            )
         candidates.append(candidate)
     if not candidates:
         return None
@@ -1612,6 +1689,9 @@ def discover_five_league_events_provider_native(
                 response.payload,
                 league=league,
                 now=_utc(response.finished_at, "native response finished"),
+                selection_purpose=ProviderNativeDiscoverySelectionPurpose(
+                    authorization.selection_purpose
+                ),
                 minimum_lead_seconds=authorization.minimum_lead_seconds,
                 maximum_lead_seconds=authorization.maximum_lead_seconds,
             )
@@ -1658,8 +1738,8 @@ def discover_five_league_events_provider_native(
             break
         if found is None:
             raise EventDiscoveryExecutionBlocked(
-                "native discovery found no target within the authorized "
-                f"qualification lead window for {league}"
+                "native discovery found no eligible target within the "
+                f"authorized search for {league}"
             )
         captures.append(found)
     result = TheRundownProviderNativeDiscoveryRunResultV1(
@@ -1691,6 +1771,7 @@ __all__ = [
     "PROVIDER_NATIVE_BILLING_MODE_PROVIDER",
     "PROVIDER_NATIVE_DISCOVERY_AUTHORIZATION_SCHEMA_VERSION",
     "PROVIDER_NATIVE_DISCOVERY_SCHEMA_VERSION",
+    "PROVIDER_NATIVE_DISCOVERY_STRUCTURAL_AUTHORIZATION_SCHEMA_VERSION",
     "PROVIDER_NATIVE_DISCOVERY_TARGET_SOURCE",
     "PROVIDER_NATIVE_INDEPENDENT_QUALIFICATION",
     "PROVIDER_NATIVE_MAX_DATAPOINTS",
@@ -1700,6 +1781,7 @@ __all__ = [
     "PROVIDER_NATIVE_MINIMUM_HEADROOM",
     "PROVIDER_NATIVE_MINIMUM_INTERVAL_SECONDS",
     "TOP5_REAL_PROVIDER_EXECUTION",
+    "ProviderNativeDiscoverySelectionPurpose",
     "TheRundownProviderNativeDiscoveryAuthorizationV1",
     "TheRundownProviderNativeDiscoveryCaptureV1",
     "TheRundownProviderNativeDiscoveryRequestV1",

@@ -52,6 +52,7 @@ from tests.football.test_top5_therundown_network_shadow import (
     _configuration,
     _NetworkStubTransport,
     _response,
+    _run_live_network_fixture,
     _targets,
 )
 
@@ -84,26 +85,22 @@ def _network_run():
         provider=CANONICAL_CANDIDATE_PROVIDER,
         quota_headroom_evidence_digest="0" * 64,
     )
-    quota_headroom = _quota_headroom(authorization)
+    quota_headroom = _quota_headroom(
+        authorization, observed_at=NOW - timedelta(seconds=10)
+    )
     authorization = replace(
         authorization, quota_headroom_evidence_digest=quota_headroom.evidence_digest
     )
-    transport = _NetworkStubTransport(
+    result, _transport, _pacing, _clock = _run_live_network_fixture(
+        configuration,
+        authorization,
+        quota_headroom,
         lambda request: _response(
             request,
             evidence_kind=ObservationEvidenceKind.REAL_OBSERVED,
             network_execution=True,
-        )
-    )
-    result = TheRundownNetworkShadowExecutorV1(
-        clock=lambda: NOW,
-        pacer=lambda _seconds: None,
-        allow_live_network=True,
-    ).run(
-        configuration,
-        authorization,
-        transport=transport,
-        quota_headroom=quota_headroom,
+        ),
+        start_at=NOW - timedelta(seconds=10),
     )
     return result, configuration, authorization
 
@@ -118,7 +115,9 @@ def _network_run_with_b1_hook(response_factory):
         provider=CANONICAL_CANDIDATE_PROVIDER,
         quota_headroom_evidence_digest="0" * 64,
     )
-    quota_headroom = _quota_headroom(authorization)
+    quota_headroom = _quota_headroom(
+        authorization, observed_at=NOW - timedelta(seconds=10)
+    )
     authorization = replace(
         authorization, quota_headroom_evidence_digest=quota_headroom.evidence_digest
     )
@@ -135,17 +134,14 @@ def _network_run_with_b1_hook(response_factory):
                 now=NOW,
             )
 
-    result = TheRundownNetworkShadowExecutorV1(
-        clock=lambda: NOW,
-        pacer=lambda _seconds: None,
-        allow_live_network=True,
-        fail_closed_immediately=True,
-    ).run(
+    result, transport, _pacing, _clock = _run_live_network_fixture(
         configuration,
         authorization,
-        transport=transport,
-        quota_headroom=quota_headroom,
+        quota_headroom,
+        response_factory,
+        fail_closed=True,
         post_capture_validator=b1_hook,
+        start_at=NOW - timedelta(seconds=10),
     )
     return result, transport, same_run_b1
 
@@ -176,7 +172,7 @@ def _b1_ll_artifact(result, authorization):
             "maximum_request_count": 2,
             "maximum_datapoint_budget": 100,
             "quota_before_used": response.quota_before,
-            "quota_before_remaining": response.rate_limit_remaining,
+            "quota_before_remaining": response.quota_before,
             "expires_at": authorization.expires_at.isoformat(),
             "controlled_shadow_run_id": authorization.controlled_shadow_run_id,
             "ceo_authorization_id": authorization.authorization_id,
@@ -217,7 +213,9 @@ def _b1_ll_artifact(result, authorization):
             },
             "quota_before": {"used": response.quota_before},
             "quota_after": {"used": response.quota_after},
-            "rate_limit_state": {"remaining": response.rate_limit_remaining},
+            "rate_limit_state": {
+                "rate_limit": response.request_rate_limit_provenance.requests_per_second_ceiling
+            },
             "quota_evidence": {"source": "B1 synthetic contract fixture"},
             "network_execution": True,
             "no_bet": True,
@@ -246,7 +244,6 @@ def _b1_ll_artifact(result, authorization):
                 "normalized_record_digest": response.normalized_record_digest,
                 "quota_before": {"used": response.quota_before},
                 "quota_after": {"used": response.quota_after},
-                "rate_limit_state": {"remaining": response.rate_limit_remaining},
                 "metadata": {},
             }
         ],
@@ -721,7 +718,7 @@ def test_reconciliation_rejects_missing_bookmaker_provenance_or_incomplete_1x2(
 def test_reconciliation_rejects_stale_observation():
     result, configuration, authorization = _network_run()
     original = _capture(result, "BL1")
-    response = replace(original.response, source_timestamp=NOW - timedelta(seconds=301))
+    response = replace(original.response, source_timestamp=NOW - timedelta(seconds=400))
     tampered = _replace_capture(result, original, response=response)
 
     with pytest.raises(ControlledShadowAuthorizationPackageError, match="stale"):
@@ -766,7 +763,7 @@ def test_reconciliation_rejects_wrong_provider_and_post_kickoff_capture():
             wrong_provider, configuration, authorization, now=NOW
         )
 
-    kickoff = NOW - timedelta(seconds=1)
+    kickoff = original.response.captured_at - timedelta(seconds=1)
     fixture_key = make_fixture_key(
         "EPL", original.target.home_team, original.target.away_team, kickoff
     )
@@ -824,6 +821,77 @@ def test_reconciliation_rejects_participant_rebinding_and_digest_mismatch():
         )
 
 
+def test_reconciliation_requires_rate_limit_provenance_for_every_real_capture():
+    result, configuration, authorization = _network_run()
+    original = _capture(result, "EPL")
+    tampered = _replace_capture(
+        result,
+        original,
+        response=replace(original.response, request_rate_limit_provenance=None),
+    )
+
+    with pytest.raises(
+        ControlledShadowAuthorizationPackageError,
+        match="request-rate provenance rejected: request-rate provenance is missing",
+    ):
+        reconcile_controlled_shadow_run(tampered, configuration, authorization, now=NOW)
+
+
+def test_reconciliation_binds_rate_pacing_to_proof_and_previous_response():
+    result, configuration, authorization = _network_run()
+    original = _capture(result, "EPL")
+    rate = original.response.request_rate_limit_provenance
+    assert rate is not None
+    changed_rate = replace(
+        rate,
+        pacing_anchor_digest="a" * 64,
+        provenance_digest="0" * 64,
+    )
+    changed_rate = replace(
+        changed_rate, provenance_digest=changed_rate.computed_provenance_digest
+    )
+    tampered = _replace_capture(
+        result,
+        original,
+        response=replace(original.response, request_rate_limit_provenance=changed_rate),
+    )
+
+    with pytest.raises(
+        ControlledShadowAuthorizationPackageError,
+        match="first request pacing is not bound to the authorized headroom proof",
+    ):
+        reconcile_controlled_shadow_run(tampered, configuration, authorization, now=NOW)
+
+    next_capture = _capture(result, "BL1")
+    next_rate = next_capture.response.request_rate_limit_provenance
+    assert next_rate is not None
+    changed_next_rate = replace(
+        next_rate,
+        pacing_anchor_digest="b" * 64,
+        provenance_digest="0" * 64,
+    )
+    changed_next_rate = replace(
+        changed_next_rate,
+        provenance_digest=changed_next_rate.computed_provenance_digest,
+    )
+    tampered_next = _replace_capture(
+        result,
+        next_capture,
+        response=replace(
+            next_capture.response,
+            request_rate_limit_provenance=changed_next_rate,
+        ),
+    )
+
+    with pytest.raises(
+        ControlledShadowAuthorizationPackageError,
+        match="request pacing is not bound to the previous Shadow response",
+    ):
+        reconcile_controlled_shadow_run(
+            tampered_next, configuration, authorization, now=NOW
+        )
+
+
 def test_reconciliation_rejects_duplicate_or_missing_league_capture():
     result, configuration, authorization = _network_run()
     first = _capture(result, "EPL")
@@ -855,6 +923,27 @@ def test_package_and_reconciliation_never_issue_receipt_or_change_authority():
     assert reconciliation.artifacts.cascade_evidence_available is False
     assert (
         reconciliation.artifacts.qualification_status == "PENDING_BUILDER2_VALIDATION"
+    )
+
+
+def test_b4_materializes_structural_qualification_manifest_without_signal_lead_window():
+    result, configuration, authorization = _network_run()
+    _, manifest = b4_package._b2_manifest_for_capture(
+        _capture(result, "EPL"), configuration, authorization
+    )
+
+    assert manifest.qualification_purpose == "STRUCTURAL_PROVIDER"
+    assert manifest.timing_policy is None
+    assert manifest.structural_policy is not None
+    assert (
+        manifest.structural_policy.maximum_odds_age_seconds
+        == configuration.maximum_source_age_seconds
+    )
+    payload = manifest.as_payload()
+    assert "timing_policy" not in payload
+    assert payload["structural_policy"]["signal_time_approved"] is False
+    assert (
+        payload["structural_policy"]["production_signal_time_values_approved"] is False
     )
 
 
@@ -1023,9 +1112,7 @@ def _dedicated_headroom_files(tmp_path: Path, monkeypatch):
     )
     authorization = replace(
         authorization,
-        quota_headroom_evidence_digest=headroom_summary[
-            "headroom_evidence_digest"
-        ],
+        quota_headroom_evidence_digest=headroom_summary["headroom_evidence_digest"],
     )
     package_path = tmp_path / "authorization-package.json"
     package_path.write_text(json.dumps(package.as_payload()), encoding="utf-8")
@@ -1105,12 +1192,10 @@ def test_dedicated_shadow_headroom_proof_materializes_and_preflight_stays_networ
     assert headroom["provenance_source"] == SHADOW_HEADROOM_PROVENANCE_SOURCE
     assert headroom["proof"]["raw_header_evidence"]["x-tier"] == "free"
     assert headroom["proof"]["status_code"] == 200
-    assert headroom["headroom"]["observed_at"] == headroom["proof"][
-        "response_finished_at"
-    ]
-    assert headroom["proof"]["raw_header_evidence"]["x-datapoints-period"] == (
-        "daily"
+    assert (
+        headroom["headroom"]["observed_at"] == headroom["proof"]["response_finished_at"]
     )
+    assert headroom["proof"]["raw_header_evidence"]["x-datapoints-period"] == ("daily")
     preflight = run_guarded_network_preflight(
         inputs["package_path"],
         inputs["authorization_path"],

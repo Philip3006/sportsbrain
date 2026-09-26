@@ -8,6 +8,7 @@ import pytest
 
 from src.football.top5_builder2_qualification_receipt import (
     BUILDER2_QUALIFICATION_RECEIPT_CONTRACT_VERSION,
+    LEGACY_RECEIPT_SCHEMA_VERSION,
     Builder2QualificationReceiptError,
     Builder2QualificationReceiptV1,
     issue_builder2_qualification_receipt,
@@ -68,8 +69,28 @@ def test_valid_pr66_real_qualification_issues_canonical_receipt() -> None:
     assert receipt.publication is False
     assert receipt.production_activation is False
     assert receipt.monetary_spend_authorized is False
+    assert receipt.qualification_purpose.value == "SIGNAL_TIME"
+    assert receipt.production_signal_time_values_approved is False
+    assert receipt.signal_time_approved is False
     assert receipt.failure_codes == ()
     assert receipt.qualification_receipt_id.startswith("b2qr-")
+
+
+def test_legacy_receipt_schema_remains_signal_time_only():
+    report, observation, result = _accepted()
+    payload = issue_builder2_qualification_receipt(
+        report, observation, result
+    ).as_payload()
+    payload["schema_version"] = LEGACY_RECEIPT_SCHEMA_VERSION
+    payload.pop("qualification_purpose")
+    payload.pop("production_signal_time_values_approved")
+    payload.pop("signal_time_approved")
+    payload.pop("receipt_digest")
+    payload["receipt_digest"] = semantic_digest(payload)
+
+    restored = Builder2QualificationReceiptV1.from_payload(payload)
+    restored.validate()
+    assert restored.qualification_purpose == "SIGNAL_TIME"
 
 
 def test_marker_fixture_rejected_and_fixture_cannot_issue_real_receipt() -> None:

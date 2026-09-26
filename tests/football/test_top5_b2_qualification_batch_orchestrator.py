@@ -39,6 +39,10 @@ from tests.football.test_top5_controlled_shadow_provider_qualification import (
     _expected_fixture,
     _observation_for_cascade,
 )
+from src.football.top5_shadow_provider_redundancy import make_fixture_key
+from src.football.top5_b2_shadow_qualification_intake import (
+    project_manifest_to_structural_provider,
+)
 
 
 def _accepted_manifest(index: int = 0):
@@ -97,6 +101,80 @@ def _accepted_receipt(manifest):
     return issue_builder2_qualification_receipt(report, observation, result)
 
 
+def _same_run_five_league_structural_manifests():
+    source = _manifest()
+    run_id = "controlled-five-league-run"
+    session_id = "qualification-five-league-session"
+    authorization_id = "ceo-five-league-authorization"
+    leagues = ("EPL", "BL1", "LL", "SA", "L1")
+    expected_fixtures = tuple(
+        replace(
+            _expected_fixture(index),
+            league=league,
+            fixture_key=make_fixture_key(
+                league,
+                _expected_fixture(index).home_team,
+                _expected_fixture(index).away_team,
+                _expected_fixture(index).kickoff,
+            ),
+        )
+        for index, league in enumerate(leagues)
+    )
+    fixture_scope = tuple(fixture.fixture_key for fixture in expected_fixtures)
+    session = replace(
+        source.session,
+        qualification_session_id=session_id,
+        league_scope=leagues,
+        fixture_scope=fixture_scope,
+    )
+    authorization = replace(
+        source.authorization,
+        authorization_id=authorization_id,
+        controlled_shadow_run_id=run_id,
+        qualification_session_id=session_id,
+        league_scope=leagues,
+        fixture_scope=fixture_scope,
+        maximum_network_requests=5,
+    )
+    manifests = []
+    for index, (league, expected) in enumerate(zip(leagues, expected_fixtures)):
+        cascade = _cascade_for_expected(expected, suffix=f"five-{league}")
+        observation = _observation_for_cascade(
+            cascade,
+            cascade.attempts[0],
+            expected=expected,
+            observation_id=f"five-league-observation-{league}",
+        )
+        attestation = replace(
+            observation.capture_attestation,
+            controlled_shadow_run_id=run_id,
+            ceo_authorization_id=authorization_id,
+            qualification_session_id=session_id,
+        )
+        observation = replace(
+            observation,
+            qualification_session_id=session_id,
+            capture_attestation=attestation,
+        )
+        source_manifest = _manifest(
+            intake_id=f"five-league-intake-{league}",
+            observation=observation,
+            session=session,
+            authorization=authorization,
+            cascade_evidence=cascade,
+            capture_attestation=attestation,
+        )
+        manifests.append(
+            project_manifest_to_structural_provider(
+                source_manifest,
+                immutable_source_path=(
+                    f"/private/tmp/structural-source-{index}-{league}.json"
+                ),
+            )
+        )
+    return tuple(manifests)
+
+
 def test_one_valid_item_uses_canonical_intake_and_receipt_chain() -> None:
     result = orchestrate_builder2_qualification_batch([_accepted_manifest()])
 
@@ -130,6 +208,24 @@ def test_multiple_valid_items_and_caller_policy_are_deterministic() -> None:
     assert left.sample_sufficient is True
     assert left.per_league_counts == {"EPL": 2}
     assert left.per_provider_counts == {"the_odds_api": 2}
+
+
+def test_five_league_structural_observations_from_one_run_issue_receipts():
+    result = orchestrate_builder2_qualification_batch(
+        _same_run_five_league_structural_manifests()
+    )
+
+    assert result.input_item_count == result.processed_item_count == 5
+    assert result.accepted_count == 5
+    assert result.rejected_count == 0
+    assert len(result.receipt_ids) == 5
+    assert result.sample_report.total_valid_receipts == 5
+    assert result.per_league_counts == {
+        league: 1 for league in ("BL1", "EPL", "L1", "LL", "SA")
+    }
+    assert result.duplicate_run_ids == ()
+    assert result.safety["no_provider_calls"] is True
+    assert result.safety["production_activation_authorized"] is False
 
 
 def test_exact_replay_is_idempotent_and_does_not_double_issue() -> None:

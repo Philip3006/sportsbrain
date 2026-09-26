@@ -20,6 +20,7 @@ from src.football.top5_controlled_shadow_provider_qualification import (
     CEOAuthorization,
     ControlledShadowCaptureAttestation,
     ObservationValidationResult,
+    ProviderQualificationPurpose,
     ProviderQualificationReport,
     ProviderQualificationStatus,
     QualificationContractError,
@@ -31,9 +32,10 @@ from src.football.top5_provider_cascade_validation import (
 )
 
 BUILDER2_QUALIFICATION_RECEIPT_CONTRACT_VERSION = (
-    "top5-builder2-qualification-receipt-v1"
+    "top5-builder2-qualification-receipt-v2"
 )
 RECEIPT_SCHEMA_VERSION = BUILDER2_QUALIFICATION_RECEIPT_CONTRACT_VERSION
+LEGACY_RECEIPT_SCHEMA_VERSION = "top5-builder2-qualification-receipt-v1"
 _SHA_RE = re.compile(r"^[0-9a-fA-F]{40,64}$")
 _EXPECTED_BINDING_FIELDS = frozenset(
     {
@@ -43,6 +45,7 @@ _EXPECTED_BINDING_FIELDS = frozenset(
         "qualification_report_digest",
         "qualification_result_digest",
         "qualification_status",
+        "qualification_purpose",
         "qualification_session_id",
         "controlled_shadow_run_id",
         "ceo_authorization_id",
@@ -211,6 +214,11 @@ class Builder2QualificationReceiptV1:
     monetary_spend_authorized: bool
     failure_codes: tuple[str, ...] = ()
     receipt_digest: str = ""
+    qualification_purpose: ProviderQualificationPurpose | str = (
+        ProviderQualificationPurpose.SIGNAL_TIME
+    )
+    production_signal_time_values_approved: bool = False
+    signal_time_approved: bool = False
 
     @property
     def receipt_schema_version(self) -> str:
@@ -252,13 +260,44 @@ class Builder2QualificationReceiptV1:
             "monetary_spend_authorized": self.monetary_spend_authorized,
             "failure_codes": list(self.failure_codes),
         }
+        if self.schema_version != LEGACY_RECEIPT_SCHEMA_VERSION:
+            payload.update(
+                {
+                    "qualification_purpose": ProviderQualificationPurpose(
+                        self.qualification_purpose
+                    ).value,
+                    "production_signal_time_values_approved": False,
+                    "signal_time_approved": False,
+                }
+            )
         if include_receipt_digest:
             payload["receipt_digest"] = self.receipt_digest
         return payload
 
     def validate(self) -> None:
-        if self.schema_version != RECEIPT_SCHEMA_VERSION:
+        if self.schema_version not in {
+            LEGACY_RECEIPT_SCHEMA_VERSION,
+            RECEIPT_SCHEMA_VERSION,
+        }:
             raise Builder2QualificationReceiptError("unsupported receipt schema")
+        try:
+            purpose = ProviderQualificationPurpose(self.qualification_purpose)
+        except (TypeError, ValueError) as exc:
+            raise Builder2QualificationReceiptError(
+                "qualification purpose is invalid"
+            ) from exc
+        if self.schema_version == LEGACY_RECEIPT_SCHEMA_VERSION:
+            if purpose is not ProviderQualificationPurpose.SIGNAL_TIME:
+                raise Builder2QualificationReceiptError(
+                    "legacy receipt purpose is signal-time only"
+                )
+        elif (
+            self.production_signal_time_values_approved is not False
+            or self.signal_time_approved is not False
+        ):
+            raise Builder2QualificationReceiptError(
+                "qualification receipt cannot approve production signal time"
+            )
         for name, value in (
             ("qualification_receipt_id", self.qualification_receipt_id),
             ("qualification_report_identity", self.qualification_report_identity),
@@ -359,6 +398,13 @@ class Builder2QualificationReceiptV1:
             monetary_spend_authorized=raw.get("monetary_spend_authorized"),
             failure_codes=tuple(failure_codes),
             receipt_digest=raw.get("receipt_digest", ""),
+            qualification_purpose=raw.get(
+                "qualification_purpose", ProviderQualificationPurpose.SIGNAL_TIME.value
+            ),
+            production_signal_time_values_approved=raw.get(
+                "production_signal_time_values_approved", False
+            ),
+            signal_time_approved=raw.get("signal_time_approved", False),
         )
 
     def as_payload(self) -> dict[str, object]:
@@ -507,6 +553,9 @@ def issue_builder2_qualification_receipt(
         production_activation=False,
         monetary_spend_authorized=False,
         failure_codes=(),
+        qualification_purpose=report.qualification_purpose,
+        production_signal_time_values_approved=False,
+        signal_time_approved=False,
     )
     receipt = replace(
         receipt,
@@ -622,6 +671,9 @@ def validate_builder2_qualification_receipt(
                     f"{expected_report.session.qualification_session_id}:"
                     f"{ProviderQualificationStatus(expected_report.qualification_status).value}"
                 ),
+                "qualification_purpose": ProviderQualificationPurpose(
+                    expected_report.qualification_purpose
+                ).value,
             },
         )
     if expected_result is not None:
@@ -702,6 +754,7 @@ Builder2ValidationReceipt = Builder2QualificationReceiptV1
 
 __all__ = [
     "BUILDER2_QUALIFICATION_RECEIPT_CONTRACT_VERSION",
+    "LEGACY_RECEIPT_SCHEMA_VERSION",
     "RECEIPT_SCHEMA_VERSION",
     "Builder2QualificationReceiptError",
     "Builder2QualificationReceiptV1",
