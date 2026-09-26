@@ -463,6 +463,10 @@ class ControlledTop5PublicationPayload:
                 or record.get("captured_at")
                 or self.generated_at.isoformat()
             )
+            prediction_timestamp = (
+                record.get("prediction_timestamp") or self.generated_at.isoformat()
+            )
+            snapshot_id = record.get("snapshot_id") or self.signal_time_experiment_id
             envelope = {
                 "record_type": "prediction_artifact",
                 "prediction_artifact": {
@@ -471,12 +475,10 @@ class ControlledTop5PublicationPayload:
                     "prediction_id": prediction_id,
                     "model_identity": self.model_identity,
                     "model_version": record.get("model_version") or self.model_identity,
-                    "prediction_timestamp": record.get("prediction_timestamp")
-                    or self.generated_at.isoformat(),
+                    "prediction_timestamp": prediction_timestamp,
                     "probabilities": dict(record["probabilities"]),
                     "signal_timestamp": signal_timestamp,
-                    "snapshot_id": record.get("snapshot_id")
-                    or self.signal_time_experiment_id,
+                    "snapshot_id": snapshot_id,
                     "snapshot_kind": "SIGNAL_TIME",
                     "odds": record.get("odds", {}),
                 },
@@ -497,8 +499,7 @@ class ControlledTop5PublicationPayload:
                     or self.controlled_shadow_run_id,
                     "qualification_session_id": record.get("qualification_session_id")
                     or self.qualification_session_id,
-                    "snapshot_id": record.get("snapshot_id")
-                    or self.signal_time_experiment_id,
+                    "snapshot_id": snapshot_id,
                     "snapshot_kind": "SIGNAL_TIME",
                     "captured_at": signal_timestamp,
                 },
@@ -520,6 +521,37 @@ class ControlledTop5PublicationPayload:
                 or self.qualification_session_id,
             }
             lifecycle_by_market = record.get("lifecycle_by_market")
+            if "top5_signal_lifecycles" in record:
+                if lifecycle_by_market is not None:
+                    raise ProductionContractError(
+                        "provide canonical signal lifecycles or lifecycle_by_market, not both"
+                    )
+                from src.football.top5_signal_lifecycle_public_adapter import (
+                    project_top5_signal_lifecycles,
+                )
+
+                lifecycle_by_market = project_top5_signal_lifecycles(
+                    record["top5_signal_lifecycles"],  # type: ignore[arg-type]
+                    prediction_probabilities=record["probabilities"],  # type: ignore[arg-type]
+                    fixture_identity=str(fixture_key),
+                    league_identity=self.league_code,
+                    candidate_identity=self.candidate_id,
+                    model_identity=self.model_identity,
+                    provider_authority=self.provider_authority,
+                    prediction_timestamp=prediction_timestamp,  # type: ignore[arg-type]
+                    signal_timestamp=signal_timestamp,  # type: ignore[arg-type]
+                    snapshot_id=str(snapshot_id),
+                    provenance={
+                        "source_sha": self.source_sha,
+                        "research_sha": self.research_sha,
+                        "model_artifact_hash": self.model_artifact_hash,
+                    },
+                    market_identity=(
+                        record["market_id"]
+                        if isinstance(record.get("market_id"), str)
+                        else None
+                    ),
+                )
             if lifecycle_by_market is not None:
                 envelope["prediction_artifact"]["lifecycle_by_market"] = (
                     lifecycle_by_market
