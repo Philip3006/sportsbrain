@@ -334,7 +334,6 @@ def main(argv: list[str] | None = None) -> int:
                 verified_authorization=verified,
                 runtime=runtime,
                 fixture=fixture,
-                expected_provider_event_id=selected.provider_event_id,
                 lifecycle=lifecycle,
             )
         if args.command == "status":

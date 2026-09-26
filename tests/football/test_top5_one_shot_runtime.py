@@ -42,6 +42,9 @@ from tests.football.test_top5_activation_authorization import (
     _signed_context,
 )
 
+CANDIDATE_PROVIDER_EVENT_ID = "therundown-event-123"
+ODDS_API_PROVIDER_EVENT_ID = "the-odds-api-event-987"
+
 
 @pytest.fixture(autouse=True)
 def _freeze_route_consumer_wall_clock(monkeypatch):
@@ -74,22 +77,23 @@ class FakeTransport:
     def __init__(
         self,
         fixture,
-        event_id,
         now,
         *,
+        odds_api_event_id=ODDS_API_PROVIDER_EVENT_ID,
         payload=None,
         status=200,
         payload_valid=True,
         error=None,
     ):
         self.calls = []
+        self.results = []
         self.now = now
         self.payload = (
             payload
             if payload is not None
             else [
                 {
-                    "id": event_id,
+                    "id": odds_api_event_id,
                     "sport_key": "soccer_germany_bundesliga",
                     "commence_time": fixture.kickoff.isoformat(),
                     "home_team": fixture.home_team,
@@ -142,7 +146,7 @@ class FakeTransport:
         if self.error is not None:
             raise self.error
         body = json.dumps(self.payload, sort_keys=True).encode()
-        return OneShotHttpResult(
+        result = OneShotHttpResult(
             status_code=self.status,
             headers={
                 "x-requests-used": "1",
@@ -160,6 +164,8 @@ class FakeTransport:
             retry_count=0,
             payload_valid=self.payload_valid,
         )
+        self.results.append(result)
+        return result
 
 
 def now_utc(binding, base, *, seconds):
@@ -298,7 +304,6 @@ def _runtime_context(
     store = MemoryLifecycleStore(lifecycle, fail_save=fail_save)
     transport = FakeTransport(
         fixture,
-        selected.provider_event_id,
         NOW,
         payload=payload,
         status=status,
@@ -347,7 +352,7 @@ def _runtime_context(
 
 def test_signed_refinement_executes_one_request_and_persists_verified_route(tmp_path):
     (
-        _package,
+        package,
         plan,
         fixture,
         _lifecycle,
@@ -361,17 +366,25 @@ def test_signed_refinement_executes_one_request_and_persists_verified_route(tmp_
         successes,
         _failures,
     ) = _runtime_context(tmp_path)
+    candidate_evidence = {
+        "provider_identity": package.dossier.provider_identity,
+        "provider_event_id": CANDIDATE_PROVIDER_EVENT_ID,
+    }
+    assert candidate_evidence["provider_identity"] == "therundown_experimental"
+    assert selected.provider_event_id != ODDS_API_PROVIDER_EVENT_ID
     result = runtime.execute(
         plan,
         binding,
         verified,
         fixture=fixture,
-        expected_provider_event_id=selected.provider_event_id,
         lifecycle=lifecycle_store.value,
     )
     assert result["schema_version"] == "top5-one-shot-production-result-v1"
     assert result["provider_request_count"] == 1
     assert result["retry_count"] == 0
+    assert result["provider_authority"] == "the_odds_api"
+    assert result["provider_event_id"] == ODDS_API_PROVIDER_EVENT_ID
+    assert result["provider_event_id"] != candidate_evidence["provider_event_id"]
     assert result["snapshot_kind"] == "signal_time"
     assert result["odds"] == {"home": 2.15, "draw": 3.45, "away": 3.65}
     assert result["model_identity"] == "M5_market_preclose"
@@ -409,7 +422,7 @@ def test_signed_initial_execution_uses_exact_due_stage_and_is_still_one_shot(
     tmp_path, monkeypatch
 ):
     (
-        package,
+        _package,
         _bundle,
         plan,
         fixture,
@@ -464,10 +477,7 @@ def test_signed_initial_execution_uses_exact_due_stage_and_is_still_one_shot(
         expected_binding=initial_binding,
         now=initial_time,
     )
-    selected = next(
-        item for item in package.dossier.bindings if item.league == fixture.league_code
-    )
-    transport = FakeTransport(fixture, selected.provider_event_id, initial_time)
+    transport = FakeTransport(fixture, initial_time)
     clock_values = iter(
         (
             initial_time,
@@ -492,7 +502,6 @@ def test_signed_initial_execution_uses_exact_due_stage_and_is_still_one_shot(
         initial_binding,
         verified,
         fixture=fixture,
-        expected_provider_event_id=selected.provider_event_id,
     )
     assert result["lifecycle_version"] == 1
     assert transport.calls[0][0].lifecycle_stage == "INITIAL"
@@ -506,7 +515,7 @@ def test_provider_budget_block_refuses_before_credential_and_transport(tmp_path)
         lifecycle,
         binding,
         verified,
-        selected,
+        _selected_candidate_binding,
         _store,
         transport,
         runtime,
@@ -520,7 +529,6 @@ def test_provider_budget_block_refuses_before_credential_and_transport(tmp_path)
             binding,
             verified,
             fixture=fixture,
-            expected_provider_event_id=selected.provider_event_id,
             lifecycle=lifecycle,
         )
     assert transport.calls == []
@@ -532,7 +540,9 @@ def test_provider_budget_block_refuses_before_credential_and_transport(tmp_path)
     [
         "unsigned",
         "expired",
-        "fixture",
+        "fixture_home",
+        "fixture_away",
+        "fixture_kickoff",
         "league",
         "stage",
         "model",
@@ -548,7 +558,7 @@ def test_preflight_scope_failures_make_zero_provider_calls(tmp_path, tamper):
         lifecycle,
         binding,
         verified,
-        selected,
+        _selected_candidate_binding,
         _store,
         transport,
         runtime,
@@ -561,8 +571,12 @@ def test_preflight_scope_failures_make_zero_provider_calls(tmp_path, tamper):
     elif tamper == "expired":
         expires = datetime.fromisoformat(str(verified.payload["expires_at"]))
         runtime.clock = lambda: expires + timedelta(seconds=1)
-    elif tamper == "fixture":
+    elif tamper == "fixture_home":
         fixture = replace(fixture, home_team=fixture.home_team + " Other")
+    elif tamper == "fixture_away":
+        fixture = replace(fixture, away_team=fixture.away_team + " Other")
+    elif tamper == "fixture_kickoff":
+        fixture = replace(fixture, kickoff=fixture.kickoff + timedelta(minutes=1))
     elif tamper == "league":
         binding = replace(binding, activation_league="EPL")
     elif tamper == "stage":
@@ -580,7 +594,6 @@ def test_preflight_scope_failures_make_zero_provider_calls(tmp_path, tamper):
             binding,
             verified,
             fixture=fixture,
-            expected_provider_event_id=selected.provider_event_id,
             lifecycle=lifecycle,
         )
     assert transport.calls == []
@@ -590,7 +603,7 @@ def test_preflight_scope_failures_make_zero_provider_calls(tmp_path, tamper):
 
 def test_not_due_refinement_refuses_before_credential_and_provider(tmp_path):
     (
-        package,
+        _package,
         _bundle,
         plan,
         fixture,
@@ -617,10 +630,7 @@ def test_not_due_refinement_refuses_before_credential_and_provider(tmp_path):
         fixture,
         inventory_for(binding.activation_league, M5_CANDIDATE_ID).model_artifact_hash,
     )
-    selected = next(
-        item for item in package.dossier.bindings if item.league == fixture.league_code
-    )
-    transport = FakeTransport(fixture, selected.provider_event_id, NOW)
+    transport = FakeTransport(fixture, NOW)
     credential_calls = []
     runtime = Top5OneShotProductionRuntime(
         route_store=DurableTop5ProductionRouteStateStore(tmp_path / "not-due.json"),
@@ -636,7 +646,6 @@ def test_not_due_refinement_refuses_before_credential_and_provider(tmp_path):
             binding,
             verified,
             fixture=fixture,
-            expected_provider_event_id=selected.provider_event_id,
             lifecycle=lifecycle,
         )
     assert transport.calls == []
@@ -648,7 +657,6 @@ def test_not_due_refinement_refuses_before_credential_and_provider(tmp_path):
     [
         "http",
         "malformed_json",
-        "wrong_event",
         "missing_fixture",
         "ambiguous_fixture",
         "stale_odds",
@@ -666,7 +674,7 @@ def test_post_route_failures_consume_at_most_one_request_and_roll_back(
     tmp_path, failure
 ):
     (
-        package,
+        _package,
         _bundle,
         plan,
         fixture,
@@ -685,9 +693,6 @@ def test_post_route_failures_consume_at_most_one_request_and_roll_back(
         fixture,
         inventory_for(binding.activation_league, M5_CANDIDATE_ID).model_artifact_hash,
     )
-    selected = next(
-        item for item in package.dossier.bindings if item.league == fixture.league_code
-    )
     payload = None
     status = 200
     payload_valid = True
@@ -697,18 +702,14 @@ def test_post_route_failures_consume_at_most_one_request_and_roll_back(
         status = 403
     elif failure == "malformed_json":
         payload_valid = False
-    elif failure == "wrong_event":
-        payload = [{"id": "different", "sport_key": "soccer_germany_bundesliga"}]
     elif failure == "missing_fixture":
         payload = []
     elif failure == "ambiguous_fixture":
-        payload = FakeTransport(fixture, selected.provider_event_id, NOW).payload * 2
+        payload = FakeTransport(fixture, NOW).payload * 2
     elif failure == "stale_odds":
-        payload = FakeTransport(
-            fixture, selected.provider_event_id, NOW - timedelta(hours=1)
-        ).payload
+        payload = FakeTransport(fixture, NOW - timedelta(hours=1)).payload
     elif failure == "closing_odds":
-        payload = FakeTransport(fixture, selected.provider_event_id, NOW).payload
+        payload = FakeTransport(fixture, NOW).payload
         for bookmaker in payload[0]["bookmakers"]:
             bookmaker["markets"][0]["last_update"] = (
                 fixture.kickoff + timedelta(minutes=1)
@@ -716,11 +717,10 @@ def test_post_route_failures_consume_at_most_one_request_and_roll_back(
     elif failure == "missing_bookmaker":
         payload = FakeTransport(
             fixture,
-            selected.provider_event_id,
             NOW,
             payload=[
                 {
-                    "id": selected.provider_event_id,
+                    "id": ODDS_API_PROVIDER_EVENT_ID,
                     "sport_key": "soccer_germany_bundesliga",
                     "commence_time": fixture.kickoff.isoformat(),
                     "home_team": fixture.home_team,
@@ -730,7 +730,7 @@ def test_post_route_failures_consume_at_most_one_request_and_roll_back(
             ],
         ).payload
     elif failure == "malformed_1x2":
-        payload = FakeTransport(fixture, selected.provider_event_id, NOW).payload
+        payload = FakeTransport(fixture, NOW).payload
         for bookmaker in payload[0]["bookmakers"]:
             bookmaker["markets"][0]["outcomes"] = [
                 outcome
@@ -740,7 +740,6 @@ def test_post_route_failures_consume_at_most_one_request_and_roll_back(
     lifecycle_store = MemoryLifecycleStore(lifecycle, fail_save=fail_save)
     transport = FakeTransport(
         fixture,
-        selected.provider_event_id,
         NOW,
         payload=payload,
         status=status,
@@ -801,7 +800,6 @@ def test_post_route_failures_consume_at_most_one_request_and_roll_back(
             binding,
             verified,
             fixture=fixture,
-            expected_provider_event_id=selected.provider_event_id,
             lifecycle=lifecycle,
         )
     assert len(transport.calls) == (0 if failure == "credential" else 1)
@@ -820,6 +818,81 @@ def test_post_route_failures_consume_at_most_one_request_and_roll_back(
     assert failures == ([403] if failure == "http" else [])
 
 
+@pytest.mark.parametrize(
+    "mismatch",
+    [
+        "wrong_kickoff",
+        "wrong_home",
+        "wrong_away",
+        "reversed_teams",
+        "wrong_sport",
+        "no_match",
+        "multiple_matches",
+        "missing_id",
+        "blank_id",
+    ],
+)
+def test_odds_api_fixture_mismatch_fails_after_exactly_one_request(tmp_path, mismatch):
+    (
+        _package,
+        plan,
+        fixture,
+        lifecycle,
+        binding,
+        verified,
+        _selected_candidate_binding,
+        _store,
+        transport,
+        runtime,
+        credential_calls,
+        _successes,
+        _failures,
+    ) = _runtime_context(tmp_path)
+    event = dict(transport.payload[0])
+    if mismatch == "wrong_kickoff":
+        event["commence_time"] = (fixture.kickoff + timedelta(minutes=1)).isoformat()
+    elif mismatch == "wrong_home":
+        event["home_team"] = "Different Home"
+    elif mismatch == "wrong_away":
+        event["away_team"] = "Different Away"
+    elif mismatch == "reversed_teams":
+        event["home_team"], event["away_team"] = (
+            event["away_team"],
+            event["home_team"],
+        )
+    elif mismatch == "wrong_sport":
+        event["sport_key"] = "soccer_wrong_league"
+    elif mismatch == "no_match":
+        transport.payload = []
+    elif mismatch == "multiple_matches":
+        transport.payload = [event, dict(event)]
+    elif mismatch == "missing_id":
+        event.pop("id")
+    elif mismatch == "blank_id":
+        event["id"] = "  "
+    if mismatch not in {"no_match", "multiple_matches"}:
+        transport.payload = [event]
+
+    with pytest.raises(OneShotExecutionError):
+        runtime.execute(
+            plan,
+            binding,
+            verified,
+            fixture=fixture,
+            lifecycle=lifecycle,
+        )
+
+    assert len(transport.calls) == 1
+    assert len(transport.results) == 1
+    assert transport.results[0].request_count == 1
+    assert transport.results[0].retry_count == 0
+    assert len(credential_calls) == 1
+    assert (
+        runtime.route_store.read()["records"][binding.activation_id]["status"]
+        == "ROLLED_BACK"
+    )
+
+
 def test_request_shape_is_exact_and_credential_free_in_signed_digest():
     payload = the_odds_api_one_shot_request_shape_digest("BL1")
     assert len(payload) == 64
@@ -833,7 +906,7 @@ def test_route_transition_failure_after_persisted_executing_rolls_back(tmp_path)
         lifecycle,
         binding,
         verified,
-        selected,
+        _selected_candidate_binding,
         _store,
         transport,
         runtime,
@@ -856,7 +929,6 @@ def test_route_transition_failure_after_persisted_executing_rolls_back(tmp_path)
             binding,
             verified,
             fixture=fixture,
-            expected_provider_event_id=selected.provider_event_id,
             lifecycle=lifecycle,
         )
     assert transport.calls == []
@@ -926,7 +998,7 @@ def test_durable_activation_store_verifies_one_shot_result_and_safety(tmp_path):
         lifecycle,
         binding,
         verified,
-        selected,
+        _selected_candidate_binding,
         _lifecycle_store,
         _transport,
         runtime,
@@ -944,7 +1016,6 @@ def test_durable_activation_store_verifies_one_shot_result_and_safety(tmp_path):
         verified_authorization=verified,
         runtime=runtime,
         fixture=fixture,
-        expected_provider_event_id=selected.provider_event_id,
         lifecycle=lifecycle,
     )
     assert record["status"] == "PRODUCTION_VERIFIED"
@@ -967,7 +1038,7 @@ def test_durable_result_validation_failure_rolls_back_route_consumer(tmp_path):
         lifecycle,
         binding,
         verified,
-        selected,
+        _selected_candidate_binding,
         _lifecycle_store,
         _transport,
         runtime,
@@ -996,7 +1067,6 @@ def test_durable_result_validation_failure_rolls_back_route_consumer(tmp_path):
             verified_authorization=verified,
             runtime=InvalidResultRuntime(),
             fixture=fixture,
-            expected_provider_event_id=selected.provider_event_id,
             lifecycle=lifecycle,
         )
     assert (
@@ -1019,7 +1089,7 @@ def test_rolled_back_route_blocks_reexecution_before_credentials_or_request(tmp_
         lifecycle,
         binding,
         verified,
-        selected,
+        _selected_candidate_binding,
         _store,
         transport,
         runtime,
@@ -1033,7 +1103,6 @@ def test_rolled_back_route_blocks_reexecution_before_credentials_or_request(tmp_
             binding,
             verified,
             fixture=fixture,
-            expected_provider_event_id=selected.provider_event_id,
             lifecycle=lifecycle,
         )
     assert (
@@ -1049,7 +1118,6 @@ def test_rolled_back_route_blocks_reexecution_before_credentials_or_request(tmp_
             binding,
             verified,
             fixture=fixture,
-            expected_provider_event_id=selected.provider_event_id,
             lifecycle=lifecycle,
         )
     assert len(transport.calls) == 1

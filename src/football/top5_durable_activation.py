@@ -899,7 +899,6 @@ class DurableTop5ActivationStore:
         verified_authorization: object | None = None,
         runtime: object | None = None,
         fixture: object | None = None,
-        expected_provider_event_id: str | None = None,
         lifecycle: object | None = None,
     ) -> dict[str, object]:
         """Execute one exact signed canary and retain its private evidence."""
@@ -942,10 +941,8 @@ class DurableTop5ActivationStore:
             or not callable(getattr(runtime, "rollback_execution", None))
         ):
             raise DurableActivationError(PRODUCTION_RUNTIME_REQUIRED)
-        if fixture is None or not isinstance(expected_provider_event_id, str):
-            raise DurableActivationError(
-                "exact fixture and provider event are required"
-            )
+        if fixture is None:
+            raise DurableActivationError("exact canonical fixture is required")
         with self._locked():
             state = self._read_unlocked()
             record = state["records"].get(plan.activation_id)
@@ -975,7 +972,6 @@ class DurableTop5ActivationStore:
                 execution_binding,
                 verified_authorization,
                 fixture=fixture,
-                expected_provider_event_id=expected_provider_event_id,
                 lifecycle=lifecycle,
             )
             runtime_returned = True

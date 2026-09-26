@@ -250,8 +250,12 @@ def _select_event(
     payload: object,
     *,
     fixture: Fixture,
-    expected_provider_event_id: str,
 ) -> Mapping[str, object]:
+    """Select one Odds API event only by the exact signed canonical fixture.
+
+    Provider-native IDs are namespace-specific and are observed only after the
+    fixture match; candidate-provider IDs never participate in selection.
+    """
     if not isinstance(payload, list):
         raise OneShotExecutionError("provider response is not an event list")
     expected_sport_key = TOP5_SPORT_KEYS[fixture.league_code]
@@ -265,7 +269,6 @@ def _select_event(
             continue
         if (
             item.get("sport_key") == expected_sport_key
-            and item.get("id") == expected_provider_event_id
             and isinstance(item.get("home_team"), str)
             and isinstance(item.get("away_team"), str)
             and canonical_team(str(item["home_team"]))
@@ -279,6 +282,15 @@ def _select_event(
         raise OneShotExecutionError(
             "authorized provider fixture is missing or ambiguous"
         )
+    provider_event_id = matches[0].get("id")
+    if (
+        not isinstance(provider_event_id, str)
+        or not provider_event_id
+        or provider_event_id != provider_event_id.strip()
+        or len(provider_event_id) > 256
+        or any(not character.isprintable() for character in provider_event_id)
+    ):
+        raise OneShotExecutionError("Odds API event identity is missing or invalid")
     return matches[0]
 
 
@@ -452,7 +464,6 @@ class Top5OneShotProductionRuntime:
         authorization: VerifiedTop5ActivationAuthorizationV1,
         *,
         fixture: Fixture,
-        expected_provider_event_id: str,
         lifecycle: Top5SignalLifecycle | None = None,
     ) -> dict[str, object]:
         preflight_now = _utc(self.clock(), "preflight_now")
@@ -478,8 +489,6 @@ class Top5OneShotProductionRuntime:
             or binding.request_shape_digest
             != the_odds_api_one_shot_request_shape_digest(binding.activation_league)
             or binding.retry_budget != 0
-            or not isinstance(expected_provider_event_id, str)
-            or not expected_provider_event_id.strip()
             or binding.model_identity != M5_CANDIDATE_ID
             or binding.research_sha != FROZEN_RESEARCH_SHA
             or binding.model_artifact_hash
@@ -617,7 +626,6 @@ class Top5OneShotProductionRuntime:
             event = _select_event(
                 response.payload,
                 fixture=fixture,
-                expected_provider_event_id=expected_provider_event_id,
             )
             snapshot, provider_event_id = _consensus_snapshot(
                 event,
