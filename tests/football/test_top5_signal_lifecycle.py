@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 
@@ -45,20 +46,25 @@ def snapshot(
     *,
     snapshot_id: str,
     fixture_key: str = "epl-1",
+    source: str = "the_odds_api:prematch",
     kind: MarketSnapshotKind = MarketSnapshotKind.SIGNAL_TIME,
 ) -> MarketSnapshot:
     return MarketSnapshot(
         fixture_key=fixture_key,
         captured_at=captured_at,
         kind=kind,
-        source="the_odds_api:prematch",
+        source=source,
         odds={"home": 2.1, "draw": 3.2, "away": 3.6},
         snapshot_id=snapshot_id,
     )
 
 
 def initial(
-    *, now: datetime | None = None, fixture_value: Fixture | None = None
+    *,
+    now: datetime | None = None,
+    fixture_value: Fixture | None = None,
+    snapshot_source: str = "the_odds_api:prematch",
+    provider_identity: str = "the_odds_api",
 ) -> Top5SignalLifecycle:
     observed_at = now or KICKOFF - timedelta(hours=24)
     resolved_fixture = fixture_value or fixture()
@@ -68,12 +74,14 @@ def initial(
             observed_at - timedelta(minutes=5),
             snapshot_id="initial-1",
             fixture_key=resolved_fixture.fixture_key,
+            source=snapshot_source,
         ),
         now=observed_at,
         market_id="1x2-regulation",
         outcome_id="home",
         candidate_id="candidate-a",
         model_identity="model-a@" + MODEL_HASH,
+        provider_identity=provider_identity,
         probabilities={"home": 0.5, "draw": 0.27, "away": 0.23},
         source_sha=SOURCE_SHA,
         research_sha=RESEARCH_SHA,
@@ -93,18 +101,25 @@ def refinement(
     eligible: bool = True,
     withdrawal_authorized: bool = False,
     snapshot_id: str = "refinement-1",
+    snapshot_source: str = "the_odds_api:prematch",
+    provider_identity: str = "the_odds_api",
 ) -> Top5SignalLifecycle:
     observed_at = now or KICKOFF - timedelta(minutes=90)
     return refine_signal(
         lifecycle,
         fixture=fixture(),
-        snapshot=snapshot(observed_at - timedelta(minutes=2), snapshot_id=snapshot_id),
+        snapshot=snapshot(
+            observed_at - timedelta(minutes=2),
+            snapshot_id=snapshot_id,
+            source=snapshot_source,
+        ),
         now=observed_at,
         probabilities={"home": 0.49, "draw": 0.28, "away": 0.23},
         eligibility_decision=eligible,
         withdrawal_authorized=withdrawal_authorized,
         decision_id="decision-refinement-1",
         decision_reason="explicit caller classification",
+        provider_identity=provider_identity,
         classification=(
             classification
             or (
@@ -114,6 +129,66 @@ def refinement(
             )
         ),
     )
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "the_odds_api",
+        "the_odds_api:prematch",
+        "the_odds_api:bulk:h2h:eu",
+    ],
+)
+def test_initial_accepts_canonical_the_odds_api_source_forms(source: str) -> None:
+    lifecycle = initial(snapshot_source=source)
+    assert lifecycle.initial_version.provider_identity == "the_odds_api"
+    assert lifecycle.initial_version.snapshot_source == source
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "another_provider:prematch",
+        "fake_the_odds_api",
+        "the_odds_api_fake",
+        "https://example.test/the_odds_api",
+        "the_odds_api:https://example.test",
+        "the_odds_api::prematch",
+    ],
+)
+def test_initial_rejects_foreign_or_deceptive_snapshot_source(source: str) -> None:
+    with pytest.raises(SignalLifecycleError, match="snapshot source"):
+        initial(snapshot_source=source)
+
+
+def test_declared_provider_identity_cannot_differ_from_the_odds_api() -> None:
+    with pytest.raises(SignalLifecycleError, match="provider identity"):
+        initial(provider_identity="therundown_experimental")
+
+
+def test_refinement_rejects_source_from_a_different_provider() -> None:
+    with pytest.raises(SignalLifecycleError, match="snapshot source"):
+        refinement(initial(), snapshot_source="another_provider:prematch")
+
+
+def test_tampered_persisted_snapshot_source_fails_validation_and_store_load(
+    tmp_path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    lifecycle = initial()
+    payload = lifecycle.as_payload()
+    payload["versions"][0]["snapshot_source"] = "another_provider:prematch"
+    with pytest.raises(SignalLifecycleError, match="snapshot source"):
+        Top5SignalLifecycle.from_payload(payload)
+
+    monkeypatch.setenv("SPORTSBRAIN_RUNTIME_STATE_DIR", str(tmp_path / "runtime"))
+    store = Top5SignalLifecycleStore()
+    store.save(lifecycle)
+    path = lifecycle_state_path(lifecycle.lifecycle_id)
+    stored = json.loads(path.read_text(encoding="utf-8"))
+    stored["lifecycle"]["versions"][0]["snapshot_source"] = "another_provider:prematch"
+    path.write_text(json.dumps(stored), encoding="utf-8")
+    with pytest.raises(SignalLifecycleError):
+        store.load(lifecycle.lifecycle_id)
 
 
 @pytest.mark.parametrize("lead_hours", [22, 24, 26])

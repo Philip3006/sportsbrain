@@ -106,6 +106,47 @@ def _boolean(value: object, name: str) -> bool:
     return value
 
 
+def _canonical_snapshot_provider(source: object) -> str | None:
+    """Parse the provider token from a canonical colon-delimited source label.
+
+    Bare provider identities and qualified internal routes are supported. Route
+    components are restricted to ASCII identifiers so URLs or substring
+    lookalikes cannot masquerade as provider provenance.
+    """
+
+    if not isinstance(source, str) or not source or source != source.strip():
+        return None
+    provider, separator, route = source.partition(":")
+    if provider != EXPECTED_PROVIDER_IDENTITY:
+        return None
+    if not separator:
+        return provider
+    components = route.split(":")
+    if any(
+        not component
+        or not component.isascii()
+        or any(
+            not (character.isalnum() or character in "_.-") for character in component
+        )
+        for component in components
+    ):
+        return None
+    return provider
+
+
+def _validate_snapshot_source_binding(
+    provider_identity: str, snapshot_source: object
+) -> None:
+    if provider_identity != EXPECTED_PROVIDER_IDENTITY:
+        raise SignalLifecycleError(
+            "signal lifecycle provider identity is not the_odds_api"
+        )
+    if _canonical_snapshot_provider(snapshot_source) != provider_identity:
+        raise SignalLifecycleError(
+            "snapshot source does not canonically bind to the_odds_api"
+        )
+
+
 def _freeze_json(value: object, *, name: str) -> object:
     if value is None or isinstance(value, (str, bool, int)):
         return value
@@ -563,6 +604,7 @@ class Top5SignalLifecycleVersion:
             raise SignalLifecycleError(
                 "signal lifecycle provider identity is not the_odds_api"
             )
+        _validate_snapshot_source_binding(self.provider_identity, self.snapshot_source)
         if self.prediction_generated_at < self.odds_captured_at:
             raise SignalLifecycleError(
                 "prediction generation precedes its odds capture"
@@ -946,6 +988,7 @@ def _build_version(
         raise SignalLifecycleError(
             "provider identity differs from lifecycle expectation"
         )
+    _validate_snapshot_source_binding(provider_identity, snapshot.source)
     stage_contract = contract.as_signal_time_contract(resolved_stage)
     if not stage_contract.accepts(fixture.kickoff, snapshot.captured_at, now_utc):
         raise SignalLifecycleError("snapshot is outside the stage window or stale")
