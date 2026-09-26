@@ -360,9 +360,27 @@ def collapse_top5_lifecycle_versions(
                         raise Top5LifecyclePublicError(
                             f"Top-5 lifecycle {key} changed for {lifecycle_id}"
                         )
-                if lifecycle.get("provenance_binding") != previous["lifecycle"].get(
-                    "provenance_binding"
+                previous_binding = previous["lifecycle"].get("provenance_binding")
+                current_binding = lifecycle.get("provenance_binding")
+                if not isinstance(previous_binding, Mapping) or not isinstance(
+                    current_binding, Mapping
                 ):
+                    raise Top5LifecyclePublicError(
+                        f"Top-5 lifecycle provenance is malformed for {lifecycle_id}"
+                    )
+                previous_immutable_binding = {
+                    key: value
+                    for key, value in previous_binding.items()
+                    if key != "snapshot_id"
+                }
+                current_immutable_binding = {
+                    key: value
+                    for key, value in current_binding.items()
+                    if key != "snapshot_id"
+                }
+                if previous_immutable_binding != current_immutable_binding or (
+                    "snapshot_id" in previous_binding
+                ) != ("snapshot_id" in current_binding):
                     raise Top5LifecyclePublicError(
                         f"Top-5 lifecycle provenance changed for {lifecycle_id}"
                     )

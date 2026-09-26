@@ -33,7 +33,9 @@ continues to come from the signal's `odds_ts`; kickoff remains the fixture's
 
 Only `source_sha`, `research_sha`, `model_artifact_hash`, `evidence_digest`,
 and `snapshot_id` may appear in `provenance_binding`, and each must match the
-enclosing signal's public provenance. Lifecycle data cannot carry provider,
+enclosing signal's public provenance. Across a version chain, source,
+Research, and model-artifact bindings remain identical; `snapshot_id` is
+version-specific and must match that version's enclosing signal. Lifecycle data cannot carry provider,
 publication, activation, account, ledger, or betting authority. Unknown nested
 fields are discarded by the Python public serializer. Existing controlled
 release authorization, provider, no-bet, freshness, provenance, and five-league
@@ -45,3 +47,21 @@ version-1 `INITIAL`, then retain the latest version. The browser also rejects
 a lower version or changed lifecycle ID for a previously observed
 `initial_record_id`; this local monotonicity check is additional to, and never
 substitutes for, the governed public-release guard.
+
+## Core-to-public projection
+
+`src.football.top5_signal_lifecycle_public_adapter.project_top5_signal_lifecycles`
+accepts only validated `Top5SignalLifecycle` domain objects. It requires one
+object for every canonical prediction outcome (`home`, `draw`, `away` as
+present), with exact fixture, league, candidate, model, provider, probability,
+timestamp, current snapshot, and source/Research/model-artifact bindings. It
+uses the INITIAL version digest for the stable public `initial_record_id`,
+retains the selected outcome's initial/current probability history, and only
+projects market/edge history already present in both core versions. The
+existing `project_top5_lifecycle` remains the public schema validator.
+
+`ControlledTop5PublicationPayload` records may provide the typed objects under
+`top5_signal_lifecycles`; the publisher projects these immediately before the
+existing prediction serializer. Supplying both typed objects and a prebuilt
+`lifecycle_by_market` is rejected. Existing prebuilt-map callers retain their
+prior behavior and are not made more permissive.
