@@ -3,10 +3,9 @@ TheOddsAPI wrapper. Free tier: 500 requests/month.
 Caches responses for 1 hour to preserve quota.
 Set ODDS_API_KEY in .env or pass directly.
 """
-import json
 import os
 from collections.abc import Mapping
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 
 import requests
@@ -15,7 +14,6 @@ from dotenv import load_dotenv
 from src.config import DATA_CACHE, LINE_SHOPPING_REGIONS, ODDS_API_URL
 from src.data.cache import disk_cache
 from src.runtime.paths import runtime_state_path
-from src.utils.atomic_io import atomic_write_json
 
 load_dotenv()
 
@@ -33,29 +31,21 @@ def _usage_log_path() -> Path:
     return runtime_state_path("data/cache/api_usage.json", require_external=True)
 
 
-def _next_month_start(at: datetime) -> datetime:
-    current = at.astimezone(timezone.utc)
-    if current.month == 12:
-        return datetime(current.year + 1, 1, 1, tzinfo=timezone.utc)
-    return datetime(current.year, current.month + 1, 1, tzinfo=timezone.utc)
-
-
 def _log_usage(
     requests_used: int,
     requests_remaining: int,
     *,
     observed_at: datetime | None = None,
 ) -> None:
-    observed = (observed_at or datetime.now(timezone.utc)).astimezone(timezone.utc)
-    usage = {
-        "requests_used": requests_used,
-        "requests_remaining": requests_remaining,
-        "observed_at": observed.isoformat(),
-        "reset_at": _next_month_start(observed).isoformat(),
-        "state": "QUOTA_EXHAUSTED" if requests_remaining == 0 else "AVAILABLE",
-        "source": "the_odds_api_response_headers",
-    }
-    atomic_write_json(_usage_log_path(), usage, sort_keys=True)
+    from src.signals import provider_budget
+
+    provider_budget.persist_odds_api_quota_usage(
+        requests_used,
+        requests_remaining,
+        source="the_odds_api_response_headers",
+        observed_at=observed_at,
+        path=_usage_log_path(),
+    )
 
 
 def get_api_key(api_key: str | None = None) -> str:
@@ -134,6 +124,7 @@ def revalidate_the_odds_api_auth_once(
             f"{ODDS_API_URL}/sports/soccer_epl/events",
             params={"apiKey": key},
             timeout=timeout,
+            allow_redirects=False,
         )
         safe_headers = _safe_auth_revalidation_headers(response.headers)
         status_code = int(response.status_code)
@@ -146,7 +137,9 @@ def revalidate_the_odds_api_auth_once(
             failure_class=None if 200 <= status_code < 300 else "http_error",
         )
         return {
-            "status": "verified" if 200 <= status_code < 300 else "failed_closed",
+            "status": "verified"
+            if audit.get("circuit_transition") == "closed"
+            else "failed_closed",
             "http_status": status_code,
             "safe_headers": safe_headers,
             "request_count": request_count,
