@@ -103,7 +103,7 @@ def _native_match_id(value: Any, *, source: str) -> str:
 def _schedule_fixtures(
     rows: list[dict[str, Any]], *, captured_at: datetime
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    """Validate the league-filtered schedule and select the existing target window."""
+    """Validate every schedule row, then choose one deterministic bounded batch."""
     captured_utc = captured_at.astimezone(timezone.utc)
     eligible: list[dict[str, Any]] = []
     excluded: list[dict[str, Any]] = []
@@ -177,6 +177,16 @@ def _schedule_fixtures(
         raise NationsLeagueIsportsError(
             "schedule returned no eligible future Nations League fixtures in the active window"
         )
+    deferred = eligible[MAX_MATCH_IDS_PER_ODDS_REQUEST:]
+    eligible = eligible[:MAX_MATCH_IDS_PER_ODDS_REQUEST]
+    excluded.extend(
+        {
+            "provider_match_id": fixture["provider_match_id"],
+            "reason": "deferred_bulk_capacity",
+        }
+        for fixture in deferred
+    )
+    excluded.sort(key=lambda fixture: (fixture["provider_match_id"], fixture["reason"]))
     return eligible, excluded
 
 
