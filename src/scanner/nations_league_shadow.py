@@ -13,7 +13,6 @@ import os
 import pickle
 import subprocess
 import tempfile
-import time
 import uuid
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
@@ -44,7 +43,6 @@ SNAPSHOT_DIR = MODELS_DIR / "snapshots" / "wm2026"
 ACTIVE_START = datetime(2026, 9, 24, tzinfo=timezone.utc)
 ACTIVE_END_EXCLUSIVE = datetime(2026, 11, 18, tzinfo=timezone.utc)
 MAX_HISTORY_AGE = timedelta(hours=24)
-MAX_PROVIDER_ATTEMPTS = 3
 SNAPSHOT_FILES = frozenset(
     {
         "README.md",
@@ -746,6 +744,25 @@ def _default_api_key_loader(api_key: str | None) -> str:
     return key
 
 
+def _required_nonnegative_quota_header(headers: Mapping[str, str], name: str) -> int:
+    raw_value = headers.get(name)
+    if raw_value is None:
+        raise NationsLeagueShadowError(
+            f"The Odds API omitted required {name} quota evidence"
+        )
+    try:
+        value = int(raw_value.strip())
+    except (AttributeError, TypeError, ValueError) as exc:
+        raise NationsLeagueShadowError(
+            f"The Odds API returned malformed {name} quota evidence"
+        ) from exc
+    if value < 0:
+        raise NationsLeagueShadowError(
+            f"The Odds API returned negative {name} quota evidence"
+        )
+    return value
+
+
 def fetch_provider_events(
     *,
     api_key: str | None = None,
@@ -755,7 +772,6 @@ def fetch_provider_events(
     success_recorder: Callable[[int | None], None] | None = None,
     error_recorder: Callable[[int, bool], None] | None = None,
     usage_logger: Callable[[int, int], None] | None = None,
-    sleeper: Callable[[float], None] = time.sleep,
 ) -> tuple[list[dict[str, Any]], int, int, dict[str, Any]]:
     """Fetch exactly The Odds API's Nations League h2h/eu endpoint after budget gate."""
     if budget_gate is None:
@@ -790,104 +806,92 @@ def fetch_provider_events(
         "query": {k: v for k, v in params.items() if k != "apiKey"},
         "credential": "apiKey (redacted)",
     }
-    request_count = 0
-    last_error: Exception | None = None
-    delays = (5.0, 15.0)
-    for attempt in range(MAX_PROVIDER_ATTEMPTS):
-        request_count += 1
-        try:
-            response = request_transport(
-                url, params=params, timeout=30, allow_redirects=False
-            )
-            status = int(response.status_code)
-            if status in (401, 403, 429):
-                if error_recorder is None:
-                    from src.signals.provider_budget import record_error
-
-                    error_recorder = lambda code, opened: record_error(
-                        "the_odds_api", code, open_circuit=opened
-                    )
-                try:
-                    error_recorder(status, True)
-                except Exception as exc:
-                    raise NationsLeagueShadowError(
-                        "provider auth failure could not be recorded"
-                    ) from exc
-                raise NationsLeagueShadowError(
-                    f"The Odds API rejected the bounded request with HTTP {status}"
-                )
-            if 400 <= status < 500:
-                raise NationsLeagueShadowError(
-                    f"The Odds API rejected the bounded request with HTTP {status}"
-                )
-            if 300 <= status < 400:
-                raise NationsLeagueShadowError(
-                    "The Odds API returned an unexpected redirect"
-                )
-            if status >= 500:
-                response.raise_for_status()
-                raise requests.HTTPError(f"The Odds API returned HTTP {status}")
-            if not 200 <= status < 300:
-                raise NationsLeagueShadowError(
-                    "The Odds API returned a non-success response"
-                )
-            response.raise_for_status()
-            headers = {str(k).casefold(): str(v) for k, v in response.headers.items()}
-            used = (
-                int(headers["x-requests-used"])
-                if "x-requests-used" in headers
-                else None
-            )
-            remaining = (
-                int(headers["x-requests-remaining"])
-                if "x-requests-remaining" in headers
-                else None
-            )
-            try:
-                if remaining is not None:
-                    if usage_logger is None:
-                        from src.data.odds_api import _log_usage
-
-                        usage_logger = lambda used_count, remaining_count: _log_usage(
-                            used_count, remaining_count
-                        )
-                    usage_logger(used or 0, remaining)
-                if success_recorder is None:
-                    from src.signals.provider_budget import record_success
-
-                    success_recorder = lambda quota: record_success(
-                        "the_odds_api", quota_remaining=quota
-                    )
-                success_recorder(remaining)
-            except Exception as exc:
-                raise NationsLeagueShadowError(
-                    "successful provider response could not be accounted for"
-                ) from exc
-            try:
-                events = response.json()
-            except (requests.RequestException, ValueError) as exc:
-                raise NationsLeagueShadowError(
-                    "The Odds API returned malformed JSON"
-                ) from exc
-            if not isinstance(events, list) or any(
-                not isinstance(e, dict) for e in events
-            ):
-                raise NationsLeagueShadowError(
-                    "The Odds API returned a malformed event list"
-                )
-            return events, request_count, request_count - 1, descriptor
-        except NationsLeagueShadowError:
-            raise
-        except (requests.RequestException, ValueError) as exc:
-            last_error = exc
-            if request_count >= MAX_PROVIDER_ATTEMPTS:
-                break
-            sleeper(delays[attempt])
-    if last_error is not None:
+    try:
+        response = request_transport(
+            url, params=params, timeout=30, allow_redirects=False
+        )
+    except Exception as exc:
         raise NationsLeagueShadowError(
-            f"The Odds API h2h fetch failed after {request_count} bounded attempt(s)"
-        ) from last_error
-    raise NationsLeagueShadowError("The Odds API h2h fetch failed")
+            "The Odds API single h2h request failed"
+        ) from exc
+
+    try:
+        status = int(response.status_code)
+    except (AttributeError, TypeError, ValueError) as exc:
+        raise NationsLeagueShadowError(
+            "The Odds API returned an invalid HTTP status"
+        ) from exc
+
+    if status in (401, 403, 429):
+        if error_recorder is None:
+            from src.signals.provider_budget import record_error
+
+            error_recorder = lambda code, opened: record_error(
+                "the_odds_api", code, open_circuit=opened
+            )
+        try:
+            error_recorder(status, True)
+        except Exception as exc:
+            raise NationsLeagueShadowError(
+                "provider auth/quota failure could not be recorded"
+            ) from exc
+        raise NationsLeagueShadowError(
+            f"The Odds API rejected the single request with HTTP {status}"
+        )
+    if 400 <= status < 500:
+        raise NationsLeagueShadowError(
+            f"The Odds API rejected the single request with HTTP {status}"
+        )
+    if 300 <= status < 400:
+        raise NationsLeagueShadowError("The Odds API returned an unexpected redirect")
+    if status >= 500:
+        raise NationsLeagueShadowError(f"The Odds API returned HTTP {status}")
+    if not 200 <= status < 300:
+        raise NationsLeagueShadowError("The Odds API returned a non-success response")
+
+    try:
+        headers = {str(k).casefold(): str(v) for k, v in response.headers.items()}
+    except Exception as exc:
+        raise NationsLeagueShadowError(
+            "The Odds API returned malformed quota headers"
+        ) from exc
+    used = _required_nonnegative_quota_header(headers, "x-requests-used")
+    remaining = _required_nonnegative_quota_header(headers, "x-requests-remaining")
+
+    try:
+        if usage_logger is None:
+            from src.data.odds_api import _log_usage
+
+            usage_logger = lambda used_count, remaining_count: _log_usage(
+                used_count, remaining_count
+            )
+        usage_logger(used, remaining)
+    except Exception as exc:
+        raise NationsLeagueShadowError(
+            "successful provider response quota evidence could not be persisted"
+        ) from exc
+
+    try:
+        events = response.json()
+    except Exception as exc:
+        raise NationsLeagueShadowError("The Odds API returned malformed JSON") from exc
+    if not isinstance(events, list) or any(not isinstance(e, dict) for e in events):
+        raise NationsLeagueShadowError("The Odds API returned a malformed event list")
+
+    try:
+        if success_recorder is None:
+            from src.signals.provider_budget import record_success
+
+            success_recorder = lambda quota: record_success(
+                "the_odds_api", quota_remaining=quota
+            )
+        success_recorder(remaining)
+    except Exception as exc:
+        raise NationsLeagueShadowError(
+            "successful provider response could not be accounted for"
+        ) from exc
+
+    return events, 1, 0, descriptor
 
 
 def current_source_sha(repository_root: Path) -> str:

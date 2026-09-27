@@ -3,14 +3,16 @@ from __future__ import annotations
 import ast
 import hashlib
 import json
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from types import SimpleNamespace
+from types import ModuleType, SimpleNamespace
+from typing import ClassVar
 
 import numpy as np
 import pandas as pd
 import pytest
-from requests import HTTPError
+import requests
 
 from src.config import LEAGUE_REGISTRY, canonical_name
 from src.features.squad_context import tournament_stage_features
@@ -28,6 +30,7 @@ from src.scanner.nations_league_shadow import (
     fetch_provider_events,
     load_frozen_snapshot,
     predict_fixture,
+    run_shadow_scan,
     write_immutable_artifact,
 )
 
@@ -168,9 +171,9 @@ def test_provider_request_is_exactly_h2h_eu_and_uses_target_sport_key():
         api_key="test-only",
         transport=transport,
         budget_gate=lambda: True,
+        credential_loader=lambda key: key,
         success_recorder=lambda remaining: recorded.append(remaining),
         usage_logger=lambda used, remaining: recorded.append((used, remaining)),
-        sleeper=lambda _: pytest.fail("successful fake response should not retry"),
     )
     assert len(events) == 1
     assert requests_made == 1
@@ -214,101 +217,397 @@ def test_provider_budget_block_makes_zero_http_or_credential_calls():
     assert calls == {"transport": 0, "credential": 0}
 
 
-def test_provider_retry_is_bounded_and_counted_without_redirects():
-    statuses = [503, 200]
+def test_provider_503_fails_after_exactly_one_request():
     requests_seen = []
 
     class Response:
-        def __init__(self, status):
-            self.status_code = status
-            self.headers = {}
+        status_code = 503
+        headers: ClassVar[dict[str, str]] = {}
 
-        def raise_for_status(self):
-            if self.status_code >= 400:
-                raise HTTPError("transient upstream failure")
+    with pytest.raises(NationsLeagueShadowError, match="HTTP 503"):
+        fetch_provider_events(
+            api_key="test-only",
+            transport=lambda *_args, **_kwargs: requests_seen.append(1) or Response(),
+            budget_gate=lambda: True,
+            credential_loader=lambda _key: "synthetic-key",
+        )
+    assert requests_seen == [1]
+
+
+@pytest.mark.parametrize("failure", [requests.Timeout, requests.ConnectionError])
+def test_provider_transport_failure_fails_after_exactly_one_request(failure):
+    requests_seen = []
+
+    def transport(*_args, **_kwargs):
+        requests_seen.append(1)
+        raise failure("synthetic network failure")
+
+    with pytest.raises(NationsLeagueShadowError, match="single h2h request failed"):
+        fetch_provider_events(
+            api_key="test-only",
+            transport=transport,
+            budget_gate=lambda: True,
+            credential_loader=lambda _key: "synthetic-key",
+        )
+    assert requests_seen == [1]
+
+
+@pytest.mark.parametrize("status", [401, 403, 429])
+def test_auth_and_quota_failures_open_circuit_after_one_request(status):
+    circuit = []
+    requests_seen = []
+
+    class Response:
+        status_code = status
+        headers: ClassVar[dict[str, str]] = {}
+
+    with pytest.raises(NationsLeagueShadowError, match=f"HTTP {status}"):
+        fetch_provider_events(
+            api_key="test-only",
+            transport=lambda *_args, **_kwargs: requests_seen.append(1) or Response(),
+            budget_gate=lambda: True,
+            credential_loader=lambda _key: "synthetic-key",
+            error_recorder=lambda code, opened: circuit.append((code, opened)),
+        )
+    assert requests_seen == [1]
+    assert circuit == [(status, True)]
+
+
+@pytest.mark.parametrize("status", [301, 302])
+def test_provider_redirect_fails_after_exactly_one_request(status):
+    requests_seen = []
+
+    class Response:
+        status_code = status
+        headers: ClassVar[dict[str, str]] = {}
+
+    with pytest.raises(NationsLeagueShadowError, match="unexpected redirect"):
+        fetch_provider_events(
+            api_key="test-only",
+            transport=lambda *_args, **kwargs: (
+                requests_seen.append(kwargs) or Response()
+            ),
+            budget_gate=lambda: True,
+            credential_loader=lambda _key: "synthetic-key",
+        )
+    assert len(requests_seen) == 1
+    assert requests_seen[0]["allow_redirects"] is False
+
+
+@pytest.mark.parametrize("status", [400, 404])
+def test_other_client_errors_fail_after_exactly_one_request(status):
+    requests_seen = []
+
+    class Response:
+        status_code = status
+        headers: ClassVar[dict[str, str]] = {}
+
+    with pytest.raises(NationsLeagueShadowError, match=f"HTTP {status}"):
+        fetch_provider_events(
+            api_key="test-only",
+            transport=lambda *_args, **_kwargs: requests_seen.append(1) or Response(),
+            budget_gate=lambda: True,
+            credential_loader=lambda _key: "synthetic-key",
+        )
+    assert requests_seen == [1]
+
+
+@pytest.mark.parametrize(
+    ("headers", "message"),
+    [
+        ({}, "omitted required x-requests-used"),
+        ({"x-requests-used": "12"}, "omitted required x-requests-remaining"),
+        (
+            {"x-requests-used": "bad", "x-requests-remaining": "88"},
+            "malformed x-requests-used",
+        ),
+        (
+            {"x-requests-used": "12", "x-requests-remaining": "bad"},
+            "malformed x-requests-remaining",
+        ),
+        (
+            {"x-requests-used": "-1", "x-requests-remaining": "88"},
+            "negative x-requests-used",
+        ),
+        (
+            {"x-requests-used": "12", "x-requests-remaining": "-1"},
+            "negative x-requests-remaining",
+        ),
+    ],
+)
+def test_invalid_quota_headers_fail_after_one_request_without_accounting(
+    headers, message
+):
+    requests_seen = []
+    usage = []
+    success = []
+
+    class Response:
+        status_code = 200
+
+        def __init__(self):
+            self.headers = headers
 
         @staticmethod
         def json():
             return [_event()]
 
-    def transport(url, **kwargs):
-        requests_seen.append(kwargs)
-        return Response(statuses.pop(0))
-
-    events, request_count, retry_count, _ = fetch_provider_events(
-        api_key="test-only",
-        transport=transport,
-        budget_gate=lambda: True,
-        success_recorder=lambda _remaining: None,
-        sleeper=lambda _delay: None,
-    )
-    assert len(events) == 1
-    assert request_count == 2
-    assert retry_count == 1
-    assert len(requests_seen) == 2
-    assert all(call["allow_redirects"] is False for call in requests_seen)
-
-
-def test_auth_failure_opens_circuit_and_does_not_retry():
-    circuit = []
-    requests_seen = []
-
-    class Response:
-        def __init__(self):
-            self.status_code = 401
-            self.headers = {}
-
-    with pytest.raises(NationsLeagueShadowError, match="HTTP 401"):
+    with pytest.raises(NationsLeagueShadowError, match=message):
         fetch_provider_events(
             api_key="test-only",
-            transport=lambda *_args, **_kwargs: (
-                requests_seen.append(True) or Response()
-            ),
+            transport=lambda *_args, **_kwargs: requests_seen.append(1) or Response(),
             budget_gate=lambda: True,
-            error_recorder=lambda code, opened: circuit.append((code, opened)),
-            sleeper=lambda _delay: pytest.fail("auth failure must not retry"),
+            credential_loader=lambda _key: "synthetic-key",
+            usage_logger=lambda used, remaining: usage.append((used, remaining)),
+            success_recorder=lambda remaining: success.append(remaining),
         )
-    assert requests_seen == [True]
-    assert circuit == [(401, True)]
+    assert requests_seen == [1]
+    assert usage == []
+    assert success == []
 
 
-def test_success_accounting_or_payload_failure_never_retries_paid_request():
+def test_zero_remaining_is_persisted_and_completed_response_is_accepted(
+    tmp_path, monkeypatch
+):
+    from src.signals import provider_budget
+
+    quota_path = tmp_path / "api_usage.json"
+    monkeypatch.setattr(provider_budget, "_API_USAGE_PATH", quota_path)
+    monkeypatch.setattr(
+        provider_budget, "_BUDGET_PATH", tmp_path / "provider_budget.json"
+    )
+    usage_log = []
+    success = []
+    fake_odds_api = ModuleType("src.data.odds_api")
+    fake_odds_api._log_usage = lambda used, remaining: (
+        usage_log.append((used, remaining))
+        or provider_budget.persist_odds_api_quota_usage(
+            used,
+            remaining,
+            source="the_odds_api_response_headers",
+            path=quota_path,
+        )
+    )
+    monkeypatch.setitem(sys.modules, "src.data.odds_api", fake_odds_api)
+
     class Response:
-        def __init__(self):
-            self.status_code = 200
-            self.headers = {}
-
-        @staticmethod
-        def raise_for_status():
-            return None
+        status_code = 200
+        headers: ClassVar[dict[str, str]] = {
+            "x-requests-used": "500",
+            "x-requests-remaining": "0",
+        }
 
         @staticmethod
         def json():
-            raise ValueError("malformed payload")
+            return [_event()]
 
-    seen = []
-    with pytest.raises(NationsLeagueShadowError, match="accounted for"):
+    events, request_count, retry_count, _ = fetch_provider_events(
+        api_key="test-only",
+        transport=lambda *_args, **_kwargs: Response(),
+        budget_gate=lambda: True,
+        credential_loader=lambda _key: "synthetic-key",
+        success_recorder=lambda remaining: success.append(remaining),
+    )
+    assert events == [_event()]
+    assert request_count == 1
+    assert retry_count == 0
+    assert usage_log == [(500, 0)]
+    assert success == [0]
+    quota = json.loads(quota_path.read_text())
+    assert quota["requests_used"] == 500
+    assert quota["requests_remaining"] == 0
+    assert quota["state"] == "QUOTA_EXHAUSTED"
+    assert quota["source"] == "the_odds_api_response_headers"
+    assert provider_budget.is_provider_available("the_odds_api") is False
+
+
+def test_successful_response_quota_persistence_failure_fails_closed_after_one_call():
+    requests_seen = []
+    success = []
+
+    class Response:
+        status_code = 200
+        headers: ClassVar[dict[str, str]] = {
+            "x-requests-used": "12",
+            "x-requests-remaining": "88",
+        }
+
+        @staticmethod
+        def json():
+            return [_event()]
+
+    with pytest.raises(
+        NationsLeagueShadowError, match="quota evidence could not be persisted"
+    ):
         fetch_provider_events(
             api_key="test-only",
-            transport=lambda *_args, **_kwargs: seen.append("account") or Response(),
+            transport=lambda *_args, **_kwargs: requests_seen.append(1) or Response(),
             budget_gate=lambda: True,
-            success_recorder=lambda _remaining: (_ for _ in ()).throw(
-                OSError("state write")
-            ),
-            sleeper=lambda _delay: pytest.fail("successful response must not retry"),
+            credential_loader=lambda _key: "synthetic-key",
+            usage_logger=lambda *_args: (_ for _ in ()).throw(OSError("write failed")),
+            success_recorder=lambda remaining: success.append(remaining),
         )
-    assert seen == ["account"]
+    assert requests_seen == [1]
+    assert success == []
 
-    seen.clear()
+
+def test_success_recorder_or_malformed_payload_failure_never_retries():
+    requests_seen = []
+
+    class Response:
+        status_code = 200
+        headers: ClassVar[dict[str, str]] = {
+            "x-requests-used": "12",
+            "x-requests-remaining": "88",
+        }
+
+        def __init__(self, malformed=False):
+            self.malformed = malformed
+
+        def json(self):
+            if self.malformed:
+                raise ValueError("malformed payload")
+            return [_event()]
+
+    with pytest.raises(NationsLeagueShadowError, match="could not be accounted for"):
+        fetch_provider_events(
+            api_key="test-only",
+            transport=lambda *_args, **_kwargs: (
+                requests_seen.append("account") or Response()
+            ),
+            budget_gate=lambda: True,
+            credential_loader=lambda _key: "synthetic-key",
+            usage_logger=lambda _used, _remaining: None,
+            success_recorder=lambda _remaining: (_ for _ in ()).throw(
+                OSError("circuit state write")
+            ),
+        )
+    assert requests_seen == ["account"]
+
+    requests_seen.clear()
     with pytest.raises(NationsLeagueShadowError, match="malformed JSON"):
         fetch_provider_events(
             api_key="test-only",
-            transport=lambda *_args, **_kwargs: seen.append("decode") or Response(),
+            transport=lambda *_args, **_kwargs: (
+                requests_seen.append("decode") or Response(malformed=True)
+            ),
             budget_gate=lambda: True,
-            success_recorder=lambda _remaining: None,
-            sleeper=lambda _delay: pytest.fail("malformed response must not retry"),
+            credential_loader=lambda _key: "synthetic-key",
+            usage_logger=lambda _used, _remaining: None,
+            success_recorder=lambda _remaining: pytest.fail(
+                "malformed payload must not be recorded as a successful fetch"
+            ),
         )
-    assert seen == ["decode"]
+    assert requests_seen == ["decode"]
+
+
+def test_missing_quota_header_prevents_artifact_creation(tmp_path, monkeypatch):
+    import src.scanner.nations_league_shadow as shadow
+    from src.signals import provider_budget
+
+    snapshot = load_frozen_snapshot()
+    monkeypatch.setattr(shadow, "load_frozen_snapshot", lambda _path: snapshot)
+    monkeypatch.setattr(
+        shadow,
+        "load_cached_history",
+        lambda *_args, **_kwargs: (_history(), {"sha256": "a" * 64}),
+    )
+    monkeypatch.setattr(shadow, "current_source_sha", lambda _root: "b" * 40)
+    monkeypatch.setattr(shadow, "_default_api_key_loader", lambda _key: "synthetic-key")
+    monkeypatch.setattr(provider_budget, "is_provider_available", lambda _name: True)
+
+    calls = []
+    artifact_path = tmp_path / "must-not-exist.json"
+
+    class Response:
+        status_code = 200
+        headers: ClassVar[dict[str, str]] = {"x-requests-used": "12"}
+
+        @staticmethod
+        def json():
+            return [_event()]
+
+    with pytest.raises(NationsLeagueShadowError, match="x-requests-remaining"):
+        run_shadow_scan(
+            snapshot_dir=SNAPSHOT_DIR,
+            history_path=tmp_path / "history.pkl",
+            source_root=ROOT,
+            output_path=artifact_path,
+            provider_transport=lambda *_args, **_kwargs: calls.append(1) or Response(),
+        )
+    assert calls == [1]
+    assert not artifact_path.exists()
+
+
+def test_quota_persistence_failure_prevents_artifact_creation(tmp_path, monkeypatch):
+    import src.scanner.nations_league_shadow as shadow
+    from src.signals import provider_budget
+
+    snapshot = load_frozen_snapshot()
+    monkeypatch.setattr(shadow, "load_frozen_snapshot", lambda _path: snapshot)
+    monkeypatch.setattr(
+        shadow,
+        "load_cached_history",
+        lambda *_args, **_kwargs: (_history(), {"sha256": "a" * 64}),
+    )
+    monkeypatch.setattr(shadow, "current_source_sha", lambda _root: "b" * 40)
+    monkeypatch.setattr(shadow, "_default_api_key_loader", lambda _key: "synthetic-key")
+    monkeypatch.setattr(provider_budget, "is_provider_available", lambda _name: True)
+
+    fake_odds_api = ModuleType("src.data.odds_api")
+
+    def fail_quota_persistence(_used, _remaining):
+        raise OSError("synthetic quota persistence failure")
+
+    fake_odds_api._log_usage = fail_quota_persistence
+    monkeypatch.setitem(sys.modules, "src.data.odds_api", fake_odds_api)
+    calls = []
+    artifact_path = tmp_path / "must-not-exist.json"
+
+    class Response:
+        status_code = 200
+        headers: ClassVar[dict[str, str]] = {
+            "x-requests-used": "12",
+            "x-requests-remaining": "88",
+        }
+
+        @staticmethod
+        def json():
+            return [_event()]
+
+    with pytest.raises(
+        NationsLeagueShadowError, match="quota evidence could not be persisted"
+    ):
+        run_shadow_scan(
+            snapshot_dir=SNAPSHOT_DIR,
+            history_path=tmp_path / "history.pkl",
+            source_root=ROOT,
+            output_path=artifact_path,
+            provider_transport=lambda *_args, **_kwargs: calls.append(1) or Response(),
+        )
+    assert calls == [1]
+    assert not artifact_path.exists()
+
+
+def test_provider_fetch_has_one_transport_call_site_and_no_retry_loop():
+    module = ROOT / "src" / "scanner" / "nations_league_shadow.py"
+    tree = ast.parse(module.read_text())
+    function = next(
+        node
+        for node in tree.body
+        if isinstance(node, ast.FunctionDef) and node.name == "fetch_provider_events"
+    )
+    transport_calls = [
+        node
+        for node in ast.walk(function)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "request_transport"
+    ]
+    assert len(transport_calls) == 1
+    assert not any(
+        isinstance(node, (ast.For, ast.While)) for node in ast.walk(function)
+    )
 
 
 def test_h2h_requires_exactly_three_valid_outcomes_and_prefers_pinnacle():
