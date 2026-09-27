@@ -30,7 +30,13 @@ from src.football.top5_activation_authorization import (
     VerifiedTop5ActivationAuthorizationV1,
 )
 from src.football.top5_controlled_shadow_provider_qualification import TOP5_LEAGUES
-from src.football.top5_durable_activation import _canonical_bytes, _sha
+from src.football.top5_durable_activation import (
+    DurableActivationError,
+    _canonical_bytes,
+    _sha,
+    validate_activation_evidence_provider,
+)
+from src.football.top5_final_acceptance import ACTIVE_PROVIDER
 from src.football.top5_production_activation import current_top5_routing_snapshot
 from src.football.top5_signal_lifecycle import (
     DEFAULT_SIGNAL_LIFECYCLE_CONTRACT,
@@ -56,7 +62,8 @@ def executing_route_configuration_digest(
     return _sha(
         {
             "activation_plan_digest": binding.activation_plan_digest,
-            "provider_authority": "the_odds_api",
+            "provider_authority": binding.provider_authority,
+            "evidence_provider": binding.evidence_provider,
             "activation_league": binding.activation_league,
             "fixture_key": binding.fixture_key,
             "request_shape_digest": binding.request_shape_digest,
@@ -227,7 +234,7 @@ class DurableTop5ProductionRouteStateStore:
             "model_artifact_hash": None,
             "source_sha": None,
             "research_sha": None,
-            "provider_authority": "the_odds_api",
+            "provider_authority": ACTIVE_PROVIDER,
             "activation_plan_digest": None,
             "signed_authorization_digest": None,
             "pre_activation_snapshot_digest": baseline.snapshot_digest,
@@ -283,7 +290,7 @@ class DurableTop5ProductionRouteStateStore:
             or route.get("schema_version") != TOP5_ROUTE_STATE_SCHEMA
         ):
             raise Top5RouteStateError("route state schema fields are invalid")
-        if route.get("provider_authority") != "the_odds_api":
+        if route.get("provider_authority") != ACTIVE_PROVIDER:
             raise Top5RouteStateError("route authority must remain the_odds_api")
         _false_safety_fields(route)
         for name in ("pre_activation_snapshot_digest", "current_configuration_digest"):
@@ -542,8 +549,14 @@ class DurableTop5ProductionRouteStateStore:
         now: datetime,
     ) -> dict[str, object]:
         now_utc = _utc(now, "now")
-        if binding.provider_authority != "the_odds_api" or binding.retry_budget != 0:
+        if binding.provider_authority != ACTIVE_PROVIDER or binding.retry_budget != 0:
             raise Top5RouteStateError("prepared route violates provider/retry contract")
+        try:
+            validate_activation_evidence_provider(binding.evidence_provider)
+        except DurableActivationError as exc:
+            raise Top5RouteStateError(
+                "prepared route evidence provider is not allowlisted"
+            ) from exc
         if binding.activation_league not in TOP5_LEAGUES:
             raise Top5RouteStateError("prepared route league is not canonical Top-5")
         if (
@@ -781,7 +794,7 @@ class DurableTop5ProductionRouteStateStore:
                     "model_artifact_hash": binding.model_artifact_hash,
                     "source_sha": binding.source_sha,
                     "research_sha": binding.research_sha,
-                    "provider_authority": "the_odds_api",
+                    "provider_authority": binding.provider_authority,
                     "activation_plan_digest": binding.activation_plan_digest,
                     "signed_authorization_digest": authorization.authorization_digest,
                     "current_configuration_digest": bound_configuration,
@@ -848,7 +861,7 @@ class DurableTop5ProductionRouteStateStore:
             "model_artifact_hash": binding.model_artifact_hash,
             "source_sha": binding.source_sha,
             "research_sha": binding.research_sha,
-            "provider_authority": "the_odds_api",
+            "provider_authority": binding.provider_authority,
             "request_shape_digest": binding.request_shape_digest,
             "provider_request_count": 1,
             "retry_count": 0,
@@ -1099,7 +1112,7 @@ class Top5ProductionRouteConsumer:
             "model_artifact_hash": binding.model_artifact_hash,
             "source_sha": binding.source_sha,
             "research_sha": binding.research_sha,
-            "provider_authority": "the_odds_api",
+            "provider_authority": ACTIVE_PROVIDER,
             "activation_plan_digest": binding.activation_plan_digest,
             "signed_authorization_digest": authorization.authorization_digest,
             "current_configuration_digest": executing_route_configuration_digest(
@@ -1139,7 +1152,7 @@ class Top5ProductionRouteConsumer:
             route.get("activation_mode") != "DISABLED"
             or route.get("active_league") is not None
             or route.get("active_fixture") is not None
-            or route.get("provider_authority") != "the_odds_api"
+            or route.get("provider_authority") != ACTIVE_PROVIDER
             or any(
                 route.get(field) is not False
                 for field in (
@@ -1190,7 +1203,7 @@ class Top5ProductionRouteConsumer:
             "model_artifact_hash": binding.model_artifact_hash,
             "source_sha": binding.source_sha,
             "research_sha": binding.research_sha,
-            "provider_authority": "the_odds_api",
+            "provider_authority": binding.provider_authority,
             "activation_plan_digest": binding.activation_plan_digest,
             "signed_authorization_digest": authorization.authorization_digest,
             "current_configuration_digest": executing_route_configuration_digest(
