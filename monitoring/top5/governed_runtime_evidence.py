@@ -18,6 +18,7 @@ from src.football.top5_activation_route_state import (
     TOP5_ROUTE_STORE_SCHEMA,
 )
 from src.football.top5_durable_activation import _sha as canonical_sha
+from src.football.top5_final_acceptance import MAX_EVIDENCE_AGE_SECONDS
 from src.runtime.paths import ROOT, governed_runtime_root
 
 ARTIFACT_SCHEMA = "top5-governed-runtime-evidence-v1"
@@ -27,6 +28,7 @@ CANDIDATE_PROVIDER = "therundown_experimental"
 STATE_RELATIVE_PATH = "football/top5/governed-runtime/runtime-state-v1.json"
 MAX_STATE_BYTES = 64 * 1024
 MAX_STATUS_BYTES = 16 * 1024
+MAX_RUNTIME_STATE_AGE_SECONDS = MAX_EVIDENCE_AGE_SECONDS
 
 
 class GovernedRuntimeEvidenceError(ValueError):
@@ -73,6 +75,19 @@ def _absolute_path(value: object, name: str) -> Path:
     if not path.is_absolute():
         raise GovernedRuntimeEvidenceError(f"{name} must be absolute")
     return path.resolve()
+
+
+def _utc_timestamp(value: object, name: str) -> tuple[str, datetime]:
+    text = _text(value, name)
+    try:
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise GovernedRuntimeEvidenceError(f"{name} is not ISO-8601") from exc
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        raise GovernedRuntimeEvidenceError(f"{name} must be timezone-aware UTC")
+    if parsed.utcoffset().total_seconds() != 0:
+        raise GovernedRuntimeEvidenceError(f"{name} must be UTC")
+    return text, parsed.astimezone(timezone.utc)
 
 
 def _read_owner_file(path: Path) -> dict[str, Any]:
@@ -167,6 +182,14 @@ def observe_governed_runtime() -> dict[str, object]:
             raise GovernedRuntimeEvidenceError("governed runtime state schema is invalid")
         if state.get("runtime_root_role") != "governed-runtime":
             raise GovernedRuntimeEvidenceError("operator state does not identify a governed runtime")
+        runtime_state_observed_at, observed_at = _utc_timestamp(
+            state.get("observed_at"), "observed_at"
+        )
+        state_now = datetime.now(timezone.utc)
+        if observed_at > state_now:
+            raise GovernedRuntimeEvidenceError("underlying runtime state is from the future")
+        if (state_now - observed_at).total_seconds() > MAX_RUNTIME_STATE_AGE_SECONDS:
+            raise GovernedRuntimeEvidenceError("underlying runtime state is stale")
 
         source_release_sha = _sha_text(state.get("source_release_sha"), "source_release_sha")
         runtime_data_sha = _sha_text(state.get("runtime_data_sha"), "runtime_data_sha")
@@ -232,7 +255,10 @@ def observe_governed_runtime() -> dict[str, object]:
         if health_authority != "governed" or health_status not in {"ok", "degraded"}:
             raise GovernedRuntimeEvidenceError("governed health evidence is invalid")
 
-        captured_at = datetime.now(timezone.utc).isoformat()
+        captured_at_dt = datetime.now(timezone.utc)
+        if captured_at_dt < observed_at:
+            raise GovernedRuntimeEvidenceError("evidence capture predates runtime observation")
+        captured_at = captured_at_dt.isoformat()
         payload: dict[str, object] = {
             "schema_version": ARTIFACT_SCHEMA,
             "status": "READY",
@@ -242,6 +268,7 @@ def observe_governed_runtime() -> dict[str, object]:
             "source_release_resolution": source_resolution,
             "runtime_data_sha": runtime_data_sha,
             "runtime_data_resolution": runtime_resolution,
+            "runtime_state_observed_at": runtime_state_observed_at,
             "active_provider_order": list(order),
             "provider_authority": ACTIVE_PROVIDER,
             "checkout_clean": True,

@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import json
 import subprocess
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
 
 import monitoring.top5.governed_runtime_evidence as evidence_module
+import monitoring.top5.governed_runtime_state as state_module
 from monitoring.top5.governed_runtime_evidence import (
     ARTIFACT_SCHEMA,
     observe_governed_runtime,
@@ -64,6 +65,7 @@ def _state(runtime_root: Path, publisher_root: Path, **overrides: object) -> dic
     state: dict[str, object] = {
         "schema_version": evidence_module.STATE_SCHEMA,
         "runtime_root_role": "governed-runtime",
+        "observed_at": datetime.now(timezone.utc).isoformat(),
         "source_release_sha": SOURCE_SHA,
         "source_release_resolution": {
             "source": str(state_path),
@@ -249,3 +251,95 @@ def test_observer_uses_only_bounded_local_git_checks(
     assert calls
     assert all(command[:3] == ["git", "-C", command[2]] for command in calls)
     assert all("status" in command for command in calls)
+
+
+def test_fresh_underlying_state_is_bound_into_b1_payload(
+    valid_observation: tuple[Path, Path, Path],
+) -> None:
+    runtime_root, publisher_root, _ = valid_observation
+    state_path = runtime_root / evidence_module.STATE_RELATIVE_PATH
+    state = _state(runtime_root, publisher_root)
+    _write_json(state_path, state)
+    payload = observe_governed_runtime()
+    assert payload["status"] == "READY"
+    assert payload["runtime_state_observed_at"] == state["observed_at"]
+    assert datetime.fromisoformat(str(payload["captured_at"])) >= datetime.fromisoformat(
+        str(payload["runtime_state_observed_at"])
+    )
+    _validate_runtime(
+        payload,
+        now=datetime.now(timezone.utc),
+        model={"source_sha": SOURCE_SHA},
+    )
+
+
+@pytest.mark.parametrize(
+    "observed_at",
+    [
+        datetime.now(timezone.utc) - timedelta(seconds=901),
+        datetime.now(timezone.utc) + timedelta(seconds=60),
+    ],
+)
+def test_stale_or_future_underlying_state_blocks(
+    valid_observation: tuple[Path, Path, Path], observed_at: datetime
+) -> None:
+    runtime_root, publisher_root, _ = valid_observation
+    _write_json(
+        runtime_root / evidence_module.STATE_RELATIVE_PATH,
+        _state(runtime_root, publisher_root, observed_at=observed_at.isoformat()),
+    )
+    result = observe_governed_runtime()
+    assert result["status"] == "BLOCKED"
+    assert "blockers" in result
+
+
+def test_old_state_cannot_become_fresh_by_wrapping_it_now(
+    valid_observation: tuple[Path, Path, Path],
+) -> None:
+    runtime_root, publisher_root, _ = valid_observation
+    old_state = _state(
+        runtime_root,
+        publisher_root,
+        observed_at=(datetime.now(timezone.utc) - timedelta(hours=2)).isoformat(),
+        captured_at=datetime.now(timezone.utc).isoformat(),
+    )
+    _write_json(runtime_root / evidence_module.STATE_RELATIVE_PATH, old_state)
+    result = observe_governed_runtime()
+    assert result["status"] == "BLOCKED"
+
+
+def test_old_source_release_is_allowed_when_active_state_observation_is_fresh(
+    valid_observation: tuple[Path, Path, Path],
+) -> None:
+    runtime_root, publisher_root, _ = valid_observation
+    payload = observe_governed_runtime()
+    assert payload["status"] == "READY"
+    assert payload["source_release_resolution"]["method"] == "operator-release-record"
+    assert payload["runtime_data_sha"] == RUNTIME_SHA
+    stored = json.loads(
+        (runtime_root / evidence_module.STATE_RELATIVE_PATH).read_text(encoding="utf-8")
+    )
+    assert payload["runtime_state_observed_at"] == stored["observed_at"]
+
+
+def test_state_producer_generates_timestamp_atomically_and_keeps_private_mode(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    runtime_root = tmp_path / "runtime-state"
+    monkeypatch.setattr(state_module, "governed_runtime_root", lambda: runtime_root)
+    state = {
+        "provider_authority": "the_odds_api",
+        "active_provider_order": ["the_odds_api"],
+        "runtime_data_sha": RUNTIME_SHA,
+        "publisher_workspace_root": str(tmp_path / "publisher"),
+    }
+    path = state_module.write_governed_runtime_state(state)
+    stored = json.loads(path.read_text(encoding="utf-8"))
+    assert path == runtime_root / state_module.STATE_RELATIVE_PATH
+    assert path.stat().st_mode & 0o777 == 0o600
+    observed_at = datetime.fromisoformat(stored["observed_at"])
+    assert datetime.now(timezone.utc) - observed_at < timedelta(seconds=5)
+    assert "observed_at" not in state
+    assert not list(path.parent.glob(f".{path.name}.*.tmp"))
+    with pytest.raises(state_module.GovernedRuntimeStateWriteError):
+        state_module.write_governed_runtime_state({**state, "observed_at": "2000-01-01T00:00:00Z"})

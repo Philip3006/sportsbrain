@@ -14,6 +14,7 @@ from .governed_runtime_evidence import (
     observe_governed_runtime,
     verify_artifact_digest,
 )
+from .governed_runtime_state import write_governed_runtime_state
 
 __all__ = [
     "BLOCKED_STATUS",
@@ -26,4 +27,5 @@ __all__ = [
     "ARTIFACT_SCHEMA",
     "observe_governed_runtime",
     "verify_artifact_digest",
+    "write_governed_runtime_state",
 ]
