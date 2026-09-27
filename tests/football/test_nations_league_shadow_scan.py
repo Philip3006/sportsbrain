@@ -740,6 +740,16 @@ def test_fixture_inference_uses_home_advantage_and_separate_raw_models(monkeypat
         captured_at=NOW,
     )
     assert alias_result["home_team"] == "United States"
+    neutral_result = predict_fixture(
+        event=event,
+        odds=odds,
+        snapshot=snapshot,
+        historical=_history(),
+        captured_at=NOW,
+        neutral=True,
+    )
+    assert neutral_result["neutral"] is True
+    assert stacker_inputs[-1]["is_neutral"] is True
     for distribution in (
         probabilities["raw_dixon_coles"],
         probabilities["raw_gbt"],
