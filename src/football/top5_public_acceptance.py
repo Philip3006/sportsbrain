@@ -23,8 +23,8 @@ from src.football.top5_research_binding import (
     inventory_for,
 )
 from src.notifications.public_serializer import (
-    TOP5_PUBLIC_PROVIDER_AUTHORITY,
     TOP5_PREPUBLICATION_RELEASE_SCHEMA,
+    TOP5_PUBLIC_PROVIDER_AUTHORITY,
     PublicFootballCompatibilityError,
     canonical_top5_league,
     serialize_public_product,
@@ -235,7 +235,9 @@ class Top5PrepublicationArtifactV1:
                 release["prepublication_id"] = expected_id
             worker = serialize_top5_prepublication_candidate_product(worker_input)
             static = serialize_top5_prepublication_candidate_product(static_input)
-        except (KeyError, TypeError, PublicFootballCompatibilityError) as exc:
+        except TypeError as exc:
+            raise TypeError(f"prepublication payload rejected: {exc}") from exc
+        except (KeyError, PublicFootballCompatibilityError) as exc:
             raise ValueError(f"prepublication payload rejected: {exc}") from exc
         worker_digest = _digest(worker)
         static_digest = _digest(static)
@@ -1063,10 +1065,10 @@ __all__ = [
     "TOP5_PREPUBLICATION_DELIVERY_READY",
     "TOP5_PREPUBLICATION_DRY_RUN_SCHEMA",
     "TOP5_PREPUBLICATION_DRY_RUN_STATUS",
-    "TOP5_PUBLIC_DELIVERY_BLOCKED",
-    "TOP5_PUBLIC_DELIVERY_READY",
     "TOP5_PUBLICATION_PRECHECK_BLOCKED",
     "TOP5_PUBLICATION_PRECHECK_READY",
+    "TOP5_PUBLIC_DELIVERY_BLOCKED",
+    "TOP5_PUBLIC_DELIVERY_READY",
     "Top5PrepublicationArtifactV1",
     "publication_precheck",
     "validate_public_bundle",
