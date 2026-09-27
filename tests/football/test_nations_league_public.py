@@ -44,10 +44,11 @@ def _artifact(now=None):
     market_probabilities = {"home": 0.48, "draw": 0.27, "away": 0.25}
     files = {"model.pkl": "b" * 64, "stacker.pkl": "c" * 64}
     artifact = {
-        "schema": "nations-league-isports-shadow-v1",
+        "schema": "nations-league-isports-shadow-v2",
         "competition": "UEFA Nations League",
         "provider_league_id": 146819,
         "run_id": f"unl-shadow-{captured.strftime('%Y%m%dT%H%M%SZ')}-012345abcdef",
+        "capture_status": "complete",
         "source_sha": "a" * 40,
         "model_snapshot": {
             "identity": "wm2026-frozen-snapshot",
@@ -55,7 +56,9 @@ def _artifact(now=None):
             "files": files,
         },
         "provider": "isports_api",
+        "sport_key": "soccer_uefa_nations_league",
         "captured_at": timestamp,
+        "input_data": {"international_results": {"sha256": "f" * 64}},
         "request_count": 2,
         "retry_count": 0,
         "provider_operation_manifest": [
@@ -90,7 +93,9 @@ def _artifact(now=None):
                 "response_sha256": "e" * 64,
             },
         ],
+        "provider_rate_evidence": [],
         "provider_event_count": 2,
+        "eligible_schedule_fixture_count": 2,
         "fixture_count": 2,
         "covered_fixture_count": 2,
         "skipped_fixtures": [],
@@ -103,7 +108,17 @@ def _artifact(now=None):
                 "event-real-shape-001",
                 "event-real-shape-002",
             ],
+            "market_covered_match_ids": [
+                "event-real-shape-001",
+                "event-real-shape-002",
+            ],
+            "model_covered_match_ids": [
+                "event-real-shape-001",
+                "event-real-shape-002",
+            ],
+            "skipped_match_ids": [],
         },
+        "excluded_schedule_fixtures": [],
         "fixtures": [
             {
                 "provider_match_id": "event-real-shape-001",
@@ -116,7 +131,23 @@ def _artifact(now=None):
                 "neutral": False,
                 "tournament": "UEFA Nations League",
                 "market": {
-                    "bookmaker": "pinnacle",
+                    "bookmaker": "iSports European odds component-wise median",
+                    "aggregation": "latest_valid_quote_per_bookmaker_then_componentwise_median",
+                    "bookmaker_count": 2,
+                    "bookmakers": [
+                        {
+                            "company_id": "101",
+                            "company_name": "Bookmaker 0",
+                            "change_time": 1790517300,
+                            "odds_decimal": {"home": 2.1, "draw": 3.2, "away": 3.6},
+                        },
+                        {
+                            "company_id": "102",
+                            "company_name": "Bookmaker 1",
+                            "change_time": 1790517301,
+                            "odds_decimal": {"home": 2.1, "draw": 3.2, "away": 3.6},
+                        },
+                    ],
                     "odds_decimal": {"home": 2.1, "draw": 3.2, "away": 3.6},
                     "margin_free_probabilities": market_probabilities,
                 },
@@ -127,12 +158,20 @@ def _artifact(now=None):
                     "final_ensemble": probabilities,
                     "market_anchored": None,
                 },
+                "market_anchor_status": "not_applied_unbound_to_frozen_stacker_contract",
+                "model_vs_market_edge_percentage_points": {
+                    "home": 0,
+                    "draw": 0,
+                    "away": 0,
+                },
             }
         ],
         "shadow": True,
         "no_bet": True,
         "publication": False,
         "ledger_mutation": False,
+        "scheduler_mutation": False,
+        "evidence_status": "WEAK_EVIDENCE_SHADOW_ONLY",
     }
     second = deepcopy(artifact["fixtures"][0])
     second.update(
@@ -158,16 +197,27 @@ def _public(artifact, now, **overrides):
 
 def _make_partial(artifact, skipped_fixtures):
     artifact["fixtures"] = artifact["fixtures"][:1]
+    artifact["capture_status"] = "partial"
+    artifact["fixture_count"] = 1
     artifact["covered_fixture_count"] = 1
     artifact["skipped_fixtures"] = skipped_fixtures
     artifact["coverage"]["valid_odds_fixtures"] = 1
     artifact["coverage"]["model_fixtures"] = 1
     artifact["coverage"]["complete"] = False
+    artifact["coverage"]["market_covered_match_ids"] = ["event-real-shape-001"]
+    artifact["coverage"]["model_covered_match_ids"] = ["event-real-shape-001"]
+    artifact["coverage"]["skipped_match_ids"] = [
+        item["provider_match_id"] for item in skipped_fixtures
+    ]
 
 
 def test_complete_shadow_artifact_projects_all_fixtures_and_no_action_authority():
     artifact, now = _artifact()
     public = _public(artifact, now)
+    assert artifact["schema"] == "nations-league-isports-shadow-v2"
+    assert artifact["capture_status"] == "complete"
+    assert artifact["eligible_schedule_fixture_count"] == 2
+    assert artifact["coverage"]["complete"] is True
     assert public["competition"] == "UEFA Nations League"
     assert public["provider"] == "isports_api"
     assert public["provider_league_id"] == 146819
@@ -353,6 +403,8 @@ def test_isports_operation_manifest_is_exact_bounded_and_secret_free(mutation):
         ("publication", True),
         ("ledger_mutation", True),
         ("synthetic", True),
+        ("scheduler_mutation", True),
+        ("evidence_status", "PRODUCTION_APPROVED"),
     ],
 )
 def test_shadow_only_authority_and_synthetic_provenance_are_required(field, value):
@@ -504,8 +556,9 @@ def test_partial_market_coverage_is_accounted_privately_and_projects_covered_onl
     _redigest(artifact)
 
     public = _public(artifact, now)
-    assert artifact["fixture_count"] == 2
-    assert artifact["covered_fixture_count"] + len(artifact["skipped_fixtures"]) == 2
+    assert artifact["eligible_schedule_fixture_count"] == 2
+    assert artifact["fixture_count"] == artifact["covered_fixture_count"] == 1
+    assert artifact["fixture_count"] + len(artifact["skipped_fixtures"]) == 2
     assert public["fixture_count"] == len(public["fixtures"]) == 1
     assert [fixture["provider_event_id"] for fixture in public["fixtures"]] == [
         "event-real-shape-001"
@@ -542,9 +595,99 @@ def test_skipped_target_requires_a_valid_native_match_id():
 
 def test_fixture_coverage_accounting_mismatch_is_rejected():
     artifact, now = _artifact()
-    artifact["fixture_count"] = 3
+    _make_partial(
+        artifact,
+        [
+            {
+                "provider_match_id": "event-real-shape-002",
+                "reason": "missing_1x2_market",
+            }
+        ],
+    )
+    artifact["fixture_count"] = artifact["eligible_schedule_fixture_count"]
     _redigest(artifact)
     with pytest.raises(NationsLeaguePublicError, match="coverage is incomplete"):
+        _public(artifact, now)
+
+
+def test_eligible_schedule_fixture_count_must_match_coverage_ids():
+    artifact, now = _artifact()
+    _make_partial(
+        artifact,
+        [
+            {
+                "provider_match_id": "event-real-shape-002",
+                "reason": "missing_1x2_market",
+            }
+        ],
+    )
+    artifact["eligible_schedule_fixture_count"] = 3
+    _redigest(artifact)
+    with pytest.raises(NationsLeaguePublicError, match="coverage is incomplete"):
+        _public(artifact, now)
+
+
+@pytest.mark.parametrize(
+    ("partial", "capture_status", "coverage_complete"),
+    [
+        (False, "partial", True),
+        (False, "complete", False),
+        (True, "complete", False),
+        (True, "partial", True),
+    ],
+)
+def test_capture_status_and_coverage_complete_must_agree(
+    partial, capture_status, coverage_complete
+):
+    artifact, now = _artifact()
+    if partial:
+        _make_partial(
+            artifact,
+            [
+                {
+                    "provider_match_id": "event-real-shape-002",
+                    "reason": "missing_1x2_market",
+                }
+            ],
+        )
+    artifact["capture_status"] = capture_status
+    artifact["coverage"]["complete"] = coverage_complete
+    _redigest(artifact)
+    with pytest.raises(NationsLeaguePublicError, match="capture status"):
+        _public(artifact, now)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("market_covered_match_ids", ["event-real-shape-002"]),
+        ("model_covered_match_ids", ["event-real-shape-002"]),
+        ("skipped_match_ids", ["event-real-shape-001"]),
+    ],
+)
+def test_coverage_identity_lists_must_match_fixture_and_skip_records(field, value):
+    artifact, now = _artifact()
+    _make_partial(
+        artifact,
+        [
+            {
+                "provider_match_id": "event-real-shape-002",
+                "reason": "missing_1x2_market",
+            }
+        ],
+    )
+    artifact["coverage"][field] = value
+    _redigest(artifact)
+    with pytest.raises(NationsLeaguePublicError, match="coverage identities"):
+        _public(artifact, now)
+
+
+@pytest.mark.parametrize("schema", ["nations-league-isports-shadow-v1", "unknown-v2"])
+def test_v1_and_tampered_private_schemas_are_rejected(schema):
+    artifact, now = _artifact()
+    artifact["schema"] = schema
+    _redigest(artifact)
+    with pytest.raises(NationsLeaguePublicError, match="schema"):
         _public(artifact, now)
 
 
@@ -560,13 +703,14 @@ def test_covered_and_skipped_identity_overlap_is_rejected():
         ],
     )
     _redigest(artifact)
-    with pytest.raises(NationsLeaguePublicError, match="do not exactly account"):
+    with pytest.raises(NationsLeaguePublicError, match="coverage identities"):
         _public(artifact, now)
 
 
 def test_zero_covered_fixtures_are_rejected():
     artifact, now = _artifact()
     artifact["fixtures"] = []
+    artifact["fixture_count"] = 0
     artifact["covered_fixture_count"] = 0
     artifact["skipped_fixtures"] = [
         {
@@ -577,7 +721,13 @@ def test_zero_covered_fixtures_are_rejected():
     ]
     artifact["coverage"]["valid_odds_fixtures"] = 0
     artifact["coverage"]["model_fixtures"] = 0
+    artifact["coverage"]["market_covered_match_ids"] = []
+    artifact["coverage"]["model_covered_match_ids"] = []
+    artifact["coverage"]["skipped_match_ids"] = list(
+        artifact["coverage"]["eligible_match_ids"]
+    )
     artifact["coverage"]["complete"] = False
+    artifact["capture_status"] = "partial"
     _redigest(artifact)
     with pytest.raises(NationsLeaguePublicError, match="coverage is incomplete"):
         _public(artifact, now)
@@ -586,8 +736,8 @@ def test_zero_covered_fixtures_are_rejected():
 def test_duplicate_skipped_match_ids_are_rejected():
     artifact, now = _artifact()
     third_id = "event-real-shape-003"
-    artifact["fixture_count"] = 3
     artifact["provider_event_count"] = 3
+    artifact["eligible_schedule_fixture_count"] = 3
     artifact["coverage"]["eligible_schedule_fixtures"] = 3
     artifact["coverage"]["eligible_match_ids"].append(third_id)
     artifact["provider_operation_manifest"][1]["query"]["matchId"] += "," + third_id
