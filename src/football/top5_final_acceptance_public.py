@@ -154,8 +154,18 @@ def _validate_runtime(
             "runtime source release does not match model source"
         )
     _sha(raw.get("runtime_data_sha"), "runtime_evidence.runtime_data_sha")
+    runtime_observed_at = _timestamp(
+        raw.get("runtime_state_observed_at"),
+        "runtime_evidence.runtime_state_observed_at",
+    )
+    _age(now, runtime_observed_at, "underlying runtime state")
+    captured_at = _timestamp(raw.get("captured_at"), "runtime_evidence.captured_at")
+    if captured_at < runtime_observed_at:
+        raise Top5FinalAcceptanceError(
+            "runtime evidence was captured before the underlying runtime state"
+        )
     _age(
         now,
-        _timestamp(raw.get("captured_at"), "runtime_evidence.captured_at"),
+        captured_at,
         "runtime evidence",
     )

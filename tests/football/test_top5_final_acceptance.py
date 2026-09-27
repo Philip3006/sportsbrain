@@ -341,6 +341,7 @@ def _bundle() -> dict[str, object]:
             "active_provider_order": [ACTIVE_PROVIDER],
             "source_release_sha": SOURCE_SHA,
             "runtime_data_sha": "3" * 64,
+            "runtime_state_observed_at": NOW.isoformat(),
             "captured_at": NOW.isoformat(),
         },
     }
