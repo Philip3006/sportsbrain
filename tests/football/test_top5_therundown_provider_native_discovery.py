@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta, timezone
 from dataclasses import replace
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -37,14 +37,16 @@ from src.football.top5_therundown_provider_native_discovery import (
     PROVIDER_NATIVE_MAXIMUM_RETRIES,
     PROVIDER_NATIVE_MINIMUM_HEADROOM,
     PROVIDER_NATIVE_MINIMUM_INTERVAL_SECONDS,
-    TheRundownProviderNativeDiscoveryAuthorizationV1,
     ProviderNativeDiscoverySelectionPurpose,
+    TheRundownProviderNativeDiscoveryAuthorizationV1,
     TheRundownProviderNativeDiscoveryRequestV1,
     _real_provider_execution_lock,
     _request_shape_payload,
     _select_candidate,
+    build_structural_provider_native_discovery_authorization,
     discover_five_league_events_provider_native,
     provider_native_discovery_request_shape_digest,
+    validate_structural_provider_native_discovery_authorization,
 )
 
 NOW = datetime(2026, 9, 24, 12, 0, tzinfo=timezone.utc)
@@ -122,6 +124,24 @@ def _authorization(
         expires_at=expires_at,
         minimum_lead_seconds=minimum_lead_seconds,
         maximum_lead_seconds=maximum_lead_seconds,
+    )
+
+
+def _structural_authorization(
+    *,
+    proof: TheRundownB4QuotaProofV1 | None = None,
+    adapter_source_sha: str = "d" * 40,
+    issued_at: datetime = NOW - timedelta(minutes=1),
+    expires_at: datetime = NOW + timedelta(hours=1),
+) -> TheRundownProviderNativeDiscoveryAuthorizationV1:
+    return build_structural_provider_native_discovery_authorization(
+        discovery_authorization_id="native-structural-20260924",
+        ceo_discovery_authorization_identity="ceo:top5:structural:20260924",
+        proof=proof or _proof(),
+        adapter_source_sha=adapter_source_sha,
+        issued_at=issued_at,
+        expires_at=expires_at,
+        now=NOW,
     )
 
 
@@ -368,12 +388,7 @@ def test_native_discovery_authorization_requires_explicit_window_and_binds_it():
 
 
 def test_structural_discovery_authorization_is_typed_and_contains_no_lead_defaults():
-    authorization = replace(
-        _authorization(),
-        minimum_lead_seconds=None,
-        maximum_lead_seconds=None,
-        selection_purpose=ProviderNativeDiscoverySelectionPurpose.STRUCTURAL_PROVIDER,
-    )
+    authorization = _structural_authorization()
     payload = authorization.as_payload()
 
     assert (
@@ -386,11 +401,55 @@ def test_structural_discovery_authorization_is_typed_and_contains_no_lead_defaul
     restored = type(authorization).from_payload(payload)
     assert restored == authorization
     assert restored.authorization_digest == authorization.authorization_digest
+    validate_structural_provider_native_discovery_authorization(
+        restored,
+        proof=_proof(),
+        current_adapter_source_sha="d" * 40,
+        now=NOW,
+    )
 
     malformed = dict(payload)
     malformed["selection_purpose"] = "SIGNAL_TIME"
     with pytest.raises(EventDiscoveryContractError, match="selection purpose"):
         type(authorization).from_payload(malformed)
+
+
+def test_executable_native_discovery_accepts_only_current_v2_or_v3_schemas():
+    structural = _structural_authorization().as_payload()
+    legacy = dict(structural)
+    legacy["schema_version"] = (
+        "top5-therundown-provider-native-discovery-authorization-v1"
+    )
+    with pytest.raises(EventDiscoveryContractError, match="schema is unsupported"):
+        TheRundownProviderNativeDiscoveryAuthorizationV1.from_payload(legacy)
+
+    signal_time = _authorization(minimum_lead_seconds=600, maximum_lead_seconds=3600)
+    assert (
+        signal_time.as_payload()["schema_version"]
+        == PROVIDER_NATIVE_DISCOVERY_AUTHORIZATION_SCHEMA_VERSION
+    )
+    assert signal_time.as_payload()["minimum_lead_seconds"] == 600
+
+
+def test_structural_authorization_rejects_adapter_and_proof_drift():
+    proof = _proof()
+    authorization = _structural_authorization(proof=proof)
+    with pytest.raises(
+        EventDiscoveryExecutionBlocked, match="source SHA is not current"
+    ):
+        validate_structural_provider_native_discovery_authorization(
+            authorization,
+            proof=proof,
+            current_adapter_source_sha="e" * 40,
+            now=NOW,
+        )
+    with pytest.raises(EventDiscoveryExecutionBlocked, match="proof binding mismatch"):
+        validate_structural_provider_native_discovery_authorization(
+            authorization,
+            proof=replace(proof, evidence_digest="f" * 64),
+            current_adapter_source_sha="d" * 40,
+            now=NOW,
+        )
 
 
 def test_structural_discovery_selects_earliest_future_without_signal_window():

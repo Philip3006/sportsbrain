@@ -30,9 +30,11 @@ from src.football.top5_therundown_network_shadow import (
     TOP5_CONTROLLED_SHADOW_MINIMUM_INTERVAL_SECONDS,
     TOP5_CONTROLLED_SHADOW_QUOTA_BUDGET,
     TOP5_CONTROLLED_SHADOW_REQUEST_COUNT,
+    NetworkShadowRunStatus,
     TheRundownNetworkConfigurationV1,
     TheRundownNetworkParticipantScopeV1,
     TheRundownNetworkRequestScopeV1,
+    TheRundownNetworkShadowRunResultV1,
     TheRundownQuotaHeadroomEvidenceV1,
 )
 from src.football.top5_therundown_provider_native_discovery import (
@@ -40,6 +42,8 @@ from src.football.top5_therundown_provider_native_discovery import (
     PROVIDER_NATIVE_BILLING_MODE_PROVIDER,
     PROVIDER_NATIVE_DISCOVERY_TARGET_SOURCE,
     PROVIDER_NATIVE_INDEPENDENT_QUALIFICATION,
+    ProviderNativeDiscoverySelectionPurpose,
+    TheRundownProviderNativeDiscoveryAuthorizationV1,
     TheRundownProviderNativeDiscoveryRunResultV1,
     provider_native_discovery_request_shape_digest,
 )
@@ -48,7 +52,7 @@ from src.football.top5_therundown_shadow_canary import TheRundownCanaryTargetV1
 NATIVE_PROVENANCE_SCHEMA_VERSION = (
     "top5-therundown-provider-native-discovery-provenance-v1"
 )
-B4_DOSSIER_SCHEMA_VERSION = "top5-b4-evidence-dossier-v1"
+B4_DOSSIER_SCHEMA_VERSION = "top5-b4-evidence-dossier-v2"
 _TOP5 = tuple(DISCOVERY_LEAGUE_ORDER)
 
 
@@ -632,6 +636,7 @@ class Top5B4EvidenceDossierV1:
 
     source_main_sha: str
     quota_proof: TheRundownB4QuotaProofV1
+    native_authorization: TheRundownProviderNativeDiscoveryAuthorizationV1
     native_provenance: ProviderNativeDiscoveryProvenanceV1
     legacy_discovery_evidence: tuple[TheRundownEventDiscoveryEvidenceV1, ...]
     source_configuration: TheRundownNetworkConfigurationV1
@@ -643,6 +648,8 @@ class Top5B4EvidenceDossierV1:
         PROVIDER_NATIVE_INDEPENDENT_QUALIFICATION
     )
     shadow_headroom: TheRundownQuotaHeadroomEvidenceV1 | None = None
+    quota_proof_package: Mapping[str, object] | None = None
+    controlled_shadow_run: TheRundownNetworkShadowRunResultV1 | None = None
     dossier_digest: str = ""
 
     def _payload_without_digest(self) -> dict[str, object]:
@@ -650,6 +657,12 @@ class Top5B4EvidenceDossierV1:
             "schema_version": B4_DOSSIER_SCHEMA_VERSION,
             "source_main_sha": self.source_main_sha,
             "quota_proof": _quota_proof_payload(self.quota_proof),
+            "quota_proof_package": (
+                json.loads(json.dumps(dict(self.quota_proof_package), sort_keys=True))
+                if self.quota_proof_package is not None
+                else None
+            ),
+            "native_authorization": self.native_authorization.as_payload(),
             "native_provenance": self.native_provenance.as_payload(),
             "legacy_discovery_evidence": [
                 item.as_payload() for item in self.legacy_discovery_evidence
@@ -659,6 +672,11 @@ class Top5B4EvidenceDossierV1:
             "reconciliation": self.reconciliation.as_payload(),
             "qualification": self.qualification.as_payload(),
             "controlled_shadow_evidence": self.controlled_shadow_evidence.as_payload(),
+            "controlled_shadow_run": (
+                self.controlled_shadow_run.as_payload()
+                if self.controlled_shadow_run is not None
+                else None
+            ),
             "independent_fixture_source_qualification": self.independent_fixture_source_qualification,
             "shadow_headroom": (
                 self.shadow_headroom.as_payload()
@@ -674,7 +692,39 @@ class Top5B4EvidenceDossierV1:
     def validate(self, *, now: datetime) -> None:
         _sha(self.source_main_sha, "source_main_sha", length=40)
         self.quota_proof.validate(now=now)
+        self.native_authorization.validate_against_quota_proof(
+            self.quota_proof, now=now
+        )
+        if (
+            self.native_authorization.selection_purpose
+            != ProviderNativeDiscoverySelectionPurpose.STRUCTURAL_PROVIDER
+            or self.native_authorization.adapter_source_sha != self.source_main_sha
+        ):
+            raise ProviderNativeEvidenceBridgeError(
+                "dossier native authorization is not current structural Discovery"
+            )
+        if self.quota_proof_package is not None:
+            packaged_proof = TheRundownB4QuotaProofV1.from_package(
+                self.quota_proof_package, now=now
+            )
+            if _quota_proof_payload(packaged_proof) != _quota_proof_payload(
+                self.quota_proof
+            ):
+                raise ProviderNativeEvidenceBridgeError(
+                    "dossier canonical quota package diverges from typed proof"
+                )
         self.native_provenance.validate()
+        if (
+            self.native_authorization.authorization_digest
+            != self.native_provenance.discovery_authorization_digest
+            or self.native_authorization.adapter_version
+            != self.native_provenance.adapter_version
+            or self.native_authorization.adapter_source_sha
+            != self.native_provenance.adapter_source_sha
+        ):
+            raise ProviderNativeEvidenceBridgeError(
+                "dossier native authorization/provenance binding mismatch"
+            )
         if tuple(item.league for item in self.legacy_discovery_evidence) != _TOP5:
             raise ProviderNativeEvidenceBridgeError(
                 "dossier legacy evidence order is invalid"
@@ -763,6 +813,57 @@ class Top5B4EvidenceDossierV1:
             raise ProviderNativeEvidenceBridgeError("dossier affiliate scope mismatch")
         if self.shadow_headroom is not None:
             self.shadow_headroom.validate(now=now)
+        if self.controlled_shadow_run is not None:
+            shadow = self.controlled_shadow_run
+            shadow.validate()
+            if (
+                shadow.status is not NetworkShadowRunStatus.COMPLETED_NETWORK
+                or not shadow.all_five_succeeded
+                or len(shadow.captures) != 5
+                or shadow.controlled_shadow_run_id
+                != self.reconciliation.controlled_shadow_run_id
+                or shadow.qualification_session_id
+                != self.reconciliation.qualification_session_id
+                or shadow.authorization_id != self.reconciliation.authorization_id
+                or shadow.request_count != self.reconciliation.request_count
+                or shadow.datapoint_count != self.reconciliation.datapoint_count
+                or shadow.quota_cost_units != self.reconciliation.quota_cost_units
+            ):
+                raise ProviderNativeEvidenceBridgeError(
+                    "dossier controlled-shadow run does not match reconciliation"
+                )
+            if tuple(capture.target.league for capture in shadow.captures) != _TOP5:
+                raise ProviderNativeEvidenceBridgeError(
+                    "dossier controlled-shadow league order is invalid"
+                )
+            if (
+                tuple(capture.target.fixture_key for capture in shadow.captures)
+                != self.reconciliation.fixture_keys
+                or tuple(
+                    capture.target.provider_event_id for capture in shadow.captures
+                )
+                != self.reconciliation.provider_event_ids
+                or tuple(
+                    capture.request.request_identity for capture in shadow.captures
+                )
+                != self.reconciliation.provider_request_ids
+            ):
+                raise ProviderNativeEvidenceBridgeError(
+                    "dossier controlled-shadow identities diverge from reconciliation"
+                )
+            for capture in shadow.captures:
+                if (
+                    capture.network_execution is not True
+                    or capture.evidence_kind.value != "REAL_OBSERVED"
+                    or capture.candidate_only is not True
+                    or capture.receipt_eligible is not False
+                    or capture.request.configuration_digest
+                    != self.configuration.configuration_digest
+                    or capture.target.provider != self.native_provenance.provider
+                ):
+                    raise ProviderNativeEvidenceBridgeError(
+                        "dossier controlled-shadow capture safety/binding is invalid"
+                    )
         if self.dossier_digest != self.computed_dossier_digest:
             raise ProviderNativeEvidenceBridgeError("dossier digest mismatch")
 
@@ -772,17 +873,60 @@ class Top5B4EvidenceDossierV1:
             "dossier_digest": self.dossier_digest,
         }
 
+    def b1_evidence_inputs(self, *, now: datetime) -> dict[str, object]:
+        """Return the exact validated B4 fields consumed by B1 acceptance.
+
+        The raw quota package and captured Shadow result are copied from their
+        canonical artifacts. This method never reconstructs either artifact.
+        """
+
+        if (
+            self.quota_proof_package is None
+            or self.shadow_headroom is None
+            or self.controlled_shadow_run is None
+        ):
+            raise ProviderNativeEvidenceBridgeError(
+                "complete B1 handoff requires original quota package, headroom, and Shadow result"
+            )
+        self.validate(now=now)
+        return {
+            "source_main_sha": self.source_main_sha,
+            "b4_quota_proof_package": json.loads(
+                json.dumps(dict(self.quota_proof_package), sort_keys=True)
+            ),
+            "b4_quota_headroom": self.shadow_headroom.as_payload(),
+            "discovery_evidence": [
+                item.as_payload() for item in self.legacy_discovery_evidence
+            ],
+            "provider_native_discovery_provenance": self.native_provenance.as_payload(),
+            "controlled_shadow": self.controlled_shadow_run.as_payload(),
+            "b4_reconciliation": self.reconciliation.as_payload(),
+            "b4_qualification": self.qualification.as_payload(),
+            "b4_native_authorization": self.native_authorization.as_payload(),
+            "b4_dossier_digest": self.dossier_digest,
+        }
+
 
 def assemble_top5_b4_evidence_dossier(
     *,
     source_main_sha: str,
     quota_proof: TheRundownB4QuotaProofV1,
+    quota_proof_package: Mapping[str, object] | None = None,
     native_run: TheRundownProviderNativeDiscoveryRunResultV1,
+    controlled_shadow_run: TheRundownNetworkShadowRunResultV1 | None = None,
     configuration: TheRundownNetworkConfigurationV1,
     reconciliation: FiveLeagueReconciliationV1,
     shadow_headroom: TheRundownQuotaHeadroomEvidenceV1 | None,
     now: datetime,
 ) -> Top5B4EvidenceDossierV1:
+    native_run.authorization.validate_against_quota_proof(quota_proof, now=now)
+    if (
+        native_run.authorization.selection_purpose
+        != ProviderNativeDiscoverySelectionPurpose.STRUCTURAL_PROVIDER
+    ):
+        raise ProviderNativeEvidenceBridgeError(
+            "B4 dossier requires structural-provider Discovery authorization"
+        )
     provenance = build_provider_native_discovery_provenance(native_run)
     legacy = project_provider_native_discovery_evidence(native_run)
     expected_configuration = (
@@ -807,6 +951,7 @@ def assemble_top5_b4_evidence_dossier(
     dossier = Top5B4EvidenceDossierV1(
         source_main_sha=source_main_sha,
         quota_proof=quota_proof,
+        native_authorization=native_run.authorization,
         native_provenance=provenance,
         legacy_discovery_evidence=legacy,
         source_configuration=expected_configuration,
@@ -816,6 +961,8 @@ def assemble_top5_b4_evidence_dossier(
         controlled_shadow_evidence=reconciliation.artifacts,
         independent_fixture_source_qualification=provenance.independent_fixture_source_qualification,
         shadow_headroom=shadow_headroom,
+        quota_proof_package=quota_proof_package,
+        controlled_shadow_run=controlled_shadow_run,
         dossier_digest="",
     )
     dossier = replace(dossier, dossier_digest=dossier.computed_dossier_digest)
