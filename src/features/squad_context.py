@@ -28,6 +28,9 @@ _EURO2028_STAGES = [
     ("final", pd.Timestamp("2028-07-18"), pd.Timestamp("2028-07-19")),
 ]
 
+_NATIONS_LEAGUE_START = pd.Timestamp("2026-09-24")
+_NATIONS_LEAGUE_END = pd.Timestamp("2026-11-18")
+
 
 def tournament_stage_features(
     match_date: pd.Timestamp,
@@ -46,7 +49,10 @@ def tournament_stage_features(
 
     # In group stage, a draw is more tactically acceptable — slightly increases
     # true draw probability vs. model's pre-match estimate.
-    draw_incentive = 0.05 if stage == "group" else 0.0
+    is_nations_league = bool(
+        tournament and "nations league" in str(tournament).casefold()
+    )
+    draw_incentive = 0.05 if stage == "group" and not is_nations_league else 0.0
 
     return {
         "is_group_stage": is_group,
@@ -58,6 +64,13 @@ def tournament_stage_features(
 
 def _detect_stage(match_date: pd.Timestamp, tournament: str | None) -> str:
     """Detects WM 2026 stage from date. Falls back to 'unknown'."""
+    if tournament and "nations league" in str(tournament).casefold():
+        date = pd.Timestamp(match_date)
+        if date.tzinfo is not None:
+            date = date.tz_localize(None)
+        if _NATIONS_LEAGUE_START <= date < _NATIONS_LEAGUE_END:
+            return "group"
+        return "unknown"
     if tournament and "World Cup" in str(tournament) and "qualif" not in str(tournament).lower():
         for stage, start, end in _WM2026_STAGES:
             if start <= match_date < end:

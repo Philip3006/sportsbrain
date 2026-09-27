@@ -238,7 +238,7 @@ def run_daily_scan(
     }
 
     all_signals, no_value_matches, skipped_divergence_matches, match_contexts = score_matches(
-        unique_matches, models, data, bankroll, scan_date
+        unique_matches, models, data, bankroll, scan_date, neutral=True
     )
 
     # D/E — Settle existing open bets, apply portfolio cap, log new bets
