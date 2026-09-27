@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
+from src.football.odds import isports as isports_module
 from src.football.odds.isports import (
     ISPORTS_COMPETITIONS,
     ISPORTS_ENDPOINT_MIN_INTERVAL_SECONDS,
@@ -118,6 +119,13 @@ def _european_payload(
     }
 
 
+def _expected_fixture(match_id="match-1"):
+    fixture = normalize_schedule(
+        {"data": [_schedule_row(match_id=match_id)]}, _competition()
+    )[0]
+    return {fixture.provider_match_id: fixture}
+
+
 def test_exact_six_competitions_resolve_without_guessing_ids():
     resolved = resolve_competitions(_catalog())
     assert tuple(resolved) == ISPORTS_COMPETITIONS
@@ -195,7 +203,9 @@ def test_schedule_rejects_duplicate_match_id_and_wrong_competition():
 
 def test_main_odds_converts_hong_kong_to_decimal_and_uses_current_early_prices():
     payload = {"data": [{"matchId": "match-1", "europeOdds": [_main_row()]}]}
-    parsed, malformed = parse_main_odds(payload, captured_at=NOW)
+    parsed, malformed = parse_main_odds(
+        payload, captured_at=NOW, expected_match_ids=("match-1",)
+    )
     quote = parsed["match-1"][0]
     assert malformed == 0
     assert quote.home_decimal == pytest.approx(2.40)
@@ -203,6 +213,194 @@ def test_main_odds_converts_hong_kong_to_decimal_and_uses_current_early_prices()
     assert quote.away_decimal == pytest.approx(2.50)
     assert quote.opening_home_decimal == pytest.approx(2.35)
     assert quote.bookmaker_identity == "isports_api:main:8:Bet365"
+
+
+def test_main_odds_documented_csv_field_order_and_all_quote_provenance():
+    change_time = int((NOW - timedelta(seconds=25)).timestamp())
+    csv_row = f"match-1,8,1.35,1.70,1.55,1.40,1.65,1.50,{change_time},false,1"
+    parsed, malformed = parse_main_odds(
+        {"data": [{"matchId": "match-1", "europeOdds": [csv_row]}]},
+        captured_at=NOW,
+        expected_match_ids=("match-1",),
+    )
+    quote = parsed["match-1"][0]
+    assert malformed == 0
+    assert quote.match_id == "match-1"
+    assert quote.company_id == "8"
+    assert quote.company_name == "Bet365"
+    assert (
+        quote.opening_home_decimal,
+        quote.opening_draw_decimal,
+        quote.opening_away_decimal,
+    ) == pytest.approx((2.35, 2.70, 2.55))
+    assert (
+        quote.home_decimal,
+        quote.draw_decimal,
+        quote.away_decimal,
+    ) == pytest.approx((2.40, 2.65, 2.50))
+    assert quote.change_time == datetime.fromtimestamp(change_time, tz=timezone.utc)
+
+
+def test_main_odds_csv_requires_exact_documented_field_count():
+    valid_prefix = "match-1,8,1.35,1.70,1.55,1.40,1.65,1.50"
+    for suffix in (",1,false", ",1,false,1,unexpected"):
+        with pytest.raises(ISportsContractError, match="malformed requested-target"):
+            parse_main_odds(
+                {
+                    "data": [
+                        {
+                            "matchId": "match-1",
+                            "europeOdds": [valid_prefix + suffix],
+                        }
+                    ]
+                },
+                captured_at=NOW,
+                expected_match_ids=("match-1",),
+            )
+
+
+def test_main_odds_rejects_unrequested_ids_and_outer_inner_identity_mismatch():
+    with pytest.raises(ISportsContractError, match="unrequested match ID"):
+        parse_main_odds(
+            {"data": [{"europeOdds": [_main_row("outside")]}]},
+            captured_at=NOW,
+            expected_match_ids=("match-1",),
+        )
+    with pytest.raises(ISportsContractError, match="unrequested match ID"):
+        parse_main_odds(
+            {"data": [{"matchId": "outside", "europeOdds": []}]},
+            captured_at=NOW,
+            expected_match_ids=("match-1",),
+        )
+    with pytest.raises(ISportsContractError, match="container/row match ID mismatch"):
+        parse_main_odds(
+            {"data": [{"matchId": "match-1", "europeOdds": [_main_row("other")]}]},
+            captured_at=NOW,
+            expected_match_ids=("match-1",),
+        )
+
+
+def test_main_odds_valid_plus_malformed_target_rows_fail_closed():
+    malformed = dict(_main_row(), instantDraw="not-a-price")
+    payload = {"data": [{"matchId": "match-1", "europeOdds": [_main_row(), malformed]}]}
+    with pytest.raises(ISportsContractError, match="malformed requested-target"):
+        parse_main_odds(payload, captured_at=NOW, expected_match_ids=("match-1",))
+
+
+@pytest.mark.parametrize(
+    "row",
+    [
+        dict(_main_row(), close="unknown"),
+        dict(_main_row(), oddsType=99),
+    ],
+)
+def test_main_odds_malformed_target_flags_or_unknown_stage_fail_closed(row):
+    with pytest.raises(ISportsContractError, match="malformed requested-target"):
+        parse_main_odds(
+            {"data": [{"matchId": "match-1", "europeOdds": [row]}]},
+            captured_at=NOW,
+            expected_match_ids=("match-1",),
+        )
+
+
+def test_main_odds_missing_market_is_not_malformed_coverage():
+    parsed, malformed = parse_main_odds(
+        {"data": [{"matchId": "match-1", "europeOdds": []}]},
+        captured_at=NOW,
+        expected_match_ids=("match-1",),
+    )
+    assert parsed == {}
+    assert malformed == 0
+
+
+def test_main_odds_duplicate_bookmaker_evidence_fails_closed():
+    with pytest.raises(ISportsContractError, match="duplicate bookmaker evidence"):
+        parse_main_odds(
+            {
+                "data": [
+                    {
+                        "matchId": "match-1",
+                        "europeOdds": [_main_row(), _main_row()],
+                    }
+                ]
+            },
+            captured_at=NOW,
+            expected_match_ids=("match-1",),
+        )
+
+
+def test_main_client_binds_parser_to_exact_outbound_match_id_set(monkeypatch):
+    seen_expected = []
+    original = isports_module.parse_main_odds
+
+    def spy(payload, *, captured_at, expected_match_ids):
+        seen_expected.append(tuple(expected_match_ids))
+        return original(
+            payload,
+            captured_at=captured_at,
+            expected_match_ids=expected_match_ids,
+        )
+
+    monkeypatch.setattr(isports_module, "parse_main_odds", spy)
+
+    def transport(path, params, api_key, timeout):
+        assert path == ISPORTS_ENDPOINTS["main_odds"]
+        assert params == {"matchId": "match-1,match-2"}
+        return (
+            200,
+            {
+                "data": [
+                    {"matchId": match_id, "europeOdds": [_main_row(match_id)]}
+                    for match_id in ("match-1", "match-2")
+                ]
+            },
+            {},
+            NOW,
+            NOW,
+            None,
+        )
+
+    client = ISportsClient(
+        api_key="offline",
+        transport=transport,
+        clock=lambda: NOW,
+        enforce_pacing=False,
+    )
+    result, malformed, _ = client.main_odds(("match-1", "match-2"))
+    assert tuple(result) == ("match-1", "match-2")
+    assert malformed == 0
+    assert seen_expected == [("match-1", "match-2")]
+
+
+def test_main_client_fails_closed_on_mixed_valid_and_malformed_target_evidence():
+    def transport(path, params, api_key, timeout):
+        return (
+            200,
+            {
+                "data": [
+                    {
+                        "matchId": "match-1",
+                        "europeOdds": [
+                            _main_row(),
+                            dict(_main_row(company_id="9"), instantAway="bad"),
+                        ],
+                    }
+                ]
+            },
+            {},
+            NOW,
+            NOW,
+            None,
+        )
+
+    client = ISportsClient(
+        api_key="offline",
+        transport=transport,
+        clock=lambda: NOW,
+        enforce_pacing=False,
+    )
+    with pytest.raises(ISportsContractError, match="malformed requested-target"):
+        client.main_odds(("match-1",))
 
 
 def test_main_odds_rejects_closing_closed_inplay_malformed_and_incomplete_rows():
@@ -213,11 +411,12 @@ def test_main_odds_rejects_closing_closed_inplay_malformed_and_incomplete_rows()
         dict(_main_row(company_id="7"), instantDraw="nan"),
         dict(_main_row(company_id="9"), instantAway="0.0"),
     ]
-    parsed, malformed = parse_main_odds(
-        {"data": [{"matchId": "match-1", "europeOdds": rows}]}, captured_at=NOW
-    )
-    assert parsed == {}
-    assert malformed == 2
+    with pytest.raises(ISportsContractError, match="malformed requested-target"):
+        parse_main_odds(
+            {"data": [{"matchId": "match-1", "europeOdds": rows}]},
+            captured_at=NOW,
+            expected_match_ids=("match-1",),
+        )
 
 
 def test_european_odds_preserve_separate_bookmaker_namespace_and_hk_conversion():
@@ -225,7 +424,9 @@ def test_european_odds_preserve_separate_bookmaker_namespace_and_hk_conversion()
     payload["data"][0]["odds"][0]["oddsDetail"].append(
         "82,Book B,1.35,1.70,1.55,1.40,1.65,1.50"
     )
-    parsed, malformed = parse_european_odds(payload, captured_at=NOW)
+    parsed, malformed = parse_european_odds(
+        payload, captured_at=NOW, expected_fixtures=_expected_fixture()
+    )
     rows = parsed["match-1"]
     assert malformed == 0
     assert len(rows) == 2
@@ -234,28 +435,121 @@ def test_european_odds_preserve_separate_bookmaker_namespace_and_hk_conversion()
     assert all(row.source == "european" for row in rows)
 
 
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("leagueName", "UEFA Champions League"),
+        ("homeName", "Different Home"),
+        ("awayName", "Different Away"),
+        ("matchTime", int((NOW + timedelta(hours=25)).timestamp())),
+        ("leagueId", "999"),
+    ],
+)
+def test_european_odds_rejects_each_fixture_identity_mismatch(field, value):
+    payload = _european_payload()
+    payload["data"][0][field] = value
+    if field == "leagueId":
+        payload["data"][0]["leagueName"] = "Premier League"
+    with pytest.raises(ISportsContractError, match="fixture identity mismatch"):
+        parse_european_odds(
+            payload, captured_at=NOW, expected_fixtures=_expected_fixture()
+        )
+
+
+def test_european_odds_rejects_unrequested_and_duplicate_target_rows():
+    with pytest.raises(ISportsContractError, match="unrequested match ID"):
+        parse_european_odds(
+            _european_payload(match_id="outside"),
+            captured_at=NOW,
+            expected_fixtures=_expected_fixture(),
+        )
+    payload = _european_payload()
+    payload["data"].append(dict(payload["data"][0]))
+    with pytest.raises(ISportsContractError, match="duplicated a target match row"):
+        parse_european_odds(
+            payload, captured_at=NOW, expected_fixtures=_expected_fixture()
+        )
+
+
+def test_european_odds_does_not_turn_valid_plus_malformed_into_coverage():
+    payload = _european_payload()
+    payload["data"][0]["odds"].append(
+        {"changeTime": int(NOW.timestamp()), "oddsDetail": ["81,Book A,broken"]}
+    )
+    with pytest.raises(ISportsContractError, match="malformed requested-target"):
+        parse_european_odds(
+            payload, captured_at=NOW, expected_fixtures=_expected_fixture()
+        )
+
+
+def test_european_duplicate_bookmaker_evidence_fails_closed():
+    payload = _european_payload()
+    payload["data"][0]["odds"][0]["oddsDetail"].append(
+        "81,Book A,1.35,1.70,1.55,1.40,1.65,1.50"
+    )
+    with pytest.raises(ISportsContractError, match="ambiguous bookmaker evidence"):
+        parse_european_odds(
+            payload, captured_at=NOW, expected_fixtures=_expected_fixture()
+        )
+
+
+def test_european_missing_market_is_distinct_from_malformed_market_evidence():
+    payload = _european_payload()
+    payload["data"][0]["odds"] = []
+    parsed, malformed = parse_european_odds(
+        payload, captured_at=NOW, expected_fixtures=_expected_fixture()
+    )
+    assert parsed == {}
+    assert malformed == 0
+
+
+def test_european_client_derives_request_ids_and_requires_fixture_bindings():
+    fixture = _expected_fixture()["match-1"]
+    captured = []
+
+    def transport(path, params, api_key, timeout):
+        captured.append((path, dict(params)))
+        return 200, _european_payload(), {}, NOW, NOW, None
+
+    client = ISportsClient(
+        api_key="offline",
+        transport=transport,
+        clock=lambda: NOW,
+        enforce_pacing=False,
+    )
+    result, malformed, _ = client.european_odds({"match-1": fixture})
+    assert captured == [(ISPORTS_ENDPOINTS["european_odds"], {"matchId": "match-1"})]
+    assert tuple(result) == ("match-1",)
+    assert malformed == 0
+
+    with pytest.raises(
+        ISportsContractError, match="requires scheduled fixture bindings"
+    ):
+        client.european_odds({})
+
+
 def test_european_incomplete_and_malformed_rows_are_rejected():
     payload = _european_payload()
     payload["data"][0]["odds"][0]["oddsDetail"] = [
         "81,Book A,0.8,0.9",
         "82,Book B,nan,1.7,1.5,1.3,1.6,1.5",
     ]
-    parsed, malformed = parse_european_odds(payload, captured_at=NOW)
-    assert parsed == {}
-    assert malformed == 2
+    with pytest.raises(ISportsContractError, match="malformed requested-target"):
+        parse_european_odds(
+            payload, captured_at=NOW, expected_fixtures=_expected_fixture()
+        )
 
 
 def test_european_rows_must_match_the_exact_schedule_identity():
     fixture = normalize_schedule({"data": [_schedule_row()]}, _competition())[0]
     payload = _european_payload()
     payload["data"][0]["awayName"] = "Different Team"
-    parsed, malformed = parse_european_odds(
-        payload,
-        captured_at=NOW,
-        expected_fixtures={fixture.provider_match_id: fixture},
-    )
-    assert parsed == {}
-    assert malformed == 1
+    with pytest.raises(ISportsContractError, match="fixture identity mismatch"):
+        parse_european_odds(
+            payload,
+            captured_at=NOW,
+            expected_fixtures={fixture.provider_match_id: fixture},
+        )
 
 
 def test_european_name_aliases_use_canonical_sportsbrain_mapping():
@@ -275,9 +569,14 @@ def test_european_name_aliases_use_canonical_sportsbrain_mapping():
 
 def test_aggregation_uses_european_when_valid_and_shin_fair_odds_deterministically():
     fixture = normalize_schedule({"data": [_schedule_row()]}, _competition())[0]
-    european, bad_euro = parse_european_odds(_european_payload(), captured_at=NOW)
+    expected = _expected_fixture()
+    european, bad_euro = parse_european_odds(
+        _european_payload(), captured_at=NOW, expected_fixtures=expected
+    )
     main, bad_main = parse_main_odds(
-        {"data": [{"matchId": "match-1", "europeOdds": [_main_row()]}]}, captured_at=NOW
+        {"data": [{"matchId": "match-1", "europeOdds": [_main_row()]}]},
+        captured_at=NOW,
+        expected_match_ids=("match-1",),
     )
     result = aggregate_1x2(
         fixture,
@@ -339,10 +638,14 @@ def test_aggregate_is_deterministic_for_bookmaker_input_order_and_exact_age_limi
 def test_european_namespace_is_not_mixed_when_fallback_to_main():
     fixture = normalize_schedule({"data": [_schedule_row()]}, _competition())[0]
     main, _ = parse_main_odds(
-        {"data": [{"matchId": "match-1", "europeOdds": [_main_row()]}]}, captured_at=NOW
+        {"data": [{"matchId": "match-1", "europeOdds": [_main_row()]}]},
+        captured_at=NOW,
+        expected_match_ids=("match-1",),
     )
     stale, _ = parse_european_odds(
-        _european_payload(change_time=NOW - timedelta(seconds=901)), captured_at=NOW
+        _european_payload(change_time=NOW - timedelta(seconds=901)),
+        captured_at=NOW,
+        expected_fixtures=_expected_fixture(),
     )
     result = aggregate_1x2(
         fixture,
@@ -368,9 +671,26 @@ def test_incomplete_or_stale_market_fails_closed():
             ]
         },
         captured_at=NOW,
+        expected_match_ids=("match-1",),
     )
     with pytest.raises(ISportsContractError, match="no fresh"):
         aggregate_1x2(fixture, main_quotes=stale.get("match-1", ()), captured_at=NOW)
+
+
+def test_aggregate_never_accepts_malformed_row_count_as_valid_snapshot():
+    fixture = normalize_schedule({"data": [_schedule_row()]}, _competition())[0]
+    quote, _ = parse_main_odds(
+        {"data": [{"matchId": "match-1", "europeOdds": [_main_row()]}]},
+        captured_at=NOW,
+        expected_match_ids=("match-1",),
+    )
+    with pytest.raises(ISportsContractError, match="malformed provider rows"):
+        aggregate_1x2(
+            fixture,
+            main_quotes=quote["match-1"],
+            captured_at=NOW,
+            malformed_row_count=1,
+        )
 
 
 def test_post_kickoff_evidence_rejected_even_if_prices_are_present():
@@ -378,7 +698,9 @@ def test_post_kickoff_evidence_rejected_even_if_prices_are_present():
         {"data": [_schedule_row(kickoff=NOW - timedelta(minutes=1))]}, _competition()
     )[0]
     main, _ = parse_main_odds(
-        {"data": [{"matchId": "match-1", "europeOdds": [_main_row()]}]}, captured_at=NOW
+        {"data": [{"matchId": "match-1", "europeOdds": [_main_row()]}]},
+        captured_at=NOW,
+        expected_match_ids=("match-1",),
     )
     with pytest.raises(ISportsContractError, match="in-play"):
         aggregate_1x2(fixture, main_quotes=main["match-1"], captured_at=NOW)
@@ -399,7 +721,9 @@ def test_ucl_uses_its_own_provider_competition_and_event_key():
 
 def test_normalized_observation_is_candidate_only_and_retains_bookmakers_and_digests():
     fixture = normalize_schedule({"data": [_schedule_row()]}, _competition())[0]
-    european, _ = parse_european_odds(_european_payload(), captured_at=NOW)
+    european, _ = parse_european_odds(
+        _european_payload(), captured_at=NOW, expected_fixtures=_expected_fixture()
+    )
     result = aggregate_1x2(
         fixture,
         european_quotes=european["match-1"],
@@ -484,7 +808,9 @@ def test_client_no_retry_and_endpoint_allowlist():
 def test_report_types_reject_closing_snapshot_as_prediction_input():
     fixture = normalize_schedule({"data": [_schedule_row()]}, _competition())[0]
     main, _ = parse_main_odds(
-        {"data": [{"matchId": "match-1", "europeOdds": [_main_row()]}]}, captured_at=NOW
+        {"data": [{"matchId": "match-1", "europeOdds": [_main_row()]}]},
+        captured_at=NOW,
+        expected_match_ids=("match-1",),
     )
     result = aggregate_1x2(fixture, main_quotes=main["match-1"], captured_at=NOW)
     assert result.snapshot.kind is not None
@@ -510,6 +836,7 @@ def test_ucl_schedule_and_market_project_without_claiming_model_authority():
     quotes, _ = parse_main_odds(
         {"data": [{"matchId": "ucl-event", "europeOdds": [_main_row("ucl-event")]}]},
         captured_at=NOW,
+        expected_match_ids=("ucl-event",),
     )
     market = aggregate_1x2(
         fixture,

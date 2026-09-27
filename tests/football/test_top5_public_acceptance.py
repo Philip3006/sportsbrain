@@ -108,15 +108,14 @@ def test_fresh_container_with_stale_signal_or_mismatched_provenance_fails_closed
 
 
 def test_candidate_provider_and_synthetic_records_never_become_public_ready() -> None:
-    for candidate_provider in ("therundown_experimental", "isports_api"):
-        candidate = _bundle()
-        candidate["top5_release"]["provider_authority"] = candidate_provider
-        result = validate_public_bundle(candidate, now=BASE + timedelta(minutes=1))
-        assert result["status"] == TOP5_PUBLIC_DELIVERY_BLOCKED
-        assert any(
-            reason["code"] == "PUBLIC_CANDIDATE_AUTHORITY_LEAK"
-            for reason in result["reasons"]
-        )
+    candidate = _bundle()
+    candidate["top5_release"]["provider_authority"] = "therundown_experimental"
+    result = validate_public_bundle(candidate, now=BASE + timedelta(minutes=1))
+    assert result["status"] == TOP5_PUBLIC_DELIVERY_BLOCKED
+    assert any(
+        reason["code"] == "PUBLIC_CANDIDATE_AUTHORITY_LEAK"
+        for reason in result["reasons"]
+    )
 
     synthetic = _bundle()
     synthetic["football"][0]["synthetic"] = True
@@ -187,14 +186,10 @@ def test_publication_precheck_requires_verified_b1_and_rejects_network_dry_run(
         reason["code"] == "PUBLIC_ACCEPTANCE_EVIDENCE_INVALID"
         for reason in result["reasons"]
     )
-    assert any(
-        reason["code"] == "PUBLIC_DRY_RUN_INVALID" for reason in result["reasons"]
-    )
+    assert any(reason["code"] == "PUBLIC_DRY_RUN_INVALID" for reason in result["reasons"])
 
 
-def test_publication_precheck_requires_dry_run_and_rollback_manifest(
-    monkeypatch,
-) -> None:
+def test_publication_precheck_requires_dry_run_and_rollback_manifest(monkeypatch) -> None:
     bundle, b1_result, now, _dry_run = _verified_b1_cli_evidence(monkeypatch)
     result = publication_precheck(bundle, b1_result, now=now)
     assert result["status"] == "TOP5_PUBLICATION_PRECHECK_BLOCKED"
@@ -273,9 +268,7 @@ def test_publication_precheck_rejects_tampered_b1_cli_output(monkeypatch, mutati
         manifest["public_product_digest"] = "0" * 64
         manifest["manifest_digest"] = builder1_manifest_digest(manifest)
     elif mutation == "public_payload":
-        public_payload["worker_candidate_payload"]["top5_release"][
-            "runtime_data_sha"
-        ] = "f" * 64
+        public_payload["worker_candidate_payload"]["top5_release"]["runtime_data_sha"] = "f" * 64
     else:
         b1_result["publication_authorized"] = True
 

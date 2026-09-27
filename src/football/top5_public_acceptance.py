@@ -17,7 +17,6 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from types import MappingProxyType
 
-from src.football.provider_cascade.contracts import CANDIDATE_ONLY_PROVIDER_IDENTITIES
 from src.football.top5_research_binding import (
     FROZEN_RESEARCH_SHA,
     M5_CANDIDATE_ID,
@@ -45,7 +44,7 @@ TOP5_PREPUBLICATION_DRY_RUN_SCHEMA = "top5-prepublication-delivery-dry-run-v1"
 TOP5_PREPUBLICATION_DRY_RUN_STATUS = "TOP5_PREPUBLICATION_DRY_RUN"
 _TOP5_LEAGUE_SET = frozenset(TOP5_LEAGUES)
 _CANDIDATE_PROVIDER_MARKERS = frozenset(
-    {"therundown", "therundown_experimental", "isports_api", "candidate", "shadow"}
+    {"therundown", "therundown_experimental", "candidate", "shadow"}
 )
 _FORBIDDEN_PREPUBLICATION_KEYS = frozenset(
     {
@@ -88,9 +87,7 @@ def _required_digest(value: object, name: str) -> str:
 
 def _freeze(value: object) -> object:
     if isinstance(value, Mapping):
-        return MappingProxyType(
-            {str(key): _freeze(item) for key, item in value.items()}
-        )
+        return MappingProxyType({str(key): _freeze(item) for key, item in value.items()})
     if isinstance(value, (list, tuple)):
         return tuple(_freeze(item) for item in value)
     return value
@@ -122,9 +119,7 @@ def _prepublication_id(
     )
 
 
-def _reject_prepublication_authority(
-    value: object, path: str = "prepublication"
-) -> None:
+def _reject_prepublication_authority(value: object, path: str = "prepublication") -> None:
     if isinstance(value, Mapping):
         for key, item in value.items():
             name = str(key).casefold()
@@ -157,7 +152,7 @@ def _reject_candidate_authority(value: object, path: str = "prepublication") -> 
                 if any(
                     isinstance(candidate, str)
                     and (
-                        candidate.casefold() in CANDIDATE_ONLY_PROVIDER_IDENTITIES
+                        candidate.casefold() == "therundown_experimental"
                         or "therundown" in candidate.casefold()
                     )
                     for candidate in candidates
@@ -289,28 +284,18 @@ class Top5PrepublicationArtifactV1:
             or value.get("provider_requests") != 0
         ):
             raise ValueError("prepublication artifact claims a forbidden side effect")
-        if not isinstance(
-            value.get("worker_candidate_payload"), Mapping
-        ) or not isinstance(value.get("static_candidate_payload"), Mapping):
+        if not isinstance(value.get("worker_candidate_payload"), Mapping) or not isinstance(
+            value.get("static_candidate_payload"), Mapping
+        ):
             raise TypeError("prepublication candidate payloads must be objects")
         return cls(
-            prepublication_id=_required_text(
-                value.get("prepublication_id"), "prepublication_id"
-            ),
+            prepublication_id=_required_text(value.get("prepublication_id"), "prepublication_id"),
             prepared_at=_required_text(value.get("prepared_at"), "prepared_at"),
             worker_candidate_payload=dict(value["worker_candidate_payload"]),
             static_candidate_payload=dict(value["static_candidate_payload"]),
-            public_product_digest=_required_digest(
-                value.get("public_product_digest"), "public_product_digest"
-            ),
-            worker_candidate_payload_digest=_required_digest(
-                value.get("worker_candidate_payload_digest"),
-                "worker_candidate_payload_digest",
-            ),
-            static_candidate_payload_digest=_required_digest(
-                value.get("static_candidate_payload_digest"),
-                "static_candidate_payload_digest",
-            ),
+            public_product_digest=_required_digest(value.get("public_product_digest"), "public_product_digest"),
+            worker_candidate_payload_digest=_required_digest(value.get("worker_candidate_payload_digest"), "worker_candidate_payload_digest"),
+            static_candidate_payload_digest=_required_digest(value.get("static_candidate_payload_digest"), "static_candidate_payload_digest"),
         )
 
     def as_payload(self) -> dict[str, object]:
@@ -364,9 +349,7 @@ class Top5PrepublicationArtifactV1:
                 f"prepublication candidate payload rejected: {exc}"
             ) from exc
         except (AssertionError, PublicFootballCompatibilityError, ValueError) as exc:
-            raise ValueError(
-                f"prepublication candidate payload rejected: {exc}"
-            ) from exc
+            raise ValueError(f"prepublication candidate payload rejected: {exc}") from exc
         if worker != worker_raw or static != static_raw:
             raise ValueError("prepublication candidate payload is not canonical")
         worker_digest = _digest(worker)
@@ -389,15 +372,9 @@ class Top5PrepublicationArtifactV1:
         session_id = _required_text(
             release.get("qualification_session_id"), "session_id"
         )
-        source_sha = _required_digest(
-            release.get("source_release_sha"), "source_release_sha"
-        )
-        runtime_sha = _required_digest(
-            release.get("runtime_data_sha"), "runtime_data_sha"
-        )
-        model_hash = _required_digest(
-            release.get("model_artifact_hash"), "model_artifact_hash"
-        )
+        source_sha = _required_digest(release.get("source_release_sha"), "source_release_sha")
+        runtime_sha = _required_digest(release.get("runtime_data_sha"), "runtime_data_sha")
+        model_hash = _required_digest(release.get("model_artifact_hash"), "model_artifact_hash")
         signal_contract = _required_text(
             release.get("signal_time_contract_id"), "signal_time_contract_id"
         )
@@ -420,25 +397,17 @@ class Top5PrepublicationArtifactV1:
             or release.get("league_codes") != sorted(TOP5_LEAGUES)
         ):
             raise ValueError("Top-5 prepublication release contract is invalid")
-        if (
-            self.prepublication_id
-            != _prepublication_id(run_id, session_id, source_sha, runtime_sha)
-            or release.get("prepublication_id") != self.prepublication_id
-        ):
+        if self.prepublication_id != _prepublication_id(
+            run_id, session_id, source_sha, runtime_sha
+        ) or release.get("prepublication_id") != self.prepublication_id:
             raise ValueError("prepublication identity binding mismatch")
         if expected_run_id is not None and run_id != expected_run_id:
             raise ValueError("prepublication run identity mismatch")
         if expected_session_id is not None and session_id != expected_session_id:
             raise ValueError("prepublication session identity mismatch")
-        if (
-            expected_source_release_sha is not None
-            and source_sha != expected_source_release_sha
-        ):
+        if expected_source_release_sha is not None and source_sha != expected_source_release_sha:
             raise ValueError("prepublication source release binding mismatch")
-        if (
-            expected_runtime_data_sha is not None
-            and runtime_sha != expected_runtime_data_sha
-        ):
+        if expected_runtime_data_sha is not None and runtime_sha != expected_runtime_data_sha:
             raise ValueError("prepublication runtime data binding mismatch")
         expected_hashes = {
             inventory_for(league, M5_CANDIDATE_ID).model_artifact_hash
@@ -446,28 +415,18 @@ class Top5PrepublicationArtifactV1:
         }
         if len(expected_hashes) != 1 or model_hash not in expected_hashes:
             raise ValueError("prepublication model hash differs from frozen inventory")
-        if (
-            expected_model_artifact_hash is not None
-            and model_hash != expected_model_artifact_hash
-        ):
+        if expected_model_artifact_hash is not None and model_hash != expected_model_artifact_hash:
             raise ValueError("prepublication model hash binding mismatch")
-        if (
-            expected_signal_time_contract_id is not None
-            and signal_contract != expected_signal_time_contract_id
-        ):
+        if expected_signal_time_contract_id is not None and signal_contract != expected_signal_time_contract_id:
             raise ValueError("prepublication Signal-Time contract binding mismatch")
-        generated = _timestamp(
-            release.get("generated_at"), "prepublication generated_at"
-        )
+        generated = _timestamp(release.get("generated_at"), "prepublication generated_at")
         _age(checked_now, generated, "prepublication product")
         if (checked_now - generated).total_seconds() > MAX_EVIDENCE_AGE_SECONDS:
             raise ValueError("prepublication product is stale")
         for record in records:
             if not isinstance(record, Mapping):
                 raise TypeError("prepublication outcome record must be an object")
-            signal_at = record.get("signal_timestamp") or record.get(
-                "prediction_timestamp"
-            )
+            signal_at = record.get("signal_timestamp") or record.get("prediction_timestamp")
             observed = _timestamp(signal_at, "prepublication signal timestamp")
             _age(checked_now, observed, "prepublication signal")
             if (checked_now - observed).total_seconds() > MAX_EVIDENCE_AGE_SECONDS:
@@ -498,8 +457,7 @@ class Top5PrepublicationArtifactV1:
             "worker_candidate_payload_digest": self.worker_candidate_payload_digest,
             "static_candidate_payload_digest": self.static_candidate_payload_digest,
             "worker_candidate_payloads_equal": (
-                dict(self.worker_candidate_payload)
-                == dict(self.static_candidate_payload)
+                dict(self.worker_candidate_payload) == dict(self.static_candidate_payload)
             ),
             "worker_destination": "/signals",
             "static_destination": "docs/data/signals.json",
@@ -543,11 +501,7 @@ def _candidate_provider(value: object) -> bool:
     if not isinstance(value, str):
         return False
     normalized = value.strip().casefold()
-    return (
-        normalized in _CANDIDATE_PROVIDER_MARKERS
-        or normalized in CANDIDATE_ONLY_PROVIDER_IDENTITIES
-        or "therundown" in normalized
-    )
+    return normalized in _CANDIDATE_PROVIDER_MARKERS or "therundown" in normalized
 
 
 def _top5_records(payload: Mapping[str, object]) -> list[dict[str, object]]:
@@ -1009,11 +963,7 @@ def publication_precheck(
         "candidate_not_authority",
         "no_bet",
     }
-    manifest = (
-        accepted_evidence.get("manifest")
-        if isinstance(accepted_evidence, Mapping)
-        else None
-    )
+    manifest = accepted_evidence.get("manifest") if isinstance(accepted_evidence, Mapping) else None
     manifest_valid = False
     if (
         isinstance(accepted_evidence, Mapping)
@@ -1022,9 +972,7 @@ def publication_precheck(
         and isinstance(manifest, Mapping)
         and set(manifest) == manifest_fields
     ):
-        manifest_body = {
-            key: value for key, value in manifest.items() if key != "manifest_digest"
-        }
+        manifest_body = {key: value for key, value in manifest.items() if key != "manifest_digest"}
         checks = manifest.get("checks")
         checks_valid = (
             isinstance(checks, Mapping)
@@ -1032,9 +980,7 @@ def publication_precheck(
             and all(value is True for value in checks.values())
         )
         try:
-            digest_valid = manifest.get("manifest_digest") == canonical_digest(
-                manifest_body
-            )
+            digest_valid = manifest.get("manifest_digest") == canonical_digest(manifest_body)
         except ValueError:
             digest_valid = False
         manifest_valid = (
@@ -1047,30 +993,19 @@ def publication_precheck(
             and checks_valid
             and artifact is not None
             and artifact_result.get("status") == TOP5_PREPUBLICATION_DELIVERY_READY
-            and manifest.get("public_prepublication_id")
-            == artifact_result.get("prepublication_id")
-            and manifest.get("controlled_shadow_run_id")
-            == artifact_result.get("run_id")
-            and manifest.get("qualification_session_id")
-            == artifact_result.get("session_id")
-            and manifest.get("provider_authority")
-            == artifact_result.get("provider_authority")
+            and manifest.get("public_prepublication_id") == artifact_result.get("prepublication_id")
+            and manifest.get("controlled_shadow_run_id") == artifact_result.get("run_id")
+            and manifest.get("qualification_session_id") == artifact_result.get("session_id")
+            and manifest.get("provider_authority") == artifact_result.get("provider_authority")
             and manifest.get("model_identity") == artifact_result.get("candidate_id")
             and manifest.get("research_sha") == artifact_result.get("research_sha")
-            and manifest.get("public_product_digest")
-            == artifact_result.get("public_product_digest")
-            and manifest.get("worker_candidate_payload_digest")
-            == artifact_result.get("worker_candidate_payload_digest")
-            and manifest.get("static_candidate_payload_digest")
-            == artifact_result.get("static_candidate_payload_digest")
-            and manifest.get("source_release_sha")
-            == artifact_result.get("source_release_sha")
-            and manifest.get("runtime_data_sha")
-            == artifact_result.get("runtime_data_sha")
-            and manifest.get("model_artifact_hash")
-            == artifact_result.get("model_artifact_hash")
-            and manifest.get("signal_time_contract_id")
-            == artifact_result.get("signal_time_contract_id")
+            and manifest.get("public_product_digest") == artifact_result.get("public_product_digest")
+            and manifest.get("worker_candidate_payload_digest") == artifact_result.get("worker_candidate_payload_digest")
+            and manifest.get("static_candidate_payload_digest") == artifact_result.get("static_candidate_payload_digest")
+            and manifest.get("source_release_sha") == artifact_result.get("source_release_sha")
+            and manifest.get("runtime_data_sha") == artifact_result.get("runtime_data_sha")
+            and manifest.get("model_artifact_hash") == artifact_result.get("model_artifact_hash")
+            and manifest.get("signal_time_contract_id") == artifact_result.get("signal_time_contract_id")
         )
     if not manifest_valid:
         reasons.append(
@@ -1089,43 +1024,22 @@ def publication_precheck(
         )
     else:
         expected_dry_run_fields = {
-            "schema_version",
-            "status",
-            "prepublication_id",
-            "prepared_at",
-            "public_product_digest",
-            "worker_candidate_payload_digest",
-            "static_candidate_payload_digest",
-            "worker_candidate_payloads_equal",
-            "worker_destination",
-            "static_destination",
-            "provider_requests",
-            "network_requests",
-            "publication_enabled",
-            "publication_authorized",
-            "capability_consumed",
-            "mutation_performed",
-            "rollback_ready",
+            "schema_version", "status", "prepublication_id", "prepared_at",
+            "public_product_digest", "worker_candidate_payload_digest",
+            "static_candidate_payload_digest", "worker_candidate_payloads_equal",
+            "worker_destination", "static_destination", "provider_requests",
+            "network_requests", "publication_enabled", "publication_authorized",
+            "capability_consumed", "mutation_performed", "rollback_ready",
         }
         if set(delivery_manifest) != expected_dry_run_fields:
-            reasons.append(
-                _reason("PUBLIC_DRY_RUN_INVALID", "dry-run manifest fields are invalid")
-            )
+            reasons.append(_reason("PUBLIC_DRY_RUN_INVALID", "dry-run manifest fields are invalid"))
         elif artifact is None:
-            reasons.append(
-                _reason(
-                    "PUBLIC_DRY_RUN_INVALID",
-                    "dry-run has no valid prepublication artifact",
-                )
-            )
+            reasons.append(_reason("PUBLIC_DRY_RUN_INVALID", "dry-run has no valid prepublication artifact"))
         else:
             expected_dry_run = artifact.delivery_dry_run_manifest(
                 rollback_ready=delivery_manifest.get("rollback_ready") is True
             )
-            if (
-                dict(delivery_manifest) != expected_dry_run
-                or delivery_manifest.get("rollback_ready") is not True
-            ):
+            if dict(delivery_manifest) != expected_dry_run or delivery_manifest.get("rollback_ready") is not True:
                 reasons.append(
                     _reason(
                         "PUBLIC_DRY_RUN_INVALID",

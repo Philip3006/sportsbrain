@@ -44,13 +44,41 @@ not serialized into evidence.
 
 This module establishes provider capability and typed fixture/market output;
 it does not claim an approved Top-5 or CL production provider migration.
-Current Top-5 final acceptance and the existing B4 real-evidence dossier are
-still bound to TheRundown-specific quota-proof, Discovery, and Controlled
-Shadow schemas. The CL model/runtime contract also currently requires the
-The Odds API as its model-input source and remains disabled. These product
-acceptance seams must be changed in their own reviewed integration before
-iSports output can satisfy those final gates. This adapter does not imitate
-legacy provider schemas to bypass them.
+The canonical B4 evidence contract is provider-neutral (PR #190). This adapter
+normalizes iSports market observations but does not itself manufacture quota
+proof, Discovery, or Controlled Shadow evidence. The B1/final-acceptance
+consumer still needs separate provider-neutral work owned by Builder 1; this
+PR does not implement that consumer. The Champions League model/runtime remains
+disabled pending its separately approved model-input contract.
+
+## Strict target binding and parser failure policy
+
+Main Odds parsing is bound to the exact validated `matchId` set sent by the
+client. Every returned container and odds-row ID must belong to that set; when
+both an outer match ID and an inner `europeOdds` row ID exist, they must agree.
+European Odds requests take the exact scheduled fixture mapping, derive the
+outbound IDs from it, and validate returned native match ID, league, home and
+away participants, and kickoff against those fixtures. Neither network path
+can omit its target identity binding.
+
+Malformed or conflicting evidence for a requested target fails closed, even
+when another bookmaker row in that same response is valid. Duplicate target
+containers and duplicate bookmaker identities are rejected. A well-formed
+target with an empty/missing market list is instead represented as missing
+market coverage, not parser corruption. Such a target cannot produce a market
+snapshot without fresh complete 1X2 quotes.
+
+The documented Main Odds `europeOdds` CSV row is parsed in its exact 11-field
+order: `matchId`, `companyId`, initial home/draw/away, instant home/draw/away,
+`changeTime`, `close`, and `oddsType`. The parser also supports the documented
+mapping/object form when supplied by an injected transport. European Odds
+`oddsDetail` CSV uses exactly eight fields: company ID/name, initial
+home/draw/away, and instant home/draw/away; its update time comes from the
+containing odds entry. Unexpected extra or missing CSV fields fail closed.
+
+The previous HTTP-200 parser failure cannot be attributed conclusively because
+only the digest was retained. Offline documented-shape regressions now cover
+the parser contract; a later bounded real capability run is still required.
 
 ## Authorized capability sample (2026-09-27 UTC)
 
@@ -69,11 +97,13 @@ catalog; they were not guessed:
 The catalog request and all six schedule requests returned HTTP 200. At that
 time, one eligible future fixture per league was selected for the single bulk
 odds request. The Main Odds request also returned HTTP 200, but the live body
-did not pass the implemented documented-response parser. Only its digest was
-retained (`6d23d58891142dd1746f25fcc6f37d1e81c1922896b4bcee50fcaee6ffe9e1dc`),
-so the exact body shape and total schedule counts cannot be recovered from this
-run. In keeping with the one-shot/no-retry boundary, the European Odds request
-was not made. No real bookmaker coverage is therefore claimed. A future
-provider request requires a fresh authorization and should first capture only
-safe response-shape metadata (not raw payload or credentials) if parser
-diagnosis is still needed.
+did not pass the then-current parser. Only its digest was retained
+(`6d23d58891142dd1746f25fcc6f37d1e81c1922896b4bcee50fcaee6ffe9e1dc`), so the
+exact body shape and total schedule counts cannot be recovered from this run.
+In keeping with the one-shot/no-retry boundary, the European Odds request was
+not made. No real bookmaker coverage is therefore claimed. The previous
+HTTP-200 parser failure cannot be attributed conclusively because only the
+digest was retained. Offline documented-shape regressions now cover the parser
+contract; a later bounded real capability run is still required. Any later
+request requires fresh authorization; this PR performs no live capability
+request.

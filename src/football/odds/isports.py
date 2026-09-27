@@ -727,80 +727,131 @@ def _decimal_from_hk(value: object, name: str) -> float:
     return decimal
 
 
-def _main_entries(payload: object) -> tuple[list[Mapping[str, object]], int]:
+def _main_entries(
+    payload: object,
+) -> tuple[list[tuple[Mapping[str, object], str | None]], int, tuple[str, ...]]:
     rows = _response_rows(payload)
-    entries: list[Mapping[str, object]] = []
+    entries: list[tuple[Mapping[str, object], str | None]] = []
+    container_match_ids: list[str] = []
     malformed = 0
     for row in rows:
+        outer_raw = row.get("matchId")
+        outer_match_id = (
+            _provider_id(outer_raw, "Main Odds container match ID")
+            if outer_raw is not None
+            else None
+        )
+        if outer_match_id is not None:
+            container_match_ids.append(outer_match_id)
         raw = row.get("europeOdds", [])
         if not isinstance(raw, list):
             raise ISportsContractError("Main Odds europeOdds must be an array")
         for item in raw:
             if isinstance(item, Mapping):
-                entries.append(item)
+                entries.append((item, outer_match_id))
             elif isinstance(item, str):
                 fields = [part.strip() for part in item.split(",")]
-                if len(fields) < 11:
+                if len(fields) != 11:
                     malformed += 1
                     continue
                 entries.append(
-                    {
-                        "matchId": fields[0],
-                        "companyId": fields[1],
-                        "initialHome": fields[2],
-                        "initialDraw": fields[3],
-                        "initialAway": fields[4],
-                        "instantHome": fields[5],
-                        "instantDraw": fields[6],
-                        "instantAway": fields[7],
-                        "changeTime": fields[8],
-                        "close": fields[9],
-                        "oddsType": fields[10],
-                    }
+                    (
+                        {
+                            "matchId": fields[0],
+                            "companyId": fields[1],
+                            "initialHome": fields[2],
+                            "initialDraw": fields[3],
+                            "initialAway": fields[4],
+                            "instantHome": fields[5],
+                            "instantDraw": fields[6],
+                            "instantAway": fields[7],
+                            "changeTime": fields[8],
+                            "close": fields[9],
+                            "oddsType": fields[10],
+                        },
+                        outer_match_id,
+                    )
                 )
             else:
                 malformed += 1
-    return entries, malformed
+    return entries, malformed, tuple(container_match_ids)
 
 
-def _flag_is_true(value: object) -> bool:
-    return (
-        value is True
-        or (isinstance(value, str) and value.strip().casefold() in {"true", "1", "yes"})
-        or (isinstance(value, int) and not isinstance(value, bool) and value == 1)
-    )
+def _validated_flag_is_true(value: object, name: str) -> bool:
+    if value is None:
+        return False
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, int) and value in (0, 1):
+        return bool(value)
+    if isinstance(value, str):
+        normalized = value.strip().casefold()
+        if normalized in {"true", "1", "yes"}:
+            return True
+        if normalized in {"false", "0", "no"}:
+            return False
+    raise ISportsContractError(f"{name} flag is malformed")
+
+
+def _main_odds_type(value: object) -> int:
+    if isinstance(value, bool):
+        raise ISportsContractError("Main Odds stage is invalid")
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str) and re.fullmatch(r"[0-9]+", value.strip()):
+        return int(value.strip())
+    raise ISportsContractError("Main Odds stage is invalid")
 
 
 def parse_main_odds(
     payload: object,
     *,
     captured_at: datetime,
-    expected_match_ids: Sequence[str] | None = None,
+    expected_match_ids: Sequence[str],
 ) -> tuple[dict[str, tuple[ISportsBookmakerQuote, ...]], int]:
     _utc(captured_at, "captured_at")
     result: dict[str, list[ISportsBookmakerQuote]] = {}
-    rows, malformed = _main_entries(payload)
-    expected = set(expected_match_ids) if expected_match_ids is not None else None
-    for row in rows:
+    expected = set(_validated_bulk_ids(expected_match_ids))
+    rows, malformed, container_ids = _main_entries(payload)
+    if any(match_id not in expected for match_id in container_ids):
+        raise ISportsContractError("Main Odds returned an unrequested match ID")
+    if len(container_ids) != len(set(container_ids)):
+        raise ISportsContractError("Main Odds duplicated a match container")
+    for row, outer_match_id in rows:
+        inner_raw = row.get("matchId")
         try:
-            if _flag_is_true(row.get("maintenance")):
+            inner_match_id = (
+                _provider_id(inner_raw, "Main Odds match ID")
+                if inner_raw is not None
+                else outer_match_id
+            )
+        except ISportsContractError:
+            malformed += 1
+            continue
+        if inner_match_id is None:
+            malformed += 1
+            continue
+        if outer_match_id is not None and inner_match_id != outer_match_id:
+            raise ISportsContractError("Main Odds container/row match ID mismatch")
+        if inner_match_id not in expected:
+            raise ISportsContractError("Main Odds returned an unrequested match ID")
+        try:
+            if _validated_flag_is_true(row.get("maintenance"), "maintenance"):
                 malformed += 1
                 continue
-            if _flag_is_true(row.get("inPlay")) or _flag_is_true(row.get("close")):
+            if _validated_flag_is_true(row.get("inPlay"), "inPlay") or (
+                _validated_flag_is_true(row.get("close"), "close")
+            ):
                 continue
             odds_type = row.get("oddsType", row.get("type"))
             if odds_type is None:
                 raise ISportsContractError("Main Odds stage is missing")
-            if isinstance(odds_type, bool):
-                raise ISportsContractError("Main Odds stage is invalid")
-            if int(odds_type) != 1:
-                if int(odds_type) == 0:
+            odds_type_value = _main_odds_type(odds_type)
+            if odds_type_value != 1:
+                if odds_type_value not in {2, 3}:
                     malformed += 1
                 continue
-            match_id = _provider_id(row.get("matchId"), "Main Odds match ID")
-            if expected is not None and match_id not in expected:
-                malformed += 1
-                continue
+            match_id = inner_match_id
             company_id = _provider_id(row.get("companyId"), "Main Odds company ID")
             name = _MAIN_COMPANIES.get(company_id)
             if name is None:
@@ -829,71 +880,120 @@ def parse_main_odds(
             result.setdefault(match_id, []).append(quote)
         except (ISportsContractError, TypeError, ValueError, OverflowError):
             malformed += 1
+    if malformed:
+        raise ISportsContractError(
+            "Main Odds response contains malformed requested-target evidence"
+        )
+    for match_id, quotes in result.items():
+        company_ids = [quote.company_id for quote in quotes]
+        if len(company_ids) != len(set(company_ids)):
+            raise ISportsContractError(
+                f"Main Odds contains duplicate bookmaker evidence for {match_id}"
+            )
     return {
         key: tuple(sorted(values, key=lambda row: (row.company_id, row.company_name)))
         for key, values in result.items()
     }, malformed
 
 
-def _european_detail_rows(raw: object) -> Sequence[object]:
-    if not isinstance(raw, list):
-        return ()
-    return raw
+def _validated_expected_fixtures(
+    expected_fixtures: Mapping[str, ISportsFixture],
+) -> dict[str, ISportsFixture]:
+    if not isinstance(expected_fixtures, Mapping) or not expected_fixtures:
+        raise ISportsContractError("European Odds requires scheduled fixture bindings")
+    if len(expected_fixtures) > MAX_BULK_MATCH_IDS:
+        raise ISportsContractError("European Odds fixture set exceeds provider limit")
+    result: dict[str, ISportsFixture] = {}
+    for raw_id, fixture in expected_fixtures.items():
+        match_id = _provider_id(raw_id, "expected provider match ID")
+        if not isinstance(fixture, ISportsFixture):
+            raise ISportsContractError("expected fixture binding is invalid")
+        fixture.validate()
+        if fixture.provider_match_id != match_id:
+            raise ISportsContractError("expected fixture key/native ID mismatch")
+        if match_id in result:
+            raise ISportsContractError("expected fixture IDs are duplicated")
+        result[match_id] = fixture
+    _validated_bulk_ids(tuple(result))
+    return result
 
 
 def parse_european_odds(
     payload: object,
     *,
     captured_at: datetime,
-    expected_fixtures: Mapping[str, ISportsFixture] | None = None,
+    expected_fixtures: Mapping[str, ISportsFixture],
 ) -> tuple[dict[str, tuple[ISportsBookmakerQuote, ...]], int]:
     _utc(captured_at, "captured_at")
+    expected = _validated_expected_fixtures(expected_fixtures)
     result: dict[str, list[ISportsBookmakerQuote]] = {}
     malformed = 0
+    seen_match_ids: set[str] = set()
     for match in _response_rows(payload):
         try:
             match_id = _provider_id(match.get("matchId"), "European match ID")
-        except ISportsContractError:
-            malformed += 1
-            continue
+        except ISportsContractError as exc:
+            raise ISportsContractError(
+                "European Odds returned a row without a bindable match ID"
+            ) from exc
+        fixture = expected.get(match_id)
+        if fixture is None:
+            raise ISportsContractError("European Odds returned an unrequested match ID")
+        if match_id in seen_match_ids:
+            raise ISportsContractError("European Odds duplicated a target match row")
+        seen_match_ids.add(match_id)
         odds = match.get("odds", [])
-        if not match_id or not isinstance(odds, list):
-            malformed += 1
-            continue
-        if expected_fixtures is not None:
-            fixture = expected_fixtures.get(match_id)
-            try:
-                identity_matches = (
-                    fixture is not None
-                    and _canonical_name(match.get("leagueName"))
-                    in _COMPETITION_NAMES[fixture.league_code]
-                    and normalize_team_name(match.get("homeName"))
-                    == normalize_team_name(fixture.home_team)
-                    and normalize_team_name(match.get("awayName"))
-                    == normalize_team_name(fixture.away_team)
-                    and _epoch_utc(match.get("matchTime"), "European matchTime")
-                    == fixture.kickoff_utc
+        if not isinstance(odds, list):
+            raise ISportsContractError("European Odds target market list is malformed")
+        try:
+            league_matches = (
+                _canonical_name(match.get("leagueName"))
+                in _COMPETITION_NAMES[fixture.league_code]
+            )
+            league_id = match.get("leagueId")
+            if league_id is not None:
+                league_matches = (
+                    league_matches
+                    and _provider_id(league_id, "European league ID")
+                    == fixture.provider_league_id
                 )
-            except (ISportsContractError, KeyError):
-                identity_matches = False
-            if not identity_matches:
-                malformed += len(odds) if odds else 1
-                continue
+            identity_matches = (
+                league_matches
+                and normalize_team_name(match.get("homeName"))
+                == normalize_team_name(fixture.home_team)
+                and normalize_team_name(match.get("awayName"))
+                == normalize_team_name(fixture.away_team)
+                and _epoch_utc(match.get("matchTime"), "European matchTime")
+                == fixture.kickoff_utc
+            )
+        except (ProductionContractError, TypeError, ValueError, KeyError):
+            identity_matches = False
+        if not identity_matches:
+            raise ISportsContractError("European Odds fixture identity mismatch")
         for entry in odds:
             if not isinstance(entry, Mapping):
                 malformed += 1
                 continue
-            if _flag_is_true(entry.get("inPlay")) or _flag_is_true(entry.get("close")):
+            if _validated_flag_is_true(entry.get("inPlay"), "inPlay") or (
+                _validated_flag_is_true(entry.get("close"), "close")
+            ):
                 continue
             change_raw = entry.get("changeTime")
-            details = _european_detail_rows(entry.get("oddsDetail"))
+            if "oddsDetail" not in entry:
+                malformed += 1
+                continue
+            details_raw = entry.get("oddsDetail")
+            if not isinstance(details_raw, list):
+                malformed += 1
+                continue
+            details = details_raw
             for detail in details:
                 try:
                     if isinstance(detail, Mapping):
                         fields = detail
                     elif isinstance(detail, str):
                         values = [part.strip() for part in detail.split(",")]
-                        if len(values) < 8:
+                        if len(values) != 8:
                             raise ISportsContractError(
                                 "European Odds row is incomplete"
                             )
@@ -945,6 +1045,16 @@ def parse_european_odds(
                     result.setdefault(match_id, []).append(quote)
                 except (ISportsContractError, TypeError, ValueError, OverflowError):
                     malformed += 1
+    if malformed:
+        raise ISportsContractError(
+            "European Odds response contains malformed requested-target evidence"
+        )
+    for match_id, quotes in result.items():
+        company_ids = [quote.company_id for quote in quotes]
+        if len(company_ids) != len(set(company_ids)):
+            raise ISportsContractError(
+                f"European Odds contains ambiguous bookmaker evidence for {match_id}"
+            )
     return {
         key: tuple(sorted(values, key=lambda row: (row.company_id, row.company_name)))
         for key, values in result.items()
@@ -970,6 +1080,10 @@ def aggregate_1x2(
     """
 
     fixture.validate()
+    if malformed_row_count:
+        raise ISportsContractError(
+            "malformed provider rows cannot enter a qualified market snapshot"
+        )
     captured = _utc(captured_at, "captured_at")
     if captured >= fixture.kickoff_utc:
         raise ISportsContractError("in-play/post-kickoff odds are not eligible")
@@ -1280,21 +1394,26 @@ class ISportsClient:
         if response.status_code != 200 or response.transport_error_class:
             raise ISportsContractError("iSports Main Odds request failed")
         parsed, malformed = parse_main_odds(
-            response.payload, captured_at=response.completed_at
+            response.payload,
+            captured_at=response.completed_at,
+            expected_match_ids=ids,
         )
         return parsed, malformed, response
 
     def european_odds(
-        self, match_ids: Sequence[str]
+        self, expected_fixtures: Mapping[str, ISportsFixture]
     ) -> tuple[dict[str, tuple[ISportsBookmakerQuote, ...]], int, ISportsHttpResponse]:
-        ids = _validated_bulk_ids(match_ids)
+        fixtures = _validated_expected_fixtures(expected_fixtures)
+        ids = tuple(fixtures)
         response = self.request(
             ISPORTS_ENDPOINTS["european_odds"], {"matchId": ",".join(ids)}
         )
         if response.status_code != 200 or response.transport_error_class:
             raise ISportsContractError("iSports European Odds request failed")
         parsed, malformed = parse_european_odds(
-            response.payload, captured_at=response.completed_at
+            response.payload,
+            captured_at=response.completed_at,
+            expected_fixtures=fixtures,
         )
         return parsed, malformed, response
 
