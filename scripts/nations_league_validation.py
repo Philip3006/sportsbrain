@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Run the offline UEFA Nations League 1X2 transferability audit."""
 from __future__ import annotations
 
