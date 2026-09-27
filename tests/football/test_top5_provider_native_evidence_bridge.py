@@ -559,15 +559,18 @@ def test_complete_post_shadow_chain_accepts_native_five_league_artifacts_offline
     assert activation.provider_authority == "the_odds_api"
     assert activation.mutation_performed is False
 
+    from src.football.top5_public_acceptance import Top5PrepublicationArtifactV1
+
+    prepublication = Top5PrepublicationArtifactV1.from_mapping(
+        builder1_bundle["public"]
+    )
     publication = publication_precheck(
-        public["worker_payload"],
+        builder1_bundle["public"],
         b1_result,
         now=precheck_now,
-        delivery_manifest={
-            **public["delivery_manifest"],
-            "dry_run_status": "TOP5_DELIVERY_DRY_RUN",
-            "rollback_ready": True,
-        },
+        delivery_manifest=prepublication.delivery_dry_run_manifest(
+            rollback_ready=True
+        ),
     )
     assert publication["status"] == "TOP5_PUBLICATION_PRECHECK_READY"
     assert publication["publication_enabled"] is False

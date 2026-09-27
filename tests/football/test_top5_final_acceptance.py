@@ -490,6 +490,64 @@ def test_b1_acceptance_uses_read_only_prepublication_artifact():
     assert result["manifest"]["checks"]["public_prepublication_delivery"] is True
 
 
+def test_b1_preserves_governed_runtime_freshness_boundary():
+    bundle = _bundle()
+    observed_at = NOW - timedelta(seconds=900)
+    bundle["runtime_evidence"].update(
+        {
+            "runtime_state_observed_at": observed_at.isoformat(),
+            "captured_at": observed_at.isoformat(),
+        }
+    )
+
+    result = verify_final_acceptance(bundle, now=NOW_ACCEPTANCE)
+
+    assert result["status"] == STATUS_VERIFIED
+
+
+@pytest.mark.parametrize(
+    "runtime_update, remove_observed_at, expected_error",
+    (
+        ({}, True, "runtime_state_observed_at is required"),
+        (
+            {
+                "runtime_state_observed_at": (NOW - timedelta(seconds=901)).isoformat(),
+                "captured_at": (NOW - timedelta(seconds=901)).isoformat(),
+            },
+            False,
+            "underlying runtime state is stale",
+        ),
+        (
+            {
+                "runtime_state_observed_at": (NOW + timedelta(seconds=1)).isoformat(),
+                "captured_at": (NOW + timedelta(seconds=1)).isoformat(),
+            },
+            False,
+            "underlying runtime state is from the future",
+        ),
+        (
+            {
+                "runtime_state_observed_at": NOW.isoformat(),
+                "captured_at": (NOW - timedelta(seconds=1)).isoformat(),
+            },
+            False,
+            "captured before the underlying runtime state",
+        ),
+    ),
+)
+def test_b1_rejects_stale_or_invalid_governed_runtime_timestamps(
+    runtime_update, remove_observed_at, expected_error
+):
+    bundle = _bundle()
+    runtime = bundle["runtime_evidence"]
+    if remove_observed_at:
+        runtime.pop("runtime_state_observed_at")
+    runtime.update(runtime_update)
+
+    with pytest.raises(Top5FinalAcceptanceError, match=expected_error):
+        verify_final_acceptance(bundle, now=NOW_ACCEPTANCE)
+
+
 def test_b1_rejects_premature_published_prepublication_artifact():
     bundle = _bundle()
     release = bundle["public"]["worker_candidate_payload"]["top5_release"]
