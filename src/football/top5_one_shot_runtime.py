@@ -62,11 +62,12 @@ from src.football.top5_signal_lifecycle import (
     SignalLifecycleError,
     SignalLifecycleStage,
     Top5SignalLifecycle,
-    Top5SignalLifecycleStore,
+    Top5SignalLifecycleSetStore,
     canonical_top5_h2h_lifecycle_set,
     create_initial_signal,
     plan_signal_lifecycle,
     refine_signal,
+    top5_h2h_lifecycle_set_digest,
 )
 from src.football.top5_the_odds_api_fixture_source import TOP5_SPORT_KEYS
 from src.signals import provider_budget
@@ -399,7 +400,7 @@ class Top5OneShotProductionRuntime:
         *,
         route_store: DurableTop5ProductionRouteStateStore,
         transport: OneShotTransport | None = None,
-        lifecycle_store: Top5SignalLifecycleStore | None = None,
+        lifecycle_set_store: Top5SignalLifecycleSetStore | None = None,
         clock: Callable[[], datetime] = lambda: datetime.now(timezone.utc),
         credential_loader: Callable[[], str] = _load_protected_api_key,
         budget_available: Callable[[datetime], bool] | None = None,
@@ -411,7 +412,7 @@ class Top5OneShotProductionRuntime:
         self.route_store = route_store
         self.consumer = Top5ProductionRouteConsumer(route_store)
         self.transport = transport or TheOddsApiOneShotHttpTransport()
-        self.lifecycle_store = lifecycle_store or Top5SignalLifecycleStore()
+        self.lifecycle_set_store = lifecycle_set_store or Top5SignalLifecycleSetStore()
         self.clock = clock
         self.credential_loader = credential_loader
         self.budget_available = budget_available or (
@@ -507,10 +508,25 @@ class Top5OneShotProductionRuntime:
             raise OneShotExecutionError("authorized M5 artifact is not canonical")
         if binding.lifecycle_stage not in {"INITIAL", "REFINEMENT"}:
             raise OneShotExecutionError("lifecycle stage is unsupported")
+        try:
+            authoritative_lifecycles = self.lifecycle_set_store.load_for_scope(
+                lifecycle_contract_id=binding.lifecycle_contract_id,
+                league_code=fixture.league_code,
+                fixture_key=fixture.fixture_key,
+                market_id="h2h",
+                candidate_id=M5_CANDIDATE_ID,
+                model_identity=binding.model_identity,
+            )
+        except SignalLifecycleError as exc:
+            raise OneShotExecutionError(str(exc)) from None
         if binding.lifecycle_stage == "INITIAL":
             if lifecycles is not None:
                 raise OneShotExecutionError(
                     "INITIAL cannot replace existing lifecycles"
+                )
+            if authoritative_lifecycles is not None:
+                raise OneShotExecutionError(
+                    "authoritative lifecycle set already exists; explicit recovery is required"
                 )
             resolved_lifecycles: dict[str, Top5SignalLifecycle] = {}
             lifecycle_for_plan = None
@@ -523,6 +539,22 @@ class Top5OneShotProductionRuntime:
                 resolved_lifecycles = canonical_top5_h2h_lifecycle_set(lifecycles)
             except SignalLifecycleError as exc:
                 raise OneShotExecutionError(str(exc)) from exc
+            if authoritative_lifecycles is None:
+                raise OneShotExecutionError("authoritative lifecycle set is missing")
+            try:
+                authoritative_by_outcome = canonical_top5_h2h_lifecycle_set(
+                    authoritative_lifecycles
+                )
+            except SignalLifecycleError as exc:
+                raise OneShotExecutionError(str(exc)) from None
+            if top5_h2h_lifecycle_set_digest(
+                tuple(resolved_lifecycles.values())
+            ) != top5_h2h_lifecycle_set_digest(
+                tuple(authoritative_by_outcome.values())
+            ):
+                raise OneShotExecutionError(
+                    "supplied lifecycle set differs from authoritative durable state"
+                )
             for outcome, existing in resolved_lifecycles.items():
                 current = existing.current_version
                 initial = existing.initial_version
@@ -546,15 +578,13 @@ class Top5OneShotProductionRuntime:
                     raise OneShotExecutionError(
                         "existing lifecycle set differs from signed INITIAL scope"
                     )
-                stored = self.lifecycle_store.load(existing.lifecycle_id)
-                if (
-                    stored is None
-                    or stored.lifecycle_digest != existing.lifecycle_digest
-                ):
+                stored = authoritative_by_outcome[outcome]
+                if stored.lifecycle_digest != existing.lifecycle_digest:
                     raise OneShotExecutionError(
-                        "persisted lifecycle differs from supplied lifecycle set"
+                        "authoritative lifecycle member differs from supplied set"
                     )
-            lifecycle_for_plan = resolved_lifecycles["home"]
+            resolved_lifecycles = authoritative_by_outcome
+            lifecycle_for_plan = authoritative_by_outcome["home"]
         lifecycle_plan = plan_signal_lifecycle(
             fixture,
             preflight_now,
@@ -745,37 +775,35 @@ class Top5OneShotProductionRuntime:
                             "request_shape_digest": binding.request_shape_digest,
                         },
                     )
-            persisted_lifecycles: dict[str, Top5SignalLifecycle] = {}
-            for outcome in TOP5_H2H_OUTCOMES:
-                next_lifecycle = next_lifecycles[outcome]
-                persisted = self.lifecycle_store.save(next_lifecycle)
-                if persisted.lifecycle_digest != next_lifecycle.lifecycle_digest:
-                    raise OneShotExecutionError(
-                        f"{outcome} lifecycle persistence write-back differs"
-                    )
-                read_back = self.lifecycle_store.load(persisted.lifecycle_id)
-                if (
-                    read_back is None
-                    or read_back.lifecycle_digest != persisted.lifecycle_digest
-                ):
-                    raise OneShotExecutionError(
-                        f"{outcome} lifecycle persistence read-back differs"
-                    )
-                persisted_lifecycles[outcome] = read_back
-            # Re-read the complete set after all writes; no partial set may pass.
-            for outcome in TOP5_H2H_OUTCOMES:
-                read_back = self.lifecycle_store.load(
-                    persisted_lifecycles[outcome].lifecycle_id
+            proposed_lifecycle_set = tuple(
+                next_lifecycles[outcome] for outcome in TOP5_H2H_OUTCOMES
+            )
+            committed_lifecycle_set = self.lifecycle_set_store.commit(
+                proposed_lifecycle_set
+            )
+            # Build production evidence from a fresh durable read, not from
+            # the in-memory objects passed to the atomic set transaction.
+            read_back_lifecycle_set = self.lifecycle_set_store.load_for_scope(
+                lifecycle_contract_id=binding.lifecycle_contract_id,
+                league_code=fixture.league_code,
+                fixture_key=fixture.fixture_key,
+                market_id="h2h",
+                candidate_id=M5_CANDIDATE_ID,
+                model_identity=binding.model_identity,
+            )
+            if (
+                read_back_lifecycle_set is None
+                or top5_h2h_lifecycle_set_digest(read_back_lifecycle_set)
+                != top5_h2h_lifecycle_set_digest(committed_lifecycle_set)
+                or top5_h2h_lifecycle_set_digest(read_back_lifecycle_set)
+                != top5_h2h_lifecycle_set_digest(proposed_lifecycle_set)
+            ):
+                raise OneShotExecutionError(
+                    "authoritative lifecycle-set commit read-back differs"
                 )
-                if (
-                    read_back is None
-                    or read_back.lifecycle_digest
-                    != persisted_lifecycles[outcome].lifecycle_digest
-                ):
-                    raise OneShotExecutionError(
-                        "complete lifecycle set persistence verification failed"
-                    )
-                persisted_lifecycles[outcome] = read_back
+            persisted_lifecycles = canonical_top5_h2h_lifecycle_set(
+                read_back_lifecycle_set
+            )
             lifecycle_ids = {
                 outcome: persisted_lifecycles[outcome].lifecycle_id
                 for outcome in TOP5_H2H_OUTCOMES
@@ -792,7 +820,9 @@ class Top5OneShotProductionRuntime:
                 outcome: persisted_lifecycles[outcome].lifecycle_digest
                 for outcome in TOP5_H2H_OUTCOMES
             }
-            lifecycle_set_digest = _sha(lifecycle_digests)
+            lifecycle_set_digest = top5_h2h_lifecycle_set_digest(
+                tuple(persisted_lifecycles.values())
+            )
             health_status = "HEALTHY"
             finished_at = _utc(self.clock(), "execution_finished_at")
             result_body: dict[str, object] = {

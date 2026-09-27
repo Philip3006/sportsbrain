@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from dataclasses import replace
 from datetime import datetime, timedelta
 from typing import ClassVar
@@ -36,11 +37,15 @@ from src.football.top5_signal_lifecycle import (
     RefinementClassification,
     SignalLifecycleError,
     SignalLifecycleStage,
-    Top5SignalLifecycleStore,
+    Top5SignalLifecycleSetStore,
+    canonical_top5_h2h_lifecycle_set,
     create_initial_signal,
-    lifecycle_state_path,
+    lifecycle_set_state_path,
     parse_top5_h2h_lifecycle_set,
     refine_signal,
+    top5_h2h_lifecycle_set_digest,
+    top5_h2h_lifecycle_set_id,
+    top5_h2h_lifecycle_set_identity_for_scope,
     top5_h2h_lifecycle_set_payload,
 )
 from src.football.top5_signal_lifecycle_public_adapter import (
@@ -68,25 +73,62 @@ def _freeze_route_consumer_wall_clock(monkeypatch):
     monkeypatch.setattr(route_state_module, "datetime", FrozenDateTime)
 
 
-class MemoryLifecycleStore:
-    def __init__(self, lifecycles=None, *, fail_save=False, fail_after_saves=None):
-        self.values = {item.lifecycle_id: item for item in (lifecycles or ())}
-        self.fail_save = fail_save
-        self.fail_after_saves = fail_after_saves
-        self.save_calls = 0
+class MemoryLifecycleSetStore:
+    """Atomic in-memory test double for the production set-store contract."""
 
-    def load(self, lifecycle_id):
-        return self.values.get(lifecycle_id)
+    def __init__(self, lifecycles=None, *, fail_commit=False):
+        self.values = {}
+        self.set_members = {}
+        self.fail_commit = fail_commit
+        self.commit_calls = 0
+        self.load_calls = 0
+        if lifecycles:
+            self._seed(lifecycles)
 
-    def save(self, lifecycle):
-        self.save_calls += 1
-        if self.fail_save or (
-            self.fail_after_saves is not None
-            and self.save_calls > self.fail_after_saves
-        ):
-            raise OSError("offline persistence failure")
-        self.values[lifecycle.lifecycle_id] = lifecycle
-        return lifecycle
+    def _seed(self, lifecycles):
+        ordered = canonical_top5_h2h_lifecycle_set(lifecycles)
+        lifecycle_set_id = top5_h2h_lifecycle_set_id(tuple(ordered.values()))
+        self.set_members[lifecycle_set_id] = tuple(
+            ordered[outcome].lifecycle_id for outcome in TOP5_H2H_OUTCOMES
+        )
+        self.values.update(
+            {lifecycle.lifecycle_id: lifecycle for lifecycle in ordered.values()}
+        )
+
+    def load_for_scope(self, **scope):
+        lifecycle_set_id = top5_h2h_lifecycle_set_identity_for_scope(**scope)
+        self.load_calls += 1
+        member_ids = self.set_members.get(lifecycle_set_id)
+        if member_ids is None:
+            return None
+        try:
+            return tuple(self.values[identity] for identity in member_ids)
+        except KeyError as exc:
+            raise SignalLifecycleError("memory lifecycle set is incomplete") from exc
+
+    def commit(self, lifecycles):
+        self.commit_calls += 1
+        if self.fail_commit:
+            raise OSError("injected atomic lifecycle-set failure")
+        ordered = canonical_top5_h2h_lifecycle_set(lifecycles)
+        lifecycle_set_id = top5_h2h_lifecycle_set_id(tuple(ordered.values()))
+        member_ids = self.set_members.get(lifecycle_set_id)
+        if member_ids is not None:
+            current = tuple(self.values[identity] for identity in member_ids)
+            if top5_h2h_lifecycle_set_digest(current) == top5_h2h_lifecycle_set_digest(
+                tuple(ordered.values())
+            ):
+                return current
+            Top5SignalLifecycleSetStore._validate_transition(current, ordered)
+        elif Top5SignalLifecycleSetStore._state_kind(ordered) != "INITIAL":
+            raise SignalLifecycleError("memory set must begin with INITIAL")
+        self.values.update(
+            {lifecycle.lifecycle_id: lifecycle for lifecycle in ordered.values()}
+        )
+        self.set_members[lifecycle_set_id] = tuple(
+            ordered[outcome].lifecycle_id for outcome in TOP5_H2H_OUTCOMES
+        )
+        return tuple(ordered[outcome] for outcome in TOP5_H2H_OUTCOMES)
 
     def by_outcome(self):
         return {
@@ -95,30 +137,21 @@ class MemoryLifecycleStore:
         }
 
 
-class InstrumentedCanonicalLifecycleStore:
-    """Track calls while exercising the real append-only external store."""
+class InstrumentedCanonicalLifecycleSetStore(Top5SignalLifecycleSetStore):
+    """Track calls while exercising the real atomic external set store."""
 
-    def __init__(self):
-        self.store = Top5SignalLifecycleStore()
-        self.save_calls = 0
+    def __init__(self, root):
+        super().__init__(root=root)
+        self.commit_calls = 0
         self.load_calls = 0
-        self.lifecycle_ids_by_outcome = {}
 
-    def load(self, lifecycle_id):
+    def load_for_scope(self, **scope):
         self.load_calls += 1
-        return self.store.load(lifecycle_id)
+        return super().load_for_scope(**scope)
 
-    def save(self, lifecycle):
-        self.save_calls += 1
-        outcome = lifecycle.initial_version.outcome_id
-        self.lifecycle_ids_by_outcome[outcome] = lifecycle.lifecycle_id
-        return self.store.save(lifecycle)
-
-    def by_outcome(self):
-        return {
-            outcome: self.store.load(lifecycle_id)
-            for outcome, lifecycle_id in self.lifecycle_ids_by_outcome.items()
-        }
+    def commit(self, lifecycles):
+        self.commit_calls += 1
+        return super().commit(lifecycles)
 
 
 class FakeTransport:
@@ -327,9 +360,9 @@ def _runtime_context(
     payload=None,
     status=200,
     payload_valid=True,
-    fail_save=False,
-    fail_after_saves=None,
+    fail_commit=False,
     budget=True,
+    durable_set_store=False,
 ):
     (
         package,
@@ -354,11 +387,13 @@ def _runtime_context(
     selected = next(
         item for item in package.dossier.bindings if item.league == fixture.league_code
     )
-    store = MemoryLifecycleStore(
-        lifecycles,
-        fail_save=fail_save,
-        fail_after_saves=fail_after_saves,
-    )
+    if durable_set_store:
+        store = InstrumentedCanonicalLifecycleSetStore(
+            tmp_path / "authoritative-lifecycle-sets"
+        )
+        store.commit(lifecycles)
+    else:
+        store = MemoryLifecycleSetStore(lifecycles, fail_commit=fail_commit)
     transport = FakeTransport(
         fixture,
         NOW,
@@ -381,7 +416,7 @@ def _runtime_context(
     runtime = Top5OneShotProductionRuntime(
         route_store=DurableTop5ProductionRouteStateStore(tmp_path / "route.json"),
         transport=transport,
-        lifecycle_store=store,
+        lifecycle_set_store=store,
         clock=lambda: next(times),
         credential_loader=lambda: (
             credential_calls.append("read") or "injected-test-key"
@@ -409,7 +444,15 @@ def _runtime_context(
 
 def _project_runtime_lifecycle_set(store, result, fixture, lifecycles=None):
     if lifecycles is None:
-        lifecycles = tuple(store.by_outcome()[outcome] for outcome in TOP5_H2H_OUTCOMES)
+        lifecycles = store.load_for_scope(
+            lifecycle_contract_id=result["lifecycle_contract_id"],
+            league_code=fixture.league_code,
+            fixture_key=fixture.fixture_key,
+            market_id="h2h",
+            candidate_id=result["candidate_id"],
+            model_identity=result["model_identity"],
+        )
+        assert lifecycles is not None
     return project_top5_signal_lifecycles(
         lifecycles,
         prediction_probabilities=result["probabilities"],
@@ -480,7 +523,7 @@ def test_signed_refinement_executes_one_request_and_persists_verified_route(tmp_
         credential_calls,
         successes,
         _failures,
-    ) = _runtime_context(tmp_path)
+    ) = _runtime_context(tmp_path, durable_set_store=True)
     candidate_evidence = {
         "provider_identity": package.dossier.provider_identity,
         "provider_event_id": CANDIDATE_PROVIDER_EVENT_ID,
@@ -505,7 +548,7 @@ def test_signed_refinement_executes_one_request_and_persists_verified_route(tmp_
         binding,
         verified,
         fixture=fixture,
-        lifecycles=tuple(lifecycle_store.values.values()),
+        lifecycles=initial_lifecycles,
     )
     assert result["schema_version"] == "top5-one-shot-production-result-v1"
     assert result["provider_request_count"] == 1
@@ -533,7 +576,24 @@ def test_signed_refinement_executes_one_request_and_persists_verified_route(tmp_
     assert result["lifecycle_ids"] == initial_ids
     assert result["lifecycle_set_digest"] == _sha(result["lifecycle_digests"])
     assert result["snapshot_id"] not in initial_snapshot_ids
-    public_lifecycles = _project_runtime_lifecycle_set(lifecycle_store, result, fixture)
+    restarted_store = Top5SignalLifecycleSetStore(root=lifecycle_store.root)
+    restarted_lifecycles = restarted_store.load_for_scope(
+        lifecycle_contract_id=binding.lifecycle_contract_id,
+        league_code=fixture.league_code,
+        fixture_key=fixture.fixture_key,
+        market_id="h2h",
+        candidate_id=M5_CANDIDATE_ID,
+        model_identity=binding.model_identity,
+    )
+    assert restarted_lifecycles is not None
+    assert (
+        top5_h2h_lifecycle_set_digest(restarted_lifecycles)
+        == result["lifecycle_set_digest"]
+    )
+    assert all(
+        item.current_version.version_number == 2 for item in restarted_lifecycles
+    )
+    public_lifecycles = _project_runtime_lifecycle_set(restarted_store, result, fixture)
     assert set(public_lifecycles) == set(TOP5_H2H_OUTCOMES)
     assert {public["lifecycle_version"] for public in public_lifecycles.values()} == {2}
     assert all(
@@ -573,9 +633,12 @@ def test_signed_refinement_executes_one_request_and_persists_verified_route(tmp_
     )
 
 
-@pytest.mark.parametrize("fail_after_saves", [None, 1])
-def test_signed_initial_execution_persists_complete_outcome_set_or_rolls_back(
-    tmp_path, monkeypatch, fail_after_saves
+@pytest.mark.parametrize(
+    "failure_point",
+    [None, "during_staging", "before_replace", "after_commit_before_route_verify"],
+)
+def test_signed_initial_execution_commits_complete_set_atomically_or_recovers(
+    tmp_path, monkeypatch, failure_point
 ):
     (
         _package,
@@ -640,27 +703,49 @@ def test_signed_initial_execution_persists_complete_outcome_set_or_rolls_back(
             initial_time + timedelta(seconds=1),
             initial_time + timedelta(seconds=3),
             initial_time + timedelta(seconds=4),
+            initial_time + timedelta(seconds=5),
         )
     )
-    if fail_after_saves is None:
-        monkeypatch.setenv(
-            "SPORTSBRAIN_RUNTIME_STATE_DIR", str(tmp_path / "external-runtime-state")
-        )
-        lifecycle_store = InstrumentedCanonicalLifecycleStore()
+    set_root = tmp_path / "external-runtime-state" / "lifecycle-sets"
+    if failure_point == "during_staging":
+
+        class StagingFailureStore(InstrumentedCanonicalLifecycleSetStore):
+            @staticmethod
+            def _write_staged_payload(descriptor, encoded):
+                os.write(descriptor, encoded[: max(1, len(encoded) // 3)])
+                os.close(descriptor)
+                raise OSError("injected failure during lifecycle-set staging")
+
+        lifecycle_set_store = StagingFailureStore(set_root)
+    elif failure_point == "before_replace":
+
+        class ReplaceFailureStore(InstrumentedCanonicalLifecycleSetStore):
+            @staticmethod
+            def _replace_staged(_temporary, _path):
+                raise OSError("injected failure before lifecycle-set replace")
+
+        lifecycle_set_store = ReplaceFailureStore(set_root)
     else:
-        lifecycle_store = MemoryLifecycleStore(fail_after_saves=fail_after_saves)
+        lifecycle_set_store = InstrumentedCanonicalLifecycleSetStore(set_root)
+    credential_calls = []
     runtime = Top5OneShotProductionRuntime(
         route_store=DurableTop5ProductionRouteStateStore(
             tmp_path / "initial-route.json"
         ),
         transport=transport,
-        lifecycle_store=lifecycle_store,
+        lifecycle_set_store=lifecycle_set_store,
         clock=lambda: next(clock_values),
-        credential_loader=lambda: "injected-test-key",
+        credential_loader=lambda: credential_calls.append(1) or "injected-test-key",
         budget_available=lambda _now: True,
         budget_success=lambda *_args: None,
     )
-    if fail_after_saves is not None:
+    if failure_point == "after_commit_before_route_verify":
+
+        def reject_production_verification(*_args, **_kwargs):
+            raise OneShotExecutionError("injected route verification failure")
+
+        runtime.route_store.mark_production_verified = reject_production_verification
+    if failure_point is not None:
         with pytest.raises(OneShotExecutionError):
             runtime.execute(
                 plan,
@@ -669,7 +754,55 @@ def test_signed_initial_execution_persists_complete_outcome_set_or_rolls_back(
                 fixture=fixture,
             )
         assert len(transport.calls) == 1
-        assert len(lifecycle_store.values) == fail_after_saves
+        assert len(credential_calls) == 1
+        set_after_failure = lifecycle_set_store.load_for_scope(
+            lifecycle_contract_id=initial_binding.lifecycle_contract_id,
+            league_code=fixture.league_code,
+            fixture_key=fixture.fixture_key,
+            market_id="h2h",
+            candidate_id=M5_CANDIDATE_ID,
+            model_identity=initial_binding.model_identity,
+        )
+        if failure_point == "after_commit_before_route_verify":
+            assert set_after_failure is not None
+            assert all(
+                item.current_version.version_number == 1 for item in set_after_failure
+            )
+            restarted = Top5SignalLifecycleSetStore(root=set_root).load_for_scope(
+                lifecycle_contract_id=initial_binding.lifecycle_contract_id,
+                league_code=fixture.league_code,
+                fixture_key=fixture.fixture_key,
+                market_id="h2h",
+                candidate_id=M5_CANDIDATE_ID,
+                model_identity=initial_binding.model_identity,
+            )
+            assert restarted is not None
+            assert top5_h2h_lifecycle_set_digest(restarted) == (
+                top5_h2h_lifecycle_set_digest(set_after_failure)
+            )
+            assert len(list(set_root.glob("*.json"))) == 1
+            retry_transport = FakeTransport(fixture, initial_time)
+            retry_credentials = []
+            retry_runtime = Top5OneShotProductionRuntime(
+                route_store=DurableTop5ProductionRouteStateStore(
+                    tmp_path / "initial-route-recovery-blocked.json"
+                ),
+                transport=retry_transport,
+                lifecycle_set_store=Top5SignalLifecycleSetStore(root=set_root),
+                clock=lambda: initial_time,
+                credential_loader=lambda: (
+                    retry_credentials.append(1) or "injected-test-key"
+                ),
+                budget_available=lambda _now: True,
+            )
+            with pytest.raises(OneShotExecutionError, match="already exists"):
+                retry_runtime.execute(plan, initial_binding, verified, fixture=fixture)
+            assert retry_transport.calls == []
+            assert retry_credentials == []
+        else:
+            assert set_after_failure is None
+            assert not list(set_root.glob("*.json"))
+            assert not list(set_root.glob(".*.tmp"))
         assert (
             runtime.route_store.read()["records"][initial_binding.activation_id][
                 "status"
@@ -680,20 +813,85 @@ def test_signed_initial_execution_persists_complete_outcome_set_or_rolls_back(
             record.get("status") != "PRODUCTION_VERIFIED"
             for record in runtime.route_store.read()["records"].values()
         )
+        if failure_point == "after_commit_before_route_verify":
+            return
+
+        # A process restart sees no authoritative partial set. A fresh signed
+        # INITIAL attempt can commit the complete set without poisoned members.
+        restarted_store = Top5SignalLifecycleSetStore(root=set_root)
+        assert (
+            restarted_store.load_for_scope(
+                lifecycle_contract_id=initial_binding.lifecycle_contract_id,
+                league_code=fixture.league_code,
+                fixture_key=fixture.fixture_key,
+                market_id="h2h",
+                candidate_id=M5_CANDIDATE_ID,
+                model_identity=initial_binding.model_identity,
+            )
+            is None
+        )
+        retry_transport = FakeTransport(fixture, initial_time)
+        retry_clock_values = iter(
+            (
+                initial_time,
+                initial_time + timedelta(seconds=1),
+                initial_time + timedelta(seconds=3),
+                initial_time + timedelta(seconds=4),
+            )
+        )
+        retry_runtime = Top5OneShotProductionRuntime(
+            route_store=DurableTop5ProductionRouteStateStore(
+                tmp_path / "initial-route-retry.json"
+            ),
+            transport=retry_transport,
+            lifecycle_set_store=Top5SignalLifecycleSetStore(root=set_root),
+            clock=lambda: next(retry_clock_values),
+            credential_loader=lambda: "injected-test-key",
+            budget_available=lambda _now: True,
+            budget_success=lambda *_args: None,
+        )
+        retried = retry_runtime.execute(
+            plan, initial_binding, verified, fixture=fixture
+        )
+        assert retried["lifecycle_versions"] == dict.fromkeys(TOP5_H2H_OUTCOMES, 1)
+        assert len(retry_transport.calls) == 1
         return
     result = runtime.execute(plan, initial_binding, verified, fixture=fixture)
     assert result["lifecycle_versions"] == dict.fromkeys(TOP5_H2H_OUTCOMES, 1)
     assert set(result["lifecycle_ids"]) == set(TOP5_H2H_OUTCOMES)
     assert len(set(result["lifecycle_ids"].values())) == 3
-    persisted = tuple(
-        runtime.lifecycle_store.by_outcome()[outcome] for outcome in TOP5_H2H_OUTCOMES
+    persisted = lifecycle_set_store.load_for_scope(
+        lifecycle_contract_id=initial_binding.lifecycle_contract_id,
+        league_code=fixture.league_code,
+        fixture_key=fixture.fixture_key,
+        market_id="h2h",
+        candidate_id=M5_CANDIDATE_ID,
+        model_identity=initial_binding.model_identity,
     )
-    assert lifecycle_store.save_calls == 3
-    assert lifecycle_store.load_calls >= 6
+    assert persisted is not None
+    fresh_store = Top5SignalLifecycleSetStore(root=set_root)
+    after_restart = fresh_store.load_for_scope(
+        lifecycle_contract_id=initial_binding.lifecycle_contract_id,
+        league_code=fixture.league_code,
+        fixture_key=fixture.fixture_key,
+        market_id="h2h",
+        candidate_id=M5_CANDIDATE_ID,
+        model_identity=initial_binding.model_identity,
+    )
+    assert after_restart is not None
+    assert (
+        top5_h2h_lifecycle_set_digest(after_restart) == result["lifecycle_set_digest"]
+    )
+    assert all(item.current_version.version_number == 1 for item in after_restart)
+    assert lifecycle_set_store.commit_calls == 1
+    assert lifecycle_set_store.load_calls >= 2
     assert all(
-        lifecycle_state_path(lifecycle.lifecycle_id).is_file()
+        lifecycle_set_state_path(
+            top5_h2h_lifecycle_set_id(persisted), root=set_root
+        ).is_file()
         for lifecycle in persisted
     )
+    assert len(list(set_root.glob("*.json"))) == 1
     assert all(
         lifecycle.initial_version.snapshot_id == result["snapshot_id"]
         and dict(lifecycle.initial_version.probabilities) == result["probabilities"]
@@ -702,14 +900,207 @@ def test_signed_initial_execution_persists_complete_outcome_set_or_rolls_back(
     assert {item.initial_version.decision_id for item in persisted} == {
         initial_binding.activation_authorization_id
     }
-    assert set(
-        _project_runtime_lifecycle_set(runtime.lifecycle_store, result, fixture)
-    ) == set(TOP5_H2H_OUTCOMES)
+    assert set(_project_runtime_lifecycle_set(fresh_store, result, fixture)) == set(
+        TOP5_H2H_OUTCOMES
+    )
     with pytest.raises(Top5SignalLifecyclePublicAdapterError):
         _project_runtime_lifecycle_set(
-            runtime.lifecycle_store, result, fixture, lifecycles=persisted[:1]
+            lifecycle_set_store, result, fixture, lifecycles=persisted[:1]
         )
     assert transport.calls[0][0].lifecycle_stage == "INITIAL"
+
+
+def _refined_store_lifecycles(lifecycles, fixture):
+    prior = lifecycles[0].initial_version
+    now = fixture.kickoff - timedelta(minutes=90)
+    snapshot = MarketSnapshot(
+        fixture_key=fixture.fixture_key,
+        captured_at=now - timedelta(seconds=10),
+        kind=prior.snapshot_kind,
+        source=prior.snapshot_source,
+        odds=prior.market_odds,
+        snapshot_id="atomic-store-refinement-snapshot",
+    )
+    probabilities = {"home": 0.45, "draw": 0.30, "away": 0.25}
+    refined = []
+    for lifecycle in lifecycles:
+        outcome = lifecycle.initial_version.outcome_id
+        before = lifecycle.current_version.probabilities[outcome]
+        after = probabilities[outcome]
+        classification = (
+            RefinementClassification.STRENGTHENED
+            if after > before
+            else RefinementClassification.WEAKENED
+            if after < before
+            else RefinementClassification.UNCHANGED
+        )
+        refined.append(
+            refine_signal(
+                lifecycle,
+                fixture=fixture,
+                snapshot=snapshot,
+                now=now,
+                probabilities=probabilities,
+                eligibility_decision=True,
+                withdrawal_authorized=False,
+                decision_id="separate-test-refinement-authorization",
+                decision_reason="deterministic per-outcome test refinement",
+                classification=classification,
+            )
+        )
+    return tuple(refined)
+
+
+def _canonical_store_initial_set(tmp_path):
+    (
+        _package,
+        _bundle,
+        _plan,
+        fixture,
+        lifecycle,
+        binding,
+        _signer,
+        _public_path,
+        _envelope,
+        _verified,
+    ) = _signed_context(tmp_path)
+    initial = _canonical_m5_initial_lifecycles(
+        lifecycle,
+        fixture,
+        inventory_for(binding.activation_league, M5_CANDIDATE_ID).model_artifact_hash,
+    )
+    return fixture, initial, binding
+
+
+def test_lifecycle_set_store_identity_initial_commit_and_restart(tmp_path):
+    fixture, initial, binding = _canonical_store_initial_set(tmp_path)
+    root = tmp_path / "lifecycle-set-store"
+    store = Top5SignalLifecycleSetStore(root=root)
+    committed = store.commit(initial)
+    lifecycle_set_id = top5_h2h_lifecycle_set_id(initial)
+    path = lifecycle_set_state_path(lifecycle_set_id, root=root)
+    assert path.is_file()
+    assert path.stat().st_mode & 0o077 == 0
+    assert root.stat().st_mode & 0o077 == 0
+    assert len(list(root.glob("*.json"))) == 1
+    stored_envelope = json.loads(path.read_text(encoding="utf-8"))
+    assert stored_envelope["schema_version"] == "top5-signal-lifecycle-set-store-v1"
+    assert stored_envelope["lifecycle_set_id"] == lifecycle_set_id
+    assert stored_envelope["outcome_keys"] == list(TOP5_H2H_OUTCOMES)
+    assert set(stored_envelope["lifecycles"]) == set(TOP5_H2H_OUTCOMES)
+    assert set(stored_envelope["shared_identity"]) == {
+        "lifecycle_contract_id",
+        "league_code",
+        "fixture_key",
+        "market_id",
+        "candidate_id",
+        "model_identity",
+    }
+    assert top5_h2h_lifecycle_set_id(tuple(reversed(initial))) == lifecycle_set_id
+    assert (
+        top5_h2h_lifecycle_set_identity_for_scope(
+            lifecycle_contract_id=binding.lifecycle_contract_id,
+            league_code=fixture.league_code,
+            fixture_key=fixture.fixture_key,
+            market_id="h2h",
+            candidate_id=M5_CANDIDATE_ID,
+            model_identity=binding.model_identity,
+        )
+        == lifecycle_set_id
+    )
+    replay = store.commit(initial)
+    assert top5_h2h_lifecycle_set_digest(replay) == top5_h2h_lifecycle_set_digest(
+        committed
+    )
+    restarted = Top5SignalLifecycleSetStore(root=root)
+    loaded = restarted.load(lifecycle_set_id)
+    assert loaded is not None
+    assert [item.initial_version.outcome_id for item in loaded] == list(
+        TOP5_H2H_OUTCOMES
+    )
+    assert top5_h2h_lifecycle_set_digest(loaded) == top5_h2h_lifecycle_set_digest(
+        initial
+    )
+
+
+def test_lifecycle_set_store_refinement_is_one_atomic_append_and_replay(tmp_path):
+    fixture, initial, _binding = _canonical_store_initial_set(tmp_path)
+    root = tmp_path / "lifecycle-set-store"
+    initial_store = Top5SignalLifecycleSetStore(root=root)
+    initial_store.commit(initial)
+    refined = _refined_store_lifecycles(initial, fixture)
+    lifecycle_set_id = top5_h2h_lifecycle_set_id(initial)
+    assert top5_h2h_lifecycle_set_id(refined) == lifecycle_set_id
+
+    class ReplaceFailureStore(Top5SignalLifecycleSetStore):
+        @staticmethod
+        def _replace_staged(_temporary, _path):
+            raise OSError("injected failure before set replacement")
+
+    with pytest.raises(OSError, match="before set replacement"):
+        ReplaceFailureStore(root=root).commit(refined)
+    after_failed_replace = Top5SignalLifecycleSetStore(root=root).load(lifecycle_set_id)
+    assert after_failed_replace is not None
+    assert all(
+        item.current_version.version_number == 1 for item in after_failed_replace
+    )
+    assert top5_h2h_lifecycle_set_digest(after_failed_replace) == (
+        top5_h2h_lifecycle_set_digest(initial)
+    )
+
+    committed = Top5SignalLifecycleSetStore(root=root).commit(refined)
+    assert all(item.current_version.version_number == 2 for item in committed)
+    assert {
+        outcome: committed[index].lifecycle_id
+        for index, outcome in enumerate(TOP5_H2H_OUTCOMES)
+    } == {
+        outcome: initial[index].lifecycle_id
+        for index, outcome in enumerate(TOP5_H2H_OUTCOMES)
+    }
+    assert len({item.current_version.snapshot_id for item in committed}) == 1
+    assert (
+        len({item.current_version.prediction_generated_at for item in committed}) == 1
+    )
+    replay = Top5SignalLifecycleSetStore(root=root).commit(refined)
+    assert top5_h2h_lifecycle_set_digest(replay) == top5_h2h_lifecycle_set_digest(
+        committed
+    )
+    restarted = Top5SignalLifecycleSetStore(root=root).load(lifecycle_set_id)
+    assert restarted is not None
+    assert all(item.current_version.version_number == 2 for item in restarted)
+    with pytest.raises(SignalLifecycleError):
+        initial_store.commit(initial)
+    mixed = (refined[0], initial[1], initial[2])
+    with pytest.raises(SignalLifecycleError):
+        initial_store.commit(mixed)
+
+
+def test_lifecycle_set_store_rejects_symlinked_authoritative_file(tmp_path):
+    _fixture, initial, _binding = _canonical_store_initial_set(tmp_path)
+    root = tmp_path / "lifecycle-set-store"
+    lifecycle_set_id = top5_h2h_lifecycle_set_id(initial)
+    target_path = lifecycle_set_state_path(lifecycle_set_id, root=root)
+    target_path.parent.mkdir(mode=0o700, parents=True)
+    external_target = tmp_path / "redirected-lifecycle-set.json"
+    external_target.write_text("{}", encoding="utf-8")
+    target_path.symlink_to(external_target)
+    with pytest.raises(SignalLifecycleError, match="symlink"):
+        Top5SignalLifecycleSetStore(root=root).load(lifecycle_set_id)
+
+
+def test_lifecycle_set_store_does_not_follow_symlinked_lock(tmp_path):
+    _fixture, initial, _binding = _canonical_store_initial_set(tmp_path)
+    root = tmp_path / "lifecycle-set-store"
+    lifecycle_set_id = top5_h2h_lifecycle_set_id(initial)
+    path = lifecycle_set_state_path(lifecycle_set_id, root=root)
+    root.mkdir(mode=0o700, parents=True)
+    external_lock = tmp_path / "external-lock"
+    external_lock.write_text("", encoding="utf-8")
+    lock_path = path.with_suffix(path.suffix + ".lock")
+    lock_path.symlink_to(external_lock)
+    with pytest.raises(OSError):
+        Top5SignalLifecycleSetStore(root=root).load(lifecycle_set_id)
+    assert external_lock.read_text(encoding="utf-8") == ""
 
 
 def test_provider_budget_block_refuses_before_credential_and_transport(tmp_path):
@@ -922,7 +1313,7 @@ def test_incomplete_or_mixed_lifecycle_set_rejects_before_request(tmp_path, mism
         )
     assert transport.calls == []
     assert credential_calls == []
-    assert store.save_calls == 0
+    assert store.commit_calls == 0
 
 
 def test_supplied_lifecycle_must_match_durable_store_exactly(tmp_path):
@@ -945,7 +1336,7 @@ def test_supplied_lifecycle_must_match_durable_store_exactly(tmp_path):
         lifecycles[0], fixture, decision_reason="durable mismatch"
     )
     store.values[replacement.lifecycle_id] = replacement
-    with pytest.raises(OneShotExecutionError, match="persisted lifecycle"):
+    with pytest.raises(OneShotExecutionError, match="lifecycle"):
         runtime.execute(
             plan,
             binding,
@@ -1049,7 +1440,7 @@ def test_not_due_refinement_refuses_before_credential_and_provider(tmp_path):
     runtime = Top5OneShotProductionRuntime(
         route_store=DurableTop5ProductionRouteStateStore(tmp_path / "not-due.json"),
         transport=transport,
-        lifecycle_store=MemoryLifecycleStore(lifecycles),
+        lifecycle_set_store=MemoryLifecycleSetStore(lifecycles),
         clock=lambda: NOW - timedelta(minutes=1),
         credential_loader=lambda: credential_calls.append(1) or "injected-test-key",
         budget_available=lambda _now: True,
@@ -1110,7 +1501,7 @@ def test_post_route_failures_consume_at_most_one_request_and_roll_back(
     payload = None
     status = 200
     payload_valid = True
-    fail_save = failure == "lifecycle"
+    fail_commit = failure == "lifecycle"
     fail_health = failure == "health"
     if failure == "http":
         status = 403
@@ -1151,7 +1542,24 @@ def test_post_route_failures_consume_at_most_one_request_and_roll_back(
                 for outcome in bookmaker["markets"][0]["outcomes"]
                 if outcome["name"] != "Draw"
             ]
-    lifecycle_store = MemoryLifecycleStore(lifecycles, fail_save=fail_save)
+    if failure in {"health", "lifecycle"}:
+        if failure == "lifecycle":
+            lifecycle_set_root = tmp_path / "post-commit-route-failure-set"
+            Top5SignalLifecycleSetStore(root=lifecycle_set_root).commit(lifecycles)
+
+            class RefinementReplaceFailureStore(InstrumentedCanonicalLifecycleSetStore):
+                @staticmethod
+                def _replace_staged(_temporary, _path):
+                    raise OSError("injected refinement failure before replace")
+
+            lifecycle_store = RefinementReplaceFailureStore(lifecycle_set_root)
+        else:
+            lifecycle_store = InstrumentedCanonicalLifecycleSetStore(
+                tmp_path / "post-commit-route-failure-set"
+            )
+            lifecycle_store.commit(lifecycles)
+    else:
+        lifecycle_store = MemoryLifecycleSetStore(lifecycles, fail_commit=fail_commit)
     transport = FakeTransport(
         fixture,
         NOW,
@@ -1194,7 +1602,7 @@ def test_post_route_failures_consume_at_most_one_request_and_roll_back(
     runtime = Top5OneShotProductionRuntime(
         route_store=DurableTop5ProductionRouteStateStore(tmp_path / f"{failure}.json"),
         transport=transport,
-        lifecycle_store=lifecycle_store,
+        lifecycle_set_store=lifecycle_store,
         clock=lambda: next(clock_values),
         credential_loader=load_credential,
         budget_available=lambda _now: True,
@@ -1230,6 +1638,49 @@ def test_post_route_failures_consume_at_most_one_request_and_roll_back(
         == "DISABLED"
     )
     assert failures == ([403] if failure == "http" else [])
+    if failure == "lifecycle":
+        unchanged = Top5SignalLifecycleSetStore(
+            root=lifecycle_store.root
+        ).load_for_scope(
+            lifecycle_contract_id=binding.lifecycle_contract_id,
+            league_code=fixture.league_code,
+            fixture_key=fixture.fixture_key,
+            market_id="h2h",
+            candidate_id=M5_CANDIDATE_ID,
+            model_identity=binding.model_identity,
+        )
+        assert unchanged is not None
+        assert all(item.current_version.version_number == 1 for item in unchanged)
+        assert top5_h2h_lifecycle_set_digest(unchanged) == (
+            top5_h2h_lifecycle_set_digest(lifecycles)
+        )
+    if failure == "health":
+        persisted_after_restart = Top5SignalLifecycleSetStore(
+            root=lifecycle_store.root
+        ).load_for_scope(
+            lifecycle_contract_id=binding.lifecycle_contract_id,
+            league_code=fixture.league_code,
+            fixture_key=fixture.fixture_key,
+            market_id="h2h",
+            candidate_id=M5_CANDIDATE_ID,
+            model_identity=binding.model_identity,
+        )
+        assert persisted_after_restart is not None
+        assert all(
+            item.current_version.version_number == 2 for item in persisted_after_restart
+        )
+        assert len(transport.calls) == 1
+        runtime.clock = lambda: NOW + timedelta(seconds=10)
+        with pytest.raises(OneShotExecutionError):
+            runtime.execute(
+                plan,
+                binding,
+                verified,
+                fixture=fixture,
+                lifecycles=lifecycles,
+            )
+        assert len(transport.calls) == 1
+        assert len(credential_calls) == 1
 
 
 @pytest.mark.parametrize(

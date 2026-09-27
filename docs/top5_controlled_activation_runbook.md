@@ -140,6 +140,31 @@ live Top-5 route writer/consumer, this is a verified durable control-state
 rollback only; live routing rollback cannot yet be claimed ready. The missing
 route writer must be reviewed together with the one-shot production runtime.
 
+The production runner persists the three actual canonical lifecycle objects
+(`home`, `draw`, `away`) as one authoritative set, not as three independent
+files. Its stable set identity binds the lifecycle contract, league, canonical
+fixture key, `h2h` market, candidate, and model; it deliberately excludes the
+outcome, activation ID, snapshot ID, and mutable versions. The external runtime
+state file is
+`football/top5/signal_lifecycle_sets/<lifecycle-set-id>.json`, schema
+`top5-signal-lifecycle-set-store-v1`; it is owner-only, lock-protected,
+symlink-safe, digest-checked canonical JSON, written through a staged file,
+fsync, atomic replace, and directory fsync. INITIAL becomes authoritative only
+as a complete three-member version-1 set. REFINEMENT atomically transitions
+that set to three version-2 histories; exact replay is idempotent, while mixed,
+regressed, conflicting, or third-version state is rejected. Production evidence
+is assembled from a fresh read-back of the committed set.
+
+If staging or a failure before atomic replace occurs, no authoritative set is
+visible: route state rolls back, production verification is withheld, and a
+fresh INITIAL attempt is not poisoned by partial lifecycle files. Atomic
+replace is the set commit point. If route verification fails after that point,
+the complete set remains durably committed even though route state rolls back;
+the runner does not issue another provider request automatically. A later
+INITIAL is blocked, and a REFINE request cannot be treated as recovery. Any
+recovery from this post-commit boundary requires a separately reviewed,
+explicit path; operators must not delete or edit lifecycle state to bypass it.
+
 ## Production verification and evidence capture
 
 Capture the preflight payload, authorization reference, source/Research/model

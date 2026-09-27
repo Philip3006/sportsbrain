@@ -11,6 +11,8 @@ import fcntl
 import hashlib
 import json
 import os
+import stat
+import tempfile
 from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass, field
@@ -34,6 +36,8 @@ from src.utils.atomic_io import atomic_write_json
 LIFECYCLE_SCHEMA_VERSION = "top5-signal-lifecycle-v1"
 LIFECYCLE_STORE_SCHEMA_VERSION = "top5-signal-lifecycle-store-v1"
 LIFECYCLE_SET_SCHEMA_VERSION = "top5-signal-lifecycle-set-v1"
+LIFECYCLE_SET_STORE_SCHEMA_VERSION = "top5-signal-lifecycle-set-store-v1"
+LIFECYCLE_SET_STATE_RELATIVE_DIR = "football/top5/signal_lifecycle_sets"
 TOP5_H2H_OUTCOMES = ("home", "draw", "away")
 LIFECYCLE_STATE_RELATIVE_DIR = "football/top5/signal_lifecycle"
 EXPECTED_PROVIDER_IDENTITY = "the_odds_api"
@@ -1076,6 +1080,64 @@ def top5_h2h_lifecycle_set_payload(lifecycles: object) -> dict[str, object]:
     }
 
 
+def _lifecycle_set_shared_identity(
+    lifecycles: Mapping[str, Top5SignalLifecycle],
+) -> dict[str, str]:
+    home = lifecycles["home"].initial_version
+    return {
+        "lifecycle_contract_id": home.lifecycle_contract_id,
+        "league_code": home.league_code,
+        "fixture_key": home.fixture_key,
+        "market_id": home.market_id,
+        "candidate_id": home.candidate_id,
+        "model_identity": home.model_identity,
+    }
+
+
+def top5_h2h_lifecycle_set_identity_for_scope(
+    *,
+    lifecycle_contract_id: str,
+    league_code: str,
+    fixture_key: str,
+    market_id: str,
+    candidate_id: str,
+    model_identity: str,
+) -> str:
+    """Return the stable transaction identity for one immutable 1X2 lifecycle set."""
+    shared = {
+        "lifecycle_contract_id": _text(lifecycle_contract_id, "lifecycle_contract_id"),
+        "league_code": _text(league_code, "league_code"),
+        "fixture_key": _text(fixture_key, "fixture_key"),
+        "market_id": _text(market_id, "market_id"),
+        "candidate_id": _text(candidate_id, "candidate_id"),
+        "model_identity": _text(model_identity, "model_identity"),
+    }
+    if shared["market_id"] != "h2h":
+        raise SignalLifecycleError("lifecycle-set market must be h2h")
+    digest = _digest(
+        {
+            "schema_version": LIFECYCLE_SET_STORE_SCHEMA_VERSION,
+            **shared,
+        }
+    )
+    return f"top5-signal-lifecycle-set-v1-{digest}"
+
+
+def top5_h2h_lifecycle_set_id(lifecycles: object) -> str:
+    ordered = canonical_top5_h2h_lifecycle_set(lifecycles)
+    return top5_h2h_lifecycle_set_identity_for_scope(
+        **_lifecycle_set_shared_identity(ordered)
+    )
+
+
+def top5_h2h_lifecycle_set_digest(lifecycles: object) -> str:
+    """Digest the exact outcome-keyed canonical member digests of a complete set."""
+    ordered = canonical_top5_h2h_lifecycle_set(lifecycles)
+    return _digest(
+        {outcome: ordered[outcome].lifecycle_digest for outcome in TOP5_H2H_OUTCOMES}
+    )
+
+
 def _build_version(
     *,
     fixture: Fixture,
@@ -1401,6 +1463,40 @@ def lifecycle_state_path(lifecycle_id: str) -> Path:
     return path
 
 
+def lifecycle_set_state_path(
+    lifecycle_set_id: str, *, root: Path | None = None
+) -> Path:
+    """Resolve one owner-only external file for an immutable lifecycle-set scope."""
+    prefix = "top5-signal-lifecycle-set-v1-"
+    _text(lifecycle_set_id, "lifecycle_set_id")
+    digest = lifecycle_set_id.removeprefix(prefix)
+    if (
+        not lifecycle_set_id.startswith(prefix)
+        or len(digest) != 64
+        or any(char not in "0123456789abcdef" for char in digest)
+    ):
+        raise SignalLifecycleError("lifecycle-set identity is malformed")
+    path_root = (
+        Path(root).expanduser()
+        if root is not None
+        else runtime_state_path(LIFECYCLE_SET_STATE_RELATIVE_DIR, require_external=True)
+    )
+    if not path_root.is_absolute():
+        raise SignalLifecycleError("lifecycle-set store root must be absolute")
+    absolute_root = Path(os.path.abspath(path_root))
+    resolved_root = absolute_root.resolve()
+    active_root = Path(__file__).resolve().parents[2]
+    if (
+        resolved_root != absolute_root
+        or resolved_root == active_root
+        or active_root in resolved_root.parents
+    ):
+        raise SignalLifecycleError(
+            "lifecycle-set store must be external and symlink-free"
+        )
+    return absolute_root / f"{lifecycle_set_id}.json"
+
+
 class Top5SignalLifecycleStore:
     """External atomic append-only lifecycle store; not registered with runtime."""
 
@@ -1492,11 +1588,375 @@ class Top5SignalLifecycleStore:
             return lifecycle
 
 
+class Top5SignalLifecycleSetStore:
+    """Atomic external authority for complete home/draw/away lifecycle sets."""
+
+    def __init__(self, root: Path | None = None) -> None:
+        if root is None:
+            root = runtime_state_path(
+                LIFECYCLE_SET_STATE_RELATIVE_DIR, require_external=True
+            )
+        self.root = Path(root).expanduser()
+        if not self.root.is_absolute():
+            raise SignalLifecycleError("lifecycle-set store root must be absolute")
+        self.root = Path(os.path.abspath(self.root))
+        active_root = Path(__file__).resolve().parents[2]
+        resolved_root = self.root.resolve()
+        if (
+            resolved_root != self.root
+            or resolved_root == active_root
+            or active_root in resolved_root.parents
+        ):
+            raise SignalLifecycleError(
+                "lifecycle-set store must be external and symlink-free"
+            )
+
+    @staticmethod
+    def _scope_id(lifecycles: Mapping[str, Top5SignalLifecycle]) -> str:
+        return top5_h2h_lifecycle_set_identity_for_scope(
+            **_lifecycle_set_shared_identity(lifecycles)
+        )
+
+    @staticmethod
+    def _member_digests(
+        lifecycles: Mapping[str, Top5SignalLifecycle],
+    ) -> dict[str, str]:
+        return {
+            outcome: lifecycles[outcome].lifecycle_digest
+            for outcome in TOP5_H2H_OUTCOMES
+        }
+
+    @staticmethod
+    def _require_complete_stage(
+        lifecycles: Mapping[str, Top5SignalLifecycle], *, stage: str
+    ) -> None:
+        expected_length = 1 if stage == "INITIAL" else 2
+        expected_stage = (
+            SignalLifecycleStage.INITIAL
+            if stage == "INITIAL"
+            else SignalLifecycleStage.REFINED
+        )
+        for lifecycle in lifecycles.values():
+            if (
+                len(lifecycle.versions) != expected_length
+                or lifecycle.current_version.version_number != expected_length
+                or lifecycle.current_version.stage is not expected_stage
+                or lifecycle.withdrawn
+            ):
+                raise SignalLifecycleError(
+                    f"lifecycle set must contain only complete {stage} histories"
+                )
+
+    @classmethod
+    def _state_kind(cls, lifecycles: Mapping[str, Top5SignalLifecycle]) -> str:
+        initial = all(
+            len(lifecycle.versions) == 1
+            and lifecycle.current_version.version_number == 1
+            and lifecycle.current_version.stage is SignalLifecycleStage.INITIAL
+            and not lifecycle.withdrawn
+            for lifecycle in lifecycles.values()
+        )
+        refined = all(
+            len(lifecycle.versions) == 2
+            and lifecycle.current_version.version_number == 2
+            and lifecycle.current_version.stage is SignalLifecycleStage.REFINED
+            and not lifecycle.withdrawn
+            for lifecycle in lifecycles.values()
+        )
+        if initial:
+            return "INITIAL"
+        if refined:
+            return "REFINEMENT"
+        raise SignalLifecycleError(
+            "lifecycle set cannot contain mixed, withdrawn, or unsupported versions"
+        )
+
+    @classmethod
+    def _wrapper(
+        cls, lifecycles: Mapping[str, Top5SignalLifecycle]
+    ) -> dict[str, object]:
+        lifecycle_set_id = cls._scope_id(lifecycles)
+        shared = _lifecycle_set_shared_identity(lifecycles)
+        lifecycle_digests = cls._member_digests(lifecycles)
+        wrapper: dict[str, object] = {
+            "schema_version": LIFECYCLE_SET_STORE_SCHEMA_VERSION,
+            "lifecycle_set_id": lifecycle_set_id,
+            "lifecycle_set_digest": _digest(lifecycle_digests),
+            "outcome_keys": list(TOP5_H2H_OUTCOMES),
+            "shared_identity": shared,
+            "lifecycles": {
+                outcome: lifecycles[outcome].as_payload()
+                for outcome in TOP5_H2H_OUTCOMES
+            },
+        }
+        wrapper["store_digest"] = _digest(wrapper)
+        return wrapper
+
+    @classmethod
+    def _parse_wrapper(
+        cls, raw: object, *, expected_set_id: str
+    ) -> tuple[Top5SignalLifecycle, ...]:
+        fields = {
+            "schema_version",
+            "lifecycle_set_id",
+            "lifecycle_set_digest",
+            "outcome_keys",
+            "shared_identity",
+            "lifecycles",
+            "store_digest",
+        }
+        if not isinstance(raw, Mapping) or set(raw) != fields:
+            raise SignalLifecycleError("lifecycle-set store envelope is malformed")
+        if (
+            raw["schema_version"] != LIFECYCLE_SET_STORE_SCHEMA_VERSION
+            or raw["lifecycle_set_id"] != expected_set_id
+            or raw["outcome_keys"] != list(TOP5_H2H_OUTCOMES)
+        ):
+            raise SignalLifecycleError("lifecycle-set store binding is invalid")
+        lifecycle_payloads = raw["lifecycles"]
+        if not isinstance(lifecycle_payloads, Mapping) or set(
+            lifecycle_payloads
+        ) != set(TOP5_H2H_OUTCOMES):
+            raise SignalLifecycleError("lifecycle-set outcomes are malformed")
+        ordered = canonical_top5_h2h_lifecycle_set(
+            tuple(
+                Top5SignalLifecycle.from_payload(lifecycle_payloads[outcome])
+                for outcome in TOP5_H2H_OUTCOMES
+            )
+        )
+        cls._state_kind(ordered)
+        if cls._scope_id(ordered) != expected_set_id or raw[
+            "shared_identity"
+        ] != _lifecycle_set_shared_identity(ordered):
+            raise SignalLifecycleError(
+                "lifecycle-set shared immutable identity is invalid"
+            )
+        expected_member_digest = _digest(cls._member_digests(ordered))
+        if raw["lifecycle_set_digest"] != expected_member_digest:
+            raise SignalLifecycleError("lifecycle-set content digest mismatch")
+        unsigned = dict(raw)
+        actual_store_digest = unsigned.pop("store_digest")
+        if actual_store_digest != _digest(unsigned):
+            raise SignalLifecycleError("lifecycle-set store digest mismatch")
+        return tuple(ordered[outcome] for outcome in TOP5_H2H_OUTCOMES)
+
+    def _path(self, lifecycle_set_id: str) -> Path:
+        return lifecycle_set_state_path(lifecycle_set_id, root=self.root)
+
+    @contextmanager
+    def _locked(self, path: Path) -> Iterator[None]:
+        self.root.mkdir(mode=0o700, parents=True, exist_ok=True)
+        if self.root.is_symlink() or self.root.resolve() != self.root:
+            raise SignalLifecycleError("lifecycle-set directory must not be a symlink")
+        if not self.root.is_dir():
+            raise SignalLifecycleError("lifecycle-set directory is not a directory")
+        root_metadata = self.root.stat()
+        if root_metadata.st_uid != os.getuid():
+            raise SignalLifecycleError("lifecycle-set directory is not owner-owned")
+        if root_metadata.st_mode & 0o077:
+            os.chmod(self.root, 0o700)
+        lock_path = path.with_suffix(path.suffix + ".lock")
+        nofollow = getattr(os, "O_NOFOLLOW", None)
+        if nofollow is None:
+            raise SignalLifecycleError(
+                "lifecycle-set store requires no-follow filesystem support"
+            )
+        flags = os.O_CREAT | os.O_RDWR | nofollow
+        descriptor = os.open(lock_path, flags, 0o600)
+        try:
+            lock_metadata = os.fstat(descriptor)
+            if not stat.S_ISREG(lock_metadata.st_mode):
+                raise SignalLifecycleError("lifecycle-set lock is not a regular file")
+            if lock_metadata.st_uid != os.getuid():
+                raise SignalLifecycleError("lifecycle-set lock is not owner-owned")
+            os.fchmod(descriptor, 0o600)
+            fcntl.flock(descriptor, fcntl.LOCK_EX)
+            try:
+                yield
+            finally:
+                fcntl.flock(descriptor, fcntl.LOCK_UN)
+        finally:
+            os.close(descriptor)
+
+    @staticmethod
+    def _read_unlocked(
+        path: Path, expected_set_id: str
+    ) -> tuple[Top5SignalLifecycle, ...] | None:
+        if path.is_symlink():
+            raise SignalLifecycleError("lifecycle-set file must not be a symlink")
+        if not path.exists():
+            return None
+        try:
+            nofollow = getattr(os, "O_NOFOLLOW", None)
+            if nofollow is None:
+                raise SignalLifecycleError(
+                    "lifecycle-set store requires no-follow filesystem support"
+                )
+            descriptor = os.open(path, os.O_RDONLY | nofollow)
+            with os.fdopen(descriptor, "r", encoding="utf-8") as handle:
+                metadata = os.fstat(handle.fileno())
+                if not stat.S_ISREG(metadata.st_mode):
+                    raise SignalLifecycleError(
+                        "lifecycle-set path is not a regular file"
+                    )
+                if metadata.st_uid != os.getuid():
+                    raise SignalLifecycleError("lifecycle-set file is not owner-owned")
+                if metadata.st_mode & 0o077:
+                    raise SignalLifecycleError(
+                        "lifecycle-set file permissions must be owner-only"
+                    )
+                raw = json.load(handle)
+        except (OSError, json.JSONDecodeError) as exc:
+            raise SignalLifecycleError(
+                "lifecycle-set store is unreadable or malformed"
+            ) from exc
+        return Top5SignalLifecycleSetStore._parse_wrapper(
+            raw, expected_set_id=expected_set_id
+        )
+
+    @staticmethod
+    def _write_staged_payload(descriptor: int, encoded: bytes) -> None:
+        with os.fdopen(descriptor, "wb") as handle:
+            handle.write(encoded)
+            handle.flush()
+            os.fsync(handle.fileno())
+
+    @classmethod
+    def _stage(cls, path: Path, wrapper: Mapping[str, object]) -> Path:
+        encoded = json.dumps(
+            _canonical(wrapper),
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=True,
+            allow_nan=False,
+        ).encode("utf-8")
+        descriptor, temp_name = tempfile.mkstemp(
+            prefix=f".{path.name}.", suffix=".tmp", dir=path.parent
+        )
+        temporary = Path(temp_name)
+        try:
+            os.fchmod(descriptor, 0o600)
+            cls._write_staged_payload(descriptor, encoded)
+        except Exception:
+            try:
+                os.close(descriptor)
+            except OSError:
+                pass
+            temporary.unlink(missing_ok=True)
+            raise
+        return temporary
+
+    @staticmethod
+    def _replace_staged(temporary: Path, path: Path) -> None:
+        os.replace(temporary, path)
+        directory_flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0)
+        directory_fd = os.open(path.parent, directory_flags)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
+
+    @classmethod
+    def _atomic_write(cls, path: Path, wrapper: Mapping[str, object]) -> None:
+        temporary = cls._stage(path, wrapper)
+        try:
+            if path.is_symlink():
+                raise SignalLifecycleError("lifecycle-set file must not be a symlink")
+            cls._replace_staged(temporary, path)
+        finally:
+            temporary.unlink(missing_ok=True)
+
+    def load(self, lifecycle_set_id: str) -> tuple[Top5SignalLifecycle, ...] | None:
+        path = self._path(lifecycle_set_id)
+        with self._locked(path):
+            return self._read_unlocked(path, lifecycle_set_id)
+
+    def load_for_scope(
+        self,
+        *,
+        lifecycle_contract_id: str,
+        league_code: str,
+        fixture_key: str,
+        market_id: str,
+        candidate_id: str,
+        model_identity: str,
+    ) -> tuple[Top5SignalLifecycle, ...] | None:
+        lifecycle_set_id = top5_h2h_lifecycle_set_identity_for_scope(
+            lifecycle_contract_id=lifecycle_contract_id,
+            league_code=league_code,
+            fixture_key=fixture_key,
+            market_id=market_id,
+            candidate_id=candidate_id,
+            model_identity=model_identity,
+        )
+        return self.load(lifecycle_set_id)
+
+    @classmethod
+    def _validate_transition(
+        cls,
+        existing: Sequence[Top5SignalLifecycle],
+        proposed: Mapping[str, Top5SignalLifecycle],
+    ) -> None:
+        prior = canonical_top5_h2h_lifecycle_set(existing)
+        if (
+            cls._state_kind(prior) != "INITIAL"
+            or cls._state_kind(proposed) != "REFINEMENT"
+        ):
+            raise SignalLifecycleError(
+                "only a complete INITIAL-to-REFINEMENT transition is allowed"
+            )
+        for outcome in TOP5_H2H_OUTCOMES:
+            before = prior[outcome]
+            after = proposed[outcome]
+            if (
+                before.lifecycle_id != after.lifecycle_id
+                or before.contract != after.contract
+                or len(after.versions) != 2
+                or after.versions[:1] != before.versions
+                or after.current_version.predecessor_version_digest
+                != before.current_version.version_digest
+                or after.current_version.stage is not SignalLifecycleStage.REFINED
+            ):
+                raise SignalLifecycleError(
+                    "lifecycle-set transition is not an exact append-only refinement"
+                )
+
+    def commit(self, lifecycles: object) -> tuple[Top5SignalLifecycle, ...]:
+        proposed = canonical_top5_h2h_lifecycle_set(lifecycles)
+        proposed_kind = self._state_kind(proposed)
+        lifecycle_set_id = self._scope_id(proposed)
+        path = self._path(lifecycle_set_id)
+        with self._locked(path):
+            existing = self._read_unlocked(path, lifecycle_set_id)
+            if existing is None:
+                if proposed_kind != "INITIAL":
+                    raise SignalLifecycleError(
+                        "a lifecycle set must begin with three INITIAL records"
+                    )
+            else:
+                current = canonical_top5_h2h_lifecycle_set(existing)
+                if self._member_digests(current) == self._member_digests(proposed):
+                    return tuple(current[outcome] for outcome in TOP5_H2H_OUTCOMES)
+                self._validate_transition(existing, proposed)
+            wrapper = self._wrapper(proposed)
+            self._atomic_write(path, wrapper)
+            read_back = self._read_unlocked(path, lifecycle_set_id)
+            if read_back is None or self._member_digests(
+                canonical_top5_h2h_lifecycle_set(read_back)
+            ) != self._member_digests(proposed):
+                raise SignalLifecycleError(
+                    "lifecycle-set commit read-back differs from proposed state"
+                )
+            return read_back
+
+
 __all__ = [
     "DEFAULT_SIGNAL_LIFECYCLE_CONTRACT",
     "EXPECTED_PROVIDER_IDENTITY",
     "LIFECYCLE_SCHEMA_VERSION",
     "LIFECYCLE_SET_SCHEMA_VERSION",
+    "LIFECYCLE_SET_STATE_RELATIVE_DIR",
+    "LIFECYCLE_SET_STORE_SCHEMA_VERSION",
     "LIFECYCLE_STATE_RELATIVE_DIR",
     "TOP5_H2H_OUTCOMES",
     "LifecyclePlan",
@@ -1507,13 +1967,18 @@ __all__ = [
     "SignalLifecycleStagePolicy",
     "Top5SignalLifecycle",
     "Top5SignalLifecycleContract",
+    "Top5SignalLifecycleSetStore",
     "Top5SignalLifecycleStore",
     "Top5SignalLifecycleVersion",
     "canonical_top5_h2h_lifecycle_set",
     "create_initial_signal",
+    "lifecycle_set_state_path",
     "lifecycle_state_path",
     "parse_top5_h2h_lifecycle_set",
     "plan_signal_lifecycle",
     "refine_signal",
+    "top5_h2h_lifecycle_set_digest",
+    "top5_h2h_lifecycle_set_id",
+    "top5_h2h_lifecycle_set_identity_for_scope",
     "top5_h2h_lifecycle_set_payload",
 ]
