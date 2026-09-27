@@ -33,7 +33,9 @@ DECOMMISSIONED_FOOTBALL_PROVIDERS = frozenset(
 )
 # Candidate identities are accepted only by explicitly candidate/shadow gates;
 # they must never be inserted into the active production cascade config.
-CANDIDATE_ONLY_PROVIDER_IDENTITIES = frozenset({"therundown_experimental"})
+CANDIDATE_ONLY_PROVIDER_IDENTITIES = frozenset(
+    {"therundown_experimental", "isports_api"}
+)
 
 
 class ProviderState(str, Enum):

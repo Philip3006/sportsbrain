@@ -18,12 +18,12 @@ from src.football.top5_final_acceptance import (
     canonical_digest,
     verify_final_acceptance,
 )
+from src.football.top5_public_acceptance import Top5PrepublicationArtifactV1
 from src.football.top5_research_binding import (
     FROZEN_RESEARCH_SHA,
     M5_CANDIDATE_ID,
     inventory_for,
 )
-from src.football.top5_public_acceptance import Top5PrepublicationArtifactV1
 from src.football.top5_therundown_event_discovery import (
     B4_QUOTA_PROOF_AFFILIATE_IDS,
     B4_QUOTA_PROOF_EXECUTION_PHASE,
@@ -433,9 +433,7 @@ def _bundle() -> dict[str, object]:
             "no_bet": True,
             "prediction_input_allowed": True,
         },
-        "public": _prepublication_public(
-            run_id, session_id, SOURCE_SHA, "3" * 64
-        ),
+        "public": _prepublication_public(run_id, session_id, SOURCE_SHA, "3" * 64),
         "runtime_evidence": {
             "runtime_root": "/private/tmp/governed-runtime",
             "runtime_root_role": "governed-runtime",
@@ -573,7 +571,9 @@ def test_b1_rejects_publication_authority_material(forbidden):
 def test_b1_rejects_publication_enabled_prepublication_artifact():
     bundle = _bundle()
     bundle["public"]["publication_enabled"] = True
-    with pytest.raises(Top5FinalAcceptanceError, match="fields are invalid|side effect"):
+    with pytest.raises(
+        Top5FinalAcceptanceError, match="fields are invalid|side effect"
+    ):
         verify_final_acceptance(bundle, now=NOW_ACCEPTANCE)
 
 
@@ -592,7 +592,9 @@ def test_b1_binds_prepublication_artifact_to_exact_provenance(binding, expected_
     bundle = _bundle()
     worker = deepcopy(bundle["public"]["worker_candidate_payload"])
     static = deepcopy(bundle["public"]["static_candidate_payload"])
-    changed_value = "9" * 40 if binding.endswith("sha") or binding.endswith("hash") else f"wrong:{binding}"
+    changed_value = (
+        "9" * 40 if binding.endswith(("sha", "hash")) else f"wrong:{binding}"
+    )
     for product in (worker, static):
         release = product["top5_release"]
         release.pop("prepublication_id", None)
@@ -666,16 +668,16 @@ def test_postpublication_validator_still_requires_capability_and_attestation():
     "mutate, message",
     [
         (
-            lambda bundle: bundle["public"]["worker_candidate_payload"]["top5_release"].update(
-                {"league_codes": ["EPL"]}
-            ),
+            lambda bundle: bundle["public"]["worker_candidate_payload"][
+                "top5_release"
+            ].update({"league_codes": ["EPL"]}),
             "league_codes must contain",
         ),
         (_remove_public_record, "requires exactly 15 records"),
         (
-            lambda bundle: bundle["public"]["worker_candidate_payload"]["top5_release"].update(
-                {"provider_authority": CANDIDATE_PROVIDER}
-            ),
+            lambda bundle: bundle["public"]["worker_candidate_payload"][
+                "top5_release"
+            ].update({"provider_authority": CANDIDATE_PROVIDER}),
             "leaks candidate provider authority",
         ),
         (
@@ -703,6 +705,13 @@ def test_final_acceptance_fails_closed_for_unsafe_or_incomplete_inputs(mutate, m
     mutate(bundle)
     with pytest.raises(Top5FinalAcceptanceError, match=message):
         verify_final_acceptance(bundle, now=NOW_ACCEPTANCE)
+
+
+def test_isports_candidate_cannot_leak_through_final_acceptance_public_boundary():
+    from src.football.top5_final_acceptance import _contains_candidate
+
+    with pytest.raises(Top5FinalAcceptanceError, match="candidate provider"):
+        _contains_candidate({"worker": {"source": "isports_api"}})
 
 
 def test_current_main_binding_is_required():

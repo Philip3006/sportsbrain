@@ -6,9 +6,9 @@ from collections.abc import Mapping, Sequence
 from datetime import datetime
 
 from scripts.top5_publication_delivery_acceptance import validate_delivery
+from src.football.provider_cascade.contracts import CANDIDATE_ONLY_PROVIDER_IDENTITIES
 from src.football.top5_final_acceptance import (
     ACTIVE_PROVIDER,
-    CANDIDATE_PROVIDER,
     TOP5_LEAGUES,
     Top5FinalAcceptanceError,
     _age,
@@ -86,7 +86,7 @@ def _validate_public(
         fixtures[league].add(fixture)
         if (
             record.get("provider") != ACTIVE_PROVIDER
-            or record.get("source") == CANDIDATE_PROVIDER
+            or record.get("source") in CANDIDATE_ONLY_PROVIDER_IDENTITIES
             or record.get("run_id") != run_id
             or record.get("session_id") != session_id
             or record.get("no_bet") is not True
@@ -175,7 +175,7 @@ def _validate_runtime(
     if (
         not isinstance(order, Sequence)
         or ACTIVE_PROVIDER not in order
-        or CANDIDATE_PROVIDER in order
+        or set(order) & CANDIDATE_ONLY_PROVIDER_IDENTITIES
     ):
         raise Top5FinalAcceptanceError("runtime provider authority evidence is invalid")
     if raw.get("source_release_sha") != model["source_sha"]:

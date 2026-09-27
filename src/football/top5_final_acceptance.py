@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from hashlib import sha256
 
 from src.football.odds.therundown import THERUNDOWN_PROVIDER_NAME
+from src.football.provider_cascade.contracts import CANDIDATE_ONLY_PROVIDER_IDENTITIES
 from src.football.top5_research_binding import FROZEN_RESEARCH_SHA, M5_CANDIDATE_ID
 from src.football.top5_therundown_event_discovery import (
     DISCOVERY_EVIDENCE_SCHEMA_VERSION,
@@ -120,6 +121,12 @@ def _age(now: datetime, captured: datetime, scope: str) -> None:
 
 
 def _contains_candidate(value: object, path: str = "public") -> None:
+    def is_candidate(provider: object) -> bool:
+        return isinstance(provider, str) and (
+            provider.strip().casefold() in CANDIDATE_ONLY_PROVIDER_IDENTITIES
+            or "therundown" in provider.casefold()
+        )
+
     if isinstance(value, Mapping):
         for key, item in value.items():
             key_text = str(key).casefold()
@@ -131,14 +138,14 @@ def _contains_candidate(value: object, path: str = "public") -> None:
                 "active_provider_order",
                 "authority",
             }:
-                if isinstance(item, str) and item == CANDIDATE_PROVIDER:
+                if is_candidate(item):
                     raise Top5FinalAcceptanceError(
                         f"{path}.{key} exposes the candidate provider as production authority"
                     )
                 if (
                     isinstance(item, Sequence)
                     and not isinstance(item, (str, bytes))
-                    and CANDIDATE_PROVIDER in item
+                    and any(is_candidate(provider) for provider in item)
                 ):
                     raise Top5FinalAcceptanceError(
                         f"{path}.{key} exposes the candidate provider as production authority"
