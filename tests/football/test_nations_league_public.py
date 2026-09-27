@@ -29,6 +29,14 @@ def _canonical(value):
     ).encode()
 
 
+def _redigest(artifact):
+    artifact["artifact_digest"] = hashlib.sha256(
+        _canonical(
+            {key: value for key, value in artifact.items() if key != "artifact_digest"}
+        )
+    ).hexdigest()
+
+
 def _artifact(now=None):
     captured = now or datetime.now(timezone.utc).replace(microsecond=0)
     timestamp = captured.isoformat().replace("+00:00", "Z")
@@ -71,7 +79,7 @@ def _artifact(now=None):
                 "operation": "odds",
                 "method": "GET",
                 "path": "/sport/football/odds/european/all",
-                "query": {"day": str(captured.day)},
+                "query": {"matchId": "event-real-shape-001,event-real-shape-002"},
                 "status_code": 200,
                 "started_at": (captured - timedelta(minutes=2))
                 .isoformat()
@@ -86,6 +94,16 @@ def _artifact(now=None):
         "fixture_count": 2,
         "covered_fixture_count": 2,
         "skipped_fixtures": [],
+        "coverage": {
+            "eligible_schedule_fixtures": 2,
+            "valid_odds_fixtures": 2,
+            "model_fixtures": 2,
+            "complete": True,
+            "eligible_match_ids": [
+                "event-real-shape-001",
+                "event-real-shape-002",
+            ],
+        },
         "fixtures": [
             {
                 "provider_match_id": "event-real-shape-001",
@@ -136,6 +154,15 @@ def _public(artifact, now, **overrides):
         now=now,
         **overrides,
     )
+
+
+def _make_partial(artifact, skipped_fixtures):
+    artifact["fixtures"] = artifact["fixtures"][:1]
+    artifact["covered_fixture_count"] = 1
+    artifact["skipped_fixtures"] = skipped_fixtures
+    artifact["coverage"]["valid_odds_fixtures"] = 1
+    artifact["coverage"]["model_fixtures"] = 1
+    artifact["coverage"]["complete"] = False
 
 
 def test_complete_shadow_artifact_projects_all_fixtures_and_no_action_authority():
@@ -240,6 +267,10 @@ def test_private_provider_request_and_query_secrets_are_not_projected():
         "api_key": "fixture-secret-never-project",
         "query": {"api_key": "query-secret-never-project"},
     }
+    artifact["provider_rate_evidence"] = {
+        "quota_remaining": 27,
+        "response_headers": {"x-requests-remaining": "quota-secret-never-project"},
+    }
     artifact["artifact_digest"] = hashlib.sha256(
         _canonical(
             {key: item for key, item in artifact.items() if key != "artifact_digest"}
@@ -249,7 +280,10 @@ def test_private_provider_request_and_query_secrets_are_not_projected():
     serialized = json.dumps(public)
     assert "fixture-secret-never-project" not in serialized
     assert "query-secret-never-project" not in serialized
+    assert "quota-secret-never-project" not in serialized
     assert "provider_private" not in public
+    assert "provider_rate_evidence" not in public
+    assert "request_count" not in public and "retry_count" not in public
 
 
 @pytest.mark.parametrize(
@@ -276,6 +310,21 @@ def test_isports_artifact_request_provenance_is_exact_two_calls_no_retry(
     [
         lambda manifest: manifest[0].update(path="/v1/unauthorized"),
         lambda manifest: manifest[0]["query"].update(apiKey="private-secret"),
+        lambda manifest: manifest[1].update(query={"day": "28"}),
+        lambda manifest: manifest[1].update(query={"date": "2026-09-28"}),
+        lambda manifest: manifest[1].update(query={"min": "2"}),
+        lambda manifest: manifest[1].update(
+            query={"matchId": "event-real-shape-001,other-match"}
+        ),
+        lambda manifest: manifest[1].update(
+            query={"matchId": "event-real-shape-001,event-real-shape-001"}
+        ),
+        lambda manifest: manifest[1].update(
+            query={
+                "matchId": "event-real-shape-001,event-real-shape-002",
+                "api_key": "private-secret",
+            }
+        ),
         lambda manifest: manifest[1].update(status_code=503),
         lambda manifest: manifest[1].update(response_sha256="bad"),
         lambda manifest: manifest[1].update(ordinal=1),
@@ -392,3 +441,169 @@ def test_public_bundle_digest_and_fixture_provenance_are_bound():
     public["fixtures"][0]["home"] = "Tampered"
     with pytest.raises(PublicFootballCompatibilityError, match="digest"):
         serialize_public_product({"nations_league": public})
+
+
+def test_match_id_manifest_binds_exactly_to_eligible_schedule_identities():
+    artifact, now = _artifact()
+    assert artifact["provider_operation_manifest"][1]["query"] == {
+        "matchId": ",".join(artifact["coverage"]["eligible_match_ids"])
+    }
+    assert _public(artifact, now)["fixture_count"] == 2
+
+
+@pytest.mark.parametrize(
+    "query_value",
+    [
+        "event-real-shape-001,event-real-shape-002,",
+        "event-real-shape-001,event-real-shape-002,other/id",
+        "event-real-shape-001,event-real-shape-002,"
+        + ",".join(f"match-{index}" for index in range(99)),
+    ],
+)
+def test_malformed_or_oversized_match_id_manifest_is_rejected(query_value):
+    artifact, now = _artifact()
+    artifact["provider_operation_manifest"][1]["query"] = {"matchId": query_value}
+    _redigest(artifact)
+    with pytest.raises(NationsLeaguePublicError, match="iSports operation"):
+        _public(artifact, now)
+
+
+def test_duplicate_or_malformed_eligible_schedule_ids_are_rejected():
+    for invalid_ids in (
+        ["event-real-shape-001", "event-real-shape-001"],
+        ["event-real-shape-001", "bad,match-id"],
+    ):
+        artifact, now = _artifact()
+        artifact["coverage"]["eligible_match_ids"] = invalid_ids
+        _redigest(artifact)
+        with pytest.raises(NationsLeaguePublicError, match="eligible"):
+            _public(artifact, now)
+
+
+def test_eligible_schedule_over_100_match_ids_is_rejected():
+    artifact, now = _artifact()
+    artifact["coverage"]["eligible_match_ids"] = [
+        f"match-{index}" for index in range(101)
+    ]
+    _redigest(artifact)
+    with pytest.raises(NationsLeaguePublicError, match="out of bounds"):
+        _public(artifact, now)
+
+
+def test_partial_market_coverage_is_accounted_privately_and_projects_covered_only():
+    artifact, now = _artifact()
+    _make_partial(
+        artifact,
+        [
+            {
+                "provider_match_id": "event-real-shape-002",
+                "reason": "missing_1x2_market",
+            }
+        ],
+    )
+    _redigest(artifact)
+
+    public = _public(artifact, now)
+    assert artifact["fixture_count"] == 2
+    assert artifact["covered_fixture_count"] + len(artifact["skipped_fixtures"]) == 2
+    assert public["fixture_count"] == len(public["fixtures"]) == 1
+    assert [fixture["provider_event_id"] for fixture in public["fixtures"]] == [
+        "event-real-shape-001"
+    ]
+    serialized = json.dumps(public)
+    assert "missing_1x2_market" not in serialized
+    assert "event-real-shape-002" not in serialized
+    assert "skipped_fixtures" not in public
+    product = serialize_public_product({"football": [], "nations_league": public})
+    assert product["nations_league"]["fixture_count"] == 1
+
+
+def test_unknown_skipped_target_reason_is_rejected():
+    artifact, now = _artifact()
+    _make_partial(
+        artifact,
+        [{"provider_match_id": "event-real-shape-002", "reason": "model_error"}],
+    )
+    _redigest(artifact)
+    with pytest.raises(NationsLeaguePublicError, match="unsupported skipped target"):
+        _public(artifact, now)
+
+
+def test_skipped_target_requires_a_valid_native_match_id():
+    artifact, now = _artifact()
+    _make_partial(
+        artifact,
+        [{"provider_match_id": "bad/match-id", "reason": "missing_1x2_market"}],
+    )
+    _redigest(artifact)
+    with pytest.raises(NationsLeaguePublicError, match="valid native iSports match ID"):
+        _public(artifact, now)
+
+
+def test_fixture_coverage_accounting_mismatch_is_rejected():
+    artifact, now = _artifact()
+    artifact["fixture_count"] = 3
+    _redigest(artifact)
+    with pytest.raises(NationsLeaguePublicError, match="coverage is incomplete"):
+        _public(artifact, now)
+
+
+def test_covered_and_skipped_identity_overlap_is_rejected():
+    artifact, now = _artifact()
+    _make_partial(
+        artifact,
+        [
+            {
+                "provider_match_id": "event-real-shape-001",
+                "reason": "missing_1x2_market",
+            }
+        ],
+    )
+    _redigest(artifact)
+    with pytest.raises(NationsLeaguePublicError, match="do not exactly account"):
+        _public(artifact, now)
+
+
+def test_zero_covered_fixtures_are_rejected():
+    artifact, now = _artifact()
+    artifact["fixtures"] = []
+    artifact["covered_fixture_count"] = 0
+    artifact["skipped_fixtures"] = [
+        {
+            "provider_match_id": match_id,
+            "reason": "missing_1x2_market",
+        }
+        for match_id in artifact["coverage"]["eligible_match_ids"]
+    ]
+    artifact["coverage"]["valid_odds_fixtures"] = 0
+    artifact["coverage"]["model_fixtures"] = 0
+    artifact["coverage"]["complete"] = False
+    _redigest(artifact)
+    with pytest.raises(NationsLeaguePublicError, match="coverage is incomplete"):
+        _public(artifact, now)
+
+
+def test_duplicate_skipped_match_ids_are_rejected():
+    artifact, now = _artifact()
+    third_id = "event-real-shape-003"
+    artifact["fixture_count"] = 3
+    artifact["provider_event_count"] = 3
+    artifact["coverage"]["eligible_schedule_fixtures"] = 3
+    artifact["coverage"]["eligible_match_ids"].append(third_id)
+    artifact["provider_operation_manifest"][1]["query"]["matchId"] += "," + third_id
+    _make_partial(
+        artifact,
+        [
+            {
+                "provider_match_id": "event-real-shape-002",
+                "reason": "missing_1x2_market",
+            },
+            {
+                "provider_match_id": "event-real-shape-002",
+                "reason": "missing_1x2_market",
+            },
+        ],
+    )
+    _redigest(artifact)
+    with pytest.raises(NationsLeaguePublicError, match="skipped target identities"):
+        _public(artifact, now)

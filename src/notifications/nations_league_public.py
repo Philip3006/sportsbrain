@@ -23,6 +23,8 @@ MAX_ARTIFACT_AGE = timedelta(minutes=15)
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _SOURCE_SHA = re.compile(r"^[0-9a-f]{40}$")
 _RUN_ID = re.compile(r"^unl-shadow-\d{8}T\d{6}Z-[0-9a-f]{12}$")
+_ISPORTS_MATCH_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
+_MAX_ISPORTS_MATCH_IDS = 100
 _OUTCOMES = ("home", "draw", "away")
 _PUBLIC_KEYS = frozenset(
     {
@@ -349,7 +351,9 @@ def build_public_nations_league(
     age = current - captured
     if age < timedelta(0) or age > MAX_ARTIFACT_AGE:
         raise NationsLeaguePublicError("shadow artifact is stale or future-dated")
-    _validate_isports_request_provenance(raw, captured_at=captured, current=current)
+    eligible_match_ids = _validate_isports_request_provenance(
+        raw, captured_at=captured, current=current
+    )
     snapshot = raw.get("model_snapshot")
     if not isinstance(snapshot, Mapping):
         raise NationsLeaguePublicError("model snapshot provenance is missing")
@@ -371,27 +375,50 @@ def build_public_nations_league(
     fixture_count = raw.get("fixture_count")
     covered_count = raw.get("covered_fixture_count")
     fixtures = raw.get("fixtures")
+    skipped = raw.get("skipped_fixtures")
     if (
         not isinstance(fixture_count, int)
         or isinstance(fixture_count, bool)
         or fixture_count < 1
+        or not isinstance(covered_count, int)
         or isinstance(covered_count, bool)
-        or covered_count != fixture_count
+        or covered_count < 1
+        or fixture_count != len(eligible_match_ids)
         or not isinstance(raw.get("provider_event_count"), int)
         or isinstance(raw.get("provider_event_count"), bool)
         or raw["provider_event_count"] < fixture_count
         or not isinstance(fixtures, list)
-        or len(fixtures) != fixture_count
+        or len(fixtures) != covered_count
+        or not isinstance(skipped, list)
+        or fixture_count != covered_count + len(skipped)
     ):
         raise NationsLeaguePublicError("shadow artifact fixture coverage is incomplete")
-    skipped = raw.get("skipped_fixtures")
-    if not isinstance(skipped, list) or any(
-        not isinstance(item, Mapping)
-        or item.get("reason") not in {"non_target_sport_key", "non_target_tournament"}
-        for item in skipped
+    coverage = raw.get("coverage")
+    if (
+        not isinstance(coverage, Mapping)
+        or not _is_count(coverage.get("eligible_schedule_fixtures"), fixture_count)
+        or not _is_count(coverage.get("valid_odds_fixtures"), covered_count)
+        or not _is_count(coverage.get("model_fixtures"), covered_count)
+    ):
+        raise NationsLeaguePublicError("shadow artifact coverage accounting mismatch")
+
+    skipped_ids: list[str] = []
+    for item in skipped:
+        if not isinstance(item, Mapping) or item.get("reason") != "missing_1x2_market":
+            raise NationsLeaguePublicError(
+                "shadow artifact contains an unsupported skipped target"
+            )
+        skipped_id = _isports_match_id(item.get("provider_match_id"))
+        if skipped_id is None:
+            raise NationsLeaguePublicError(
+                "skipped target has no valid native iSports match ID"
+            )
+        skipped_ids.append(skipped_id)
+    if len(set(skipped_ids)) != len(skipped_ids) or not set(skipped_ids).issubset(
+        eligible_match_ids
     ):
         raise NationsLeaguePublicError(
-            "shadow artifact contains skipped target fixtures"
+            "skipped target identities are duplicated or outside the eligible schedule"
         )
 
     public_fixtures: list[dict[str, Any]] = []
@@ -490,8 +517,17 @@ def build_public_nations_league(
                 "artifact_digest": claimed_digest,
             }
         )
-    if len({item["provider_event_id"] for item in public_fixtures}) != fixture_count:
+    if len({item["provider_event_id"] for item in public_fixtures}) != len(
+        public_fixtures
+    ):
         raise NationsLeaguePublicError("shadow artifact fixture IDs are duplicated")
+    covered_ids = {item["provider_event_id"] for item in public_fixtures}
+    if covered_ids.intersection(skipped_ids) or covered_ids.union(skipped_ids) != set(
+        eligible_match_ids
+    ):
+        raise NationsLeaguePublicError(
+            "covered and skipped fixtures do not exactly account for the eligible schedule"
+        )
     payload: dict[str, Any] = {
         "schema": SCHEMA,
         "competition": COMPETITION,
@@ -505,7 +541,7 @@ def build_public_nations_league(
         "source_sha": source_sha,
         "artifact_digest": claimed_digest,
         "model_snapshot_digest": snapshot_digest,
-        "fixture_count": fixture_count,
+        "fixture_count": len(public_fixtures),
         "fixtures": public_fixtures,
     }
     payload["public_digest"] = _public_digest(payload)
@@ -526,7 +562,7 @@ def _validate_isports_identity(raw: Mapping[str, Any]) -> None:
 
 def _validate_isports_request_provenance(
     raw: Mapping[str, Any], *, captured_at: datetime, current: datetime
-) -> None:
+) -> list[str]:
     """Validate the two known iSports operations without exposing auth data."""
     request_count = raw.get("request_count")
     retry_count = raw.get("retry_count")
@@ -542,6 +578,25 @@ def _validate_isports_request_provenance(
     manifest = raw.get("provider_operation_manifest")
     if not isinstance(manifest, list) or len(manifest) != 2:
         raise NationsLeaguePublicError("iSports operation manifest is incomplete")
+    coverage = raw.get("coverage")
+    eligible_raw = (
+        coverage.get("eligible_match_ids") if isinstance(coverage, Mapping) else None
+    )
+    if (
+        not isinstance(eligible_raw, list)
+        or not 1 <= len(eligible_raw) <= _MAX_ISPORTS_MATCH_IDS
+    ):
+        raise NationsLeaguePublicError(
+            "iSports eligible schedule match IDs are missing or out of bounds"
+        )
+    eligible_ids: list[str] = []
+    for value in eligible_raw:
+        match_id = _isports_match_id(value)
+        if match_id is None:
+            raise NationsLeaguePublicError("iSports eligible match ID is malformed")
+        eligible_ids.append(match_id)
+    if len(set(eligible_ids)) != len(eligible_ids):
+        raise NationsLeaguePublicError("iSports eligible schedule IDs are duplicated")
     expected_operations = (
         (1, "schedule", "/sport/football/schedule/basic"),
         (2, "odds", "/sport/football/odds/european/all"),
@@ -581,13 +636,20 @@ def _validate_isports_request_provenance(
                 and query.get("leagueId") == str(PROVIDER_LEAGUE_ID)
             )
         else:
-            day = query.get("day") if isinstance(query, Mapping) else None
+            match_filter = query.get("matchId") if isinstance(query, Mapping) else None
+            requested_ids = (
+                match_filter.split(",")
+                if isinstance(match_filter, str) and match_filter
+                else []
+            )
+            parsed_requested_ids = [_isports_match_id(value) for value in requested_ids]
             query_valid = (
                 isinstance(query, Mapping)
-                and set(query) == {"day"}
-                and isinstance(day, (str, int))
-                and not isinstance(day, bool)
-                and re.fullmatch(r"[0-9]+", str(day)) is not None
+                and set(query) == {"matchId"}
+                and 1 <= len(requested_ids) <= _MAX_ISPORTS_MATCH_IDS
+                and all(value is not None for value in parsed_requested_ids)
+                and len(set(parsed_requested_ids)) == len(parsed_requested_ids)
+                and set(parsed_requested_ids) == set(eligible_ids)
             )
         status = record.get("status_code")
         if (
@@ -613,14 +675,19 @@ def _validate_isports_request_provenance(
             raise NationsLeaguePublicError(
                 "iSports operation time/provenance is invalid"
             )
+    return eligible_ids
 
 
 def _isports_match_id(value: object) -> str | None:
     """Return the stable native iSports matchId in public string form."""
     if isinstance(value, bool) or not isinstance(value, (str, int)):
         return None
-    match_id = str(value).strip()
-    return match_id or None
+    match_id = str(value)
+    return match_id if _ISPORTS_MATCH_ID.fullmatch(match_id) else None
+
+
+def _is_count(value: object, expected: int) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool) and value == expected
 
 
 def load_public_nations_league_from_runtime(
