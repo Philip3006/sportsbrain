@@ -127,12 +127,15 @@ def score_matches(
     data: dict,
     bankroll: float,
     scan_date: pd.Timestamp,
+    neutral: bool = True,
 ) -> tuple[list, list, list, dict]:
     """
     Run the per-match scoring loop.
 
     models: {dc_params, lgbm_model, calibrators, cluster_calibrators, dc_weight, stacker, conformal}
     data:   {historical, elo_series, elo_ratings, statsbomb_xg, player_xg_df, ppda_df, fotmob_ratings_df}
+    neutral: run-level venue default (True preserves the existing WM path); a match-level
+             ``neutral`` value, when present, takes precedence for every venue-sensitive model.
     Returns: (all_signals, no_value_matches, skipped_divergence_matches, match_contexts)
     """
     dc_params = models['dc_params']
@@ -162,12 +165,33 @@ def score_matches(
         from src.config import canonical_name
         home = canonical_name(match["home_team"])
         away = canonical_name(match["away_team"])
+        match_neutral = bool(match.get("neutral", neutral))
+        sport_key = str(match.get("sport_key", ""))
+        tournament_name = str(match.get("tournament", ""))
+        is_world_cup = (
+            sport_key == "soccer_fifa_world_cup"
+            or "world cup" in tournament_name.casefold()
+        )
+        # Preserve legacy scans that do not carry competition metadata; known
+        # non-WM fixtures must never inherit WM host/environment adjustments.
+        legacy_unlabelled_match = not sport_key and not tournament_name
+        venue_adjustments_allowed = is_world_cup or legacy_unlabelled_match
         # I6: WM-2026-Host-Boost
-        host_boost = HOST_LAMBDA_BOOST if (HOST_BOOST_ENABLED and home in HOST_NATIONS) else 1.0
+        host_boost = (
+            HOST_LAMBDA_BOOST
+            if (venue_adjustments_allowed and HOST_BOOST_ENABLED and home in HOST_NATIONS)
+            else 1.0
+        )
         # I12: Höhenlage + Kunstrasen — kein Effekt auf WM (Nationalteam-Platzhalter haben (0,0))
         _alt = ALTITUDE_BOOST_MAP.get(home)
-        altitude_factors = _alt if (_alt and _alt[0] > 0.0) else None
-        turf_penalty = TURF_AWAY_PENALTY if home in ARTIFICIAL_TURF_STADIUMS else 1.0
+        altitude_factors = (
+            _alt if (venue_adjustments_allowed and _alt and _alt[0] > 0.0) else None
+        )
+        turf_penalty = (
+            TURF_AWAY_PENALTY
+            if venue_adjustments_allowed and home in ARTIFICIAL_TURF_STADIUMS
+            else 1.0
+        )
         raw_odds = (
             float(match.get("home_odds", 0)),
             float(match.get("draw_odds", 0)),
@@ -183,7 +207,7 @@ def score_matches(
         is_ko = bool(stage_pre.get("is_knockout", False))
         try:
             dc_probs = dc.predict_match_staged(
-                home, away, dc_params, is_knockout=is_ko, neutral=True,
+                home, away, dc_params, is_knockout=is_ko, neutral=match_neutral,
                 elo_home=elo_ratings.get(home, 1500.0),
                 elo_away=elo_ratings.get(away, 1500.0),
                 host_boost=host_boost,
@@ -217,7 +241,7 @@ def score_matches(
                     historical=historical,
                     elo_series=elo_series,
                     dc_params=dc_params,
-                    neutral=True,
+                    neutral=match_neutral,
                     tournament=match.get("tournament"),
                     statsbomb_xg=statsbomb_xg if not statsbomb_xg.empty else None,
                     player_xg_df=player_xg_df if not player_xg_df.empty else None,
@@ -241,7 +265,7 @@ def score_matches(
                         lgbm_probs=lgbm_raw_arr,
                         shin_probs=shin_probs,
                         is_knockout=is_ko,
-                        is_neutral=True,
+                        is_neutral=match_neutral,
                     )
                     final_arr = stacker.predict_proba(x_s.reshape(1, -1))[0]
                 elif cluster_calibrators and calibrators:
@@ -271,7 +295,7 @@ def score_matches(
                 lgbm_probs=None,
                 shin_probs=shin_probs,
                 is_knockout=is_ko,
-                is_neutral=True,
+                is_neutral=match_neutral,
             )
             final_arr = stacker.predict_proba(x_s.reshape(1, -1))[0]
         else:
@@ -321,7 +345,7 @@ def score_matches(
         # DC expected goals, BTTS and top scorelines for display (single matrix computation)
         try:
             _score_matrix = dc.predict_scoreline(
-                home, away, dc_params, neutral=True,
+                home, away, dc_params, neutral=match_neutral,
                 elo_home=elo_ratings.get(home, 1500.0),
                 elo_away=elo_ratings.get(away, 1500.0),
                 host_boost=host_boost,
@@ -392,7 +416,7 @@ def score_matches(
         elo_home_rating = elo_ratings.get(home, 1500.0)
         elo_away_rating = elo_ratings.get(away, 1500.0)
         elo_p_home, elo_p_draw, elo_p_away = elo_win_probability(
-            elo_home_rating, elo_away_rating, neutral=True
+            elo_home_rating, elo_away_rating, neutral=match_neutral
         )
         _elo_probs = {"home": elo_p_home, "draw": elo_p_draw, "away": elo_p_away}
 
@@ -441,7 +465,7 @@ def score_matches(
                 continue
             if ou_line not in totals_cache:
                 totals_cache[ou_line] = dc.predict_totals_all(
-                    home, away, dc_params, line=ou_line, neutral=True, rho_override=rho_staged,
+                    home, away, dc_params, line=ou_line, neutral=match_neutral, rho_override=rho_staged,
                     host_boost=host_boost,
                     altitude_factors=altitude_factors, turf_penalty=turf_penalty,
                 )
@@ -472,7 +496,7 @@ def score_matches(
             if ah_line not in ah_cache:
                 try:
                     ah_cache[ah_line] = dc.predict_asian_handicap_all(
-                        home, away, dc_params, line=ah_line, neutral=True, rho_override=rho_staged,
+                        home, away, dc_params, line=ah_line, neutral=match_neutral, rho_override=rho_staged,
                         host_boost=host_boost,
                         altitude_factors=altitude_factors, turf_penalty=turf_penalty,
                     )
@@ -500,18 +524,18 @@ def score_matches(
             _implied_p_range = derive_goals_range_implied(_totals_lines, min_g=2, max_g=4)
             _gr_probs = dc.predict_goals_range(
                 home, away, dc_params, min_g=2, max_g=4,
-                neutral=True, rho_override=rho_staged,
+                neutral=match_neutral, rho_override=rho_staged,
                 elo_home=elo_home_rating, elo_away=elo_away_rating,
                 host_boost=host_boost,
                 altitude_factors=altitude_factors, turf_penalty=turf_penalty,
             )
             _h1_probs = dc.predict_half_goals_range(
-                home, away, dc_params, min_g=2, max_g=4, half=1, neutral=True,
+                home, away, dc_params, min_g=2, max_g=4, half=1, neutral=match_neutral,
                 host_boost=host_boost,
                 altitude_factors=altitude_factors, turf_penalty=turf_penalty,
             )
             _h2_probs = dc.predict_half_goals_range(
-                home, away, dc_params, min_g=2, max_g=4, half=2, neutral=True,
+                home, away, dc_params, min_g=2, max_g=4, half=2, neutral=match_neutral,
                 host_boost=host_boost,
                 altitude_factors=altitude_factors, turf_penalty=turf_penalty,
             )
@@ -538,7 +562,7 @@ def score_matches(
         ftts_home_odds = float(match.get("ftts_home_odds", 0))
         ftts_away_odds = float(match.get("ftts_away_odds", 0))
         if ftts_home_odds > 1.0 or ftts_away_odds > 1.0:
-            ftts_probs = dc.predict_first_scorer(home, away, dc_params, neutral=True, host_boost=host_boost,
+            ftts_probs = dc.predict_first_scorer(home, away, dc_params, neutral=match_neutral, host_boost=host_boost,
                                                    altitude_factors=altitude_factors, turf_penalty=turf_penalty)
             signals.extend(detect_value_ftts(
                 home, away, ftts_probs, ftts_home_odds, ftts_away_odds,
