@@ -17,6 +17,11 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from types import MappingProxyType
 
+from src.football.top5_research_binding import (
+    FROZEN_RESEARCH_SHA,
+    M5_CANDIDATE_ID,
+    inventory_for,
+)
 from src.notifications.public_serializer import (
     TOP5_PUBLIC_PROVIDER_AUTHORITY,
     TOP5_PREPUBLICATION_RELEASE_SCHEMA,
@@ -24,11 +29,6 @@ from src.notifications.public_serializer import (
     canonical_top5_league,
     serialize_public_product,
     serialize_top5_prepublication_candidate_product,
-)
-from src.football.top5_research_binding import (
-    FROZEN_RESEARCH_SHA,
-    M5_CANDIDATE_ID,
-    inventory_for,
 )
 
 TOP5_PUBLIC_DELIVERY_READY = "TOP5_PUBLIC_DELIVERY_READY"
@@ -69,7 +69,11 @@ def _digest(value: object) -> str:
 
 
 def _required_text(value: object, name: str) -> str:
-    if not isinstance(value, str) or not value.strip():
+    if value is None:
+        raise ValueError(f"{name} is required")
+    if not isinstance(value, str):
+        raise TypeError(f"{name} must be text")
+    if not value.strip():
         raise ValueError(f"{name} is required")
     return value.strip()
 
@@ -187,13 +191,13 @@ class Top5PrepublicationArtifactV1:
         worker_candidate_payload: Mapping[str, object],
         static_candidate_payload: Mapping[str, object],
         prepared_at: datetime | str,
-    ) -> "Top5PrepublicationArtifactV1":
+    ) -> Top5PrepublicationArtifactV1:
         """Project already-prepared payloads and derive only their digests/identity."""
         prepared = _timestamp(prepared_at, "prepublication prepared_at")
         if not isinstance(worker_candidate_payload, Mapping) or not isinstance(
             static_candidate_payload, Mapping
         ):
-            raise ValueError("Worker/static candidate payloads must be objects")
+            raise TypeError("Worker/static candidate payloads must be objects")
         worker_input = deepcopy(dict(worker_candidate_payload))
         static_input = deepcopy(dict(static_candidate_payload))
         _reject_prepublication_authority(worker_input, "worker_candidate_payload")
@@ -204,7 +208,7 @@ class Top5PrepublicationArtifactV1:
             if not isinstance(worker_release, Mapping) or not isinstance(
                 static_release, Mapping
             ):
-                raise ValueError("Top-5 prepublication release is missing")
+                raise TypeError("Top-5 prepublication release must be an object")
             identity_values = (
                 "controlled_shadow_run_id",
                 "qualification_session_id",
@@ -248,9 +252,9 @@ class Top5PrepublicationArtifactV1:
         )
 
     @classmethod
-    def from_mapping(cls, value: object) -> "Top5PrepublicationArtifactV1":
+    def from_mapping(cls, value: object) -> Top5PrepublicationArtifactV1:
         if not isinstance(value, Mapping):
-            raise ValueError("prepublication artifact must be an object")
+            raise TypeError("prepublication artifact must be an object")
         expected = {
             "schema_version",
             "prepublication_id",
@@ -281,7 +285,7 @@ class Top5PrepublicationArtifactV1:
         if not isinstance(value.get("worker_candidate_payload"), Mapping) or not isinstance(
             value.get("static_candidate_payload"), Mapping
         ):
-            raise ValueError("prepublication candidate payloads must be objects")
+            raise TypeError("prepublication candidate payloads must be objects")
         return cls(
             prepublication_id=_required_text(value.get("prepublication_id"), "prepublication_id"),
             prepared_at=_required_text(value.get("prepared_at"), "prepared_at"),
@@ -413,7 +417,7 @@ class Top5PrepublicationArtifactV1:
             raise ValueError("prepublication product is stale")
         for record in records:
             if not isinstance(record, Mapping):
-                raise ValueError("prepublication outcome record is invalid")
+                raise TypeError("prepublication outcome record must be an object")
             signal_at = record.get("signal_timestamp") or record.get("prediction_timestamp")
             observed = _timestamp(signal_at, "prepublication signal timestamp")
             _age(checked_now, observed, "prepublication signal")
@@ -1053,17 +1057,17 @@ def publication_precheck(
 
 
 __all__ = [
+    "TOP5_LEAGUES",
     "TOP5_PREPUBLICATION_ARTIFACT_SCHEMA",
     "TOP5_PREPUBLICATION_DELIVERY_BLOCKED",
     "TOP5_PREPUBLICATION_DELIVERY_READY",
     "TOP5_PREPUBLICATION_DRY_RUN_SCHEMA",
     "TOP5_PREPUBLICATION_DRY_RUN_STATUS",
-    "Top5PrepublicationArtifactV1",
-    "TOP5_LEAGUES",
-    "TOP5_PUBLICATION_PRECHECK_BLOCKED",
-    "TOP5_PUBLICATION_PRECHECK_READY",
     "TOP5_PUBLIC_DELIVERY_BLOCKED",
     "TOP5_PUBLIC_DELIVERY_READY",
+    "TOP5_PUBLICATION_PRECHECK_BLOCKED",
+    "TOP5_PUBLICATION_PRECHECK_READY",
+    "Top5PrepublicationArtifactV1",
     "publication_precheck",
     "validate_public_bundle",
 ]
