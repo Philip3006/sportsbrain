@@ -21,18 +21,20 @@ from src.football.top5_provider_native_evidence_bridge import (
 from src.football.top5_therundown_event_discovery import (
     EventDiscoveryContractError,
     EventDiscoveryExecutionBlocked,
+    TheRundownB4QuotaProofV1,
 )
 from src.football.top5_therundown_network_shadow import NetworkShadowExecutionBlocked
 from src.football.top5_therundown_provider_native_discovery import (
     DISCOVERY_LEAGUE_ORDER,
+    build_structural_provider_native_discovery_authorization,
     discover_five_league_events_provider_native,
 )
 from tests.football.test_top5_therundown_provider_native_discovery import (
     NOW,
     FakeNativeTransport,
-    _authorization,
     _proof,
     _response,
+    _structural_authorization,
 )
 
 
@@ -44,7 +46,7 @@ def native_run(monkeypatch, tmp_path):
         lambda: state,
     )
     return discover_five_league_events_provider_native(
-        _authorization(),
+        _structural_authorization(),
         proof=_proof(),
         api_key="injected-test-only",
         transport=FakeNativeTransport(
@@ -246,7 +248,7 @@ def test_typed_b4_dossier_binds_native_projection_and_reconciliation(native_run)
         reconciliation_digest=_digest(reconciliation._payload_without_digest()),
     )
     dossier = assemble_top5_b4_evidence_dossier(
-        source_main_sha="a" * 40,
+        source_main_sha="d" * 40,
         quota_proof=_proof(),
         native_run=native_run,
         configuration=configuration,
@@ -254,7 +256,7 @@ def test_typed_b4_dossier_binds_native_projection_and_reconciliation(native_run)
         shadow_headroom=None,
         now=NOW,
     )
-    assert dossier.as_payload()["schema_version"] == "top5-b4-evidence-dossier-v1"
+    assert dossier.as_payload()["schema_version"] == "top5-b4-evidence-dossier-v2"
     assert dossier.dossier_digest == dossier.computed_dossier_digest
     assert dossier.source_configuration.enabled is False
     assert dossier.source_configuration.configuration_digest == (
@@ -264,6 +266,11 @@ def test_typed_b4_dossier_binds_native_projection_and_reconciliation(native_run)
     assert dossier.configuration.configuration_digest == (
         configuration.configuration_digest
     )
+    with pytest.raises(
+        ProviderNativeEvidenceBridgeError,
+        match="original quota package, headroom, and Shadow result",
+    ):
+        dossier.b1_evidence_inputs(now=NOW)
 
     drifted_configuration = replace(
         configuration,
@@ -276,7 +283,7 @@ def test_typed_b4_dossier_binds_native_projection_and_reconciliation(native_run)
     )
     with pytest.raises(ProviderNativeEvidenceBridgeError):
         assemble_top5_b4_evidence_dossier(
-            source_main_sha="a" * 40,
+            source_main_sha="d" * 40,
             quota_proof=_proof(),
             native_run=native_run,
             configuration=drifted_configuration,
@@ -336,14 +343,46 @@ def test_complete_post_shadow_chain_accepts_native_five_league_artifacts_offline
         lambda: tmp_path / "native-discovery-consumption.json",
     )
 
+    quota_proof_package = builder1_tests._b4_package()
+    quota_proof_record = quota_proof_package["proof"]
+    quota_proof_record.update(
+        {
+            "remaining_datapoints": 19944,
+            "quota_used_datapoints": 56,
+            "quota_limit_datapoints": 20000,
+        }
+    )
+    quota_proof_record["raw_header_evidence"].update(
+        {
+            "x-datapoints-used": "56",
+            "x-datapoints-remaining": "19944",
+            "x-datapoints-limit": "20000",
+        }
+    )
+    quota_proof_record["evidence_digest"] = builder1_tests.canonical_digest(
+        {
+            key: value
+            for key, value in quota_proof_record.items()
+            if key != "evidence_digest"
+        }
+    )
+    quota_proof = TheRundownB4QuotaProofV1.from_package(
+        quota_proof_package, now=base_now
+    )
+
     # All transport responses below are deterministic in-process stubs. No
     # provider client, credential file, socket, or external evidence is used.
     native_run = discovery_tests.discover_five_league_events_provider_native(
-        discovery_tests._authorization(
+        build_structural_provider_native_discovery_authorization(
+            discovery_authorization_id="native-structural-e2e",
+            ceo_discovery_authorization_identity="ceo:offline:structural-e2e",
+            proof=quota_proof,
+            adapter_source_sha="d" * 40,
             issued_at=base_now - timedelta(minutes=1),
             expires_at=base_now + timedelta(hours=1),
+            now=base_now,
         ),
-        proof=discovery_tests._proof(),
+        proof=quota_proof,
         api_key="injected-test-only",
         transport=discovery_tests.FakeNativeTransport(
             [
@@ -355,7 +394,6 @@ def test_complete_post_shadow_chain_accepts_native_five_league_artifacts_offline
         pacer=lambda _seconds: None,
     )
     provenance = build_provider_native_discovery_provenance(native_run)
-    projected_discovery = project_provider_native_discovery_evidence(native_run)
     source_configuration = (
         materialize_prebound_network_configuration_from_provider_native(native_run)
     )
@@ -371,7 +409,7 @@ def test_complete_post_shadow_chain_accepts_native_five_league_artifacts_offline
     authorization, quota_headroom = network_tests._quota_headroom(
         authorization, observed_at=base_now - timedelta(seconds=10)
     )
-    shadow_run, _transport, _pacing, shadow_clock = (
+    shadow_run, _transport, _pacing, _shadow_clock = (
         network_tests._run_live_network_fixture(
             configuration,
             authorization,
@@ -448,9 +486,11 @@ def test_complete_post_shadow_chain_accepts_native_five_league_artifacts_offline
     )
 
     dossier = assemble_top5_b4_evidence_dossier(
-        source_main_sha="a" * 40,
-        quota_proof=discovery_tests._proof(),
+        source_main_sha="d" * 40,
+        quota_proof=quota_proof,
+        quota_proof_package=quota_proof_package,
         native_run=native_run,
+        controlled_shadow_run=shadow_run,
         configuration=configuration,
         reconciliation=reconciliation,
         shadow_headroom=quota_headroom,
@@ -471,15 +511,21 @@ def test_complete_post_shadow_chain_accepts_native_five_league_artifacts_offline
         for capture in native_run.captures
         for participant in (capture.home_participant_id, capture.away_participant_id)
     )
+    assert dossier.native_authorization.selection_purpose.value == "STRUCTURAL_PROVIDER"
+    assert dossier.native_authorization.minimum_lead_seconds is None
+    assert dossier.native_authorization.maximum_lead_seconds is None
+    assert dossier.quota_proof_package == quota_proof_package
+    b1_handoff = dossier.b1_evidence_inputs(now=precheck_now)
+    assert b1_handoff["b4_quota_proof_package"] == quota_proof_package
+    assert b1_handoff["controlled_shadow"] == shadow_run.as_payload()
+    assert len(b1_handoff["discovery_evidence"]) == 5
+    assert b1_handoff["provider_native_discovery_provenance"] == provenance.as_payload()
 
     monkeypatch.setattr(
         builder1_tests, "_candidate_network_run", lambda: (shadow_run, configuration)
     )
     builder1_bundle = builder1_tests._bundle()
-    builder1_bundle["discovery_evidence"] = [
-        item.as_payload() for item in projected_discovery
-    ]
-    builder1_bundle["provider_native_discovery_provenance"] = provenance.as_payload()
+    builder1_bundle.update(b1_handoff)
     public = builder1_bundle["public"]
     release_values = {
         "source_release_sha": builder1_bundle["model_runtime"]["source_sha"],
