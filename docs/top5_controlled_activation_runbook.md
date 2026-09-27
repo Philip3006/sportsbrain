@@ -65,40 +65,38 @@ The durable control commands are:
 chmod 600 <exact-evidence-and-authorization.json>
 python3 scripts/top5_controlled_activation.py prepare --input <absolute-path-to-exact-evidence-and-authorization.json>
 python3 scripts/top5_controlled_activation.py status [--activation-id <id>]
-python3 scripts/top5_controlled_activation.py execute --input <same-absolute-path> --activation-id <id> --authorization-envelope <absolute-signed-envelope.json> --public-key-file <absolute-owner-only-public-key.pem> --signer-key-id <trusted-key-id> --lifecycle-stage <INITIAL-or-REFINEMENT> [--lifecycle-state <absolute-canonical-lifecycle.json>] --execute
+python3 scripts/top5_controlled_activation.py execute --input <same-absolute-path> --activation-id <id> --authorization-envelope <absolute-signed-envelope.json> --public-key-file <absolute-owner-only-public-key.pem> --signer-key-id <trusted-key-id> --lifecycle-stage <INITIAL-or-REFINEMENT> [--lifecycle-state <absolute-top5-signal-lifecycle-set-v1.json>] --execute
 python3 scripts/top5_controlled_activation.py rollback --activation-id <id> --plan-digest <exact-plan-digest>
 ```
 
 The default path is non-executing. `execute` requires the explicit flag,
-explicit lifecycle stage, exact B1/B2 evidence, an INITIAL lifecycle record
-when selecting REFINEMENT, and a valid detached Ed25519 signature. A legacy
+explicit lifecycle stage, exact B1/B2 evidence, and a valid detached Ed25519
+signature. INITIAL must omit `--lifecycle-state`. REFINEMENT requires one
+owner-only `top5-signal-lifecycle-set-v1` envelope with exactly three
+canonical lifecycle payloads, whose outcome set is exactly `home`, `draw`,
+and `away`; a single-lifecycle file is not accepted. A legacy
 non-empty bearer token alone has zero execution authority. The two-stage
 contract is `DEFAULT_SIGNAL_LIFECYCLE_CONTRACT`; INITIAL and REFINEMENT use
 their exact stage contract IDs, planner due status, 900-second maximum
 snapshot age, SIGNAL_TIME-only input, and zero retries. Closing odds are
-rejected. The offline route-state store is atomic, owner-only, locked,
-digest-checked, nonce-aware, and can restore/read back its saved disabled
-record. It is not connected to a live route consumer and is not proof of
-production routing or production rollback.
+rejected. The route-state store is atomic, owner-only, locked, digest-checked,
+nonce-aware, and can restore/read back its saved disabled record. The manual
+one-shot runner is its launch-specific live consumer; the store alone is not
+proof of activation. Only validated provider, M5, lifecycle, and post-run
+health evidence can move the route to `PRODUCTION_VERIFIED`.
 
-Even with valid signed authorization, current `main` has no genuine Top-5
-one-shot production model/provider runtime. The durable execute method
-therefore remains fail-closed with
-`NO_PRODUCTION_ONE_SHOT_MODEL_PROVIDER_RUNTIME` before a provider request or
-activation-state transition. There is also no live route-state consumer to
-verify activation or rollback. Do not run the command as a production canary;
-do not treat PREPARED, AUTHORIZED, or an EXECUTING route-state record as
-activation.
+This path is executable only with a fresh exact signed authorization and the
+explicit operator `--execute` flag. This implementation task did not run a
+canary. Do not treat PREPARED, AUTHORIZED, or EXECUTING as production-verified.
 
 No recurring scheduler is registered or required for a future manual
 one-shot canary. This PR does not add scheduler wiring.
 
 ## Activation
 
-After a genuine reviewed one-shot runtime and live route consumer exist, a
-separate task may execute one league only from the exact prepared snapshot and
-fresh signature. Before that dependency is supplied, there is no executable
-production path. This runbook does not authorize or perform activation.
+The one-shot production path executes one league only from the exact prepared
+snapshot and fresh signature. This runbook does not itself authorize or perform
+activation; a valid detached CEO authorization remains mandatory.
 
 Do not expand league scope, change cadence, bind a different model, add a
 provider, or enable publication in the same run.
@@ -141,6 +139,31 @@ delete files, reset Git, or mutate the financial ledger. Because `main` has no
 live Top-5 route writer/consumer, this is a verified durable control-state
 rollback only; live routing rollback cannot yet be claimed ready. The missing
 route writer must be reviewed together with the one-shot production runtime.
+
+The production runner persists the three actual canonical lifecycle objects
+(`home`, `draw`, `away`) as one authoritative set, not as three independent
+files. Its stable set identity binds the lifecycle contract, league, canonical
+fixture key, `h2h` market, candidate, and model; it deliberately excludes the
+outcome, activation ID, snapshot ID, and mutable versions. The external runtime
+state file is
+`football/top5/signal_lifecycle_sets/<lifecycle-set-id>.json`, schema
+`top5-signal-lifecycle-set-store-v1`; it is owner-only, lock-protected,
+symlink-safe, digest-checked canonical JSON, written through a staged file,
+fsync, atomic replace, and directory fsync. INITIAL becomes authoritative only
+as a complete three-member version-1 set. REFINEMENT atomically transitions
+that set to three version-2 histories; exact replay is idempotent, while mixed,
+regressed, conflicting, or third-version state is rejected. Production evidence
+is assembled from a fresh read-back of the committed set.
+
+If staging or a failure before atomic replace occurs, no authoritative set is
+visible: route state rolls back, production verification is withheld, and a
+fresh INITIAL attempt is not poisoned by partial lifecycle files. Atomic
+replace is the set commit point. If route verification fails after that point,
+the complete set remains durably committed even though route state rolls back;
+the runner does not issue another provider request automatically. A later
+INITIAL is blocked, and a REFINE request cannot be treated as recovery. Any
+recovery from this post-commit boundary requires a separately reviewed,
+explicit path; operators must not delete or edit lifecycle state to bypass it.
 
 ## Production verification and evidence capture
 

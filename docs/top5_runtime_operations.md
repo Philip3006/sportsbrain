@@ -126,11 +126,10 @@ Example input shape (values are deliberately not fabricated here):
 The precheck remains an operator-supplied, side-effect-free checklist. The
 durable activation CLI independently revalidates the canonical B2 five-league
 receipt package and B1 final-acceptance bundle before persisting a `PREPARED`
-record. Its status health reports activation-control state only; provider and
-model health remain `NOT_OBSERVED`. Execution currently stops with
-`NO_PRODUCTION_ONE_SHOT_MODEL_PROVIDER_RUNTIME` because no actual production
-Top-5 model/provider one-shot runtime or route-state consumer exists. No
-recurring scheduler is introduced by the durable substrate.
+record. The manual one-shot runner now consumes the durable route and performs
+the exact authorized provider/model/lifecycle path; status health remains
+`NOT_OBSERVED` until an authorized execution supplies real evidence. No
+recurring scheduler is introduced by this canary path.
 
 ## Operational decisions
 

@@ -10,8 +10,8 @@ from src.football.top5_activation_authorization import (
     verify_activation_authorization,
 )
 from src.football.top5_activation_route_state import (
-    TOP5_ROUTE_CONSUMER_BLOCKER,
     DurableTop5ProductionRouteStateStore,
+    Top5ProductionRouteConsumer,
     Top5RouteStateError,
 )
 from tests.football.test_top5_activation_authorization import (
@@ -76,10 +76,12 @@ def test_route_record_is_durable_and_exactly_restored_without_claiming_live_roll
         "ROLLED_BACK",
     ]
     assert path.stat().st_mode & 0o077 == 0
-    with pytest.raises(Top5RouteStateError, match=TOP5_ROUTE_CONSUMER_BLOCKER):
-        final_store.mark_production_verified()
-    # The API only restores and reads back its external record; it cannot prove
-    # that a live SportsBrain route consumer changed or was rolled back.
+    rollback_readback = Top5ProductionRouteConsumer(
+        final_store
+    ).verify_disabled_after_rollback(
+        binding.activation_id, binding.activation_plan_digest
+    )
+    assert rollback_readback["activation_mode"] == "DISABLED"
     assert final_store.read()["current_route"] == baseline
 
 
