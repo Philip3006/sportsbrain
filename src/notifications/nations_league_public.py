@@ -15,8 +15,8 @@ from src.runtime.paths import governed_runtime_root
 SCHEMA = "nations-league-public-v1"
 ARTIFACT_SCHEMA = "nations-league-shadow-v1"
 COMPETITION = "UEFA Nations League"
-PROVIDER = "the_odds_api"
-SPORT_KEY = "soccer_uefa_nations_league"
+PROVIDER = "isports_api"
+PROVIDER_LEAGUE_ID = 146819
 EVIDENCE_STATUS = "WEAK_EVIDENCE_SHADOW_ONLY"
 LIFECYCLE = "SHADOW_ONLY"
 MAX_ARTIFACT_AGE = timedelta(minutes=15)
@@ -29,7 +29,7 @@ _PUBLIC_KEYS = frozenset(
         "schema",
         "competition",
         "provider",
-        "sport_key",
+        "provider_league_id",
         "evidence_status",
         "lifecycle",
         "no_bet",
@@ -181,7 +181,9 @@ def validate_public_nations_league(
     if (
         payload.get("competition") != COMPETITION
         or payload.get("provider") != PROVIDER
-        or payload.get("sport_key") != SPORT_KEY
+        or not isinstance(payload.get("provider_league_id"), int)
+        or isinstance(payload.get("provider_league_id"), bool)
+        or payload.get("provider_league_id") != PROVIDER_LEAGUE_ID
     ):
         raise NationsLeaguePublicError("public competition/provider identity mismatch")
     if (
@@ -327,8 +329,7 @@ def build_public_nations_league(
         )
     if raw.get("schema") != ARTIFACT_SCHEMA:
         raise NationsLeaguePublicError("unsupported shadow artifact schema")
-    if raw.get("provider") != PROVIDER or raw.get("sport_key") != SPORT_KEY:
-        raise NationsLeaguePublicError("shadow artifact provider/tournament mismatch")
+    _validate_isports_identity(raw)
     if (
         raw.get("shadow") is not True
         or raw.get("no_bet") is not True
@@ -340,24 +341,7 @@ def build_public_nations_league(
         raise NationsLeaguePublicError(
             "artifact is synthetic or outside shadow-only authority"
         )
-    if (
-        isinstance(raw.get("request_count"), bool)
-        or raw.get("request_count") != 1
-        or isinstance(raw.get("retry_count"), bool)
-        or raw.get("retry_count") != 0
-    ):
-        raise NationsLeaguePublicError("artifact request/retry bounds are unsupported")
-    request = raw.get("request")
-    query = request.get("query") if isinstance(request, Mapping) else None
-    if (
-        not isinstance(request, Mapping)
-        or not isinstance(query, Mapping)
-        or request.get("method") != "GET"
-        or query.get("regions") != "eu"
-        or query.get("markets") != "h2h"
-        or not str(request.get("url", "")).endswith(f"/sports/{SPORT_KEY}/odds")
-    ):
-        raise NationsLeaguePublicError("artifact request contract mismatch")
+    _validate_isports_request_provenance(raw)
     run_id = raw.get("run_id")
     if not isinstance(run_id, str) or not _RUN_ID.fullmatch(run_id):
         raise NationsLeaguePublicError("artifact run identity is not production-shaped")
@@ -477,7 +461,7 @@ def build_public_nations_league(
             raise NationsLeaguePublicError(
                 "fixture time/provenance is stale or mismatched"
             )
-        event_id = item.get("provider_event_id")
+        event_id = _isports_match_id(item.get("matchId"))
         home, away = item.get("home_team"), item.get("away_team")
         if not all(
             isinstance(text, str) and text.strip() for text in (event_id, home, away)
@@ -512,7 +496,7 @@ def build_public_nations_league(
         "schema": SCHEMA,
         "competition": COMPETITION,
         "provider": PROVIDER,
-        "sport_key": SPORT_KEY,
+        "provider_league_id": PROVIDER_LEAGUE_ID,
         "evidence_status": EVIDENCE_STATUS,
         "lifecycle": LIFECYCLE,
         "no_bet": True,
@@ -526,6 +510,39 @@ def build_public_nations_league(
     }
     payload["public_digest"] = _public_digest(payload)
     return validate_public_nations_league(payload, now=current)
+
+
+def _validate_isports_identity(raw: Mapping[str, Any]) -> None:
+    """Validate the one supported iSports Nations League identity contract."""
+    if (
+        raw.get("provider") != PROVIDER
+        or raw.get("competition") != COMPETITION
+        or not isinstance(raw.get("provider_league_id"), int)
+        or isinstance(raw.get("provider_league_id"), bool)
+        or raw.get("provider_league_id") != PROVIDER_LEAGUE_ID
+    ):
+        raise NationsLeaguePublicError("iSports competition/provider identity mismatch")
+
+
+def _validate_isports_request_provenance(raw: Mapping[str, Any]) -> None:
+    """Bound the recorded one-shot run without imposing an endpoint shape."""
+    request_count = raw.get("request_count")
+    retry_count = raw.get("retry_count")
+    if (
+        isinstance(request_count, bool)
+        or request_count != 1
+        or isinstance(retry_count, bool)
+        or retry_count != 0
+    ):
+        raise NationsLeaguePublicError("iSports request/retry bounds are unsupported")
+
+
+def _isports_match_id(value: object) -> str | None:
+    """Return the stable native iSports matchId in public string form."""
+    if isinstance(value, bool) or not isinstance(value, (str, int)):
+        return None
+    match_id = str(value).strip()
+    return match_id or None
 
 
 def load_public_nations_league_from_runtime(

@@ -20,8 +20,8 @@ function publicBundle(overrides = {}) {
   return {
     schema: 'nations-league-public-v1',
     competition: 'UEFA Nations League',
-    provider: 'the_odds_api',
-    sport_key: 'soccer_uefa_nations_league',
+    provider: 'isports_api',
+    provider_league_id: 146819,
     evidence_status: 'WEAK_EVIDENCE_SHADOW_ONLY',
     lifecycle: 'SHADOW_ONLY',
     no_bet: true,
@@ -95,6 +95,8 @@ test('Worker public allowlist preserves the validated Nations League shadow enve
   assert.equal('private_marker' in output, false);
   assert.throws(() => serializePublicProduct({ nations_league: publicBundle({ no_bet: false }) }), /Nations League/);
   assert.throws(() => serializePublicProduct({ nations_league: publicBundle({ fixture_count: 2 }) }), /Nations League/);
+  assert.throws(() => serializePublicProduct({ nations_league: publicBundle({ provider: 'the_odds_api' }) }), /Nations League/);
+  assert.throws(() => serializePublicProduct({ nations_league: publicBundle({ provider_league_id: 999 }) }), /Nations League/);
 });
 
 test('Worker and PWA verify the public projection digest and reject tampering', async () => {

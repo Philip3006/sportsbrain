@@ -619,15 +619,15 @@ function _validatePublicNationsLeague(value) {
     return actual.length === expected.length && actual.every((key, index) => key === expected[index]);
   };
   if (!hasExactKeys(value, [
-    'schema', 'competition', 'provider', 'sport_key', 'evidence_status', 'lifecycle',
+    'schema', 'competition', 'provider', 'provider_league_id', 'evidence_status', 'lifecycle',
     'no_bet', 'publication_enabled', 'captured_at', 'source_sha', 'artifact_digest',
     'model_snapshot_digest', 'fixture_count', 'fixtures', 'public_digest',
   ])) fail('fields are not allowlisted');
   if (!value || typeof value !== 'object' || Array.isArray(value)) fail('expected object');
   if (value.schema !== 'nations-league-public-v1' ||
       value.competition !== 'UEFA Nations League' ||
-      value.provider !== 'the_odds_api' ||
-      value.sport_key !== 'soccer_uefa_nations_league') fail('unsupported identity');
+      value.provider !== 'isports_api' ||
+      value.provider_league_id !== 146819) fail('unsupported identity');
   if (value.evidence_status !== 'WEAK_EVIDENCE_SHADOW_ONLY' ||
       value.lifecycle !== 'SHADOW_ONLY' || value.no_bet !== true ||
       value.publication_enabled !== false) fail('unsafe lifecycle');

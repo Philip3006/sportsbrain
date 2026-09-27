@@ -37,6 +37,8 @@ def _artifact(now=None):
     files = {"model.pkl": "b" * 64, "stacker.pkl": "c" * 64}
     artifact = {
         "schema": "nations-league-shadow-v1",
+        "competition": "UEFA Nations League",
+        "provider_league_id": 146819,
         "run_id": f"unl-shadow-{captured.strftime('%Y%m%dT%H%M%SZ')}-012345abcdef",
         "source_sha": "a" * 40,
         "model_snapshot": {
@@ -44,15 +46,8 @@ def _artifact(now=None):
             "digest": hashlib.sha256(_canonical(files)).hexdigest(),
             "files": files,
         },
-        "provider": "the_odds_api",
-        "sport_key": "soccer_uefa_nations_league",
+        "provider": "isports_api",
         "captured_at": timestamp,
-        "request": {
-            "method": "GET",
-            "url": "https://api.the-odds-api.com/v4/sports/soccer_uefa_nations_league/odds",
-            "query": {"regions": "eu", "markets": "h2h"},
-            "credential": "apiKey (redacted)",
-        },
         "request_count": 1,
         "retry_count": 0,
         "provider_event_count": 2,
@@ -61,7 +56,7 @@ def _artifact(now=None):
         "skipped_fixtures": [],
         "fixtures": [
             {
-                "provider_event_id": "event-real-shape-001",
+                "matchId": "event-real-shape-001",
                 "kickoff": (captured + timedelta(hours=2))
                 .isoformat()
                 .replace("+00:00", "Z"),
@@ -91,7 +86,7 @@ def _artifact(now=None):
     }
     second = deepcopy(artifact["fixtures"][0])
     second.update(
-        provider_event_id="event-real-shape-002",
+        matchId="event-real-shape-002",
         home_team="Spain",
         away_team="Italy",
         kickoff=(captured + timedelta(hours=3)).isoformat().replace("+00:00", "Z"),
@@ -114,6 +109,8 @@ def test_complete_shadow_artifact_projects_all_fixtures_and_no_action_authority(
     artifact, now = _artifact()
     public = _public(artifact, now)
     assert public["competition"] == "UEFA Nations League"
+    assert public["provider"] == "isports_api"
+    assert public["provider_league_id"] == 146819
     assert public["fixture_count"] == len(public["fixtures"]) == 2
     fixture = public["fixtures"][0]
     assert fixture["provider_event_id"] == "event-real-shape-001"
@@ -170,6 +167,76 @@ def test_source_sha_must_match_independently_verified_release():
 
 
 @pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("provider", "the_odds_api", "iSports competition/provider identity"),
+        ("provider_league_id", 999, "iSports competition/provider identity"),
+        ("provider_league_id", 146819.0, "iSports competition/provider identity"),
+        ("competition", "FIFA World Cup", "iSports competition/provider identity"),
+    ],
+)
+def test_only_canonical_isports_competition_identity_is_accepted(field, value, message):
+    artifact, now = _artifact()
+    artifact[field] = value
+    artifact["artifact_digest"] = hashlib.sha256(
+        _canonical(
+            {key: item for key, item in artifact.items() if key != "artifact_digest"}
+        )
+    ).hexdigest()
+    with pytest.raises(NationsLeaguePublicError, match=message):
+        _public(artifact, now)
+
+
+def test_isports_match_id_is_required_and_used_as_public_fixture_identity():
+    artifact, now = _artifact()
+    del artifact["fixtures"][0]["matchId"]
+    artifact["artifact_digest"] = hashlib.sha256(
+        _canonical(
+            {key: item for key, item in artifact.items() if key != "artifact_digest"}
+        )
+    ).hexdigest()
+    with pytest.raises(NationsLeaguePublicError, match="identity is incomplete"):
+        _public(artifact, now)
+
+
+def test_private_provider_request_and_query_secrets_are_not_projected():
+    artifact, now = _artifact()
+    artifact["provider_private"] = {
+        "api_key": "fixture-secret-never-project",
+        "query": {"api_key": "query-secret-never-project"},
+    }
+    artifact["artifact_digest"] = hashlib.sha256(
+        _canonical(
+            {key: item for key, item in artifact.items() if key != "artifact_digest"}
+        )
+    ).hexdigest()
+    public = _public(artifact, now)
+    serialized = json.dumps(public)
+    assert "fixture-secret-never-project" not in serialized
+    assert "query-secret-never-project" not in serialized
+    assert "provider_private" not in public
+
+
+@pytest.mark.parametrize(
+    ("request_count", "retry_count"),
+    [(0, 0), (2, 0), (1, 1)],
+)
+def test_isports_artifact_request_provenance_is_one_shot_only(
+    request_count, retry_count
+):
+    artifact, now = _artifact()
+    artifact["request_count"] = request_count
+    artifact["retry_count"] = retry_count
+    artifact["artifact_digest"] = hashlib.sha256(
+        _canonical(
+            {key: item for key, item in artifact.items() if key != "artifact_digest"}
+        )
+    ).hexdigest()
+    with pytest.raises(NationsLeaguePublicError, match="request/retry bounds"):
+        _public(artifact, now)
+
+
+@pytest.mark.parametrize(
     "field,value",
     [
         ("shadow", False),
@@ -215,6 +282,7 @@ def test_runtime_loader_rejects_synthetic_fixture_artifacts(tmp_path, monkeypatc
         "missing_coverage",
         "bad_model_probability",
         "bad_market_probability",
+        "missing_1x2_market",
         "bad_odds",
         "skipped_target",
     ],
@@ -230,6 +298,8 @@ def test_invalid_or_partial_target_artifact_fails_closed(change):
         fixture["probabilities"]["final_ensemble"]["home"] = 1.2
     elif change == "bad_market_probability":
         fixture["market"]["margin_free_probabilities"]["draw"] = "0.3"
+    elif change == "missing_1x2_market":
+        del fixture["market"]["odds_decimal"]["draw"]
     elif change == "bad_odds":
         fixture["market"]["odds_decimal"]["away"] = 1.0
     else:

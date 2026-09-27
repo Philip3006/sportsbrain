@@ -533,8 +533,8 @@ function renderNationsLeagueShadow(payload) {
   const now = Date.now();
   const valid = payload && payload.schema === 'nations-league-public-v1' &&
     payload.competition === 'UEFA Nations League' &&
-    payload.provider === 'the_odds_api' &&
-    payload.sport_key === 'soccer_uefa_nations_league' &&
+    payload.provider === 'isports_api' &&
+    payload.provider_league_id === 146819 &&
     payload.evidence_status === 'WEAK_EVIDENCE_SHADOW_ONLY' &&
     payload.lifecycle === 'SHADOW_ONLY' && payload.no_bet === true &&
     payload.publication_enabled === false && /^[0-9a-f]{40}$/.test(payload.source_sha || '') &&
