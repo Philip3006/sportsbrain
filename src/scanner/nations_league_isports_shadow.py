@@ -36,9 +36,11 @@ from src.scanner.nations_league_shadow import (
 PROVIDER = "isports_api"
 PROVIDER_LEAGUE_ID = 146819
 COMPETITION = "UEFA Nations League"
-ARTIFACT_SCHEMA = "nations-league-isports-shadow-v1"
+ARTIFACT_SCHEMA = "nations-league-isports-shadow-v2"
 SNAPSHOT_DIR = MODELS_DIR / "snapshots" / "wm2026"
 MAX_HISTORY_AGE = timedelta(hours=24)
+MAX_MATCH_IDS_PER_ODDS_REQUEST = 100
+_MATCH_ID = re.compile(r"^[A-Za-z0-9._:-]{1,128}$", re.ASCII)
 
 
 class NationsLeagueIsportsError(RuntimeError):
@@ -84,6 +86,20 @@ def _parse_timestamp(value: Any, label: str) -> datetime:
     raise NationsLeagueIsportsError(f"{label} is malformed")
 
 
+def _native_match_id(value: Any, *, source: str) -> str:
+    if isinstance(value, bool):
+        raise NationsLeagueIsportsError(f"{source} matchId is malformed")
+    if isinstance(value, int):
+        match_id = str(value)
+    elif isinstance(value, str):
+        match_id = value
+    else:
+        raise NationsLeagueIsportsError(f"{source} matchId is malformed")
+    if match_id != match_id.strip() or not _MATCH_ID.fullmatch(match_id):
+        raise NationsLeagueIsportsError(f"{source} matchId is malformed")
+    return match_id
+
+
 def _schedule_fixtures(
     rows: list[dict[str, Any]], *, captured_at: datetime
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
@@ -93,9 +109,7 @@ def _schedule_fixtures(
     excluded: list[dict[str, Any]] = []
     seen: set[str] = set()
     for row in rows:
-        match_id = str(row.get("matchId", "")).strip()
-        if not match_id:
-            raise NationsLeagueIsportsError("schedule row has no stable matchId")
+        match_id = _native_match_id(row.get("matchId"), source="schedule")
         if match_id in seen:
             raise NationsLeagueIsportsError(
                 f"schedule contains duplicate matchId {match_id}"
@@ -164,6 +178,26 @@ def _schedule_fixtures(
             "schedule returned no eligible future Nations League fixtures in the active window"
         )
     return eligible, excluded
+
+
+def _eligible_match_ids(fixtures: list[dict[str, Any]]) -> list[str]:
+    match_ids = [
+        _native_match_id(fixture.get("provider_match_id"), source="eligible schedule")
+        for fixture in fixtures
+    ]
+    if not match_ids:
+        raise NationsLeagueIsportsError(
+            "schedule has zero eligible target fixtures for the bulk odds request"
+        )
+    if len(set(match_ids)) != len(match_ids):
+        raise NationsLeagueIsportsError(
+            "eligible schedule contains duplicate provider matchIds"
+        )
+    if len(match_ids) > MAX_MATCH_IDS_PER_ODDS_REQUEST:
+        raise NationsLeagueIsportsError(
+            "eligible target fixture count exceeds the 100 matchId bulk odds limit"
+        )
+    return match_ids
 
 
 def _valid_decimal_triple(
@@ -259,11 +293,11 @@ def _bookmaker_quotes(odds_record: Mapping[str, Any]) -> list[dict[str, Any]]:
 
 def _odds_records_by_match(
     rows: list[dict[str, Any]], fixtures: list[dict[str, Any]]
-) -> dict[str, dict[str, Any]]:
+) -> tuple[dict[str, dict[str, Any]], list[dict[str, str]]]:
     targets = {fixture["provider_match_id"]: fixture for fixture in fixtures}
     found: dict[str, dict[str, Any]] = {}
     for row in rows:
-        match_id = str(row.get("matchId", "")).strip()
+        match_id = _native_match_id(row.get("matchId"), source="odds response")
         if match_id not in targets:
             continue
         if match_id in found:
@@ -299,12 +333,15 @@ def _odds_records_by_match(
                 f"odds competition disagrees with schedule for matchId {match_id}"
             )
         found[match_id] = row
-    missing = sorted(set(targets) - set(found))
-    if missing:
-        raise NationsLeagueIsportsError(
-            "bulk odds coverage gap: missing matchId " + ", ".join(missing)
-        )
-    return found
+    skipped = [
+        {
+            "provider_match_id": fixture["provider_match_id"],
+            "reason": "missing_1x2_market",
+        }
+        for fixture in fixtures
+        if fixture["provider_match_id"] not in found
+    ]
+    return found, skipped
 
 
 def _market_for_fixture(record: Mapping[str, Any], *, match_id: str) -> dict[str, Any]:
@@ -347,7 +384,10 @@ def _prediction_event(fixture: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _validate_operation_manifest(
-    operations: list[dict[str, Any]], *, captured_at: datetime
+    operations: list[dict[str, Any]],
+    *,
+    captured_at: datetime,
+    eligible_match_ids: list[str],
 ) -> None:
     exact_keys = {
         "ordinal",
@@ -374,14 +414,18 @@ def _validate_operation_manifest(
                 "provider operation manifest fields are not allowlisted"
             )
         query = actual["query"]
+        status_code = actual["status_code"]
         if (
-            actual["ordinal"] != ordinal
+            not isinstance(actual["ordinal"], int)
+            or isinstance(actual["ordinal"], bool)
+            or actual["ordinal"] != ordinal
             or actual["operation"] != expected_operation
             or actual["method"] != "GET"
             or actual["path"] != expected_path
             or not isinstance(query, Mapping)
-            or isinstance(actual["status_code"], bool)
-            or not 200 <= int(actual["status_code"]) < 300
+            or not isinstance(status_code, int)
+            or isinstance(status_code, bool)
+            or not 200 <= status_code < 300
             or not re.fullmatch(r"[0-9a-f]{64}", str(actual["response_sha256"]))
         ):
             raise NationsLeagueIsportsError(
@@ -392,15 +436,22 @@ def _validate_operation_manifest(
                 raise NationsLeagueIsportsError(
                     "provider schedule query differs from the frozen contract"
                 )
-        elif (
-            set(query) != {"day"}
-            or isinstance(query.get("day"), bool)
-            or not isinstance(query.get("day"), int)
-            or query["day"] < 1
-        ):
-            raise NationsLeagueIsportsError(
-                "provider odds operation must use one numeric day filter"
-            )
+        else:
+            expected_match_filter = ",".join(eligible_match_ids)
+            if (
+                set(query) != {"matchId"}
+                or query.get("matchId") != expected_match_filter
+                or not eligible_match_ids
+                or len(eligible_match_ids) > MAX_MATCH_IDS_PER_ODDS_REQUEST
+                or len(set(eligible_match_ids)) != len(eligible_match_ids)
+                or any(
+                    not isinstance(match_id, str) or not _MATCH_ID.fullmatch(match_id)
+                    for match_id in eligible_match_ids
+                )
+            ):
+                raise NationsLeagueIsportsError(
+                    "provider odds operation must use the exact eligible matchId filter"
+                )
         started = _parse_timestamp(actual["started_at"], "operation started_at")
         completed = _parse_timestamp(actual["completed_at"], "operation completed_at")
         if started > completed or completed > captured_utc:
@@ -414,6 +465,7 @@ def _build_artifact(
     schedule_fixtures: list[dict[str, Any]],
     excluded_fixtures: list[dict[str, Any]],
     odds_by_match: Mapping[str, dict[str, Any]],
+    skipped_fixtures: list[dict[str, str]],
     operation_manifest: list[dict[str, Any]],
     provider_rate_evidence: list[dict[str, Any]],
     snapshot: FrozenSnapshot,
@@ -423,10 +475,40 @@ def _build_artifact(
     captured_at: datetime,
 ) -> dict[str, Any]:
     captured_utc = captured_at.astimezone(timezone.utc)
+    eligible_match_ids = _eligible_match_ids(schedule_fixtures)
+    covered_match_ids = [
+        match_id for match_id in eligible_match_ids if match_id in odds_by_match
+    ]
+    skipped_match_ids = [row.get("provider_match_id", "") for row in skipped_fixtures]
+    if (
+        len(covered_match_ids) != len(set(covered_match_ids))
+        or len(skipped_match_ids) != len(set(skipped_match_ids))
+        or set(covered_match_ids) & set(skipped_match_ids)
+        or set(covered_match_ids) | set(skipped_match_ids) != set(eligible_match_ids)
+        or any(
+            set(row) != {"provider_match_id", "reason"}
+            or row.get("reason") != "missing_1x2_market"
+            for row in skipped_fixtures
+        )
+    ):
+        raise NationsLeagueIsportsError(
+            "eligible fixture accounting is incomplete or inconsistent"
+        )
+    if not odds_by_match:
+        raise NationsLeagueIsportsError(
+            "no eligible target fixture has valid 1X2 market coverage"
+        )
+
+    markets_by_match = {
+        match_id: _market_for_fixture(odds_by_match[match_id], match_id=match_id)
+        for match_id in covered_match_ids
+    }
     results: list[dict[str, Any]] = []
     for fixture in schedule_fixtures:
         match_id = fixture["provider_match_id"]
-        market = _market_for_fixture(odds_by_match[match_id], match_id=match_id)
+        if match_id not in markets_by_match:
+            continue
+        market = markets_by_match[match_id]
         raw_event = _prediction_event(fixture)
         try:
             prediction = predict_fixture(
@@ -437,9 +519,9 @@ def _build_artifact(
                 captured_at=captured_utc,
                 neutral=fixture["neutral"],
             )
-        except NationsLeagueShadowError as exc:
+        except Exception:  # noqa: BLE001 - any model failure must fail closed.
             raise NationsLeagueIsportsError(
-                f"model coverage failed for matchId {match_id}: {exc}"
+                f"model inference failed for market-covered matchId {match_id}"
             ) from None
         prediction.pop("provider_event_id", None)
         prediction["provider_match_id"] = match_id
@@ -453,16 +535,22 @@ def _build_artifact(
         prediction["market"]["bookmakers"] = market["bookmakers"]
         results.append(prediction)
 
-    if len(results) != len(schedule_fixtures):
-        raise NationsLeagueIsportsError("fixture/model coverage is incomplete")
-    _validate_operation_manifest(operation_manifest, captured_at=captured_utc)
+    if len(results) != len(markets_by_match):
+        raise NationsLeagueIsportsError(
+            "market-covered fixture/model coverage is incomplete"
+        )
+    _validate_operation_manifest(
+        operation_manifest,
+        captured_at=captured_utc,
+        eligible_match_ids=eligible_match_ids,
+    )
     run_id = (
         f"unl-shadow-{captured_utc.strftime('%Y%m%dT%H%M%SZ')}-{uuid.uuid4().hex[:12]}"
     )
     artifact: dict[str, Any] = {
         "schema": ARTIFACT_SCHEMA,
         "run_id": run_id,
-        "capture_status": "complete",
+        "capture_status": "partial" if skipped_fixtures else "complete",
         "source_sha": source_sha,
         "provider": PROVIDER,
         "provider_league_id": PROVIDER_LEAGUE_ID,
@@ -477,17 +565,22 @@ def _build_artifact(
         "retry_count": 0,
         "coverage": {
             "eligible_schedule_fixtures": len(schedule_fixtures),
-            "valid_odds_fixtures": len(odds_by_match),
+            "valid_odds_fixtures": len(markets_by_match),
             "model_fixtures": len(results),
-            "complete": len(schedule_fixtures) == len(odds_by_match) == len(results),
-            "eligible_match_ids": [
-                row["provider_match_id"] for row in schedule_fixtures
-            ],
+            "complete": (
+                len(schedule_fixtures) == len(markets_by_match) == len(results)
+                and not skipped_fixtures
+            ),
+            "eligible_match_ids": eligible_match_ids,
+            "market_covered_match_ids": covered_match_ids,
+            "model_covered_match_ids": [row["provider_match_id"] for row in results],
+            "skipped_match_ids": skipped_match_ids,
         },
         "provider_event_count": len(schedule_fixtures) + len(excluded_fixtures),
-        "fixture_count": len(schedule_fixtures),
+        "eligible_schedule_fixture_count": len(schedule_fixtures),
+        "fixture_count": len(results),
         "covered_fixture_count": len(results),
-        "skipped_fixtures": [],
+        "skipped_fixtures": skipped_fixtures,
         "excluded_schedule_fixtures": excluded_fixtures,
         "fixtures": results,
         "evidence_status": "WEAK_EVIDENCE_SHADOW_ONLY",
@@ -498,12 +591,16 @@ def _build_artifact(
         "scheduler_mutation": False,
     }
     artifact["artifact_digest"] = _sha256_bytes(_canonical_json(artifact))
+    _validate_artifact_digest(artifact)
     return artifact
 
 
-def _window_days(now: datetime) -> int:
-    seconds = (ACTIVE_END_EXCLUSIVE - now.astimezone(timezone.utc)).total_seconds()
-    return max(1, math.ceil(seconds / 86400))
+def _validate_artifact_digest(artifact: Mapping[str, Any]) -> None:
+    supplied = artifact.get("artifact_digest")
+    body = {key: value for key, value in artifact.items() if key != "artifact_digest"}
+    expected = _sha256_bytes(_canonical_json(body))
+    if not isinstance(supplied, str) or supplied != expected:
+        raise NationsLeagueIsportsError("artifact digest does not match its contents")
 
 
 def run_isports_shadow_scan(
@@ -563,6 +660,7 @@ def run_isports_shadow_scan(
         schedule_fixtures, excluded_fixtures = _schedule_fixtures(
             schedule_operation.payload, captured_at=preflight_at
         )
+        eligible_match_ids = _eligible_match_ids(schedule_fixtures)
     except NationsLeagueIsportsError as exc:
         raise NationsLeagueIsportsError(
             str(exc),
@@ -575,7 +673,7 @@ def run_isports_shadow_scan(
             operation_kind="odds",
             ordinal=2,
             endpoint_path=EUROPEAN_ODDS_PATH,
-            query={"day": _window_days(preflight_at)},
+            query={"matchId": ",".join(eligible_match_ids)},
             transport=transport,
         )
     except IsportsApiError as exc:
@@ -592,7 +690,7 @@ def run_isports_shadow_scan(
         )
 
     try:
-        odds_by_match = _odds_records_by_match(
+        odds_by_match, skipped_fixtures = _odds_records_by_match(
             odds_operation.payload, schedule_fixtures
         )
     except NationsLeagueIsportsError as exc:
@@ -610,6 +708,7 @@ def run_isports_shadow_scan(
             schedule_fixtures=schedule_fixtures,
             excluded_fixtures=excluded_fixtures,
             odds_by_match=odds_by_match,
+            skipped_fixtures=skipped_fixtures,
             operation_manifest=operations,
             provider_rate_evidence=rate_evidence,
             snapshot=snapshot,
