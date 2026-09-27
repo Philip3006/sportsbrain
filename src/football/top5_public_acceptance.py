@@ -364,8 +364,10 @@ class Top5PrepublicationArtifactV1:
             raise ValueError("prepublication payload digest mismatch")
         release = worker.get("top5_release")
         records = worker.get("football")
-        if not isinstance(release, Mapping) or not isinstance(records, list):
-            raise ValueError("prepublication Top-5 release is incomplete")
+        if not isinstance(release, Mapping):
+            raise TypeError("prepublication Top-5 release must be an object")
+        if not isinstance(records, list):
+            raise TypeError("prepublication outcome records must be a list")
         run_id = _required_text(release.get("controlled_shadow_run_id"), "run_id")
         session_id = _required_text(
             release.get("qualification_session_id"), "session_id"
