@@ -313,6 +313,9 @@ def test_complete_post_shadow_chain_accepts_native_five_league_artifacts_offline
         ObservationEvidenceKind,
     )
     from src.football.top5_final_acceptance import verify_final_acceptance
+    from src.football.top5_final_acceptance_composer import (
+        compose_top5_final_acceptance_bundle,
+    )
     from src.football.top5_public_acceptance import publication_precheck
     from src.football.top5_runtime_operations import (
         Top5ActivationPrecheckInput,
@@ -330,6 +333,12 @@ def test_complete_post_shadow_chain_accepts_native_five_league_artifacts_offline
     from tests.football import test_top5_therundown_network_shadow as network_tests
     from tests.football import (
         test_top5_therundown_provider_native_discovery as discovery_tests,
+    )
+    from tests.football.test_top5_final_acceptance_composer import (
+        _lifecycles as composer_lifecycles,
+    )
+    from tests.football.test_top5_final_acceptance_composer import (
+        _prepublication_artifact as composer_prepublication_artifact,
     )
 
     base_now = public_delivery_tests.BASE
@@ -525,16 +534,55 @@ def test_complete_post_shadow_chain_accepts_native_five_league_artifacts_offline
         builder1_tests, "_candidate_network_run", lambda: (shadow_run, configuration)
     )
     builder1_bundle = builder1_tests._bundle()
-    builder1_bundle.update(b1_handoff)
+    lifecycles = composer_lifecycles(precheck_now)
+    lifecycle_version = lifecycles[0].versions[-1]
+    prepublication_artifact = composer_prepublication_artifact(
+        builder1_bundle, precheck_now, lifecycle_version.stage_contract_id
+    )
+    from monitoring.top5 import governed_runtime_evidence
+
+    runtime_evidence = dict(builder1_bundle["runtime_evidence"])
+    runtime_evidence.update(
+        {
+            "schema_version": governed_runtime_evidence.ARTIFACT_SCHEMA,
+            "status": "READY",
+            "runtime_state_observed_at": precheck_now.isoformat(),
+            "captured_at": precheck_now.isoformat(),
+        }
+    )
+    runtime_evidence["artifact_digest"] = governed_runtime_evidence._canonical_digest(
+        runtime_evidence
+    )
+    monkeypatch.setattr(
+        "src.football.top5_final_acceptance_composer.observe_governed_runtime",
+        lambda: runtime_evidence,
+    )
+    builder1_bundle = compose_top5_final_acceptance_bundle(
+        b4_dossier=dossier,
+        lifecycles=lifecycles,
+        prepublication_artifact=prepublication_artifact,
+        now=precheck_now,
+    )
+    assert builder1_bundle["b4_quota_proof_package"] == quota_proof_package
+    assert builder1_bundle["controlled_shadow"] == shadow_run.as_payload()
+    assert (
+        builder1_bundle["provider_native_discovery_provenance"]
+        == provenance.as_payload()
+    )
+    for key in (
+        "b4_reconciliation",
+        "b4_qualification",
+        "b4_native_authorization",
+        "b4_dossier_digest",
+    ):
+        assert builder1_bundle[key] == b1_handoff[key]
     b1_result = verify_final_acceptance(builder1_bundle, now=precheck_now)
     assert b1_result["status"] == "TOP5_FINAL_ACCEPTANCE_VERIFIED"
     assert b1_result["manifest"]["provider_authority"] == "the_odds_api"
     assert b1_result["manifest"]["candidate_provider"] == "therundown_experimental"
     assert b1_result["manifest"]["checks"]["candidate_not_authority"] is True
     assert b1_result["manifest"]["checks"]["no_bet"] is True
-    assert (
-        b1_result["manifest"]["checks"]["public_prepublication_delivery"] is True
-    )
+    assert b1_result["manifest"]["checks"]["public_prepublication_delivery"] is True
 
     activation = top5_activation_precheck(
         Top5ActivationPrecheckInput(
@@ -568,9 +616,7 @@ def test_complete_post_shadow_chain_accepts_native_five_league_artifacts_offline
         builder1_bundle["public"],
         b1_result,
         now=precheck_now,
-        delivery_manifest=prepublication.delivery_dry_run_manifest(
-            rollback_ready=True
-        ),
+        delivery_manifest=prepublication.delivery_dry_run_manifest(rollback_ready=True),
     )
     assert publication["status"] == "TOP5_PUBLICATION_PRECHECK_READY"
     assert publication["publication_enabled"] is False
