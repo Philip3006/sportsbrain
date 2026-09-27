@@ -19,7 +19,7 @@ from src.football.top5_therundown_network_shadow import (
     TheRundownQuotaHeadroomEvidenceV1,
 )
 
-FINAL_ACCEPTANCE_SCHEMA_VERSION = "top5-final-acceptance-v1"
+FINAL_ACCEPTANCE_SCHEMA_VERSION = "top5-final-acceptance-v2"
 STATUS_VERIFIED = "TOP5_FINAL_ACCEPTANCE_VERIFIED"
 STATUS_BLOCKED = "TOP5_FINAL_ACCEPTANCE_BLOCKED"
 ACTIVE_PROVIDER = "the_odds_api"
@@ -150,7 +150,9 @@ def _contains_candidate(value: object, path: str = "public") -> None:
 
 
 def _validate_model_runtime(raw: Mapping[str, object]) -> dict[str, str]:
-    _text(raw.get("signal_time_contract_id"), "model_runtime.signal_time_contract_id")
+    signal_time_contract_id = _text(
+        raw.get("signal_time_contract_id"), "model_runtime.signal_time_contract_id"
+    )
     _text(raw.get("prediction_input_kind"), "model_runtime.prediction_input_kind")
     if (
         raw.get("candidate_id") != M5_CANDIDATE_ID
@@ -181,6 +183,7 @@ def _validate_model_runtime(raw: Mapping[str, object]) -> dict[str, str]:
         "model_artifact_hash": _sha(
             raw.get("model_artifact_hash"), "model_runtime.model_artifact_hash"
         ),
+        "signal_time_contract_id": signal_time_contract_id,
     }
 
 
@@ -307,7 +310,7 @@ def verify_final_acceptance(
 
     try:
         from src.football.top5_final_acceptance_public import (
-            _validate_public,
+            _validate_prepublication_public,
             _validate_runtime,
         )
         from src.football.top5_final_acceptance_shadow import (
@@ -374,17 +377,18 @@ def verify_final_acceptance(
             or headroom.authorization_id != authorization_id
         ):
             raise Top5FinalAcceptanceError("B4 headroom/run identity binding mismatch")
-        public = _validate_public(
+        runtime_data_sha = _validate_runtime(
+            _mapping(bundle.get("runtime_evidence"), "runtime_evidence"),
+            now=now_utc,
+            model=model,
+        )
+        public = _validate_prepublication_public(
             _mapping(bundle.get("public"), "public"),
             now=now_utc,
             run_id=run_id,
             session_id=session_id,
             model=model,
-        )
-        _validate_runtime(
-            _mapping(bundle.get("runtime_evidence"), "runtime_evidence"),
-            now=now_utc,
-            model=model,
+            runtime_data_sha=runtime_data_sha,
         )
         manifest_body = {
             "schema_version": FINAL_ACCEPTANCE_SCHEMA_VERSION,
@@ -407,16 +411,25 @@ def verify_final_acceptance(
             "adapter_source_sha": adapter_sha,
             "controlled_shadow_digest": shadow_digest,
             "capture_digests": list(capture_digests),
-            "public_generation_id": public["generation_id"],
-            "public_activation_id": public["activation_id"],
+            "source_release_sha": model["source_sha"],
+            "runtime_data_sha": runtime_data_sha,
+            "model_artifact_hash": model["model_artifact_hash"],
+            "signal_time_contract_id": model["signal_time_contract_id"],
+            "public_prepublication_id": public["prepublication_id"],
             "public_product_digest": public["public_product_digest"],
+            "worker_candidate_payload_digest": public[
+                "worker_candidate_payload_digest"
+            ],
+            "static_candidate_payload_digest": public[
+                "static_candidate_payload_digest"
+            ],
             "checks": {
                 "five_leagues": True,
                 "b4_quota_proof": True,
                 "discovery": True,
                 "controlled_shadow": True,
                 "model_signal_time": True,
-                "public_delivery": True,
+                "public_prepublication_delivery": True,
                 "runtime_provenance": True,
                 "candidate_not_authority": True,
                 "no_bet": True,
