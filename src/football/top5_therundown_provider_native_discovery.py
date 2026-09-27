@@ -8,9 +8,13 @@ run.  TheRundown remains candidate-only throughout.
 
 from __future__ import annotations
 
+import argparse
 import fcntl
 import json
 import os
+import subprocess
+import sys
+import tempfile
 import time
 import unicodedata
 from collections.abc import Callable, Mapping
@@ -20,9 +24,11 @@ from datetime import date, datetime, timedelta, timezone
 from enum import Enum
 from functools import wraps
 from hashlib import sha256
+from pathlib import Path
 from typing import Protocol
 
 from src.football.odds.therundown import (
+    THERUNDOWN_ADAPTER_VERSION,
     THERUNDOWN_BASE_URL,
     THERUNDOWN_MONEYLINE_MARKET_ID,
     THERUNDOWN_PROVIDER_NAME,
@@ -946,6 +952,108 @@ class TheRundownProviderNativeDiscoveryAuthorizationV1:
         return authorization
 
 
+def build_structural_provider_native_discovery_authorization(
+    *,
+    discovery_authorization_id: str,
+    ceo_discovery_authorization_identity: str,
+    proof: TheRundownB4QuotaProofV1,
+    adapter_source_sha: str,
+    issued_at: datetime,
+    expires_at: datetime,
+    now: datetime,
+) -> TheRundownProviderNativeDiscoveryAuthorizationV1:
+    """Materialize the current structural authorization without lead policy.
+
+    The operator supplies only the externally authorized identity and time
+    window. Provider, schema, purpose, quota bindings, request shape, limits,
+    pacing, retry policy, and safety flags are canonical code-owned values.
+    """
+
+    current = _utc(now, "structural discovery authorization now")
+    proof.validate(now=current)
+    authorization = TheRundownProviderNativeDiscoveryAuthorizationV1(
+        discovery_authorization_id=_text(
+            discovery_authorization_id, "discovery_authorization_id"
+        ),
+        ceo_discovery_authorization_identity=_text(
+            ceo_discovery_authorization_identity,
+            "ceo_discovery_authorization_identity",
+        ),
+        provider=THERUNDOWN_PROVIDER_NAME,
+        search_start_date=current.date(),
+        adapter_version=THERUNDOWN_ADAPTER_VERSION,
+        adapter_source_sha=_sha(adapter_source_sha, "adapter_source_sha", length=40),
+        request_shape_digest=provider_native_discovery_request_shape_digest(
+            current.date()
+        ),
+        quota_proof_id=proof.proof_id,
+        quota_proof_authorization_id=proof.authorization_id,
+        quota_proof_evidence_digest=proof.evidence_digest,
+        quota_proof_response_digest=proof.response_digest,
+        quota_proof_account_scope=proof.account_scope,
+        quota_proof_remaining_datapoints=proof.remaining_datapoints,
+        quota_proof_sport_id=proof.sport_id,
+        quota_proof_snapshot_date=proof.snapshot_date,
+        quota_proof_observed_at=proof.response_started_at,
+        quota_proof_finished_at=proof.response_finished_at,
+        quota_proof_reset_at=proof.quota_reset_at,
+        issued_at=_utc(issued_at, "issued_at"),
+        expires_at=_utc(expires_at, "expires_at"),
+        minimum_lead_seconds=None,
+        maximum_lead_seconds=None,
+        selection_purpose=ProviderNativeDiscoverySelectionPurpose.STRUCTURAL_PROVIDER,
+    )
+    validate_structural_provider_native_discovery_authorization(
+        authorization,
+        proof=proof,
+        current_adapter_source_sha=adapter_source_sha,
+        now=current,
+    )
+    return authorization
+
+
+def validate_structural_provider_native_discovery_authorization(
+    authorization: TheRundownProviderNativeDiscoveryAuthorizationV1,
+    *,
+    proof: TheRundownB4QuotaProofV1,
+    current_adapter_source_sha: str,
+    now: datetime,
+) -> None:
+    """Validate the exact executable v3 structural Discovery contract."""
+
+    current = _utc(now, "structural discovery authorization now")
+    authorization.validate_against_quota_proof(proof, now=current)
+    payload = authorization.as_payload()
+    if (
+        payload.get("schema_version")
+        != PROVIDER_NATIVE_DISCOVERY_STRUCTURAL_AUTHORIZATION_SCHEMA_VERSION
+        or payload.get("selection_purpose")
+        != ProviderNativeDiscoverySelectionPurpose.STRUCTURAL_PROVIDER.value
+        or authorization.selection_purpose
+        != ProviderNativeDiscoverySelectionPurpose.STRUCTURAL_PROVIDER
+    ):
+        raise EventDiscoveryExecutionBlocked(
+            "structural Discovery requires the current v3 authorization"
+        )
+    if authorization.adapter_version != THERUNDOWN_ADAPTER_VERSION:
+        raise EventDiscoveryExecutionBlocked(
+            "structural Discovery adapter version is not current"
+        )
+    if authorization.adapter_source_sha.lower() != _sha(
+        current_adapter_source_sha, "current adapter source SHA", length=40
+    ):
+        raise EventDiscoveryExecutionBlocked(
+            "structural Discovery adapter source SHA is not current"
+        )
+    if (
+        authorization.minimum_lead_seconds is not None
+        or authorization.maximum_lead_seconds is not None
+    ):
+        raise EventDiscoveryExecutionBlocked(
+            "structural Discovery cannot carry Signal-Time lead limits"
+        )
+
+
 @dataclass(frozen=True)
 class TheRundownProviderNativeDiscoveryRequestV1:
     authorization: TheRundownProviderNativeDiscoveryAuthorizationV1
@@ -1786,6 +1894,268 @@ __all__ = [
     "TheRundownProviderNativeDiscoveryCaptureV1",
     "TheRundownProviderNativeDiscoveryRequestV1",
     "TheRundownProviderNativeDiscoveryRunResultV1",
+    "build_structural_provider_native_discovery_authorization",
     "discover_five_league_events_provider_native",
+    "main",
     "provider_native_discovery_request_shape_digest",
+    "run_structural_provider_native_discovery_operator",
+    "validate_structural_provider_native_discovery_authorization",
 ]
+
+
+def _current_repository_source_sha() -> str:
+    repository = Path(__file__).resolve().parents[2]
+    try:
+        dirty = subprocess.run(
+            [
+                "git",
+                "status",
+                "--porcelain",
+                "--untracked-files=all",
+                "--",
+                "src/football",
+            ],
+            cwd=repository,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout
+        if dirty.strip():
+            raise EventDiscoveryExecutionBlocked(
+                "native Discovery source tree has uncommitted changes"
+            )
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=repository,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise EventDiscoveryExecutionBlocked(
+            "native Discovery source identity is unavailable"
+        ) from exc
+    return _sha(result, "current repository source SHA", length=40)
+
+
+def _read_operator_json(path_value: object, name: str) -> Mapping[str, object]:
+    path = Path(path_value)
+    if not path.is_absolute() or path.is_symlink() or not path.is_file():
+        raise EventDiscoveryExecutionBlocked(
+            f"{name} must be an existing absolute regular file"
+        )
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise EventDiscoveryExecutionBlocked(f"{name} is invalid") from exc
+    if not isinstance(payload, Mapping):
+        raise EventDiscoveryContractError(f"{name} must contain a JSON object")
+    return payload
+
+
+def _write_new_operator_json(path_value: object, payload: Mapping[str, object]) -> None:
+    path = Path(path_value)
+    _validate_new_operator_output_path(path)
+    encoded = (
+        json.dumps(payload, sort_keys=True, separators=(",", ":"), allow_nan=False)
+        + "\n"
+    ).encode("utf-8")
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{path.name}.", suffix=".tmp", dir=path.parent
+    )
+    temporary = Path(temporary_name)
+    try:
+        os.fchmod(descriptor, 0o600)
+        with os.fdopen(descriptor, "wb") as output:
+            output.write(encoded)
+            output.flush()
+            os.fsync(output.fileno())
+        os.link(temporary, path)
+        directory_descriptor = os.open(path.parent, os.O_RDONLY)
+        try:
+            os.fsync(directory_descriptor)
+        finally:
+            os.close(directory_descriptor)
+    except FileExistsError as exc:
+        raise EventDiscoveryExecutionBlocked("operator output already exists") from exc
+    except OSError as exc:
+        raise EventDiscoveryExecutionBlocked(
+            "operator output could not be persisted safely"
+        ) from exc
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def _validate_new_operator_output_path(path_value: object) -> None:
+    path = Path(path_value)
+    if (
+        not path.is_absolute()
+        or path.is_symlink()
+        or path.exists()
+        or not path.parent.is_dir()
+    ):
+        raise EventDiscoveryExecutionBlocked(
+            "operator output must be an unused absolute path in an existing directory"
+        )
+
+
+def run_structural_provider_native_discovery_operator(
+    *,
+    quota_proof_package_path: object,
+    discovery_authorization_id: str,
+    ceo_discovery_authorization_identity: str,
+    issued_at: datetime,
+    expires_at: datetime,
+    authorization_output_path: object | None,
+    result_output_path: object | None = None,
+    credential_file: object | None = None,
+    execute_network: bool = False,
+    now: datetime | None = None,
+    transport: TheRundownProviderNativeDiscoveryTransport | None = None,
+) -> dict[str, object]:
+    """Build the canonical v3 authorization and optionally execute Discovery.
+
+    Dry-run is the default. The CLI never accepts caller-authored schema,
+    purpose, league, budget, retry, pacing, or safety values.
+    """
+
+    current = _utc(now or datetime.now(timezone.utc), "operator current time")
+    proof_package = _read_operator_json(quota_proof_package_path, "B4 quota proof")
+    proof = TheRundownB4QuotaProofV1.from_package(proof_package, now=current)
+    source_sha = _current_repository_source_sha()
+    authorization = build_structural_provider_native_discovery_authorization(
+        discovery_authorization_id=discovery_authorization_id,
+        ceo_discovery_authorization_identity=ceo_discovery_authorization_identity,
+        proof=proof,
+        adapter_source_sha=source_sha,
+        issued_at=issued_at,
+        expires_at=expires_at,
+        now=current,
+    )
+    authorization = TheRundownProviderNativeDiscoveryAuthorizationV1.from_payload(
+        authorization.as_payload()
+    )
+    validate_structural_provider_native_discovery_authorization(
+        authorization,
+        proof=proof,
+        current_adapter_source_sha=source_sha,
+        now=current,
+    )
+    if not execute_network:
+        if transport is not None:
+            raise EventDiscoveryExecutionBlocked(
+                "dry-run cannot be supplied a transport"
+            )
+        if authorization_output_path is not None:
+            _write_new_operator_json(
+                authorization_output_path, authorization.as_payload()
+            )
+        return {
+            "status": "DRY_RUN_READY_NO_NETWORK",
+            "authorization_schema": PROVIDER_NATIVE_DISCOVERY_STRUCTURAL_AUTHORIZATION_SCHEMA_VERSION,
+            "authorization_id": authorization.discovery_authorization_id,
+            "authorization_digest": authorization.authorization_digest,
+            "provider": THERUNDOWN_PROVIDER_NAME,
+            "selection_purpose": ProviderNativeDiscoverySelectionPurpose.STRUCTURAL_PROVIDER.value,
+            "league_order": list(DISCOVERY_LEAGUE_ORDER),
+            "adapter_version": authorization.adapter_version,
+            "adapter_source_sha": authorization.adapter_source_sha,
+            "request_shape_digest": authorization.request_shape_digest,
+            "maximum_request_count": authorization.maximum_request_count,
+            "maximum_datapoints": authorization.maximum_datapoints,
+            "maximum_retries": authorization.maximum_retries,
+            "minimum_interval_seconds": authorization.minimum_interval_seconds,
+            "provider_requests": 0,
+            "credential_accesses": 0,
+        }
+    if authorization_output_path is None or result_output_path is None:
+        raise EventDiscoveryContractError(
+            "network execution requires authorization and result output paths"
+        )
+    if Path(authorization_output_path).resolve() == Path(result_output_path).resolve():
+        raise EventDiscoveryContractError(
+            "authorization and result outputs must be distinct files"
+        )
+    _validate_new_operator_output_path(authorization_output_path)
+    _validate_new_operator_output_path(result_output_path)
+    _write_new_operator_json(authorization_output_path, authorization.as_payload())
+    if transport is None:
+        if credential_file is None:
+            from src.football.top5_controlled_shadow_authorization_package import (
+                DEFAULT_THERUNDOWN_CREDENTIAL_PATH,
+            )
+
+            credential_file = DEFAULT_THERUNDOWN_CREDENTIAL_PATH
+        from src.football.top5_controlled_shadow_authorization_package import (
+            _read_protected_therundown_credential,
+        )
+
+        credential_loader = lambda: _read_protected_therundown_credential(
+            credential_file
+        )
+    else:
+        credential_loader = None
+    run = discover_five_league_events_provider_native(
+        authorization,
+        proof=proof,
+        credential_loader=credential_loader,
+        transport=transport,
+        now=current,
+    )
+    run_payload = run.as_payload()
+    _write_new_operator_json(result_output_path, run_payload)
+    return {
+        "status": "COMPLETED_NETWORK",
+        "authorization_id": authorization.discovery_authorization_id,
+        "authorization_digest": authorization.authorization_digest,
+        "native_run_digest": run.run_digest,
+        "request_count": run.request_count,
+        "datapoint_total": run.datapoint_total,
+        "provider_requests": run.request_count,
+        "credential_accesses": 1 if transport is None else 0,
+        "result_schema": PROVIDER_NATIVE_DISCOVERY_SCHEMA_VERSION,
+        "result_output": str(result_output_path),
+    }
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Build current v3 Top-5 structural Discovery authorization; dry-run by default."
+    )
+    parser.add_argument("run", choices=("run",))
+    parser.add_argument("--quota-proof-package", required=True)
+    parser.add_argument("--discovery-authorization-id", required=True)
+    parser.add_argument("--ceo-discovery-authorization-identity", required=True)
+    parser.add_argument("--issued-at", required=True)
+    parser.add_argument("--expires-at", required=True)
+    parser.add_argument("--authorization-output")
+    parser.add_argument("--result-output")
+    parser.add_argument("--credential-file")
+    parser.add_argument("--execute-network", action="store_true")
+    args = parser.parse_args(argv)
+    try:
+        current = datetime.now(timezone.utc)
+        result = run_structural_provider_native_discovery_operator(
+            quota_proof_package_path=args.quota_proof_package,
+            discovery_authorization_id=args.discovery_authorization_id,
+            ceo_discovery_authorization_identity=args.ceo_discovery_authorization_identity,
+            issued_at=_datetime_field(args.issued_at, "issued_at"),
+            expires_at=_datetime_field(args.expires_at, "expires_at"),
+            authorization_output_path=args.authorization_output,
+            result_output_path=args.result_output,
+            credential_file=args.credential_file,
+            execute_network=args.execute_network,
+            now=current,
+        )
+        print(json.dumps(result, sort_keys=True))
+        return 0
+    except (EventDiscoveryContractError, OSError, ValueError) as exc:
+        print(f"FAILED_CLOSED: {type(exc).__name__}: {exc}", file=sys.stderr)
+        return 2
+    except Exception as exc:  # noqa: BLE001 - never print transport exception detail
+        print(f"FAILED_CLOSED: {type(exc).__name__}", file=sys.stderr)
+        return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
