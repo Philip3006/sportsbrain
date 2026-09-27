@@ -34,6 +34,7 @@ def _configure_budget(tmp_path, monkeypatch, *, code: int = 401) -> Path:
     budget_path = tmp_path / "provider_budget.json"
     _open_auth_circuit(budget_path, code=code)
     monkeypatch.setattr(provider_budget, "_BUDGET_PATH", budget_path)
+    monkeypatch.setattr(provider_budget, "_API_USAGE_PATH", tmp_path / "api_usage.json")
     return budget_path
 
 
@@ -65,20 +66,45 @@ def test_explicit_revalidation_makes_exactly_one_request_and_closes_circuit(
     tmp_path, monkeypatch
 ):
     budget_path = _configure_budget(tmp_path, monkeypatch)
+    usage_path = tmp_path / "api_usage.json"
     calls: list[dict[str, object]] = []
 
     monkeypatch.setattr(odds_api, "get_api_key", lambda: "synthetic-test-key")
+    real_record_success = provider_budget.record_success
 
-    def fake_get(url, *, params, timeout):
-        calls.append({"url": url, "params": params, "timeout": timeout})
-        return _response(
+    def assert_quota_is_durable_before_close(name, *, quota_remaining=None):
+        quota = json.loads(usage_path.read_text())
+        circuit = json.loads(budget_path.read_text())["the_odds_api"]
+        assert quota["requests_used"] == 3
+        assert quota["requests_remaining"] == 497
+        assert circuit["circuit_open"] is True
+        real_record_success(name, quota_remaining=quota_remaining)
+
+    monkeypatch.setattr(
+        provider_budget, "record_success", assert_quota_is_durable_before_close
+    )
+
+    def fake_get(url, *, params, timeout, allow_redirects):
+        calls.append(
+            {
+                "url": url,
+                "params": params,
+                "timeout": timeout,
+                "allow_redirects": allow_redirects,
+            }
+        )
+        response = _response(
             200,
             {
                 "Content-Type": "application/json",
+                "X-Requests-Used": "3",
                 "X-Requests-Remaining": "497",
+                "X-Requests-Limit": "500",
                 "Authorization": "must-not-be-persisted",
             },
         )
+        response.text = "response body must not be persisted"
+        return response
 
     monkeypatch.setattr(odds_api.requests, "get", fake_get)
 
@@ -90,18 +116,259 @@ def test_explicit_revalidation_makes_exactly_one_request_and_closes_circuit(
     assert result["credential_access_count"] == 1
     assert result["retry_count"] == 0
     assert len(calls) == 1
+    assert calls[0]["allow_redirects"] is False
     assert calls[0]["params"] == {"apiKey": "synthetic-test-key"}
     assert result["safe_headers"] == {
         "content-type": "application/json",
+        "x-requests-used": "3",
         "x-requests-remaining": "497",
+        "x-requests-limit": "500",
     }
     assert state["circuit_open"] is False
     assert state["last_auth_revalidation"]["circuit_transition"] == "closed"
     assert state["last_auth_revalidation"]["request_count"] == 1
     assert state["last_auth_revalidation"]["credential_access_count"] == 1
-    persisted = budget_path.read_text()
+    quota = json.loads(usage_path.read_text())
+    assert quota["requests_used"] == 3
+    assert quota["requests_remaining"] == 497
+    assert quota["state"] == "AVAILABLE"
+    assert quota["source"] == "the_odds_api_auth_revalidation_response_headers"
+    assert quota["observed_at"]
+    assert quota["reset_at"]
+    assert provider_budget.odds_api_quota_state()["requests_remaining"] == 497
+    assert provider_budget.is_provider_available("the_odds_api") is True
+    persisted = budget_path.read_text() + usage_path.read_text()
     assert "must-not-be-persisted" not in persisted
     assert "synthetic-test-key" not in persisted
+    assert "response body must not be persisted" not in persisted
+
+
+def _assert_auth_revalidation_stays_closed(budget_path: Path) -> None:
+    state = json.loads(budget_path.read_text())["the_odds_api"]
+    assert state["circuit_open"] is True
+    assert state["last_auth_revalidation"]["circuit_transition"] == "remains_open"
+    assert provider_budget.is_provider_available("the_odds_api") is False
+
+
+def test_missing_remaining_header_fails_closed_without_quota_state(
+    tmp_path, monkeypatch
+):
+    budget_path = _configure_budget(tmp_path, monkeypatch)
+    usage_path = tmp_path / "api_usage.json"
+    monkeypatch.setattr(odds_api, "get_api_key", lambda: "synthetic-test-key")
+    calls = []
+    monkeypatch.setattr(
+        odds_api.requests,
+        "get",
+        lambda *args, **kwargs: (
+            calls.append((args, kwargs))
+            or _response(
+                200,
+                {
+                    "X-Requests-Used": "3",
+                },
+            )
+        ),
+    )
+
+    result = odds_api.revalidate_the_odds_api_auth_once(explicit_opt_in=True)
+
+    assert result["status"] == "failed_closed"
+    assert result["request_count"] == 1
+    assert len(calls) == 1
+    assert not usage_path.exists()
+    assert (
+        json.loads(budget_path.read_text())["the_odds_api"]["last_auth_revalidation"][
+            "failure_class"
+        ]
+        == "missing_x_requests_remaining"
+    )
+    _assert_auth_revalidation_stays_closed(budget_path)
+
+
+@pytest.mark.parametrize("remaining", ["not-an-integer", "-1"])
+def test_malformed_or_negative_remaining_header_fails_closed(
+    tmp_path, monkeypatch, remaining
+):
+    budget_path = _configure_budget(tmp_path, monkeypatch)
+    usage_path = tmp_path / "api_usage.json"
+    monkeypatch.setattr(odds_api, "get_api_key", lambda: "synthetic-test-key")
+    monkeypatch.setattr(
+        odds_api.requests,
+        "get",
+        lambda *args, **kwargs: _response(
+            200,
+            {"X-Requests-Used": "3", "X-Requests-Remaining": remaining},
+        ),
+    )
+
+    result = odds_api.revalidate_the_odds_api_auth_once(explicit_opt_in=True)
+
+    assert result["status"] == "failed_closed"
+    assert not usage_path.exists()
+    _assert_auth_revalidation_stays_closed(budget_path)
+
+
+def test_zero_remaining_is_recorded_but_provider_stays_unavailable(
+    tmp_path, monkeypatch
+):
+    budget_path = _configure_budget(tmp_path, monkeypatch)
+    usage_path = tmp_path / "api_usage.json"
+    monkeypatch.setattr(odds_api, "get_api_key", lambda: "synthetic-test-key")
+    monkeypatch.setattr(
+        odds_api.requests,
+        "get",
+        lambda *args, **kwargs: _response(
+            200,
+            {
+                "X-Requests-Used": "3",
+                "X-Requests-Remaining": "0",
+                "X-Requests-Limit": "500",
+            },
+        ),
+    )
+
+    result = odds_api.revalidate_the_odds_api_auth_once(explicit_opt_in=True)
+
+    assert result["status"] == "failed_closed"
+    quota = json.loads(usage_path.read_text())
+    assert quota["requests_used"] == 3
+    assert quota["requests_remaining"] == 0
+    assert quota["state"] == "QUOTA_EXHAUSTED"
+    assert quota["source"] == "the_odds_api_auth_revalidation_response_headers"
+    assert (
+        json.loads(budget_path.read_text())["the_odds_api"]["last_auth_revalidation"][
+            "failure_class"
+        ]
+        == "quota_remaining_zero"
+    )
+    _assert_auth_revalidation_stays_closed(budget_path)
+
+
+@pytest.mark.parametrize(
+    ("used", "include_used"),
+    [("3", False), ("not-an-integer", True), ("-1", True)],
+)
+def test_missing_or_invalid_used_header_fails_closed(
+    tmp_path, monkeypatch, used, include_used
+):
+    budget_path = _configure_budget(tmp_path, monkeypatch)
+    usage_path = tmp_path / "api_usage.json"
+    headers = {"X-Requests-Remaining": "497"}
+    if include_used:
+        headers["X-Requests-Used"] = used
+    monkeypatch.setattr(odds_api, "get_api_key", lambda: "synthetic-test-key")
+    monkeypatch.setattr(
+        odds_api.requests,
+        "get",
+        lambda *args, **kwargs: _response(200, headers),
+    )
+
+    result = odds_api.revalidate_the_odds_api_auth_once(explicit_opt_in=True)
+
+    assert result["status"] == "failed_closed"
+    assert not usage_path.exists()
+    _assert_auth_revalidation_stays_closed(budget_path)
+
+
+@pytest.mark.parametrize(
+    "headers",
+    [
+        {
+            "X-Requests-Used": "3",
+            "X-Requests-Remaining": "497",
+            "X-Requests-Limit": "0",
+        },
+        {
+            "X-Requests-Used": "3",
+            "X-Requests-Remaining": "497",
+            "X-Requests-Limit": "bad",
+        },
+        {
+            "X-Requests-Used": "3",
+            "X-Requests-Remaining": "501",
+            "X-Requests-Limit": "500",
+        },
+        {
+            "X-Requests-Used": "501",
+            "X-Requests-Remaining": "0",
+            "X-Requests-Limit": "500",
+        },
+    ],
+)
+def test_invalid_limit_or_impossible_remaining_fails_closed(
+    tmp_path, monkeypatch, headers
+):
+    budget_path = _configure_budget(tmp_path, monkeypatch)
+    usage_path = tmp_path / "api_usage.json"
+    monkeypatch.setattr(odds_api, "get_api_key", lambda: "synthetic-test-key")
+    monkeypatch.setattr(
+        odds_api.requests,
+        "get",
+        lambda *args, **kwargs: _response(200, headers),
+    )
+
+    result = odds_api.revalidate_the_odds_api_auth_once(explicit_opt_in=True)
+
+    assert result["status"] == "failed_closed"
+    assert not usage_path.exists()
+    _assert_auth_revalidation_stays_closed(budget_path)
+
+
+def test_quota_persistence_failure_keeps_circuit_open(tmp_path, monkeypatch):
+    budget_path = _configure_budget(tmp_path, monkeypatch)
+    usage_path = tmp_path / "api_usage.json"
+    monkeypatch.setattr(odds_api, "get_api_key", lambda: "synthetic-test-key")
+    monkeypatch.setattr(
+        odds_api.requests,
+        "get",
+        lambda *args, **kwargs: _response(
+            200,
+            {"X-Requests-Used": "3", "X-Requests-Remaining": "497"},
+        ),
+    )
+    real_atomic_write_json = provider_budget.atomic_write_json
+
+    def fail_usage_write(path, payload, **kwargs):
+        if Path(path) == usage_path:
+            raise OSError("synthetic quota persistence failure")
+        return real_atomic_write_json(path, payload, **kwargs)
+
+    monkeypatch.setattr(provider_budget, "atomic_write_json", fail_usage_write)
+
+    result = odds_api.revalidate_the_odds_api_auth_once(explicit_opt_in=True)
+
+    assert result["status"] == "failed_closed"
+    assert not usage_path.exists()
+    assert (
+        json.loads(budget_path.read_text())["the_odds_api"]["last_auth_revalidation"][
+            "failure_class"
+        ]
+        == "quota_state_persistence_failed"
+    )
+    _assert_auth_revalidation_stays_closed(budget_path)
+
+
+def test_quota_headers_cannot_close_without_one_credentialed_request(
+    tmp_path, monkeypatch
+):
+    budget_path = _configure_budget(tmp_path, monkeypatch)
+
+    audit = provider_budget.record_auth_revalidation(
+        "the_odds_api",
+        status_code=200,
+        request_count=0,
+        credential_access_count=0,
+        safe_headers={
+            "x-requests-used": "3",
+            "x-requests-remaining": "497",
+        },
+    )
+
+    assert audit["circuit_transition"] == "remains_open"
+    assert audit["failure_class"] == "revalidation_request_counts_invalid"
+    assert not (tmp_path / "api_usage.json").exists()
+    assert json.loads(budget_path.read_text())["the_odds_api"]["circuit_open"] is True
 
 
 @pytest.mark.parametrize("status_code", [401, 403])

@@ -82,6 +82,60 @@ def _load_api_usage() -> dict[str, object] | None:
     return usage if isinstance(usage, dict) else None
 
 
+def persist_odds_api_quota_usage(
+    requests_used: int,
+    requests_remaining: int,
+    *,
+    source: str,
+    observed_at: datetime | None = None,
+    path: Path | None = None,
+) -> dict[str, object]:
+    """Persist and verify canonical The Odds API quota evidence."""
+
+    if (
+        isinstance(requests_used, bool)
+        or not isinstance(requests_used, int)
+        or requests_used < 0
+    ):
+        raise ValueError("requests_used must be a non-negative integer")
+    if (
+        isinstance(requests_remaining, bool)
+        or not isinstance(requests_remaining, int)
+        or requests_remaining < 0
+    ):
+        raise ValueError("requests_remaining must be a non-negative integer")
+    if not isinstance(source, str) or not source.strip():
+        raise ValueError("quota evidence source is required")
+
+    observed = (observed_at or datetime.now(timezone.utc)).astimezone(timezone.utc)
+    reset_at = observed.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    if reset_at.month == 12:
+        reset_at = reset_at.replace(year=reset_at.year + 1, month=1)
+    else:
+        reset_at = reset_at.replace(month=reset_at.month + 1)
+    usage: dict[str, object] = {
+        "requests_used": requests_used,
+        "requests_remaining": requests_remaining,
+        "observed_at": observed.isoformat(),
+        "reset_at": reset_at.isoformat(),
+        "state": "QUOTA_EXHAUSTED" if requests_remaining == 0 else "AVAILABLE",
+        "source": source,
+    }
+    usage_path = path or _api_usage_path()
+    usage_path.parent.mkdir(parents=True, exist_ok=True)
+    atomic_write_json(usage_path, usage, sort_keys=True)
+
+    try:
+        persisted = json.loads(usage_path.read_text())
+    except (OSError, TypeError, ValueError) as exc:
+        raise OSError("quota evidence read-back failed") from exc
+    if not isinstance(persisted, dict) or any(
+        persisted.get(key) != value for key, value in usage.items()
+    ):
+        raise OSError("quota evidence read-back did not match the persisted record")
+    return usage
+
+
 def odds_api_quota_state() -> dict[str, object] | None:
     """Return redacted The Odds API quota evidence, if available."""
     usage = _load_api_usage()
@@ -322,16 +376,79 @@ def record_auth_revalidation(
         raise RuntimeError("auth revalidation provider is not permitted")
     if request_count not in (0, 1) or credential_access_count not in (0, 1):
         raise RuntimeError("auth revalidation counts are invalid")
+    normalized_headers = {
+        str(key).casefold(): str(value) for key, value in safe_headers.items()
+    }
+    observed = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
+    recorded_failure = failure_class
+    quota_remaining_observed: int | None = None
     if request_count == 0 and credential_access_count == 1:
         transition = "remains_open"
-    elif status_code is not None and 200 <= status_code < 300:
-        remaining = safe_headers.get("x-requests-remaining")
+        recorded_failure = "no_revalidation_request"
+    elif (
+        status_code is not None
+        and 200 <= status_code < 300
+        and request_count == 1
+        and credential_access_count == 1
+    ):
+        transition = "remains_open"
+        used_raw = normalized_headers.get("x-requests-used")
+        remaining_raw = normalized_headers.get("x-requests-remaining")
+        limit_raw = normalized_headers.get("x-requests-limit")
         try:
-            remaining_value = int(remaining) if remaining is not None else None
-        except (TypeError, ValueError):
-            remaining_value = None
-        record_success(name, quota_remaining=remaining_value)
-        transition = "closed"
+            if used_raw is None:
+                raise ValueError("missing_x_requests_used")
+            try:
+                used_value = int(used_raw)
+            except ValueError as exc:
+                raise ValueError("invalid_x_requests_used") from exc
+            if used_value < 0:
+                raise ValueError("invalid_x_requests_used")
+            if remaining_raw is None:
+                raise ValueError("missing_x_requests_remaining")
+            try:
+                remaining_value = int(remaining_raw)
+            except ValueError as exc:
+                raise ValueError("invalid_x_requests_remaining") from exc
+            if remaining_value < 0:
+                raise ValueError("invalid_x_requests_remaining")
+            if limit_raw is not None:
+                try:
+                    limit_value = int(limit_raw)
+                except ValueError as exc:
+                    raise ValueError("invalid_x_requests_limit") from exc
+                if limit_value <= 0:
+                    raise ValueError("invalid_x_requests_limit")
+                if used_value > limit_value:
+                    raise ValueError("x_requests_used_exceeds_limit")
+                if remaining_value > limit_value:
+                    raise ValueError("x_requests_remaining_exceeds_limit")
+        except ValueError as exc:
+            recorded_failure = str(exc)
+        else:
+            try:
+                persist_odds_api_quota_usage(
+                    used_value,
+                    remaining_value,
+                    source="the_odds_api_auth_revalidation_response_headers",
+                    observed_at=observed,
+                )
+            except (OSError, TypeError, ValueError):
+                recorded_failure = "quota_state_persistence_failed"
+            else:
+                quota_remaining_observed = remaining_value
+                if remaining_value == 0:
+                    recorded_failure = "quota_remaining_zero"
+                else:
+                    try:
+                        record_success(name, quota_remaining=remaining_value)
+                    except (OSError, TypeError, ValueError):
+                        recorded_failure = "circuit_close_persistence_failed"
+                    else:
+                        transition = "closed"
+    elif status_code is not None and 200 <= status_code < 300:
+        transition = "remains_open"
+        recorded_failure = "revalidation_request_counts_invalid"
     elif status_code in AUTH_FAILURE_CODES:
         record_error(name, int(status_code), open_circuit=True)
         transition = "reopened"
@@ -339,7 +456,14 @@ def record_auth_revalidation(
         if status_code is not None:
             record_error(name, int(status_code), open_circuit=True)
         transition = "remains_open"
-    observed = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
+    if status_code is not None and 200 <= status_code < 300 and transition != "closed":
+        state = _load()
+        entry = state.get(name, {})
+        if not isinstance(entry, dict):
+            entry = {}
+        entry["circuit_open"] = True
+        state[name] = entry
+        _save(state)
     audit = {
         "schema_version": AUTH_REVALIDATION_SCHEMA_VERSION,
         "observed_at": observed.isoformat(),
@@ -347,10 +471,8 @@ def record_auth_revalidation(
         "request_count": request_count,
         "credential_access_count": credential_access_count,
         "http_status": status_code,
-        "safe_headers": {
-            str(key).casefold(): str(value) for key, value in safe_headers.items()
-        },
-        "failure_class": failure_class,
+        "safe_headers": normalized_headers,
+        "failure_class": recorded_failure,
         "circuit_transition": transition,
     }
     state = _load()
@@ -358,6 +480,8 @@ def record_auth_revalidation(
     if not isinstance(entry, dict):
         entry = {}
     entry["last_auth_revalidation"] = audit
+    if quota_remaining_observed is not None:
+        entry["quota_remaining"] = quota_remaining_observed
     state[name] = entry
     _save(state)
     return audit
