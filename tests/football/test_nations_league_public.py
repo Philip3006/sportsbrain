@@ -36,7 +36,7 @@ def _artifact(now=None):
     market_probabilities = {"home": 0.48, "draw": 0.27, "away": 0.25}
     files = {"model.pkl": "b" * 64, "stacker.pkl": "c" * 64}
     artifact = {
-        "schema": "nations-league-shadow-v1",
+        "schema": "nations-league-isports-shadow-v1",
         "competition": "UEFA Nations League",
         "provider_league_id": 146819,
         "run_id": f"unl-shadow-{captured.strftime('%Y%m%dT%H%M%SZ')}-012345abcdef",
@@ -48,15 +48,47 @@ def _artifact(now=None):
         },
         "provider": "isports_api",
         "captured_at": timestamp,
-        "request_count": 1,
+        "request_count": 2,
         "retry_count": 0,
+        "provider_operation_manifest": [
+            {
+                "ordinal": 1,
+                "operation": "schedule",
+                "method": "GET",
+                "path": "/sport/football/schedule/basic",
+                "query": {"leagueId": "146819"},
+                "status_code": 200,
+                "started_at": (captured - timedelta(minutes=4))
+                .isoformat()
+                .replace("+00:00", "Z"),
+                "completed_at": (captured - timedelta(minutes=3))
+                .isoformat()
+                .replace("+00:00", "Z"),
+                "response_sha256": "d" * 64,
+            },
+            {
+                "ordinal": 2,
+                "operation": "odds",
+                "method": "GET",
+                "path": "/sport/football/odds/european/all",
+                "query": {"day": str(captured.day)},
+                "status_code": 200,
+                "started_at": (captured - timedelta(minutes=2))
+                .isoformat()
+                .replace("+00:00", "Z"),
+                "completed_at": (captured - timedelta(minutes=1))
+                .isoformat()
+                .replace("+00:00", "Z"),
+                "response_sha256": "e" * 64,
+            },
+        ],
         "provider_event_count": 2,
         "fixture_count": 2,
         "covered_fixture_count": 2,
         "skipped_fixtures": [],
         "fixtures": [
             {
-                "matchId": "event-real-shape-001",
+                "provider_match_id": "event-real-shape-001",
                 "kickoff": (captured + timedelta(hours=2))
                 .isoformat()
                 .replace("+00:00", "Z"),
@@ -86,9 +118,10 @@ def _artifact(now=None):
     }
     second = deepcopy(artifact["fixtures"][0])
     second.update(
-        matchId="event-real-shape-002",
+        provider_match_id="event-real-shape-002",
         home_team="Spain",
         away_team="Italy",
+        neutral=True,
         kickoff=(captured + timedelta(hours=3)).isoformat().replace("+00:00", "Z"),
     )
     artifact["fixtures"].append(second)
@@ -123,7 +156,9 @@ def test_complete_shadow_artifact_projects_all_fixtures_and_no_action_authority(
     assert public["evidence_status"] == "WEAK_EVIDENCE_SHADOW_ONLY"
     assert public["artifact_digest"] == artifact["artifact_digest"]
     assert fixture["source_sha"] == public["source_sha"] == "a" * 40
-    assert "request" not in public and "quota" not in public
+    assert "request" not in public
+    assert "provider_operation_manifest" not in public
+    assert "quota" not in public
     product = serialize_public_product({"football": [], "nations_league": public})
     assert product["nations_league"] == public
 
@@ -189,7 +224,7 @@ def test_only_canonical_isports_competition_identity_is_accepted(field, value, m
 
 def test_isports_match_id_is_required_and_used_as_public_fixture_identity():
     artifact, now = _artifact()
-    del artifact["fixtures"][0]["matchId"]
+    del artifact["fixtures"][0]["provider_match_id"]
     artifact["artifact_digest"] = hashlib.sha256(
         _canonical(
             {key: item for key, item in artifact.items() if key != "artifact_digest"}
@@ -219,9 +254,9 @@ def test_private_provider_request_and_query_secrets_are_not_projected():
 
 @pytest.mark.parametrize(
     ("request_count", "retry_count"),
-    [(0, 0), (2, 0), (1, 1)],
+    [(0, 0), (1, 0), (3, 0), (2, 1)],
 )
-def test_isports_artifact_request_provenance_is_one_shot_only(
+def test_isports_artifact_request_provenance_is_exact_two_calls_no_retry(
     request_count, retry_count
 ):
     artifact, now = _artifact()
@@ -233,6 +268,31 @@ def test_isports_artifact_request_provenance_is_one_shot_only(
         )
     ).hexdigest()
     with pytest.raises(NationsLeaguePublicError, match="request/retry bounds"):
+        _public(artifact, now)
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        lambda manifest: manifest[0].update(path="/v1/unauthorized"),
+        lambda manifest: manifest[0]["query"].update(apiKey="private-secret"),
+        lambda manifest: manifest[1].update(status_code=503),
+        lambda manifest: manifest[1].update(response_sha256="bad"),
+        lambda manifest: manifest[1].update(ordinal=1),
+        lambda manifest: manifest[1].update(
+            completed_at=(datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
+        ),
+    ],
+)
+def test_isports_operation_manifest_is_exact_bounded_and_secret_free(mutation):
+    artifact, now = _artifact()
+    mutation(artifact["provider_operation_manifest"])
+    artifact["artifact_digest"] = hashlib.sha256(
+        _canonical(
+            {key: item for key, item in artifact.items() if key != "artifact_digest"}
+        )
+    ).hexdigest()
+    with pytest.raises(NationsLeaguePublicError, match="iSports operation"):
         _public(artifact, now)
 
 
@@ -284,6 +344,7 @@ def test_runtime_loader_rejects_synthetic_fixture_artifacts(tmp_path, monkeypatc
         "bad_market_probability",
         "missing_1x2_market",
         "bad_odds",
+        "malformed_neutral",
         "skipped_target",
     ],
 )
@@ -302,6 +363,8 @@ def test_invalid_or_partial_target_artifact_fails_closed(change):
         del fixture["market"]["odds_decimal"]["draw"]
     elif change == "bad_odds":
         fixture["market"]["odds_decimal"]["away"] = 1.0
+    elif change == "malformed_neutral":
+        fixture["neutral"] = "false"
     else:
         artifact["skipped_fixtures"] = [
             {"provider_event_id": "uncovered", "reason": "unknown_model_team"}

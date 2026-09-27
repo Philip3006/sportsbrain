@@ -13,7 +13,7 @@ from typing import Any
 from src.runtime.paths import governed_runtime_root
 
 SCHEMA = "nations-league-public-v1"
-ARTIFACT_SCHEMA = "nations-league-shadow-v1"
+ARTIFACT_SCHEMA = "nations-league-isports-shadow-v1"
 COMPETITION = "UEFA Nations League"
 PROVIDER = "isports_api"
 PROVIDER_LEAGUE_ID = 146819
@@ -341,7 +341,6 @@ def build_public_nations_league(
         raise NationsLeaguePublicError(
             "artifact is synthetic or outside shadow-only authority"
         )
-    _validate_isports_request_provenance(raw)
     run_id = raw.get("run_id")
     if not isinstance(run_id, str) or not _RUN_ID.fullmatch(run_id):
         raise NationsLeaguePublicError("artifact run identity is not production-shaped")
@@ -350,6 +349,7 @@ def build_public_nations_league(
     age = current - captured
     if age < timedelta(0) or age > MAX_ARTIFACT_AGE:
         raise NationsLeaguePublicError("shadow artifact is stale or future-dated")
+    _validate_isports_request_provenance(raw, captured_at=captured, current=current)
     snapshot = raw.get("model_snapshot")
     if not isinstance(snapshot, Mapping):
         raise NationsLeaguePublicError("model snapshot provenance is missing")
@@ -398,9 +398,9 @@ def build_public_nations_league(
     for item in fixtures:
         if not isinstance(item, Mapping) or item.get("tournament") != COMPETITION:
             raise NationsLeaguePublicError("shadow fixture has the wrong tournament")
-        if item.get("neutral") is not False:
+        if not isinstance(item.get("neutral"), bool):
             raise NationsLeaguePublicError(
-                "Nations League venue semantics are unsupported"
+                "Nations League venue provenance is missing or malformed"
             )
         model_probabilities = _probabilities(
             item.get("probabilities", {}).get("final_ensemble")
@@ -461,7 +461,7 @@ def build_public_nations_league(
             raise NationsLeaguePublicError(
                 "fixture time/provenance is stale or mismatched"
             )
-        event_id = _isports_match_id(item.get("matchId"))
+        event_id = _isports_match_id(item.get("provider_match_id"))
         home, away = item.get("home_team"), item.get("away_team")
         if not all(
             isinstance(text, str) and text.strip() for text in (event_id, home, away)
@@ -524,17 +524,95 @@ def _validate_isports_identity(raw: Mapping[str, Any]) -> None:
         raise NationsLeaguePublicError("iSports competition/provider identity mismatch")
 
 
-def _validate_isports_request_provenance(raw: Mapping[str, Any]) -> None:
-    """Bound the recorded one-shot run without imposing an endpoint shape."""
+def _validate_isports_request_provenance(
+    raw: Mapping[str, Any], *, captured_at: datetime, current: datetime
+) -> None:
+    """Validate the two known iSports operations without exposing auth data."""
     request_count = raw.get("request_count")
     retry_count = raw.get("retry_count")
     if (
-        isinstance(request_count, bool)
-        or request_count != 1
+        not isinstance(request_count, int)
+        or isinstance(request_count, bool)
+        or request_count != 2
+        or not isinstance(retry_count, int)
         or isinstance(retry_count, bool)
         or retry_count != 0
     ):
         raise NationsLeaguePublicError("iSports request/retry bounds are unsupported")
+    manifest = raw.get("provider_operation_manifest")
+    if not isinstance(manifest, list) or len(manifest) != 2:
+        raise NationsLeaguePublicError("iSports operation manifest is incomplete")
+    expected_operations = (
+        (1, "schedule", "/sport/football/schedule/basic"),
+        (2, "odds", "/sport/football/odds/european/all"),
+    )
+    expected_keys = {
+        "ordinal",
+        "operation",
+        "method",
+        "path",
+        "query",
+        "status_code",
+        "started_at",
+        "completed_at",
+        "response_sha256",
+    }
+    for record, (ordinal, operation, path) in zip(
+        manifest, expected_operations, strict=True
+    ):
+        if not isinstance(record, Mapping) or set(record) != expected_keys:
+            raise NationsLeaguePublicError(
+                "iSports operation manifest fields are unsupported"
+            )
+        if (
+            not isinstance(record.get("ordinal"), int)
+            or isinstance(record.get("ordinal"), bool)
+            or record.get("ordinal") != ordinal
+            or record.get("operation") != operation
+            or record.get("method") != "GET"
+            or record.get("path") != path
+        ):
+            raise NationsLeaguePublicError("iSports operation identity mismatch")
+        query = record.get("query")
+        if operation == "schedule":
+            query_valid = (
+                isinstance(query, Mapping)
+                and set(query) == {"leagueId"}
+                and query.get("leagueId") == str(PROVIDER_LEAGUE_ID)
+            )
+        else:
+            day = query.get("day") if isinstance(query, Mapping) else None
+            query_valid = (
+                isinstance(query, Mapping)
+                and set(query) == {"day"}
+                and isinstance(day, (str, int))
+                and not isinstance(day, bool)
+                and re.fullmatch(r"[0-9]+", str(day)) is not None
+            )
+        status = record.get("status_code")
+        if (
+            not query_valid
+            or isinstance(status, bool)
+            or not isinstance(status, int)
+            or not 200 <= status < 300
+            or not isinstance(record.get("response_sha256"), str)
+            or not _SHA256.fullmatch(record["response_sha256"])
+        ):
+            raise NationsLeaguePublicError(
+                "iSports operation request/provenance is invalid"
+            )
+        started = _timestamp(record.get("started_at"), "iSports operation started_at")
+        completed = _timestamp(
+            record.get("completed_at"), "iSports operation completed_at"
+        )
+        if (
+            started > completed
+            or completed > captured_at
+            or current - completed > MAX_ARTIFACT_AGE
+        ):
+            raise NationsLeaguePublicError(
+                "iSports operation time/provenance is invalid"
+            )
 
 
 def _isports_match_id(value: object) -> str | None:
