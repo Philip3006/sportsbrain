@@ -394,19 +394,129 @@ def test_zero_market_coverage_fails_closed_without_artifact(tmp_path, monkeypatc
     assert not output.exists()
 
 
-def test_exactly_100_eligible_ids_are_supported_and_101_fails_before_odds(
-    tmp_path, monkeypatch
-):
-    ids = [f"match-{index}" for index in range(100)]
-    assert (
-        shadow._eligible_match_ids(
-            [{"provider_match_id": match_id} for match_id in ids]
-        )
-        == ids
+def test_exactly_100_eligible_fixtures_are_selected_without_deferral():
+    ids = [f"match-{index:03d}" for index in range(100)]
+    eligible, excluded = shadow._schedule_fixtures(
+        [_schedule(match_id) for match_id in ids], captured_at=NOW
     )
 
+    assert [row["provider_match_id"] for row in eligible] == ids
+    assert shadow._eligible_match_ids(eligible) == ids
+    assert excluded == []
+
+
+def test_batch_order_is_deterministic_for_shuffled_equal_kickoff_schedule():
+    ids = [f"match-{index:03d}" for index in range(101)]
+    rows = [_schedule(match_id) for match_id in ids]
+
+    selected, deferred = shadow._schedule_fixtures(rows, captured_at=NOW)
+    shuffled_selected, shuffled_deferred = shadow._schedule_fixtures(
+        list(reversed(rows)), captured_at=NOW
+    )
+
+    expected = ids[: shadow.MAX_MATCH_IDS_PER_ODDS_REQUEST]
+    expected_deferred = [
+        {"provider_match_id": "match-100", "reason": "deferred_bulk_capacity"}
+    ]
+    assert [row["provider_match_id"] for row in selected] == expected
+    assert [row["provider_match_id"] for row in shuffled_selected] == expected
+    assert deferred == expected_deferred
+    assert shuffled_deferred == expected_deferred
+
+
+def test_exactly_100_shuffled_schedule_rows_keep_identical_selected_order():
+    ids = [f"match-{index:03d}" for index in range(100)]
+    rows = [_schedule(match_id) for match_id in ids]
+
+    selected, excluded = shadow._schedule_fixtures(rows, captured_at=NOW)
+    shuffled_selected, shuffled_excluded = shadow._schedule_fixtures(
+        list(reversed(rows)), captured_at=NOW
+    )
+
+    assert [row["provider_match_id"] for row in selected] == ids
+    assert [row["provider_match_id"] for row in shuffled_selected] == ids
+    assert excluded == shuffled_excluded == []
+
+
+def test_equal_kickoff_order_tie_is_resolved_by_provider_match_id():
+    eligible, _excluded = shadow._schedule_fixtures(
+        [_schedule("z-match"), _schedule("a-match")], captured_at=NOW
+    )
+    assert [row["provider_match_id"] for row in eligible] == ["a-match", "z-match"]
+
+
+def test_101_schedule_fixtures_use_exact_bounded_batch_and_account_for_deferred(
+    tmp_path, monkeypatch
+):
     _patch_offline_runtime(monkeypatch)
-    schedule = [_schedule(f"match-{index}") for index in range(101)]
+    ids = [f"match-{index:03d}" for index in range(101)]
+    selected_ids = ids[:100]
+    deferred_id = ids[100]
+    schedule = [_schedule(match_id) for match_id in ids]
+    odds_rows = [_odds(selected_ids[0]), _odds(selected_ids[1])]
+    responses = [Response(schedule), Response(odds_rows)]
+    calls = []
+
+    def transport(url, *, params, timeout, allow_redirects):
+        calls.append((url, dict(params), allow_redirects))
+        return responses.pop(0)
+
+    output = tmp_path / "capture.json"
+    artifact, written = shadow.run_isports_shadow_scan(
+        api_key="test-secret",
+        transport=transport,
+        source_root=ROOT,
+        output_path=output,
+        now=NOW,
+    )
+
+    assert written == output
+    assert artifact["schema"] == "nations-league-isports-shadow-v2"
+    assert artifact["request_count"] == len(calls) == 2
+    assert artifact["retry_count"] == 0
+    assert calls[1][0].endswith(isports_api.EUROPEAN_ODDS_PATH)
+    assert calls[1][1] == {
+        "matchId": ",".join(selected_ids),
+        "api_key": "test-secret",
+    }
+    assert artifact["provider_operation_manifest"][1]["query"] == {
+        "matchId": ",".join(selected_ids)
+    }
+    assert all(allow_redirects is False for _url, _params, allow_redirects in calls)
+    assert deferred_id not in calls[1][1]["matchId"].split(",")
+
+    assert artifact["provider_event_count"] == 101
+    assert artifact["eligible_schedule_fixture_count"] == 100
+    assert artifact["coverage"]["eligible_schedule_fixtures"] == 100
+    assert artifact["coverage"]["eligible_match_ids"] == selected_ids
+    assert artifact["excluded_schedule_fixtures"] == [
+        {"provider_match_id": deferred_id, "reason": "deferred_bulk_capacity"}
+    ]
+    assert all(
+        set(row) == {"provider_match_id", "reason"}
+        and row["reason"] == "deferred_bulk_capacity"
+        for row in artifact["excluded_schedule_fixtures"]
+    )
+    assert artifact["covered_fixture_count"] == 2
+    assert artifact["skipped_fixtures"] == [
+        {"provider_match_id": match_id, "reason": "missing_1x2_market"}
+        for match_id in selected_ids[2:]
+    ]
+    assert artifact["covered_fixture_count"] + len(artifact["skipped_fixtures"]) == 100
+    assert artifact["coverage"]["complete"] is False
+    assert deferred_id not in {
+        row["provider_match_id"] for row in artifact["skipped_fixtures"]
+    }
+    assert "test-secret" not in output.read_text()
+    shadow._validate_artifact_digest(artifact)
+
+
+def test_malformed_schedule_row_after_capacity_still_fails_full_validation(
+    tmp_path, monkeypatch
+):
+    _patch_offline_runtime(monkeypatch)
+    schedule = [_schedule(f"match-{index:03d}") for index in range(101)]
+    schedule.append(_schedule("match-z-malformed", leagueId="wrong-league"))
     calls = []
 
     def transport(url, **kwargs):
@@ -415,8 +525,7 @@ def test_exactly_100_eligible_ids_are_supported_and_101_fails_before_odds(
 
     output = tmp_path / "must-not-exist.json"
     with pytest.raises(
-        shadow.NationsLeagueIsportsError,
-        match="exceeds the 100 matchId bulk odds limit",
+        shadow.NationsLeagueIsportsError, match="unexpected provider league ID"
     ) as exc_info:
         shadow.run_isports_shadow_scan(
             api_key="test-secret",
@@ -425,8 +534,8 @@ def test_exactly_100_eligible_ids_are_supported_and_101_fails_before_odds(
             output_path=output,
             now=NOW,
         )
+
     assert exc_info.value.request_count == 1
-    assert exc_info.value.http_statuses == [200]
     assert len(calls) == 1
     assert not output.exists()
 
