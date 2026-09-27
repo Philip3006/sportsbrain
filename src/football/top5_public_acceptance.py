@@ -10,26 +10,54 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from collections.abc import Mapping, Sequence
+from copy import deepcopy
+from dataclasses import dataclass
 from datetime import datetime, timezone
+from types import MappingProxyType
 
+from src.football.top5_research_binding import (
+    FROZEN_RESEARCH_SHA,
+    M5_CANDIDATE_ID,
+    inventory_for,
+)
 from src.notifications.public_serializer import (
+    TOP5_PREPUBLICATION_RELEASE_SCHEMA,
     TOP5_PUBLIC_PROVIDER_AUTHORITY,
     PublicFootballCompatibilityError,
     canonical_top5_league,
     serialize_public_product,
+    serialize_top5_prepublication_candidate_product,
 )
 
 TOP5_PUBLIC_DELIVERY_READY = "TOP5_PUBLIC_DELIVERY_READY"
 TOP5_PUBLIC_DELIVERY_BLOCKED = "TOP5_PUBLIC_DELIVERY_BLOCKED"
+TOP5_PREPUBLICATION_DELIVERY_READY = "TOP5_PREPUBLICATION_DELIVERY_READY"
+TOP5_PREPUBLICATION_DELIVERY_BLOCKED = "TOP5_PREPUBLICATION_DELIVERY_BLOCKED"
 TOP5_PUBLICATION_PRECHECK_READY = "TOP5_PUBLICATION_PRECHECK_READY"
 TOP5_PUBLICATION_PRECHECK_BLOCKED = "TOP5_PUBLICATION_PRECHECK_BLOCKED"
 TOP5_LEAGUES = ("EPL", "BL1", "LL", "SA", "L1")
 TOP5_RELEASE_SCHEMA = "top5-public-release-v1"
+TOP5_PREPUBLICATION_ARTIFACT_SCHEMA = "top5-prepublication-artifact-v1"
+TOP5_PREPUBLICATION_DRY_RUN_SCHEMA = "top5-prepublication-delivery-dry-run-v1"
+TOP5_PREPUBLICATION_DRY_RUN_STATUS = "TOP5_PREPUBLICATION_DRY_RUN"
 _TOP5_LEAGUE_SET = frozenset(TOP5_LEAGUES)
 _CANDIDATE_PROVIDER_MARKERS = frozenset(
     {"therundown", "therundown_experimental", "candidate", "shadow"}
 )
+_FORBIDDEN_PREPUBLICATION_KEYS = frozenset(
+    {
+        "activation_id",
+        "capability",
+        "capability_id",
+        "capability_nonce",
+        "publication_attestation",
+        "publication_authorization_id",
+        "published_at",
+    }
+)
+_SHA_RE = re.compile(r"^[0-9a-fA-F]{40,64}$")
 
 
 def _digest(value: object) -> str:
@@ -40,13 +68,423 @@ def _digest(value: object) -> str:
     ).hexdigest()
 
 
+def _required_text(value: object, name: str) -> str:
+    if value is None:
+        raise ValueError(f"{name} is required")
+    if not isinstance(value, str):
+        raise TypeError(f"{name} must be text")
+    if not value.strip():
+        raise ValueError(f"{name} is required")
+    return value.strip()
+
+
+def _required_digest(value: object, name: str) -> str:
+    result = _required_text(value, name)
+    if _SHA_RE.fullmatch(result) is None:
+        raise ValueError(f"{name} must be a hexadecimal digest")
+    return result.lower()
+
+
+def _freeze(value: object) -> object:
+    if isinstance(value, Mapping):
+        return MappingProxyType({str(key): _freeze(item) for key, item in value.items()})
+    if isinstance(value, (list, tuple)):
+        return tuple(_freeze(item) for item in value)
+    return value
+
+
+def _thaw(value: object) -> object:
+    if isinstance(value, Mapping):
+        return {str(key): _thaw(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_thaw(item) for item in value]
+    return value
+
+
+def _age(now: datetime, captured: datetime, scope: str) -> None:
+    if captured > now:
+        raise ValueError(f"{scope} is from the future")
+
+
+def _prepublication_id(
+    run_id: str, session_id: str, source_sha: str, runtime_data_sha: str
+) -> str:
+    return "top5-prepublication-v1:" + _digest(
+        {
+            "run_id": run_id,
+            "session_id": session_id,
+            "source_release_sha": source_sha,
+            "runtime_data_sha": runtime_data_sha,
+        }
+    )
+
+
+def _reject_prepublication_authority(value: object, path: str = "prepublication") -> None:
+    if isinstance(value, Mapping):
+        for key, item in value.items():
+            name = str(key).casefold()
+            if name in _FORBIDDEN_PREPUBLICATION_KEYS:
+                raise ValueError(f"{path}.{key} is forbidden before publication")
+            _reject_prepublication_authority(item, f"{path}.{key}")
+    elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        for index, item in enumerate(value):
+            _reject_prepublication_authority(item, f"{path}[{index}]")
+
+
+def _reject_candidate_authority(value: object, path: str = "prepublication") -> None:
+    authority_keys = {
+        "provider",
+        "provider_authority",
+        "provider_name",
+        "source",
+        "selected_provider",
+        "active_provider_order",
+        "authority",
+    }
+    if isinstance(value, Mapping):
+        for key, item in value.items():
+            if str(key).casefold() in authority_keys:
+                candidates = (
+                    item
+                    if isinstance(item, Sequence) and not isinstance(item, (str, bytes))
+                    else (item,)
+                )
+                if any(
+                    isinstance(candidate, str)
+                    and (
+                        candidate.casefold() == "therundown_experimental"
+                        or "therundown" in candidate.casefold()
+                    )
+                    for candidate in candidates
+                ):
+                    raise ValueError(f"{path}.{key} leaks candidate provider authority")
+            _reject_candidate_authority(item, f"{path}.{key}")
+    elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        for index, item in enumerate(value):
+            _reject_candidate_authority(item, f"{path}[{index}]")
+
+
+@dataclass(frozen=True)
+class Top5PrepublicationArtifactV1:
+    """Read-only proof binding equal Worker/static Top-5 candidate payloads."""
+
+    prepublication_id: str
+    prepared_at: str
+    worker_candidate_payload: Mapping[str, object]
+    static_candidate_payload: Mapping[str, object]
+    public_product_digest: str
+    worker_candidate_payload_digest: str
+    static_candidate_payload_digest: str
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self, "worker_candidate_payload", _freeze(self.worker_candidate_payload)
+        )
+        object.__setattr__(
+            self, "static_candidate_payload", _freeze(self.static_candidate_payload)
+        )
+
+    @classmethod
+    def create(
+        cls,
+        *,
+        worker_candidate_payload: Mapping[str, object],
+        static_candidate_payload: Mapping[str, object],
+        prepared_at: datetime | str,
+    ) -> Top5PrepublicationArtifactV1:
+        """Project already-prepared payloads and derive only their digests/identity."""
+        prepared = _timestamp(prepared_at, "prepublication prepared_at")
+        if not isinstance(worker_candidate_payload, Mapping) or not isinstance(
+            static_candidate_payload, Mapping
+        ):
+            raise TypeError("Worker/static candidate payloads must be objects")
+        worker_input = deepcopy(dict(worker_candidate_payload))
+        static_input = deepcopy(dict(static_candidate_payload))
+        _reject_prepublication_authority(worker_input, "worker_candidate_payload")
+        _reject_prepublication_authority(static_input, "static_candidate_payload")
+        try:
+            worker_release = worker_input["top5_release"]
+            static_release = static_input["top5_release"]
+            if not isinstance(worker_release, Mapping) or not isinstance(
+                static_release, Mapping
+            ):
+                raise TypeError("Top-5 prepublication release must be an object")
+            identity_values = (
+                "controlled_shadow_run_id",
+                "qualification_session_id",
+                "source_release_sha",
+                "runtime_data_sha",
+            )
+            for key in identity_values:
+                if worker_release.get(key) != static_release.get(key):
+                    raise ValueError(f"Worker/static {key} binding differs")
+            run_id, session_id, source_sha, runtime_sha = (
+                _required_text(worker_release.get(key), key) for key in identity_values
+            )
+            expected_id = _prepublication_id(
+                run_id, session_id, source_sha, runtime_sha
+            )
+            worker_release = dict(worker_release)
+            static_release = dict(static_release)
+            worker_input["top5_release"] = worker_release
+            static_input["top5_release"] = static_release
+            for release in (worker_release, static_release):
+                supplied_id = release.get("prepublication_id")
+                if supplied_id not in (None, expected_id):
+                    raise ValueError("prepublication_id does not match its run binding")
+                release["prepublication_id"] = expected_id
+            worker = serialize_top5_prepublication_candidate_product(worker_input)
+            static = serialize_top5_prepublication_candidate_product(static_input)
+        except TypeError as exc:
+            raise TypeError(f"prepublication payload rejected: {exc}") from exc
+        except (KeyError, PublicFootballCompatibilityError) as exc:
+            raise ValueError(f"prepublication payload rejected: {exc}") from exc
+        worker_digest = _digest(worker)
+        static_digest = _digest(static)
+        if worker != static:
+            raise ValueError("Worker/static candidate payloads are not equal")
+        return cls(
+            prepublication_id=expected_id,
+            prepared_at=prepared.isoformat(),
+            worker_candidate_payload=worker,
+            static_candidate_payload=static,
+            public_product_digest=worker_digest,
+            worker_candidate_payload_digest=worker_digest,
+            static_candidate_payload_digest=static_digest,
+        )
+
+    @classmethod
+    def from_mapping(cls, value: object) -> Top5PrepublicationArtifactV1:
+        if not isinstance(value, Mapping):
+            raise TypeError("prepublication artifact must be an object")
+        expected = {
+            "schema_version",
+            "prepublication_id",
+            "prepared_at",
+            "worker_candidate_payload",
+            "static_candidate_payload",
+            "public_product_digest",
+            "worker_candidate_payload_digest",
+            "static_candidate_payload_digest",
+            "publication_enabled",
+            "publication_authorized",
+            "capability_consumed",
+            "mutation_performed",
+            "provider_requests",
+        }
+        if set(value) != expected:
+            raise ValueError("prepublication artifact fields are invalid")
+        if value.get("schema_version") != TOP5_PREPUBLICATION_ARTIFACT_SCHEMA:
+            raise ValueError("prepublication artifact schema is unsupported")
+        if (
+            value.get("publication_enabled") is not False
+            or value.get("publication_authorized") is not False
+            or value.get("capability_consumed") is not False
+            or value.get("mutation_performed") is not False
+            or value.get("provider_requests") != 0
+        ):
+            raise ValueError("prepublication artifact claims a forbidden side effect")
+        if not isinstance(value.get("worker_candidate_payload"), Mapping) or not isinstance(
+            value.get("static_candidate_payload"), Mapping
+        ):
+            raise TypeError("prepublication candidate payloads must be objects")
+        return cls(
+            prepublication_id=_required_text(value.get("prepublication_id"), "prepublication_id"),
+            prepared_at=_required_text(value.get("prepared_at"), "prepared_at"),
+            worker_candidate_payload=dict(value["worker_candidate_payload"]),
+            static_candidate_payload=dict(value["static_candidate_payload"]),
+            public_product_digest=_required_digest(value.get("public_product_digest"), "public_product_digest"),
+            worker_candidate_payload_digest=_required_digest(value.get("worker_candidate_payload_digest"), "worker_candidate_payload_digest"),
+            static_candidate_payload_digest=_required_digest(value.get("static_candidate_payload_digest"), "static_candidate_payload_digest"),
+        )
+
+    def as_payload(self) -> dict[str, object]:
+        return {
+            "schema_version": TOP5_PREPUBLICATION_ARTIFACT_SCHEMA,
+            "prepublication_id": self.prepublication_id,
+            "prepared_at": self.prepared_at,
+            "worker_candidate_payload": _thaw(self.worker_candidate_payload),
+            "static_candidate_payload": _thaw(self.static_candidate_payload),
+            "public_product_digest": self.public_product_digest,
+            "worker_candidate_payload_digest": self.worker_candidate_payload_digest,
+            "static_candidate_payload_digest": self.static_candidate_payload_digest,
+            "publication_enabled": False,
+            "publication_authorized": False,
+            "capability_consumed": False,
+            "mutation_performed": False,
+            "provider_requests": 0,
+        }
+
+    def validate(
+        self,
+        *,
+        now: datetime,
+        expected_run_id: str | None = None,
+        expected_session_id: str | None = None,
+        expected_source_release_sha: str | None = None,
+        expected_runtime_data_sha: str | None = None,
+        expected_model_artifact_hash: str | None = None,
+        expected_signal_time_contract_id: str | None = None,
+    ) -> dict[str, object]:
+        from src.football.top5_final_acceptance import MAX_EVIDENCE_AGE_SECONDS
+
+        checked_now = _timestamp(now, "now")
+        prepared = _timestamp(self.prepared_at, "prepublication prepared_at")
+        _age(checked_now, prepared, "prepublication artifact")
+        if (checked_now - prepared).total_seconds() > MAX_EVIDENCE_AGE_SECONDS:
+            raise ValueError("prepublication artifact is stale")
+        worker_raw = _thaw(self.worker_candidate_payload)
+        static_raw = _thaw(self.static_candidate_payload)
+        assert isinstance(worker_raw, dict)
+        assert isinstance(static_raw, dict)
+        _reject_prepublication_authority(worker_raw, "worker_candidate_payload")
+        _reject_prepublication_authority(static_raw, "static_candidate_payload")
+        _reject_candidate_authority(worker_raw, "worker_candidate_payload")
+        _reject_candidate_authority(static_raw, "static_candidate_payload")
+        try:
+            worker = serialize_top5_prepublication_candidate_product(worker_raw)
+            static = serialize_top5_prepublication_candidate_product(static_raw)
+        except TypeError as exc:
+            raise TypeError(
+                f"prepublication candidate payload rejected: {exc}"
+            ) from exc
+        except (AssertionError, PublicFootballCompatibilityError, ValueError) as exc:
+            raise ValueError(f"prepublication candidate payload rejected: {exc}") from exc
+        if worker != worker_raw or static != static_raw:
+            raise ValueError("prepublication candidate payload is not canonical")
+        worker_digest = _digest(worker)
+        static_digest = _digest(static)
+        if worker != static:
+            raise ValueError("Worker/static candidate payloads are not equal")
+        if (
+            self.public_product_digest != worker_digest
+            or self.worker_candidate_payload_digest != worker_digest
+            or self.static_candidate_payload_digest != static_digest
+        ):
+            raise ValueError("prepublication payload digest mismatch")
+        release = worker.get("top5_release")
+        records = worker.get("football")
+        if not isinstance(release, Mapping):
+            raise TypeError("prepublication Top-5 release must be an object")
+        if not isinstance(records, list):
+            raise TypeError("prepublication outcome records must be a list")
+        run_id = _required_text(release.get("controlled_shadow_run_id"), "run_id")
+        session_id = _required_text(
+            release.get("qualification_session_id"), "session_id"
+        )
+        source_sha = _required_digest(release.get("source_release_sha"), "source_release_sha")
+        runtime_sha = _required_digest(release.get("runtime_data_sha"), "runtime_data_sha")
+        model_hash = _required_digest(release.get("model_artifact_hash"), "model_artifact_hash")
+        signal_contract = _required_text(
+            release.get("signal_time_contract_id"), "signal_time_contract_id"
+        )
+        if release.get("schema_version") != TOP5_PREPUBLICATION_RELEASE_SCHEMA:
+            raise ValueError("Top-5 release is not prepublication")
+        if release.get("research_sha") != FROZEN_RESEARCH_SHA:
+            raise ValueError("prepublication Research SHA differs from frozen Research")
+        if (
+            release.get("candidate_id") != M5_CANDIDATE_ID
+            or release.get("model_identity") != M5_CANDIDATE_ID
+        ):
+            raise ValueError("prepublication model identity is not frozen M5")
+        if (
+            release.get("provider_authority") != TOP5_PUBLIC_PROVIDER_AUTHORITY
+            or release.get("source_runtime_consistent") is not True
+            or release.get("publication_status") != "PREPARED"
+            or release.get("publication_enabled") is not False
+            or release.get("publication_authorized") is not False
+            or release.get("no_bet") is not True
+            or release.get("league_codes") != sorted(TOP5_LEAGUES)
+        ):
+            raise ValueError("Top-5 prepublication release contract is invalid")
+        if self.prepublication_id != _prepublication_id(
+            run_id, session_id, source_sha, runtime_sha
+        ) or release.get("prepublication_id") != self.prepublication_id:
+            raise ValueError("prepublication identity binding mismatch")
+        if expected_run_id is not None and run_id != expected_run_id:
+            raise ValueError("prepublication run identity mismatch")
+        if expected_session_id is not None and session_id != expected_session_id:
+            raise ValueError("prepublication session identity mismatch")
+        if expected_source_release_sha is not None and source_sha != expected_source_release_sha:
+            raise ValueError("prepublication source release binding mismatch")
+        if expected_runtime_data_sha is not None and runtime_sha != expected_runtime_data_sha:
+            raise ValueError("prepublication runtime data binding mismatch")
+        expected_hashes = {
+            inventory_for(league, M5_CANDIDATE_ID).model_artifact_hash
+            for league in TOP5_LEAGUES
+        }
+        if len(expected_hashes) != 1 or model_hash not in expected_hashes:
+            raise ValueError("prepublication model hash differs from frozen inventory")
+        if expected_model_artifact_hash is not None and model_hash != expected_model_artifact_hash:
+            raise ValueError("prepublication model hash binding mismatch")
+        if expected_signal_time_contract_id is not None and signal_contract != expected_signal_time_contract_id:
+            raise ValueError("prepublication Signal-Time contract binding mismatch")
+        generated = _timestamp(release.get("generated_at"), "prepublication generated_at")
+        _age(checked_now, generated, "prepublication product")
+        if (checked_now - generated).total_seconds() > MAX_EVIDENCE_AGE_SECONDS:
+            raise ValueError("prepublication product is stale")
+        for record in records:
+            if not isinstance(record, Mapping):
+                raise TypeError("prepublication outcome record must be an object")
+            signal_at = record.get("signal_timestamp") or record.get("prediction_timestamp")
+            observed = _timestamp(signal_at, "prepublication signal timestamp")
+            _age(checked_now, observed, "prepublication signal")
+            if (checked_now - observed).total_seconds() > MAX_EVIDENCE_AGE_SECONDS:
+                raise ValueError("prepublication signal is stale")
+        return {
+            "prepublication_id": self.prepublication_id,
+            "provider_authority": TOP5_PUBLIC_PROVIDER_AUTHORITY,
+            "candidate_id": M5_CANDIDATE_ID,
+            "research_sha": FROZEN_RESEARCH_SHA,
+            "public_product_digest": worker_digest,
+            "worker_candidate_payload_digest": worker_digest,
+            "static_candidate_payload_digest": static_digest,
+            "run_id": run_id,
+            "session_id": session_id,
+            "source_release_sha": source_sha,
+            "runtime_data_sha": runtime_sha,
+            "model_artifact_hash": model_hash,
+            "signal_time_contract_id": signal_contract,
+        }
+
+    def delivery_dry_run_manifest(self, *, rollback_ready: bool) -> dict[str, object]:
+        return {
+            "schema_version": TOP5_PREPUBLICATION_DRY_RUN_SCHEMA,
+            "status": TOP5_PREPUBLICATION_DRY_RUN_STATUS,
+            "prepublication_id": self.prepublication_id,
+            "prepared_at": self.prepared_at,
+            "public_product_digest": self.public_product_digest,
+            "worker_candidate_payload_digest": self.worker_candidate_payload_digest,
+            "static_candidate_payload_digest": self.static_candidate_payload_digest,
+            "worker_candidate_payloads_equal": (
+                dict(self.worker_candidate_payload) == dict(self.static_candidate_payload)
+            ),
+            "worker_destination": "/signals",
+            "static_destination": "docs/data/signals.json",
+            "provider_requests": 0,
+            "network_requests": 0,
+            "publication_enabled": False,
+            "publication_authorized": False,
+            "capability_consumed": False,
+            "mutation_performed": False,
+            "rollback_ready": rollback_ready,
+        }
+
+
 def _timestamp(value: object, field: str) -> datetime:
-    if not isinstance(value, str) or not value.strip():
+    if isinstance(value, datetime):
+        parsed = value
+    elif isinstance(value, str):
+        if not value.strip():
+            raise ValueError(f"{field} is missing")
+        try:
+            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError as exc:
+            raise ValueError(f"{field} is malformed") from exc
+    elif value is None:
         raise ValueError(f"{field} is missing")
-    try:
-        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
-    except ValueError as exc:
-        raise ValueError(f"{field} is malformed") from exc
+    else:
+        raise TypeError(f"{field} must be a datetime or ISO-8601 string")
     if parsed.tzinfo is None or parsed.utcoffset() is None:
         raise ValueError(f"{field} must include timezone")
     return parsed.astimezone(timezone.utc)
@@ -462,260 +900,157 @@ def publication_precheck(
     now: datetime,
     delivery_manifest: Mapping[str, object] | None = None,
 ) -> dict[str, object]:
-    """Bind public delivery to Builder 1 acceptance without duplicating it."""
-
-    acceptance = validate_public_bundle(payload, now=now)
+    """Validate B1 prepublication acceptance plus a zero-mutation dry run."""
     reasons: list[dict[str, str]] = []
+    artifact_result: dict[str, object] = {
+        "status": TOP5_PREPUBLICATION_DELIVERY_BLOCKED,
+        "reasons": [],
+    }
+    artifact = None
+    try:
+        artifact = Top5PrepublicationArtifactV1.from_mapping(payload)
+        artifact_result = {
+            "status": TOP5_PREPUBLICATION_DELIVERY_READY,
+            **artifact.validate(now=now),
+        }
+    except (TypeError, ValueError) as exc:
+        reasons.append(_reason("PUBLIC_PREPUBLICATION_INVALID", str(exc)))
+
+    from src.football.top5_final_acceptance import (
+        FINAL_ACCEPTANCE_SCHEMA_VERSION,
+        STATUS_VERIFIED,
+        canonical_digest,
+    )
+
+    manifest_fields = {
+        "schema_version",
+        "source_main_sha",
+        "provider_authority",
+        "candidate_provider",
+        "leagues",
+        "research_sha",
+        "model_identity",
+        "b4_proof_id",
+        "b4_proof_evidence_digest",
+        "b4_headroom_digest",
+        "discovery_event_ids",
+        "controlled_shadow_run_id",
+        "qualification_session_id",
+        "ceo_authorization_id",
+        "adapter_source_sha",
+        "controlled_shadow_digest",
+        "capture_digests",
+        "source_release_sha",
+        "runtime_data_sha",
+        "model_artifact_hash",
+        "signal_time_contract_id",
+        "public_prepublication_id",
+        "public_product_digest",
+        "worker_candidate_payload_digest",
+        "static_candidate_payload_digest",
+        "checks",
+        "readiness",
+        "manifest_digest",
+    }
+    check_fields = {
+        "five_leagues",
+        "b4_quota_proof",
+        "discovery",
+        "controlled_shadow",
+        "model_signal_time",
+        "public_prepublication_delivery",
+        "runtime_provenance",
+        "candidate_not_authority",
+        "no_bet",
+    }
+    manifest = accepted_evidence.get("manifest") if isinstance(accepted_evidence, Mapping) else None
+    manifest_valid = False
     if (
         isinstance(accepted_evidence, Mapping)
+        and set(accepted_evidence) == {"status", "manifest"}
         and accepted_evidence.get("status") == "TOP5_FINAL_ACCEPTANCE_VERIFIED"
+        and isinstance(manifest, Mapping)
+        and set(manifest) == manifest_fields
     ):
-        from src.football.top5_final_acceptance import (
-            FINAL_ACCEPTANCE_SCHEMA_VERSION,
-            STATUS_VERIFIED,
-            canonical_digest,
+        manifest_body = {key: value for key, value in manifest.items() if key != "manifest_digest"}
+        checks = manifest.get("checks")
+        checks_valid = (
+            isinstance(checks, Mapping)
+            and set(checks) == check_fields
+            and all(value is True for value in checks.values())
         )
-
-        manifest = accepted_evidence.get("manifest")
-        manifest_fields = {
-            "schema_version",
-            "source_main_sha",
-            "provider_authority",
-            "candidate_provider",
-            "leagues",
-            "research_sha",
-            "model_identity",
-            "b4_proof_id",
-            "b4_proof_evidence_digest",
-            "b4_headroom_digest",
-            "discovery_event_ids",
-            "controlled_shadow_run_id",
-            "qualification_session_id",
-            "ceo_authorization_id",
-            "adapter_source_sha",
-            "controlled_shadow_digest",
-            "capture_digests",
-            "public_generation_id",
-            "public_activation_id",
-            "public_product_digest",
-            "checks",
-            "readiness",
-            "manifest_digest",
-        }
-        check_fields = {
-            "five_leagues",
-            "b4_quota_proof",
-            "discovery",
-            "controlled_shadow",
-            "model_signal_time",
-            "public_delivery",
-            "runtime_provenance",
-            "candidate_not_authority",
-            "no_bet",
-        }
-        manifest_valid = False
-        if (
-            set(accepted_evidence) == {"status", "manifest"}
-            and isinstance(manifest, Mapping)
-            and set(manifest) == manifest_fields
-        ):
-            manifest_body = {
-                str(key): value
-                for key, value in manifest.items()
-                if key != "manifest_digest"
-            }
-            checks = manifest.get("checks")
-            checks_valid = (
-                isinstance(checks, Mapping)
-                and set(checks) == check_fields
-                and all(value is True for value in checks.values())
-                and checks.get("candidate_not_authority") is True
-            )
-            manifest_valid = (
-                acceptance.get("status") == TOP5_PUBLIC_DELIVERY_READY
-                and manifest.get("schema_version") == FINAL_ACCEPTANCE_SCHEMA_VERSION
-                and manifest.get("readiness") == STATUS_VERIFIED
-                and manifest.get("provider_authority") == TOP5_PUBLIC_PROVIDER_AUTHORITY
-                and manifest.get("candidate_provider") == "therundown_experimental"
-                and manifest.get("leagues") == sorted(TOP5_LEAGUES)
-                and checks_valid
-                and manifest.get("manifest_digest") == canonical_digest(manifest_body)
-                and manifest.get("public_generation_id")
-                == acceptance.get("generation_id")
-                and manifest.get("public_activation_id")
-                == acceptance.get("activation_id")
-                and manifest.get("public_product_digest")
-                == acceptance.get("bundle_digest")
-            )
-        if manifest_valid and isinstance(manifest, Mapping):
-            accepted_evidence = {
-                "schema_version": FINAL_ACCEPTANCE_SCHEMA_VERSION,
-                "status": "ACCEPTED",
-                "publication_ready": True,
-                "provider_authority": manifest["provider_authority"],
-                "generation_id": acceptance["generation_id"],
-                "activation_id": acceptance["activation_id"],
-                "source_release_sha": acceptance["source_release_sha"],
-                "runtime_data_sha": acceptance["runtime_data_sha"],
-                "evidence_digest": manifest["manifest_digest"],
-            }
-        else:
-            accepted_evidence = {
-                "schema_version": FINAL_ACCEPTANCE_SCHEMA_VERSION,
-                "status": "INVALID_B1_ACCEPTANCE",
-                "publication_ready": False,
-            }
-    required = {
-        "schema_version": "top5-final-acceptance-v1",
-        "status": "ACCEPTED",
-        "publication_ready": True,
-        "provider_authority": TOP5_PUBLIC_PROVIDER_AUTHORITY,
-    }
-    accepted_shape = isinstance(accepted_evidence, Mapping)
-    if not accepted_shape:
+        try:
+            digest_valid = manifest.get("manifest_digest") == canonical_digest(manifest_body)
+        except ValueError:
+            digest_valid = False
+        manifest_valid = (
+            digest_valid
+            and manifest.get("schema_version") == FINAL_ACCEPTANCE_SCHEMA_VERSION
+            and manifest.get("readiness") == STATUS_VERIFIED
+            and manifest.get("provider_authority") == TOP5_PUBLIC_PROVIDER_AUTHORITY
+            and manifest.get("candidate_provider") == "therundown_experimental"
+            and manifest.get("leagues") == sorted(TOP5_LEAGUES)
+            and checks_valid
+            and artifact is not None
+            and artifact_result.get("status") == TOP5_PREPUBLICATION_DELIVERY_READY
+            and manifest.get("public_prepublication_id") == artifact_result.get("prepublication_id")
+            and manifest.get("controlled_shadow_run_id") == artifact_result.get("run_id")
+            and manifest.get("qualification_session_id") == artifact_result.get("session_id")
+            and manifest.get("provider_authority") == artifact_result.get("provider_authority")
+            and manifest.get("model_identity") == artifact_result.get("candidate_id")
+            and manifest.get("research_sha") == artifact_result.get("research_sha")
+            and manifest.get("public_product_digest") == artifact_result.get("public_product_digest")
+            and manifest.get("worker_candidate_payload_digest") == artifact_result.get("worker_candidate_payload_digest")
+            and manifest.get("static_candidate_payload_digest") == artifact_result.get("static_candidate_payload_digest")
+            and manifest.get("source_release_sha") == artifact_result.get("source_release_sha")
+            and manifest.get("runtime_data_sha") == artifact_result.get("runtime_data_sha")
+            and manifest.get("model_artifact_hash") == artifact_result.get("model_artifact_hash")
+            and manifest.get("signal_time_contract_id") == artifact_result.get("signal_time_contract_id")
+        )
+    if not manifest_valid:
         reasons.append(
             _reason(
-                "PUBLIC_ACCEPTANCE_EVIDENCE_MISSING",
-                "Builder 1 acceptance manifest is missing",
+                "PUBLIC_ACCEPTANCE_EVIDENCE_INVALID",
+                "verified Builder 1 prepublication acceptance is required",
             )
         )
-    else:
-        for key, expected in required.items():
-            if accepted_evidence.get(key) != expected:
-                reasons.append(
-                    _reason(
-                        "PUBLIC_ACCEPTANCE_EVIDENCE_INVALID",
-                        f"Builder 1 acceptance field {key} is not accepted",
-                    )
-                )
-        for key in (
-            "generation_id",
-            "activation_id",
-            "source_release_sha",
-            "runtime_data_sha",
-            "evidence_digest",
-        ):
-            if (
-                not isinstance(accepted_evidence.get(key), str)
-                or not accepted_evidence[key]
-            ):
-                reasons.append(
-                    _reason(
-                        "PUBLIC_ACCEPTANCE_EVIDENCE_INVALID",
-                        f"Builder 1 acceptance field {key} is missing",
-                    )
-                )
-        if (
-            isinstance(accepted_evidence.get("source_release_sha"), str)
-            and accepted_evidence.get("source_release_sha")
-            and isinstance(accepted_evidence.get("runtime_data_sha"), str)
-            and accepted_evidence.get("runtime_data_sha")
-        ):
-            acceptance = validate_public_bundle(
-                payload,
-                now=now,
-                expected_source_release_sha=accepted_evidence["source_release_sha"],
-                expected_runtime_data_sha=accepted_evidence["runtime_data_sha"],
-            )
-        if acceptance.get("generation_id") and accepted_evidence.get(
-            "generation_id"
-        ) != acceptance.get("generation_id"):
-            reasons.append(
-                _reason(
-                    "PUBLIC_PROVENANCE_INVALID",
-                    "Builder 1 generation binding does not match public bundle",
-                )
-            )
-        if acceptance.get("activation_id") and accepted_evidence.get(
-            "activation_id"
-        ) != acceptance.get("activation_id"):
-            reasons.append(
-                _reason(
-                    "PUBLIC_PROVENANCE_INVALID",
-                    "Builder 1 activation binding does not match public bundle",
-                )
-            )
-        if acceptance.get("source_release_sha") and accepted_evidence.get(
-            "source_release_sha"
-        ) != acceptance.get("source_release_sha"):
-            reasons.append(
-                _reason(
-                    "PUBLIC_PROVENANCE_INVALID",
-                    "Builder 1 source release binding does not match public bundle",
-                )
-            )
-        if acceptance.get("runtime_data_sha") and accepted_evidence.get(
-            "runtime_data_sha"
-        ) != acceptance.get("runtime_data_sha"):
-            reasons.append(
-                _reason(
-                    "PUBLIC_PROVENANCE_INVALID",
-                    "Builder 1 runtime data binding does not match public bundle",
-                )
-            )
+
     if delivery_manifest is None:
         reasons.append(
             _reason(
                 "PUBLIC_DELIVERY_MANIFEST_MISSING",
-                "dry-run delivery manifest is required for publication precheck",
+                "zero-mutation delivery dry-run manifest is required",
             )
         )
     else:
-        if delivery_manifest.get("public_product_digest") != acceptance.get(
-            "bundle_digest"
-        ):
-            reasons.append(
-                _reason(
-                    "PUBLIC_PROVENANCE_INVALID",
-                    "delivery manifest digest does not match public bundle",
-                )
+        expected_dry_run_fields = {
+            "schema_version", "status", "prepublication_id", "prepared_at",
+            "public_product_digest", "worker_candidate_payload_digest",
+            "static_candidate_payload_digest", "worker_candidate_payloads_equal",
+            "worker_destination", "static_destination", "provider_requests",
+            "network_requests", "publication_enabled", "publication_authorized",
+            "capability_consumed", "mutation_performed", "rollback_ready",
+        }
+        if set(delivery_manifest) != expected_dry_run_fields:
+            reasons.append(_reason("PUBLIC_DRY_RUN_INVALID", "dry-run manifest fields are invalid"))
+        elif artifact is None:
+            reasons.append(_reason("PUBLIC_DRY_RUN_INVALID", "dry-run has no valid prepublication artifact"))
+        else:
+            expected_dry_run = artifact.delivery_dry_run_manifest(
+                rollback_ready=delivery_manifest.get("rollback_ready") is True
             )
-        if delivery_manifest.get("generation_id") != acceptance.get("generation_id"):
-            reasons.append(
-                _reason(
-                    "PUBLIC_PROVENANCE_INVALID",
-                    "delivery manifest generation does not match public bundle",
+            if dict(delivery_manifest) != expected_dry_run or delivery_manifest.get("rollback_ready") is not True:
+                reasons.append(
+                    _reason(
+                        "PUBLIC_DRY_RUN_INVALID",
+                        "dry run must prove equal payloads and zero requests, authorization, and mutation",
+                    )
                 )
-            )
-        if delivery_manifest.get("activation_id") != acceptance.get("activation_id"):
-            reasons.append(
-                _reason(
-                    "PUBLIC_PROVENANCE_INVALID",
-                    "delivery manifest activation does not match public bundle",
-                )
-            )
-        for field, code, message in (
-            (
-                "static_payload_digest",
-                "PUBLIC_BUNDLE_PARTIAL",
-                "static delivery digest does not match public bundle",
-            ),
-            (
-                "worker_payload_digest",
-                "PUBLIC_BUNDLE_PARTIAL",
-                "Worker delivery digest does not match public bundle",
-            ),
-        ):
-            if delivery_manifest.get(field) != acceptance.get("bundle_digest"):
-                reasons.append(_reason(code, message))
-        if delivery_manifest.get("dry_run_status") not in {
-            "TOP5_DELIVERY_DRY_RUN",
-            "TOP5_DELIVERY_IDEMPOTENT",
-        }:
-            reasons.append(
-                _reason(
-                    "PUBLIC_DRY_RUN_REQUIRED",
-                    "delivery manifest does not prove a successful dry run",
-                )
-            )
-        if delivery_manifest.get("rollback_ready") is not True:
-            reasons.append(
-                _reason(
-                    "PUBLIC_ROLLBACK_UNAVAILABLE",
-                    "delivery manifest does not preserve rollback state",
-                )
-            )
-    reasons.extend(acceptance.get("reasons") or [])
+
+    acceptance = {
+        **artifact_result,
+        "reasons": reasons.copy(),
+    }
     status = (
         TOP5_PUBLICATION_PRECHECK_READY
         if not reasons
@@ -724,7 +1059,9 @@ def publication_precheck(
     return {
         "status": status,
         "publication_enabled": False,
+        "publication_authorized": False,
         "production_mutation": False,
+        "capability_consumed": False,
         "provider_requests": 0,
         "reasons": reasons,
         "acceptance": acceptance,
@@ -733,10 +1070,16 @@ def publication_precheck(
 
 __all__ = [
     "TOP5_LEAGUES",
+    "TOP5_PREPUBLICATION_ARTIFACT_SCHEMA",
+    "TOP5_PREPUBLICATION_DELIVERY_BLOCKED",
+    "TOP5_PREPUBLICATION_DELIVERY_READY",
+    "TOP5_PREPUBLICATION_DRY_RUN_SCHEMA",
+    "TOP5_PREPUBLICATION_DRY_RUN_STATUS",
     "TOP5_PUBLICATION_PRECHECK_BLOCKED",
     "TOP5_PUBLICATION_PRECHECK_READY",
     "TOP5_PUBLIC_DELIVERY_BLOCKED",
     "TOP5_PUBLIC_DELIVERY_READY",
+    "Top5PrepublicationArtifactV1",
     "publication_precheck",
     "validate_public_bundle",
 ]

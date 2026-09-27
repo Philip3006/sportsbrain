@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
 from datetime import timedelta
 
 import pytest
@@ -151,59 +152,46 @@ def test_offline_fixture_is_contract_ready_but_not_production_eligible() -> None
     assert result["evidence_classification"] == "TEST_FIXTURE"
 
 
-def test_publication_precheck_requires_builder1_acceptance_and_keeps_publish_disabled() -> (
-    None
-):
-    bundle = _bundle()
-    release = bundle["top5_release"]
-    accepted = {
-        "schema_version": "top5-final-acceptance-v1",
-        "status": "ACCEPTED",
-        "publication_ready": True,
-        "provider_authority": "the_odds_api",
-        "generation_id": release["generation_id"],
-        "activation_id": release["activation_id"],
-        "source_release_sha": "1" * 40,
-        "runtime_data_sha": "2" * 40,
-        "evidence_digest": "evidence-accepted",
-    }
-    bundle_digest = validate_public_bundle(bundle, now=BASE + timedelta(minutes=1))[
-        "bundle_digest"
-    ]
+def test_publication_precheck_requires_builder1_acceptance_and_keeps_publish_disabled(
+    monkeypatch,
+) -> None:
+    bundle, b1_result, now, dry_run = _verified_b1_cli_evidence(monkeypatch)
+    before = deepcopy(bundle)
     result = publication_precheck(
         bundle,
-        accepted,
-        now=BASE + timedelta(minutes=1),
-        delivery_manifest={
-            "public_product_digest": bundle_digest,
-            "generation_id": release["generation_id"],
-            "activation_id": release["activation_id"],
-            "static_payload_digest": bundle_digest,
-            "worker_payload_digest": bundle_digest,
-            "dry_run_status": "TOP5_DELIVERY_DRY_RUN",
-            "rollback_ready": True,
-        },
+        b1_result,
+        now=now,
+        delivery_manifest=dry_run,
     )
     assert result["status"] == TOP5_PUBLICATION_PRECHECK_READY
     assert result["publication_enabled"] is False
+    assert result["publication_authorized"] is False
+    assert result["production_mutation"] is False
     assert result["provider_requests"] == 0
+    assert bundle == before
 
 
-def test_publication_precheck_requires_dry_run_and_rollback_manifest() -> None:
-    bundle = _bundle()
-    release = bundle["top5_release"]
-    accepted = {
-        "schema_version": "top5-final-acceptance-v1",
-        "status": "ACCEPTED",
-        "publication_ready": True,
-        "provider_authority": "the_odds_api",
-        "generation_id": release["generation_id"],
-        "activation_id": release["activation_id"],
-        "source_release_sha": "1" * 40,
-        "runtime_data_sha": "2" * 40,
-        "evidence_digest": "evidence-accepted",
-    }
-    result = publication_precheck(bundle, accepted, now=BASE + timedelta(minutes=1))
+def test_publication_precheck_requires_verified_b1_and_rejects_network_dry_run(
+    monkeypatch,
+) -> None:
+    bundle, _b1_result, now, dry_run = _verified_b1_cli_evidence(monkeypatch)
+    invalid = deepcopy(dry_run)
+    invalid["network_requests"] = 1
+    result = publication_precheck(bundle, {}, now=now, delivery_manifest=invalid)
+    assert result["status"] == TOP5_PUBLICATION_PRECHECK_BLOCKED
+    assert result["publication_enabled"] is False
+    assert result["production_mutation"] is False
+    assert result["provider_requests"] == 0
+    assert any(
+        reason["code"] == "PUBLIC_ACCEPTANCE_EVIDENCE_INVALID"
+        for reason in result["reasons"]
+    )
+    assert any(reason["code"] == "PUBLIC_DRY_RUN_INVALID" for reason in result["reasons"])
+
+
+def test_publication_precheck_requires_dry_run_and_rollback_manifest(monkeypatch) -> None:
+    bundle, b1_result, now, _dry_run = _verified_b1_cli_evidence(monkeypatch)
+    result = publication_precheck(bundle, b1_result, now=now)
     assert result["status"] == "TOP5_PUBLICATION_PRECHECK_BLOCKED"
     assert any(
         reason["code"] == "PUBLIC_DELIVERY_MANIFEST_MISSING"
@@ -211,7 +199,7 @@ def test_publication_precheck_requires_dry_run_and_rollback_manifest() -> None:
     )
 
 
-def _verified_b1_cli_evidence(monkeypatch):
+def _verified_b1_cli_evidence(monkeypatch=None):
     from src.football.top5_final_acceptance import verify_final_acceptance
     from tests.football import (
         test_top5_candidate_provider_eligibility as candidate_tests,
@@ -221,34 +209,18 @@ def _verified_b1_cli_evidence(monkeypatch):
     from tests.football.test_top5_public_delivery import BASE as PUBLIC_BASE
 
     now = PUBLIC_BASE + timedelta(minutes=1)
-    monkeypatch.setattr(candidate_tests, "NOW", PUBLIC_BASE)
-    monkeypatch.setattr(shadow_tests, "NOW", PUBLIC_BASE)
-    monkeypatch.setattr(builder1_tests, "NOW", PUBLIC_BASE)
-    monkeypatch.setattr(builder1_tests, "NOW_ACCEPTANCE", now)
+    if monkeypatch is not None:
+        monkeypatch.setattr(candidate_tests, "NOW", PUBLIC_BASE)
+        monkeypatch.setattr(shadow_tests, "NOW", PUBLIC_BASE)
+        monkeypatch.setattr(builder1_tests, "NOW", PUBLIC_BASE)
+        monkeypatch.setattr(builder1_tests, "NOW_ACCEPTANCE", now)
     bundle = builder1_tests._bundle()
-    public = bundle["public"]
-    release_values = {
-        "source_release_sha": bundle["model_runtime"]["source_sha"],
-        "runtime_data_sha": bundle["runtime_evidence"]["runtime_data_sha"],
-        "source_runtime_consistent": True,
-    }
-    public["worker_payload"]["top5_release"].update(release_values)
-    public["static_payload"]["top5_release"].update(release_values)
-    public_digest = builder1_tests.canonical_digest(public["worker_payload"])
-    public["delivery_manifest"].update(
-        {
-            "public_product_digest": public_digest,
-            "static_payload_digest": public_digest,
-            "worker_payload_digest": public_digest,
-        }
-    )
     result = verify_final_acceptance(bundle, now=now)
-    delivery_manifest = {
-        **public["delivery_manifest"],
-        "dry_run_status": "TOP5_DELIVERY_DRY_RUN",
-        "rollback_ready": True,
-    }
-    return public["worker_payload"], result, now, delivery_manifest
+    from src.football.top5_public_acceptance import Top5PrepublicationArtifactV1
+
+    artifact = Top5PrepublicationArtifactV1.from_mapping(bundle["public"])
+    delivery_manifest = artifact.delivery_dry_run_manifest(rollback_ready=True)
+    return bundle["public"], result, now, delivery_manifest
 
 
 def test_publication_precheck_accepts_actual_verified_b1_cli_shape_read_only(
@@ -296,7 +268,7 @@ def test_publication_precheck_rejects_tampered_b1_cli_output(monkeypatch, mutati
         manifest["public_product_digest"] = "0" * 64
         manifest["manifest_digest"] = builder1_manifest_digest(manifest)
     elif mutation == "public_payload":
-        public_payload["top5_release"]["runtime_data_sha"] = "f" * 40
+        public_payload["worker_candidate_payload"]["top5_release"]["runtime_data_sha"] = "f" * 64
     else:
         b1_result["publication_authorized"] = True
 

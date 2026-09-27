@@ -526,28 +526,15 @@ def test_complete_post_shadow_chain_accepts_native_five_league_artifacts_offline
     )
     builder1_bundle = builder1_tests._bundle()
     builder1_bundle.update(b1_handoff)
-    public = builder1_bundle["public"]
-    release_values = {
-        "source_release_sha": builder1_bundle["model_runtime"]["source_sha"],
-        "runtime_data_sha": builder1_bundle["runtime_evidence"]["runtime_data_sha"],
-        "source_runtime_consistent": True,
-    }
-    public["worker_payload"]["top5_release"].update(release_values)
-    public["static_payload"]["top5_release"].update(release_values)
-    public_digest = builder1_tests.canonical_digest(public["worker_payload"])
-    public["delivery_manifest"].update(
-        {
-            "public_product_digest": public_digest,
-            "static_payload_digest": public_digest,
-            "worker_payload_digest": public_digest,
-        }
-    )
     b1_result = verify_final_acceptance(builder1_bundle, now=precheck_now)
     assert b1_result["status"] == "TOP5_FINAL_ACCEPTANCE_VERIFIED"
     assert b1_result["manifest"]["provider_authority"] == "the_odds_api"
     assert b1_result["manifest"]["candidate_provider"] == "therundown_experimental"
     assert b1_result["manifest"]["checks"]["candidate_not_authority"] is True
     assert b1_result["manifest"]["checks"]["no_bet"] is True
+    assert (
+        b1_result["manifest"]["checks"]["public_prepublication_delivery"] is True
+    )
 
     activation = top5_activation_precheck(
         Top5ActivationPrecheckInput(
@@ -572,15 +559,18 @@ def test_complete_post_shadow_chain_accepts_native_five_league_artifacts_offline
     assert activation.provider_authority == "the_odds_api"
     assert activation.mutation_performed is False
 
+    from src.football.top5_public_acceptance import Top5PrepublicationArtifactV1
+
+    prepublication = Top5PrepublicationArtifactV1.from_mapping(
+        builder1_bundle["public"]
+    )
     publication = publication_precheck(
-        public["worker_payload"],
+        builder1_bundle["public"],
         b1_result,
         now=precheck_now,
-        delivery_manifest={
-            **public["delivery_manifest"],
-            "dry_run_status": "TOP5_DELIVERY_DRY_RUN",
-            "rollback_ready": True,
-        },
+        delivery_manifest=prepublication.delivery_dry_run_manifest(
+            rollback_ready=True
+        ),
     )
     assert publication["status"] == "TOP5_PUBLICATION_PRECHECK_READY"
     assert publication["publication_enabled"] is False

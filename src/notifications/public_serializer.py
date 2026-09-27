@@ -115,6 +115,10 @@ _PUBLIC_FOOTBALL_PROVENANCE_FIELDS = frozenset(
         "evidence_digest",
         "controlled_shadow_run_id",
         "qualification_session_id",
+        "candidate_id",
+        "signal_time_contract_id",
+        "publication_authorized",
+        "closing_used_for_prediction",
     }
 )
 
@@ -122,11 +126,13 @@ _PUBLIC_TOP5_RELEASE_FIELDS = frozenset(
     {
         "schema_version",
         "release_type",
+        "prepublication_id",
         "generation_id",
         "activation_state",
         "activation_id",
         "publication_status",
         "publication_enabled",
+        "publication_authorized",
         "publication_authorization_id",
         "provider_authority",
         "source_release_sha",
@@ -135,6 +141,10 @@ _PUBLIC_TOP5_RELEASE_FIELDS = frozenset(
         "result_authority",
         "candidate_id",
         "model_identity",
+        "research_sha",
+        "model_artifact_hash",
+        "signal_time_contract_id",
+        "closing_used_for_prediction",
         "evidence_digest",
         "evidence_digests",
         "controlled_shadow_run_id",
@@ -148,6 +158,7 @@ _PUBLIC_TOP5_RELEASE_FIELDS = frozenset(
 )
 _TOP5_LEAGUES = frozenset({"EPL", "BL1", "LL", "SA", "L1"})
 TOP5_PUBLIC_PROVIDER_AUTHORITY = "the_odds_api"
+TOP5_PREPUBLICATION_RELEASE_SCHEMA = "top5-prepublication-release-v1"
 _TOP5_LEAGUE_ALIASES = {
     "epl": "EPL",
     "premier_league": "EPL",
@@ -422,7 +433,9 @@ def _project_public_top5_lifecycle(
         raise PublicFootballCompatibilityError(str(exc)) from exc
 
 
-def _public_top5_release(value: object) -> dict[str, object]:
+def _public_top5_release(
+    value: object, *, prepublication: bool = False
+) -> dict[str, object]:
     """Project the controlled Top-5 release envelope through an allowlist.
 
     This metadata is deliberately separate from ``health``.  The PWA and the
@@ -450,30 +463,81 @@ def _public_top5_release(value: object) -> dict[str, object]:
             raise PublicFootballCompatibilityError(
                 f"unsupported top5_release field: {key}"
             )
-    required = {
-        "schema_version",
-        "generation_id",
-        "activation_state",
-        "activation_id",
-        "publication_status",
-        "publication_enabled",
-        "league_codes",
-        "no_bet",
-    }
+    is_prepublication = (
+        prepublication
+        and result.get("schema_version") == TOP5_PREPUBLICATION_RELEASE_SCHEMA
+    )
+    required = (
+        {
+            "schema_version",
+            "prepublication_id",
+            "publication_status",
+            "publication_enabled",
+            "publication_authorized",
+            "provider_authority",
+            "source_release_sha",
+            "runtime_data_sha",
+            "source_runtime_consistent",
+            "candidate_id",
+            "model_identity",
+            "research_sha",
+            "model_artifact_hash",
+            "signal_time_contract_id",
+            "controlled_shadow_run_id",
+            "qualification_session_id",
+            "generated_at",
+            "league_codes",
+            "no_bet",
+            "closing_used_for_prediction",
+        }
+        if is_prepublication
+        else {
+            "schema_version",
+            "generation_id",
+            "activation_state",
+            "activation_id",
+            "publication_status",
+            "publication_enabled",
+            "league_codes",
+            "no_bet",
+        }
+    )
     missing = sorted(required - result.keys())
     if missing:
         raise PublicFootballCompatibilityError(
             "top5_release is incomplete: " + ", ".join(missing)
         )
-    if result["activation_state"] != "CONTROLLED":
-        raise PublicFootballCompatibilityError(
-            "top5_release must be bound to CONTROLLED activation"
-        )
-    if (
-        result["publication_status"] != "PUBLISHED"
-        or result["publication_enabled"] is not True
-    ):
-        raise PublicFootballCompatibilityError("top5_release is not published")
+    if is_prepublication:
+        if (
+            result["publication_status"] != "PREPARED"
+            or result["publication_enabled"] is not False
+            or result["publication_authorized"] is not False
+            or result["closing_used_for_prediction"] is not False
+        ):
+            raise PublicFootballCompatibilityError(
+                "prepublication release must remain PREPARED and unauthorized"
+            )
+        if any(
+            result.get(field) is not None
+            for field in ("activation_id", "publication_authorization_id", "published_at")
+        ):
+            raise PublicFootballCompatibilityError(
+                "prepublication release cannot claim activation or publication"
+            )
+    else:
+        if result.get("schema_version") == TOP5_PREPUBLICATION_RELEASE_SCHEMA:
+            raise PublicFootballCompatibilityError(
+                "prepublication release is not a post-publication product"
+            )
+        if result["activation_state"] != "CONTROLLED":
+            raise PublicFootballCompatibilityError(
+                "top5_release must be bound to CONTROLLED activation"
+            )
+        if (
+            result["publication_status"] != "PUBLISHED"
+            or result["publication_enabled"] is not True
+        ):
+            raise PublicFootballCompatibilityError("top5_release is not published")
     if result["no_bet"] is not True:
         raise PublicFootballCompatibilityError("top5_release must remain no-bet")
     if result.get("provider_authority") != TOP5_PUBLIC_PROVIDER_AUTHORITY:
@@ -486,7 +550,10 @@ def _public_top5_release(value: object) -> dict[str, object]:
 
 
 def _validate_top5_public_records(
-    records: object, release: Mapping[str, object] | None
+    records: object,
+    release: Mapping[str, object] | None,
+    *,
+    prepublication: bool = False,
 ) -> None:
     """Reject incomplete or unbound Top-5 records at the public boundary."""
     if not isinstance(records, Sequence) or isinstance(records, (str, bytes)):
@@ -506,6 +573,13 @@ def _validate_top5_public_records(
             raise PublicFootballCompatibilityError(
                 "published Top-5 release requires complete five-league records"
             )
+        return
+    if (
+        prepublication
+        and isinstance(release, Mapping)
+        and release.get("schema_version") == TOP5_PREPUBLICATION_RELEASE_SCHEMA
+    ):
+        _validate_top5_prepublication_records(top5_records, release)
         return
     offline = all(
         record.get("publication_enabled") is False
@@ -568,6 +642,88 @@ def _validate_top5_public_records(
                 fixture_identity=record.get("fixture_key"),
                 model_identity=record.get("model_identity"),
                 provenance=provenance,
+            )
+
+
+def _validate_top5_prepublication_records(
+    records: Sequence[Mapping[str, object]], release: Mapping[str, object]
+) -> None:
+    if len(records) != len(_TOP5_LEAGUES) * 3:
+        raise PublicFootballCompatibilityError(
+            "prepublication Top-5 release requires exactly 15 records"
+        )
+    by_league: dict[str, list[Mapping[str, object]]] = {
+        league: [] for league in _TOP5_LEAGUES
+    }
+    for record in records:
+        league = canonical_top5_league(record.get("league"))
+        if league not in by_league:
+            raise PublicFootballCompatibilityError(
+                "prepublication Top-5 release contains an unknown league"
+            )
+        by_league[league].append(record)
+    if any(len(items) != 3 for items in by_league.values()):
+        raise PublicFootballCompatibilityError(
+            "prepublication Top-5 release requires three outcomes per league"
+        )
+    for league, items in by_league.items():
+        fixtures = [item.get("fixture_key") for item in items]
+        if (
+            any(not isinstance(fixture, str) or not fixture for fixture in fixtures)
+            or len(set(fixtures)) != 1
+        ):
+            raise PublicFootballCompatibilityError(
+                f"prepublication Top-5 release requires one fixture for {league}"
+            )
+    for record in records:
+        evidence_kind = str(record.get("evidence_kind", "")).upper()
+        if (
+            record.get("activation_state") != "SHADOW"
+            or record.get("signal_status") != "SHADOW"
+            or record.get("publication_status") != "PREPARED"
+            or record.get("publication_enabled") is not False
+            or record.get("publication_authorized") is not False
+            or record.get("synthetic") is True
+            or evidence_kind not in {"REAL_OBSERVED", "RUNTIME_DERIVED"}
+            or record.get("no_bet") is not True
+            or record.get("closing_used_for_prediction") is not False
+            or record.get("provider") != TOP5_PUBLIC_PROVIDER_AUTHORITY
+            or record.get("source") != TOP5_PUBLIC_PROVIDER_AUTHORITY
+            or record.get("run_id") != release.get("controlled_shadow_run_id")
+            or record.get("session_id") != release.get("qualification_session_id")
+            or record.get("candidate_id") != release.get("candidate_id")
+            or record.get("model_identity") != release.get("model_identity")
+            or record.get("research_sha") != release.get("research_sha")
+            or record.get("source_sha") != release.get("source_release_sha")
+            or record.get("runtime_data_sha") != release.get("runtime_data_sha")
+            or record.get("model_artifact_hash") != release.get("model_artifact_hash")
+            or record.get("signal_time_contract_id")
+            != release.get("signal_time_contract_id")
+            or record.get("closing_used_for_prediction") is not False
+        ):
+            raise PublicFootballCompatibilityError(
+                "prepublication Top-5 record/release binding mismatch"
+            )
+        provenance = _mapping(record.get("provenance"))
+        if (
+            provenance.get("provider") != TOP5_PUBLIC_PROVIDER_AUTHORITY
+            or provenance.get("source") != TOP5_PUBLIC_PROVIDER_AUTHORITY
+            or provenance.get("source_sha") != release.get("source_release_sha")
+            or provenance.get("research_sha") != release.get("research_sha")
+            or provenance.get("model_artifact_hash")
+            != release.get("model_artifact_hash")
+            or provenance.get("controlled_shadow_run_id")
+            != release.get("controlled_shadow_run_id")
+            or provenance.get("qualification_session_id")
+            != release.get("qualification_session_id")
+            or provenance.get("candidate_id") != release.get("candidate_id")
+            or provenance.get("signal_time_contract_id")
+            != release.get("signal_time_contract_id")
+            or provenance.get("publication_authorized") is not False
+            or provenance.get("closing_used_for_prediction") is not False
+        ):
+            raise PublicFootballCompatibilityError(
+                "prepublication Top-5 record provenance mismatch"
             )
 
 
@@ -706,7 +862,7 @@ def map_prediction_to_public_football_signals(
         .strip()
         .upper()
     )
-    if publication_status not in {"UNPUBLISHED", "PUBLISHED", "FAILED", "BLOCKED"}:
+    if publication_status not in {"UNPUBLISHED", "PREPARED", "PUBLISHED", "FAILED", "BLOCKED"}:
         raise PublicFootballCompatibilityError(
             f"unsupported public football publication status: {publication_status!r}"
         )
@@ -873,6 +1029,25 @@ def map_prediction_to_public_football_signals(
         "n_models_agree": 0,
         "no_bet_flag": record.get("no_bet_flag") is True,
     }
+    # Preserve explicit Top-5 prepublication contract evidence when supplied.
+    # These scalar fields are part of the read-only candidate proof; dropping
+    # them here would make the downstream acceptance gate unable to verify
+    # authorization, closing-input, and provenance bindings.
+    for field in (
+        "candidate_id",
+        "research_sha",
+        "source_sha",
+        "runtime_data_sha",
+        "model_artifact_hash",
+        "signal_time_contract_id",
+        "publication_authorized",
+        "closing_used_for_prediction",
+        "evidence_kind",
+        "synthetic",
+    ):
+        value = _first_value(record, artifact, provenance, health, keys=(field,))
+        if isinstance(value, (str, int, float, bool)):
+            common[field] = value
     if synthetic:
         common.update(
             {
@@ -1193,8 +1368,10 @@ def _public_tennis_stats(ts: dict | None) -> dict:
     return result
 
 
-def serialize_public_product(snapshot: dict | None) -> dict:
-    """Return a public-safe product payload derived from a full internal snapshot.
+def _serialize_public_product(
+    snapshot: dict | None, *, prepublication: bool
+) -> dict:
+    """Project a public payload, selecting an explicit Top-5 lifecycle state.
 
     Implements an explicit ALLOWLIST: every top-level key must be on the list.
     Nested objects with mixed public/private fields (meta, tennis_stats) are
@@ -1224,8 +1401,14 @@ def serialize_public_product(snapshot: dict | None) -> dict:
     if "football" in pub:
         pub["football"] = serialize_public_football_records(pub["football"])
     if "top5_release" in pub:
-        pub["top5_release"] = _public_top5_release(pub["top5_release"])
-    _validate_top5_public_records(pub.get("football"), pub.get("top5_release"))
+        pub["top5_release"] = _public_top5_release(
+            pub["top5_release"], prepublication=prepublication
+        )
+    _validate_top5_public_records(
+        pub.get("football"),
+        pub.get("top5_release"),
+        prepublication=prepublication,
+    )
     if isinstance(snapshot.get("health"), Mapping):
         public_health = dict(snapshot["health"])
         if "football_release" in public_health:
@@ -1249,6 +1432,23 @@ def serialize_public_product(snapshot: dict | None) -> dict:
     # raises AssertionError here rather than reaching the caller.
     assert_no_private_fields(pub)
     return pub
+
+
+def serialize_public_product(snapshot: dict | None) -> dict:
+    """Serialize a post-publication product with the strict existing contract."""
+
+    return _serialize_public_product(snapshot, prepublication=False)
+
+
+def serialize_top5_prepublication_candidate_product(snapshot: dict | None) -> dict:
+    """Serialize a Top-5 draft using the same public allowlists, without publication.
+
+    This is a read-only candidate payload for B1/B3 preproduction checks. It is
+    not accepted by :func:`serialize_public_product` and carries no activation,
+    publication authorization, attestation, or capability.
+    """
+
+    return _serialize_public_product(snapshot, prepublication=True)
 
 
 def assert_no_private_fields(obj: Any, _path: str = "root") -> None:

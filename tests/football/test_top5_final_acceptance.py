@@ -18,7 +18,12 @@ from src.football.top5_final_acceptance import (
     canonical_digest,
     verify_final_acceptance,
 )
-from src.football.top5_research_binding import FROZEN_RESEARCH_SHA, M5_CANDIDATE_ID
+from src.football.top5_research_binding import (
+    FROZEN_RESEARCH_SHA,
+    M5_CANDIDATE_ID,
+    inventory_for,
+)
+from src.football.top5_public_acceptance import Top5PrepublicationArtifactV1
 from src.football.top5_therundown_event_discovery import (
     B4_QUOTA_PROOF_AFFILIATE_IDS,
     B4_QUOTA_PROOF_EXECUTION_PHASE,
@@ -44,7 +49,7 @@ from tests.football.test_top5_therundown_network_shadow import (
 )
 
 SOURCE_SHA = "1" * 40
-MODEL_ARTIFACT_HASH = "2" * 64
+MODEL_ARTIFACT_HASH = inventory_for("EPL", M5_CANDIDATE_ID).model_artifact_hash
 NOW_ACCEPTANCE = NOW
 
 
@@ -302,6 +307,104 @@ def _public(run_id: str, session_id: str, source_sha: str) -> dict[str, object]:
     }
 
 
+def _prepublication_public(
+    run_id: str,
+    session_id: str,
+    source_sha: str,
+    runtime_data_sha: str,
+) -> dict[str, object]:
+    worker = deepcopy(_controlled_public_product())
+    release = worker["top5_release"]
+    for key in (
+        "generation_id",
+        "activation_state",
+        "activation_id",
+        "publication_authorization_id",
+        "published_at",
+    ):
+        release.pop(key, None)
+    release.update(
+        {
+            "schema_version": "top5-prepublication-release-v1",
+            "release_type": "PREPUBLICATION",
+            "publication_status": "PREPARED",
+            "publication_enabled": False,
+            "publication_authorized": False,
+            "provider_authority": ACTIVE_PROVIDER,
+            "candidate_id": M5_CANDIDATE_ID,
+            "model_identity": M5_CANDIDATE_ID,
+            "research_sha": FROZEN_RESEARCH_SHA,
+            "model_artifact_hash": MODEL_ARTIFACT_HASH,
+            "signal_time_contract_id": "signal-time:shadow-v1",
+            "closing_used_for_prediction": False,
+            "controlled_shadow_run_id": run_id,
+            "qualification_session_id": session_id,
+            "source_release_sha": source_sha,
+            "runtime_data_sha": runtime_data_sha,
+            "source_runtime_consistent": True,
+            "league_codes": ["BL1", "EPL", "L1", "LL", "SA"],
+            "generated_at": NOW.isoformat(),
+            "no_bet": True,
+        }
+    )
+    for record in worker["football"]:
+        record.pop("activation_id", None)
+        record.update(
+            {
+                "activation_state": "SHADOW",
+                "activation_mode": "shadow",
+                "signal_status": "SHADOW",
+                "publication_status": "PREPARED",
+                "publication_enabled": False,
+                "publication_authorized": False,
+                "provider": ACTIVE_PROVIDER,
+                "source": ACTIVE_PROVIDER,
+                "run_id": run_id,
+                "session_id": session_id,
+                "controlled_shadow_run_id": run_id,
+                "qualification_session_id": session_id,
+                "candidate_id": M5_CANDIDATE_ID,
+                "model_identity": M5_CANDIDATE_ID,
+                "research_sha": FROZEN_RESEARCH_SHA,
+                "source_sha": source_sha,
+                "runtime_data_sha": runtime_data_sha,
+                "source_release_sha": source_sha,
+                "source_runtime_consistent": True,
+                "model_artifact_hash": MODEL_ARTIFACT_HASH,
+                "signal_time_contract_id": "signal-time:shadow-v1",
+                "evidence_kind": "RUNTIME_DERIVED",
+                "synthetic": False,
+                "no_bet": True,
+                "closing_used_for_prediction": False,
+                "prediction_timestamp": NOW.isoformat(),
+                "signal_timestamp": NOW.isoformat(),
+            }
+        )
+        provenance = record["provenance"]
+        provenance.pop("activation_id", None)
+        provenance.update(
+            {
+                "provider": ACTIVE_PROVIDER,
+                "source": ACTIVE_PROVIDER,
+                "source_sha": source_sha,
+                "runtime_data_sha": runtime_data_sha,
+                "research_sha": FROZEN_RESEARCH_SHA,
+                "model_artifact_hash": MODEL_ARTIFACT_HASH,
+                "candidate_id": M5_CANDIDATE_ID,
+                "signal_time_contract_id": "signal-time:shadow-v1",
+                "publication_authorized": False,
+                "closing_used_for_prediction": False,
+                "controlled_shadow_run_id": run_id,
+                "qualification_session_id": session_id,
+            }
+        )
+    return Top5PrepublicationArtifactV1.create(
+        worker_candidate_payload=worker,
+        static_candidate_payload=deepcopy(worker),
+        prepared_at=NOW,
+    ).as_payload()
+
+
 def _bundle() -> dict[str, object]:
     run, _configuration = _candidate_network_run()
     run_payload = run.as_payload()
@@ -330,7 +433,9 @@ def _bundle() -> dict[str, object]:
             "no_bet": True,
             "prediction_input_allowed": True,
         },
-        "public": _public(run_id, session_id, SOURCE_SHA),
+        "public": _prepublication_public(
+            run_id, session_id, SOURCE_SHA, "3" * 64
+        ),
         "runtime_evidence": {
             "runtime_root": "/private/tmp/governed-runtime",
             "runtime_root_role": "governed-runtime",
@@ -348,18 +453,8 @@ def _bundle() -> dict[str, object]:
 
 
 def _remove_public_record(bundle: dict[str, object]) -> None:
-    worker = bundle["public"]["worker_payload"]
-    static = bundle["public"]["static_payload"]
-    worker["football"].pop()
-    static["football"].pop()
-    digest = canonical_digest(worker)
-    bundle["public"]["delivery_manifest"].update(
-        {
-            "public_product_digest": digest,
-            "static_payload_digest": digest,
-            "worker_payload_digest": digest,
-        }
-    )
+    bundle["public"]["worker_candidate_payload"]["football"].pop()
+    bundle["public"]["static_candidate_payload"]["football"].pop()
 
 
 def test_complete_b4_to_public_acceptance_bundle_is_verified_without_side_effects():
@@ -368,24 +463,220 @@ def test_complete_b4_to_public_acceptance_bundle_is_verified_without_side_effect
     assert result["manifest"]["provider_authority"] == ACTIVE_PROVIDER
     assert result["manifest"]["candidate_provider"] == CANDIDATE_PROVIDER
     assert result["manifest"]["checks"]["candidate_not_authority"] is True
+    assert result["manifest"]["checks"]["public_prepublication_delivery"] is True
+    assert "public_delivery" not in result["manifest"]["checks"]
+    assert "public_generation_id" not in result["manifest"]
+    assert "public_activation_id" not in result["manifest"]
     assert len(result["manifest"]["discovery_event_ids"]) == 5
+
+
+def test_b1_acceptance_uses_read_only_prepublication_artifact():
+    bundle = _bundle()
+    artifact = bundle["public"]
+    assert artifact["publication_enabled"] is False
+    assert artifact["publication_authorized"] is False
+    assert artifact["capability_consumed"] is False
+    assert artifact["mutation_performed"] is False
+    assert artifact["provider_requests"] == 0
+    release = artifact["worker_candidate_payload"]["top5_release"]
+    assert release["publication_status"] == "PREPARED"
+    assert release["publication_enabled"] is False
+    assert release["publication_authorized"] is False
+    assert "activation_id" not in release
+    assert "published_at" not in release
+    assert "capability" not in artifact
+    assert "publication_attestation" not in artifact
+    result = verify_final_acceptance(bundle, now=NOW_ACCEPTANCE)
+    assert result["manifest"]["checks"]["public_prepublication_delivery"] is True
+
+
+def test_b1_preserves_governed_runtime_freshness_boundary():
+    bundle = _bundle()
+    observed_at = NOW - timedelta(seconds=900)
+    bundle["runtime_evidence"].update(
+        {
+            "runtime_state_observed_at": observed_at.isoformat(),
+            "captured_at": observed_at.isoformat(),
+        }
+    )
+
+    result = verify_final_acceptance(bundle, now=NOW_ACCEPTANCE)
+
+    assert result["status"] == STATUS_VERIFIED
+
+
+@pytest.mark.parametrize(
+    "runtime_update, remove_observed_at, expected_error",
+    (
+        ({}, True, "runtime_state_observed_at is required"),
+        (
+            {
+                "runtime_state_observed_at": (NOW - timedelta(seconds=901)).isoformat(),
+                "captured_at": (NOW - timedelta(seconds=901)).isoformat(),
+            },
+            False,
+            "underlying runtime state is stale",
+        ),
+        (
+            {
+                "runtime_state_observed_at": (NOW + timedelta(seconds=1)).isoformat(),
+                "captured_at": (NOW + timedelta(seconds=1)).isoformat(),
+            },
+            False,
+            "underlying runtime state is from the future",
+        ),
+        (
+            {
+                "runtime_state_observed_at": NOW.isoformat(),
+                "captured_at": (NOW - timedelta(seconds=1)).isoformat(),
+            },
+            False,
+            "captured before the underlying runtime state",
+        ),
+    ),
+)
+def test_b1_rejects_stale_or_invalid_governed_runtime_timestamps(
+    runtime_update, remove_observed_at, expected_error
+):
+    bundle = _bundle()
+    runtime = bundle["runtime_evidence"]
+    if remove_observed_at:
+        runtime.pop("runtime_state_observed_at")
+    runtime.update(runtime_update)
+
+    with pytest.raises(Top5FinalAcceptanceError, match=expected_error):
+        verify_final_acceptance(bundle, now=NOW_ACCEPTANCE)
+
+
+def test_b1_rejects_premature_published_prepublication_artifact():
+    bundle = _bundle()
+    release = bundle["public"]["worker_candidate_payload"]["top5_release"]
+    release.update(
+        {
+            "publication_status": "PUBLISHED",
+            "publication_enabled": True,
+            "publication_authorized": True,
+        }
+    )
+    with pytest.raises(Top5FinalAcceptanceError, match="prepublication|PREPARED"):
+        verify_final_acceptance(bundle, now=NOW_ACCEPTANCE)
+
+
+@pytest.mark.parametrize("forbidden", ("capability", "publication_attestation"))
+def test_b1_rejects_publication_authority_material(forbidden):
+    bundle = _bundle()
+    bundle["public"][forbidden] = {"forbidden": True}
+    with pytest.raises(Top5FinalAcceptanceError, match="fields are invalid"):
+        verify_final_acceptance(bundle, now=NOW_ACCEPTANCE)
+
+
+def test_b1_rejects_publication_enabled_prepublication_artifact():
+    bundle = _bundle()
+    bundle["public"]["publication_enabled"] = True
+    with pytest.raises(Top5FinalAcceptanceError, match="fields are invalid|side effect"):
+        verify_final_acceptance(bundle, now=NOW_ACCEPTANCE)
+
+
+@pytest.mark.parametrize(
+    "binding, expected_error",
+    (
+        ("controlled_shadow_run_id", "run identity mismatch"),
+        ("qualification_session_id", "session identity mismatch"),
+        ("source_release_sha", "source release binding mismatch"),
+        ("research_sha", "Research SHA differs from frozen Research"),
+        ("model_artifact_hash", "model hash differs from frozen inventory"),
+        ("signal_time_contract_id", "Signal-Time contract binding mismatch"),
+    ),
+)
+def test_b1_binds_prepublication_artifact_to_exact_provenance(binding, expected_error):
+    bundle = _bundle()
+    worker = deepcopy(bundle["public"]["worker_candidate_payload"])
+    static = deepcopy(bundle["public"]["static_candidate_payload"])
+    changed_value = "9" * 40 if binding.endswith("sha") or binding.endswith("hash") else f"wrong:{binding}"
+    for product in (worker, static):
+        release = product["top5_release"]
+        release.pop("prepublication_id", None)
+        release[binding] = changed_value
+        for record in product["football"]:
+            if binding == "controlled_shadow_run_id":
+                record["run_id"] = changed_value
+                record[binding] = changed_value
+            elif binding == "qualification_session_id":
+                record["session_id"] = changed_value
+                record[binding] = changed_value
+            elif binding == "source_release_sha":
+                record["source_release_sha"] = changed_value
+                record["source_sha"] = changed_value
+            else:
+                record[binding] = changed_value
+            record["provenance"][binding] = changed_value
+            if binding == "source_release_sha":
+                record["provenance"]["source_sha"] = changed_value
+    bundle["public"] = Top5PrepublicationArtifactV1.create(
+        worker_candidate_payload=worker,
+        static_candidate_payload=static,
+        prepared_at=NOW,
+    ).as_payload()
+    with pytest.raises(Top5FinalAcceptanceError, match=expected_error):
+        verify_final_acceptance(bundle, now=NOW_ACCEPTANCE)
+
+
+def test_prepublication_artifact_payloads_are_read_only():
+    artifact = Top5PrepublicationArtifactV1.from_mapping(_bundle()["public"])
+    with pytest.raises(TypeError):
+        artifact.worker_candidate_payload["top5_release"]["publication_enabled"] = True
+
+
+def test_postpublication_validator_still_requires_capability_and_attestation():
+    from src.football.top5_final_acceptance_public import _validate_public
+
+    bundle = _bundle()
+    run_id = bundle["controlled_shadow"]["controlled_shadow_run_id"]
+    session_id = bundle["controlled_shadow"]["qualification_session_id"]
+    model = {
+        "source_sha": SOURCE_SHA,
+        "research_sha": FROZEN_RESEARCH_SHA,
+        "model_artifact_hash": MODEL_ARTIFACT_HASH,
+        "signal_time_contract_id": "signal-time:shadow-v1",
+    }
+    postpublication = _public(run_id, session_id, SOURCE_SHA)
+    missing_capability = deepcopy(postpublication)
+    missing_capability.pop("capability")
+    with pytest.raises(Top5FinalAcceptanceError, match="publication capability"):
+        _validate_public(
+            missing_capability,
+            now=NOW_ACCEPTANCE,
+            run_id=run_id,
+            session_id=session_id,
+            model=model,
+        )
+    missing_attestation = deepcopy(postpublication)
+    missing_attestation.pop("publication_attestation")
+    with pytest.raises(Top5FinalAcceptanceError, match="publication attestation"):
+        _validate_public(
+            missing_attestation,
+            now=NOW_ACCEPTANCE,
+            run_id=run_id,
+            session_id=session_id,
+            model=model,
+        )
 
 
 @pytest.mark.parametrize(
     "mutate, message",
     [
         (
-            lambda bundle: bundle["public"]["worker_payload"]["top5_release"].update(
+            lambda bundle: bundle["public"]["worker_candidate_payload"]["top5_release"].update(
                 {"league_codes": ["EPL"]}
             ),
-            "Top-5",
+            "league_codes must contain",
         ),
-        (_remove_public_record, "15 Top-5"),
+        (_remove_public_record, "requires exactly 15 records"),
         (
-            lambda bundle: bundle["public"]["worker_payload"]["top5_release"].update(
+            lambda bundle: bundle["public"]["worker_candidate_payload"]["top5_release"].update(
                 {"provider_authority": CANDIDATE_PROVIDER}
             ),
-            "unexpected provider authority",
+            "leaks candidate provider authority",
         ),
         (
             lambda bundle: bundle["controlled_shadow"]["captures"][0].update(

@@ -128,9 +128,38 @@ def _validate_public(
     }
 
 
+def _validate_prepublication_public(
+    raw: Mapping[str, object],
+    *,
+    now: datetime,
+    run_id: str,
+    session_id: str,
+    model: Mapping[str, str],
+    runtime_data_sha: str,
+) -> dict[str, object]:
+    """Validate B1's read-only candidate product, never a published product."""
+    from src.football.top5_public_acceptance import Top5PrepublicationArtifactV1
+
+    try:
+        artifact = Top5PrepublicationArtifactV1.from_mapping(raw)
+        return artifact.validate(
+            now=now,
+            expected_run_id=run_id,
+            expected_session_id=session_id,
+            expected_source_release_sha=model["source_sha"],
+            expected_runtime_data_sha=runtime_data_sha,
+            expected_model_artifact_hash=model["model_artifact_hash"],
+            expected_signal_time_contract_id=model["signal_time_contract_id"],
+        )
+    except Exception as exc:
+        raise Top5FinalAcceptanceError(
+            f"public prepublication delivery rejected: {exc}"
+        ) from exc
+
+
 def _validate_runtime(
     raw: Mapping[str, object], *, now: datetime, model: Mapping[str, str]
-) -> None:
+) -> str:
     root = _text(raw.get("runtime_root"), "runtime_evidence.runtime_root")
     if not root.startswith("/") or raw.get("runtime_root_role") != "governed-runtime":
         raise Top5FinalAcceptanceError(
@@ -153,7 +182,9 @@ def _validate_runtime(
         raise Top5FinalAcceptanceError(
             "runtime source release does not match model source"
         )
-    _sha(raw.get("runtime_data_sha"), "runtime_evidence.runtime_data_sha")
+    runtime_data_sha = _sha(
+        raw.get("runtime_data_sha"), "runtime_evidence.runtime_data_sha"
+    )
     runtime_observed_at = _timestamp(
         raw.get("runtime_state_observed_at"),
         "runtime_evidence.runtime_state_observed_at",
@@ -169,3 +200,4 @@ def _validate_runtime(
         captured_at,
         "runtime evidence",
     )
+    return runtime_data_sha
