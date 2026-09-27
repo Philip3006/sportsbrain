@@ -13,6 +13,7 @@ from src.football.top5_activation_route_state import (
     DurableTop5ProductionRouteStateStore,
     Top5ProductionRouteConsumer,
     Top5RouteStateError,
+    executing_route_configuration_digest,
 )
 from tests.football.test_top5_activation_authorization import (
     NOW,
@@ -20,6 +21,17 @@ from tests.football.test_top5_activation_authorization import (
     _resign,
     _signed_context,
 )
+
+
+def test_route_configuration_digest_binds_both_provider_identities(tmp_path):
+    *_, binding, _signer, _public_path, _envelope, _verified = _signed_context(tmp_path)
+    baseline = executing_route_configuration_digest(binding)
+
+    authority_substitution = replace(binding, provider_authority="isports_api")
+    evidence_substitution = replace(binding, evidence_provider="isports_api")
+
+    assert executing_route_configuration_digest(authority_substitution) != baseline
+    assert executing_route_configuration_digest(evidence_substitution) != baseline
 
 
 def test_route_record_is_durable_and_exactly_restored_without_claiming_live_rollback(
@@ -172,6 +184,8 @@ def test_route_cannot_be_reprepared_under_changed_binding_or_fake_candidate_auth
         store.prepare(
             replace(binding, provider_authority="therundown_experimental"), now=NOW
         )
+    with pytest.raises(Top5RouteStateError, match="evidence provider"):
+        store.prepare(replace(binding, evidence_provider="unknown_provider"), now=NOW)
     with pytest.raises(Top5RouteStateError, match="provider/retry"):
         store.prepare(replace(binding, retry_budget=1), now=NOW)
     with pytest.raises(Top5RouteStateError, match="disabled route baseline"):

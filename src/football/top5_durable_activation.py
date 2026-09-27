@@ -37,7 +37,6 @@ from src.football.top5_controlled_release import (
 from src.football.top5_controlled_shadow_provider_qualification import TOP5_LEAGUES
 from src.football.top5_final_acceptance import (
     ACTIVE_PROVIDER,
-    CANDIDATE_PROVIDER,
     STATUS_VERIFIED,
     Top5FinalAcceptanceError,
     canonical_digest,
@@ -58,6 +57,9 @@ DURABLE_ACTIVATION_SCHEMA_VERSION = "top5-durable-activation-state-v1"
 ACTIVATION_PLAN_SCHEMA_VERSION = "top5-controlled-activation-plan-v1"
 ACTIVATION_RUNTIME_STATE_PATH = "football/top5/controlled-activation/state-v1.json"
 PRODUCTION_RUNTIME_REQUIRED = "VERIFIED_ONE_SHOT_RUNTIME_REQUIRED"
+ACTIVATION_EVIDENCE_PROVIDER_IDENTITIES = frozenset(
+    {*CANDIDATE_ONLY_PROVIDER_IDENTITIES, "isports_api"}
+)
 
 
 class DurableActivationError(ProductionContractError):
@@ -84,6 +86,37 @@ def _hash(value: object, name: str) -> str:
     ):
         raise DurableActivationError(f"{name} must be a hexadecimal source SHA")
     return result.lower()
+
+
+def validate_activation_evidence_provider(
+    provider_identity: object,
+    candidate_provider_identity: object | None = None,
+) -> str:
+    """Validate candidate evidence identity without granting production authority."""
+    provider = _text(provider_identity, "evidence provider identity")
+    if provider not in ACTIVATION_EVIDENCE_PROVIDER_IDENTITIES:
+        raise DurableActivationError("evidence provider identity is not allowlisted")
+    if candidate_provider_identity is not None and _text(
+        candidate_provider_identity, "candidate evidence provider identity"
+    ) != provider:
+        raise DurableActivationError("evidence provider identities do not match")
+    return provider
+
+
+def validate_activation_manifest_evidence_provider(
+    manifest: Mapping[str, object],
+) -> str:
+    """Read the neutral name first, with the legacy B1 field as fallback."""
+    identities = [
+        validate_activation_evidence_provider(manifest[key])
+        for key in ("evidence_provider", "candidate_provider")
+        if key in manifest
+    ]
+    if not identities:
+        raise DurableActivationError("B1 evidence provider identity is missing")
+    if any(identity != identities[0] for identity in identities[1:]):
+        raise DurableActivationError("B1 evidence provider identities do not match")
+    return identities[0]
 
 
 def _timestamp(value: object, name: str) -> datetime:
@@ -259,7 +292,12 @@ def _activation_claims_digest(
 
 @dataclass(frozen=True)
 class Top5DurableActivationPlanV1:
-    """A verified five-league evidence package bound to one activation league."""
+    """A verified five-league evidence package bound to one activation league.
+
+    ``candidate_provider`` is retained in the v1 serialized plan for
+    compatibility; semantically it is the evidence provider, never the
+    production odds authority.
+    """
 
     activation_id: str
     activation_league: str
@@ -333,6 +371,11 @@ class Top5DurableActivationPlanV1:
     def plan_digest(self) -> str:
         return _sha(self._payload())
 
+    @property
+    def evidence_provider(self) -> str:
+        """The provider identity of accepted evidence, distinct from authority."""
+        return self.candidate_provider
+
     def validate(self, *, now: datetime) -> None:
         for name in (
             "activation_id",
@@ -358,11 +401,7 @@ class Top5DurableActivationPlanV1:
             raise DurableActivationError(
                 "production authority must remain the_odds_api"
             )
-        if (
-            self.candidate_provider != CANDIDATE_PROVIDER
-            or self.candidate_provider not in CANDIDATE_ONLY_PROVIDER_IDENTITIES
-        ):
-            raise DurableActivationError("candidate provider identity is not canonical")
+        validate_activation_evidence_provider(self.evidence_provider)
         for name in (
             "receipt_package_digest",
             "b1_manifest_digest",
@@ -438,12 +477,17 @@ def prepare_top5_durable_activation_plan(
         raise DurableActivationError(
             "B1 final-acceptance manifest digest/readiness mismatch"
         )
-    if (
-        manifest.get("provider_authority") != ACTIVE_PROVIDER
-        or manifest.get("candidate_provider") != CANDIDATE_PROVIDER
-    ):
+    try:
+        manifest_evidence_provider = validate_activation_manifest_evidence_provider(
+            manifest
+        )
+    except DurableActivationError as exc:
         raise DurableActivationError(
-            "B1 provider/candidate authority binding is invalid"
+            "B1 evidence-provider binding is invalid"
+        ) from exc
+    if manifest.get("provider_authority") != ACTIVE_PROVIDER:
+        raise DurableActivationError(
+            "B1 production provider authority binding is invalid"
         )
     if (
         not isinstance(manifest.get("leagues"), (list, tuple))
@@ -477,12 +521,12 @@ def prepare_top5_durable_activation_plan(
         raise DurableActivationError(
             "B2 package must retain canonical five-league evidence"
         )
-    if (
-        dossier.provider_identity != CANDIDATE_PROVIDER
-        or dossier.candidate_provider_identity != CANDIDATE_PROVIDER
-    ):
+    evidence_provider = validate_activation_evidence_provider(
+        dossier.provider_identity, dossier.candidate_provider_identity
+    )
+    if evidence_provider != manifest_evidence_provider:
         raise DurableActivationError(
-            "B2 evidence is not from the candidate-only provider"
+            "B1 and B2 evidence provider identities differ"
         )
     if any(
         binding.evidence_kind != "REAL_OBSERVED"
@@ -662,6 +706,7 @@ def prepare_top5_durable_activation_plan(
         "activation_id": activation.activation_id,
         "activation_league": activation.league_code,
         "provider_authority": ACTIVE_PROVIDER,
+        "evidence_provider": evidence_provider,
         "candidate_provider_authority": False,
         "receipt_package_digest": receipt_package.package_digest,
         "b1_manifest_digest": manifest["manifest_digest"],
@@ -680,7 +725,7 @@ def prepare_top5_durable_activation_plan(
         activation_league=activation.league_code,
         evidence_leagues=TOP5_LEAGUES,
         provider_authority=ACTIVE_PROVIDER,
-        candidate_provider=CANDIDATE_PROVIDER,
+        candidate_provider=evidence_provider,
         receipt_package_id=receipt_package.package_id,
         receipt_package_digest=receipt_package.package_digest,
         b1_manifest_digest=str(manifest["manifest_digest"]),

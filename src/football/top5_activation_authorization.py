@@ -40,8 +40,11 @@ from src.football.top5_durable_activation import (
     DurableActivationError,
     Top5DurableActivationPlanV1,
     _sha,
+    validate_activation_evidence_provider,
+    validate_activation_manifest_evidence_provider,
 )
 from src.football.top5_final_acceptance import (
+    ACTIVE_PROVIDER,
     Top5FinalAcceptanceError,
     verify_final_acceptance,
 )
@@ -58,7 +61,7 @@ from src.football.top5_signal_lifecycle import (
 )
 from src.runtime.paths import ROOT
 
-ACTIVATION_AUTHORIZATION_SCHEMA = "top5-philip-activation-authorization-v1"
+ACTIVATION_AUTHORIZATION_SCHEMA = "top5-philip-activation-authorization-v2"
 ACTIVATION_AUTHORIZATION_ACTION = "controlled_top5_activation"
 _HEX_64 = re.compile(r"^[0-9a-f]{64}$")
 _NONCE = re.compile(r"^[A-Za-z0-9_-]{32,128}$")
@@ -224,6 +227,7 @@ class Top5ActivationExecutionBindingV1:
     model_identity: str
     model_artifact_hash: str
     provider_authority: str
+    evidence_provider: str
     request_shape_digest: str
     lifecycle_contract_id: str
     lifecycle_stage: str
@@ -237,7 +241,7 @@ class Top5ActivationExecutionBindingV1:
 
     def _core_payload(self) -> dict[str, object]:
         return {
-            "schema_version": "top5-controlled-activation-execution-plan-v1",
+            "schema_version": "top5-controlled-activation-execution-plan-v2",
             "durable_plan_digest": self.durable_plan_digest,
             "activation_authorization_id": self.activation_authorization_id,
             "activation_id": self.activation_id,
@@ -250,6 +254,7 @@ class Top5ActivationExecutionBindingV1:
             "model_identity": self.model_identity,
             "model_artifact_hash": self.model_artifact_hash,
             "provider_authority": self.provider_authority,
+            "evidence_provider": self.evidence_provider,
             "request_shape_digest": self.request_shape_digest,
             "lifecycle_contract_id": self.lifecycle_contract_id,
             "lifecycle_stage": self.lifecycle_stage,
@@ -282,6 +287,7 @@ class Top5ActivationExecutionBindingV1:
             "model_identity": self.model_identity,
             "model_artifact_hash": self.model_artifact_hash,
             "provider_authority": self.provider_authority,
+            "evidence_provider": self.evidence_provider,
             "request_shape_digest": self.request_shape_digest,
             "lifecycle_contract_id": self.lifecycle_contract_id,
             "lifecycle_stage": self.lifecycle_stage,
@@ -358,7 +364,9 @@ def build_activation_execution_binding(
         or activation.research_sha.lower() != plan.research_sha.lower()
         or activation.model_identity != plan.model_identity
         or activation.model_artifact_hash.lower() != plan.model_artifact_hash.lower()
-        or activation.provider_authority.approved_odds_provider != "the_odds_api"
+        or activation.provider_authority.approved_odds_provider != ACTIVE_PROVIDER
+        or activation.provider_authority.approved_odds_provider
+        != plan.provider_authority
     ):
         raise ActivationAuthorizationError(
             "activation authorization differs from the exact prepared plan"
@@ -367,9 +375,18 @@ def build_activation_execution_binding(
         raise ActivationAuthorizationError(
             "five-league evidence package digest mismatch"
         )
-    if receipt_package.dossier.provider_identity != "therundown_experimental":
+    try:
+        evidence_provider = validate_activation_evidence_provider(
+            receipt_package.dossier.provider_identity,
+            receipt_package.dossier.candidate_provider_identity,
+        )
+    except DurableActivationError as exc:
         raise ActivationAuthorizationError(
-            "five-league candidate evidence identity mismatch"
+            "five-league evidence provider identity is invalid"
+        ) from exc
+    if evidence_provider != plan.evidence_provider:
+        raise ActivationAuthorizationError(
+            "five-league evidence provider differs from prepared plan"
         )
 
     _, lifecycle_for_plan = _validated_lifecycle_inputs(
@@ -428,7 +445,8 @@ def build_activation_execution_binding(
         research_sha=plan.research_sha.lower(),
         model_identity=plan.model_identity,
         model_artifact_hash=plan.model_artifact_hash.lower(),
-        provider_authority="the_odds_api",
+        provider_authority=plan.provider_authority,
+        evidence_provider=plan.evidence_provider,
         request_shape_digest=the_odds_api_one_shot_request_shape_digest(
             plan.activation_league
         ),
@@ -547,14 +565,26 @@ def build_signed_activation_execution_binding(
         raise ActivationAuthorizationError(
             "selected fixture differs from canonical B2 evidence"
         )
+    try:
+        evidence_provider = validate_activation_evidence_provider(
+            receipt_package.dossier.provider_identity,
+            receipt_package.dossier.candidate_provider_identity,
+        )
+        manifest_evidence_provider = validate_activation_manifest_evidence_provider(
+            manifest
+        )
+    except DurableActivationError as exc:
+        raise ActivationAuthorizationError(
+            "B1/B2 evidence provider identity is invalid"
+        ) from exc
     if (
-        plan.provider_authority != "the_odds_api"
-        or receipt_package.dossier.provider_identity != "therundown_experimental"
-        or receipt_package.dossier.candidate_provider_identity
-        != "therundown_experimental"
+        plan.provider_authority != ACTIVE_PROVIDER
+        or manifest.get("provider_authority") != ACTIVE_PROVIDER
+        or evidence_provider != plan.evidence_provider
+        or manifest_evidence_provider != plan.evidence_provider
     ):
         raise ActivationAuthorizationError(
-            "provider authority/candidate binding is invalid"
+            "production authority/evidence provider binding is invalid"
         )
     _, lifecycle_for_plan = _validated_lifecycle_inputs(
         lifecycles=lifecycles,
@@ -600,6 +630,7 @@ def build_signed_activation_execution_binding(
         model_identity=plan.model_identity,
         model_artifact_hash=plan.model_artifact_hash.lower(),
         provider_authority=plan.provider_authority,
+        evidence_provider=plan.evidence_provider,
         request_shape_digest=the_odds_api_one_shot_request_shape_digest(
             plan.activation_league
         ),
@@ -780,6 +811,7 @@ _PAYLOAD_FIELDS = frozenset(
         "model_identity",
         "model_artifact_hash",
         "provider_authority",
+        "evidence_provider",
         "request_shape_digest",
         "lifecycle_contract_id",
         "lifecycle_stage",
@@ -840,14 +872,21 @@ def verify_activation_authorization(
         "activation_league",
         "fixture_key",
         "model_identity",
+        "evidence_provider",
         "lifecycle_contract_id",
         "lifecycle_stage_contract_id",
         "signer_key_id",
     ):
         if not isinstance(payload.get(key), str) or not str(payload[key]).strip():
             raise ActivationAuthorizationError(f"{key} must be non-empty text")
-    if payload["provider_authority"] != "the_odds_api":
+    if payload["provider_authority"] != ACTIVE_PROVIDER:
         raise ActivationAuthorizationError("production provider must be the_odds_api")
+    try:
+        validate_activation_evidence_provider(payload["evidence_provider"])
+    except DurableActivationError as exc:
+        raise ActivationAuthorizationError(
+            "signed evidence provider is not allowlisted"
+        ) from exc
     if payload["lifecycle_stage"] not in {"INITIAL", "REFINEMENT"}:
         raise ActivationAuthorizationError("signed lifecycle stage is invalid")
     if payload["lifecycle_timing_bounds"] != dict(

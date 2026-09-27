@@ -182,6 +182,8 @@ def test_exact_ed25519_authorization_is_accepted_and_separate_from_signal_time(
         == binding.signal_time_approval_identity
     )
     assert verified.payload["provider_authority"] == "the_odds_api"
+    assert verified.payload["evidence_provider"] == "therundown_experimental"
+    assert binding.provider_authority != binding.evidence_provider
     assert verified.payload["retry_budget"] == 0
     assert verified.payload["publication"] is False
     assert verified.payload["betting"] is False
@@ -200,6 +202,8 @@ def test_exact_ed25519_authorization_is_accepted_and_separate_from_signal_time(
         ("fixture_key", "fixture:other"),
         ("model_identity", "model:other"),
         ("provider_authority", "therundown_experimental"),
+        ("provider_authority", "isports_api"),
+        ("evidence_provider", "isports_api"),
         ("lifecycle_contract_id", "lifecycle:other"),
         ("lifecycle_stage", "INITIAL"),
         ("lifecycle_stage_contract_id", "stage:other"),
@@ -225,6 +229,27 @@ def test_any_bound_claim_mutation_is_rejected(tmp_path, field, replacement):
             expected_signer_key_id=SIGNER_ID,
             expected_binding=binding,
             now=NOW,
+        )
+
+
+def test_prepared_evidence_provider_substitution_is_rejected(tmp_path):
+    package, bundle, plan, fixture, lifecycles, *_rest = _signed_context(tmp_path)
+    substituted_plan = replace(plan, candidate_provider="isports_api")
+
+    with pytest.raises(
+        ActivationAuthorizationError,
+        match="production authority/evidence provider binding",
+    ):
+        build_signed_activation_execution_binding(
+            plan=substituted_plan,
+            receipt_package=package,
+            b1_acceptance_bundle=bundle,
+            fixture=fixture,
+            activation_authorization_id=AUTHORIZATION_ID,
+            lifecycle_contract=DEFAULT_SIGNAL_LIFECYCLE_CONTRACT,
+            lifecycle_stage="REFINEMENT",
+            now=NOW,
+            lifecycles=lifecycles,
         )
 
 
