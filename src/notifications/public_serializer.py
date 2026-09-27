@@ -26,6 +26,10 @@ from src.football.top5_lifecycle_public import (
     collapse_top5_lifecycle_versions,
     project_top5_lifecycle,
 )
+from src.notifications.nations_league_public import (
+    NationsLeaguePublicError,
+    validate_public_nations_league,
+)
 
 
 class PublicFootballCompatibilityError(ValueError):
@@ -46,6 +50,7 @@ _PUBLIC_TOP_LEVEL_KEYS: frozenset[str] = frozenset(
         "model_tips",
         "model_evals",
         "football",
+        "nations_league",
         "tennis",
         "top_elo",
         "wm_results",
@@ -519,7 +524,11 @@ def _public_top5_release(
             )
         if any(
             result.get(field) is not None
-            for field in ("activation_id", "publication_authorization_id", "published_at")
+            for field in (
+                "activation_id",
+                "publication_authorization_id",
+                "published_at",
+            )
         ):
             raise PublicFootballCompatibilityError(
                 "prepublication release cannot claim activation or publication"
@@ -862,7 +871,13 @@ def map_prediction_to_public_football_signals(
         .strip()
         .upper()
     )
-    if publication_status not in {"UNPUBLISHED", "PREPARED", "PUBLISHED", "FAILED", "BLOCKED"}:
+    if publication_status not in {
+        "UNPUBLISHED",
+        "PREPARED",
+        "PUBLISHED",
+        "FAILED",
+        "BLOCKED",
+    }:
         raise PublicFootballCompatibilityError(
             f"unsupported public football publication status: {publication_status!r}"
         )
@@ -1368,9 +1383,7 @@ def _public_tennis_stats(ts: dict | None) -> dict:
     return result
 
 
-def _serialize_public_product(
-    snapshot: dict | None, *, prepublication: bool
-) -> dict:
+def _serialize_public_product(snapshot: dict | None, *, prepublication: bool) -> dict:
     """Project a public payload, selecting an explicit Top-5 lifecycle state.
 
     Implements an explicit ALLOWLIST: every top-level key must be on the list.
@@ -1400,6 +1413,15 @@ def _serialize_public_product(
             pub[key] = snapshot[key]
     if "football" in pub:
         pub["football"] = serialize_public_football_records(pub["football"])
+    if "nations_league" in pub:
+        try:
+            pub["nations_league"] = validate_public_nations_league(
+                pub["nations_league"]
+            )
+        except NationsLeaguePublicError as exc:
+            raise PublicFootballCompatibilityError(
+                f"invalid public Nations League shadow: {exc}"
+            ) from exc
     if "top5_release" in pub:
         pub["top5_release"] = _public_top5_release(
             pub["top5_release"], prepublication=prepublication

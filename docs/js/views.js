@@ -526,6 +526,66 @@ function _footballLeagueLabel(league) {
   return _FOOTBALL_LEAGUE_LABELS[String(league || '').toLowerCase()] || '⚽ Fußball';
 }
 
+function renderNationsLeagueShadow(payload) {
+  const container = document.getElementById('nations-league-shadow');
+  if (!container) return;
+  const captured = Date.parse(payload?.captured_at || '');
+  const now = Date.now();
+  const valid = payload && payload.schema === 'nations-league-public-v1' &&
+    payload.competition === 'UEFA Nations League' &&
+    payload.provider === 'the_odds_api' &&
+    payload.sport_key === 'soccer_uefa_nations_league' &&
+    payload.evidence_status === 'WEAK_EVIDENCE_SHADOW_ONLY' &&
+    payload.lifecycle === 'SHADOW_ONLY' && payload.no_bet === true &&
+    payload.publication_enabled === false && /^[0-9a-f]{40}$/.test(payload.source_sha || '') &&
+    /^[0-9a-f]{64}$/.test(payload.artifact_digest || '') &&
+    /^[0-9a-f]{64}$/.test(payload.public_digest || '') &&
+    Number.isFinite(captured) && captured <= now && now - captured <= 15 * 60 * 1000 &&
+    Number.isInteger(payload.fixture_count) && payload.fixture_count > 0 &&
+    Array.isArray(payload.fixtures) && payload.fixtures.length === payload.fixture_count;
+  if (!valid) {
+    container.replaceChildren();
+    container.hidden = true;
+    return;
+  }
+  const pct = (value) => `${(Number(value) * 100).toFixed(1)}%`;
+  const fixtures = payload.fixtures.map((fixture) => {
+    const model = fixture?.model?.probabilities;
+    const market = fixture?.market?.probabilities;
+    const odds = fixture?.market?.odds_decimal;
+    const kickoff = Date.parse(fixture?.kickoff || '');
+    const identities = typeof fixture?.provider_event_id === 'string' && fixture.provider_event_id &&
+      fixture.competition === payload.competition && fixture.source_sha === payload.source_sha &&
+      fixture.artifact_digest === payload.artifact_digest && fixture.captured_at === payload.captured_at &&
+      typeof fixture.home === 'string' && fixture.home && typeof fixture.away === 'string' && fixture.away &&
+      Number.isFinite(kickoff) && kickoff > now;
+    const probabilityMaps = [model, market, fixture?.model?.components?.raw_dixon_coles,
+      fixture?.model?.components?.raw_gbt, fixture?.model?.components?.canonical_stacker];
+    const validProbabilities = probabilityMaps.every((map) => map &&
+      ['home', 'draw', 'away'].every((key) => Number.isFinite(map[key]) && map[key] >= 0 && map[key] <= 1) &&
+      Math.abs(map.home + map.draw + map.away - 1) <= 1e-6);
+    const validOdds = odds && ['home', 'draw', 'away'].every((key) => Number.isFinite(odds[key]) && odds[key] > 1);
+    if (!identities || !validProbabilities || !validOdds) return null;
+    const time = new Date(kickoff).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    const outcomes = [['home', fixture.home], ['draw', 'Remis'], ['away', fixture.away]];
+    const rows = outcomes.map(([key, label]) =>
+      `<div class="nl-shadow-outcome"><span>${esc(label)}</span><b>Modell ${pct(model[key])}</b><span>Markt ${pct(market[key])} · Quote ${Number(odds[key]).toFixed(2)}</span></div>`
+    ).join('');
+    const components = fixture.model.components;
+    const detail = ['raw_dixon_coles', 'raw_gbt', 'canonical_stacker'].map((key) =>
+      `${esc(key.replaceAll('_', ' '))}: ${pct(components[key].home)} / ${pct(components[key].draw)} / ${pct(components[key].away)}`
+    ).join(' · ');
+    return `<article class="nl-shadow-fixture"><div class="nl-shadow-fixture-title"><b>${esc(fixture.home)} vs ${esc(fixture.away)}</b><span>${time}</span></div>${rows}<details><summary>Modellkomponenten &amp; Herkunft</summary><p>${detail}</p><p>Quelle: ${esc(payload.provider)} · Erfasst: ${esc(payload.captured_at)} · Source: <code title="${esc(payload.source_sha)}">${esc(payload.source_sha.slice(0, 12))}</code></p></details></article>`;
+  });
+  if (fixtures.some((fixture) => fixture === null)) {
+    container.replaceChildren();
+    container.hidden = true;
+    return;
+  }
+  container.hidden = false;
+  container.innerHTML = `<section class="nl-shadow-panel" aria-label="UEFA Nations League shadow model"><header><div><b>UEFA Nations League</b><span class="nl-shadow-badge">Shadow</span></div><small>WEAK EVIDENCE · NO BET · Kein Wett- oder Produktionssignal</small></header>${fixtures.join('')}</section>`;
+}
+
 function _footballCompatMetaHtml(s) {
   const state = String(s.activation_state || s.activation_mode || '').toUpperCase();
   const publication = String(s.publication_status || '').toUpperCase();

@@ -68,6 +68,31 @@ function _dropUntrustedTop5(payload) {
   return safe;
 }
 
+function _canonicalNationsLeagueJson(value) {
+  if (Array.isArray(value)) return `[${value.map(_canonicalNationsLeagueJson).join(',')}]`;
+  if (value && typeof value === 'object') {
+    return `{${Object.keys(value).sort().map((key) =>
+      `${JSON.stringify(key)}:${_canonicalNationsLeagueJson(value[key])}`
+    ).join(',')}}`;
+  }
+  return JSON.stringify(value);
+}
+
+async function _validNationsLeaguePublicDigest(value) {
+  if (!value || typeof value !== 'object' || !globalThis.crypto?.subtle ||
+      typeof TextEncoder === 'undefined' || !/^[0-9a-f]{64}$/.test(value.public_digest || '')) return false;
+  const body = { ...value };
+  delete body.public_digest;
+  try {
+    const bytes = new TextEncoder().encode(_canonicalNationsLeagueJson(body));
+    const digest = await globalThis.crypto.subtle.digest('SHA-256', bytes);
+    const actual = [...new Uint8Array(digest)].map((item) => item.toString(16).padStart(2, '0')).join('');
+    return actual === value.public_digest;
+  } catch {
+    return false;
+  }
+}
+
 function _top5LifecycleError(message) {
   throw new Error(`invalid public Top-5 lifecycle: ${message}`);
 }
@@ -1183,6 +1208,9 @@ async function _load() {
     if (!fallback.ok) throw workerReleaseError;
     d = _top5PublicReleaseGuard(await fallback.json(), 'static');
   }
+  if (d.nations_league && !(await _validNationsLeaguePublicDigest(d.nations_league))) {
+    d = Object.assign({}, d, { nations_league: null });
+  }
 
   const dt = new Date(d.updated), age = (Date.now()-dt)/36e5;
   document.getElementById('updated-time').textContent =
@@ -1202,6 +1230,11 @@ async function _load() {
   }
 
   _signals = [...(d.football||[]), ...(d.tennis||[])];
+  // Nations League shadow fixtures have a separate read-only renderer and are
+  // deliberately never added to the actionable football signal collection.
+  if (typeof renderNationsLeagueShadow === 'function') {
+    renderNationsLeagueShadow(d.nations_league || null);
+  }
   _tennisStats = d.tennis_stats || {};
   _schedule = d.schedule || [];
   _allOdds = d.all_odds || {};
