@@ -10,6 +10,7 @@ import hashlib
 import json
 import pickle
 from collections import defaultdict
+from itertools import pairwise
 from pathlib import Path
 from typing import Any
 
@@ -222,7 +223,7 @@ def _reliability_by_class(probabilities: np.ndarray, outcomes: np.ndarray, n_bin
         p = probabilities[:, class_index]
         y = (outcomes == class_index).astype(float)
         bins: list[dict[str, Any]] = []
-        for bin_index, (lo, hi) in enumerate(zip(edges[:-1], edges[1:], strict=True)):
+        for bin_index, (lo, hi) in enumerate(pairwise(edges)):
             mask = (p >= lo) & (p < hi)
             if bin_index == n_bins - 1:
                 mask |= p == 1.0
