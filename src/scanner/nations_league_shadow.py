@@ -63,9 +63,11 @@ SNAPSHOT_FILES = frozenset(
 )
 SOURCE_FILES = (
     "scripts/nations_league_shadow_scan.py",
+    "scripts/nations_league_isports_shadow_scan.py",
     "src/betting/odds_utils.py",
     "src/config.py",
     "src/data/odds_api.py",
+    "src/data/isports_api.py",
     "src/ensemble/stacking.py",
     "src/features/builder.py",
     "src/features/squad_context.py",
@@ -74,6 +76,7 @@ SOURCE_FILES = (
     "src/models/lgbm_model.py",
     "src/runtime/paths.py",
     "src/scanner/nations_league_shadow.py",
+    "src/scanner/nations_league_isports_shadow.py",
     "src/scanner/scoring.py",
     "src/signals/provider_budget.py",
 )
@@ -389,6 +392,7 @@ def predict_fixture(
     snapshot: FrozenSnapshot,
     historical: pd.DataFrame,
     captured_at: datetime,
+    neutral: bool = False,
 ) -> dict[str, Any]:
     raw_home = str(event["home_team"])
     raw_away = str(event["away_team"])
@@ -413,7 +417,7 @@ def predict_fixture(
         )
 
     try:
-        dc_result = dc.predict_match(home, away, snapshot.dc_params, neutral=False)
+        dc_result = dc.predict_match(home, away, snapshot.dc_params, neutral=neutral)
     except Exception as exc:
         raise NationsLeagueShadowError("frozen Dixon-Coles inference failed") from exc
     dc_probs = _probability_map(
@@ -433,7 +437,7 @@ def predict_fixture(
             historical=past,
             elo_series=elo_series,
             dc_params=snapshot.dc_params,
-            neutral=False,
+            neutral=neutral,
             tournament=TOURNAMENT,
             market_odds=None,
             statsbomb_xg=None,
@@ -441,9 +445,9 @@ def predict_fixture(
             fotmob_ratings_df=pd.DataFrame(),
             ppda_df=None,
         )
-        if int(features.get("is_neutral", 1)) != 0:
+        if int(features.get("is_neutral", 1)) != int(neutral):
             raise NationsLeagueShadowError(
-                "feature contract marked a normal NL fixture neutral"
+                "feature contract neutral flag disagrees with the provider fixture"
             )
         if int(features.get("is_knockout", 1)) != 0:
             raise NationsLeagueShadowError(
@@ -474,7 +478,7 @@ def predict_fixture(
         lgbm_probs=None,
         shin_probs=(market_probs["home"], market_probs["draw"], market_probs["away"]),
         is_knockout=False,
-        is_neutral=False,
+        is_neutral=neutral,
     )
     stacker_array = np.asarray(
         snapshot.stacker.predict_proba(stacker_features.reshape(1, -1)), dtype=float
@@ -497,7 +501,7 @@ def predict_fixture(
         "captured_at": captured_at.astimezone(timezone.utc).isoformat(),
         "home_team": home,
         "away_team": away,
-        "neutral": False,
+        "neutral": neutral,
         "tournament": TOURNAMENT,
         "market": {
             "bookmaker": odds["bookmaker"],
