@@ -376,7 +376,7 @@ function _signalsKey(user) {
 // is structurally excluded. Applied to every GET /signals.json response.
 const _PUBLIC_TOP_LEVEL_KEYS = new Set([
   'updated', 'build_info', 'schedule', 'all_odds', 'model_tips', 'model_evals',
-  'football', 'tennis', 'top_elo', 'wm_results', 'odds_history', 'health',
+  'football', 'nations_league', 'tennis', 'top_elo', 'wm_results', 'odds_history', 'health',
   'top5_release',
 ]);
 
@@ -600,6 +600,7 @@ export function serializePublicProduct(snapshot) {
     if (key in snapshot) pub[key] = snapshot[key];
   }
   if ('football' in pub) pub.football = _canonicalizeTop5PublicRecords(pub.football);
+  if ('nations_league' in pub) _validatePublicNationsLeague(pub.nations_league);
   if ('top5_release' in pub) pub.top5_release = _publicTop5Release(pub.top5_release);
   _validateTop5PublicRecords(pub.football, pub.top5_release);
   if ('meta' in snapshot) pub.meta = _publicMeta(snapshot.meta);
@@ -607,6 +608,105 @@ export function serializePublicProduct(snapshot) {
   // Fail-closed: throws if any forbidden key survived inside an approved container.
   _assertNoPrivateKeys(pub);
   return pub;
+}
+
+function _validatePublicNationsLeague(value) {
+  const fail = (reason) => { throw new Error(`invalid Nations League shadow: ${reason}`); };
+  const hasExactKeys = (object, names) => {
+    if (!object || typeof object !== 'object' || Array.isArray(object)) return false;
+    const actual = Object.keys(object).sort();
+    const expected = [...names].sort();
+    return actual.length === expected.length && actual.every((key, index) => key === expected[index]);
+  };
+  if (!hasExactKeys(value, [
+    'schema', 'competition', 'provider', 'provider_league_id', 'evidence_status', 'lifecycle',
+    'no_bet', 'publication_enabled', 'captured_at', 'source_sha', 'artifact_digest',
+    'model_snapshot_digest', 'fixture_count', 'fixtures', 'public_digest',
+  ])) fail('fields are not allowlisted');
+  if (!value || typeof value !== 'object' || Array.isArray(value)) fail('expected object');
+  if (value.schema !== 'nations-league-public-v1' ||
+      value.competition !== 'UEFA Nations League' ||
+      value.provider !== 'isports_api' ||
+      value.provider_league_id !== 146819) fail('unsupported identity');
+  if (value.evidence_status !== 'WEAK_EVIDENCE_SHADOW_ONLY' ||
+      value.lifecycle !== 'SHADOW_ONLY' || value.no_bet !== true ||
+      value.publication_enabled !== false) fail('unsafe lifecycle');
+  if (!/^[0-9a-f]{40}$/.test(value.source_sha || '') ||
+      !/^[0-9a-f]{64}$/.test(value.artifact_digest || '') ||
+      !/^[0-9a-f]{64}$/.test(value.model_snapshot_digest || '') ||
+      !/^[0-9a-f]{64}$/.test(value.public_digest || '')) fail('malformed provenance');
+  const captured = Date.parse(value.captured_at || '');
+  if (!Number.isFinite(captured) || captured > Date.now() || Date.now() - captured > 15 * 60 * 1000) {
+    fail('stale or invalid capture time');
+  }
+  if (!Number.isSafeInteger(value.fixture_count) || value.fixture_count < 1 ||
+      !Array.isArray(value.fixtures) || value.fixtures.length !== value.fixture_count) {
+    fail('incomplete fixture coverage');
+  }
+  const ids = new Set();
+  const probabilities = (item) => item && ['home', 'draw', 'away'].every((key) =>
+    typeof item[key] === 'number' && Number.isFinite(item[key]) && item[key] >= 0 && item[key] <= 1 &&
+    Number.isInteger(item[key] * 1e6)) &&
+    Math.abs(item.home + item.draw + item.away - 1) <= 1e-6;
+  for (const fixture of value.fixtures) {
+    if (!hasExactKeys(fixture, [
+      'provider_event_id', 'competition', 'kickoff', 'home', 'away', 'captured_at',
+      'model', 'market', 'source_sha', 'artifact_digest',
+    ]) || !hasExactKeys(fixture.model, ['probabilities', 'components']) ||
+        !hasExactKeys(fixture.model.components, ['raw_dixon_coles', 'raw_gbt', 'canonical_stacker']) ||
+        !hasExactKeys(fixture.market, ['bookmaker', 'odds_decimal', 'probabilities']) ||
+        !hasExactKeys(fixture.market.odds_decimal, ['home', 'draw', 'away']) ||
+        !hasExactKeys(fixture.market.probabilities, ['home', 'draw', 'away']) ||
+        !hasExactKeys(fixture.model.probabilities, ['home', 'draw', 'away']) ||
+        !Object.values(fixture.model.components).every((item) =>
+          hasExactKeys(item, ['home', 'draw', 'away']))) {
+      fail('nested fields are not allowlisted');
+    }
+    if (!fixture || typeof fixture !== 'object' ||
+        typeof fixture.provider_event_id !== 'string' || !fixture.provider_event_id ||
+        ids.has(fixture.provider_event_id) || fixture.competition !== value.competition ||
+        fixture.source_sha !== value.source_sha || fixture.artifact_digest !== value.artifact_digest ||
+        fixture.captured_at !== value.captured_at || !fixture.home || !fixture.away ||
+        !Number.isFinite(Date.parse(fixture.kickoff || '')) ||
+        Date.parse(fixture.kickoff) <= Date.now() ||
+        !probabilities(fixture.model?.probabilities) ||
+        !probabilities(fixture.market?.probabilities) ||
+        !['home', 'draw', 'away'].every((key) =>
+          fixture.model.probabilities[key] === fixture.model.components.canonical_stacker[key]) ||
+        !['raw_dixon_coles', 'raw_gbt', 'canonical_stacker'].every((key) =>
+          probabilities(fixture.model?.components?.[key])) ||
+        typeof fixture.market.bookmaker !== 'string' || !fixture.market.bookmaker ||
+        !['home', 'draw', 'away'].every((key) =>
+          Number.isFinite(fixture.market?.odds_decimal?.[key]) && fixture.market.odds_decimal[key] > 1 &&
+          Number.isInteger(fixture.market.odds_decimal[key] * 1e6))) {
+      fail('malformed fixture or provenance');
+    }
+    ids.add(fixture.provider_event_id);
+  }
+}
+
+function _canonicalJsonForDigest(value) {
+  if (Array.isArray(value)) return `[${value.map(_canonicalJsonForDigest).join(',')}]`;
+  if (value && typeof value === 'object') {
+    return `{${Object.keys(value).sort().map((key) =>
+      `${JSON.stringify(key)}:${_canonicalJsonForDigest(value[key])}`
+    ).join(',')}}`;
+  }
+  return JSON.stringify(value);
+}
+
+export async function validatePublicNationsLeagueDigest(value) {
+  _validatePublicNationsLeague(value);
+  if (!globalThis.crypto?.subtle || typeof TextEncoder === 'undefined') {
+    throw new Error('Nations League public digest verification is unavailable');
+  }
+  const body = { ...value };
+  delete body.public_digest;
+  const bytes = new TextEncoder().encode(_canonicalJsonForDigest(body));
+  const digest = await globalThis.crypto.subtle.digest('SHA-256', bytes);
+  const actual = [...new Uint8Array(digest)].map((item) => item.toString(16).padStart(2, '0')).join('');
+  if (actual !== value.public_digest) throw new Error('Nations League public bundle digest mismatch');
+  return true;
 }
 
 async function readPending(env, user = DEFAULT_USER) {
@@ -1066,6 +1166,9 @@ export default {
       let publicPayload;
       try {
         publicPayload = serializePublicProduct(parsed);
+        if (publicPayload.nations_league) {
+          await validatePublicNationsLeagueDigest(publicPayload.nations_league);
+        }
       } catch {
         // Fail-closed: nested private key found in an approved container.
         return jr({ error: 'privacy_boundary_violation' }, 500);

@@ -679,3 +679,15 @@
     .tip-pop::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 6px solid transparent; border-top-color: var(--green); }
     .tip.open .tip-pop { display: block; }
     .tip.open { background: var(--green); color: #0d1117; border-color: var(--green); box-shadow: 0 0 0 4px rgba(0,200,83,.22); }
+.nl-shadow-panel{margin:8px 12px 14px;padding:12px;border:1px solid var(--border);border-radius:14px;background:var(--card-bg,rgba(255,255,255,.035));color:var(--text)}
+.nl-shadow-panel>header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 12px;margin-bottom:8px}
+.nl-shadow-panel>header>div{display:flex;align-items:center;gap:8px}
+.nl-shadow-panel>header small{color:var(--muted);font-size:10px}
+.nl-shadow-badge{padding:3px 8px;border:1px solid var(--yellow);border-radius:20px;color:var(--yellow);font-size:10px;font-weight:800;text-transform:uppercase}
+.nl-shadow-fixture{padding:10px 0;border-top:1px solid var(--border)}
+.nl-shadow-fixture-title,.nl-shadow-outcome{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 10px}
+.nl-shadow-fixture-title{font-size:12px;margin-bottom:7px}
+.nl-shadow-fixture-title span,.nl-shadow-outcome span{color:var(--muted);font-size:10px}
+.nl-shadow-outcome{padding:5px 0;border-top:1px solid var(--border);font-size:11px}
+.nl-shadow-fixture details{margin-top:7px;color:var(--muted);font-size:10px}
+.nl-shadow-fixture details p{margin:5px 0;overflow-wrap:anywhere}
