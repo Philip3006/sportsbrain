@@ -34,6 +34,8 @@ from src.football.top5_durable_activation import (
     DurableTop5ActivationStore,
     activation_health_payload,
     prepare_top5_durable_activation_plan,
+    validate_activation_evidence_provider,
+    validate_activation_manifest_evidence_provider,
 )
 from src.football.top5_production_activation import current_top5_routing_snapshot
 from tests.football.test_top5_b2_five_league_receipt import _canonical_run_and_manifests
@@ -137,10 +139,46 @@ def test_plan_keeps_five_league_evidence_and_one_league_activation_only():
     assert plan.activation_league == "BL1"
     assert plan.provider_authority == "the_odds_api"
     assert plan.candidate_provider == "therundown_experimental"
+    assert plan.evidence_provider == "therundown_experimental"
     assert plan.publication_enabled is False
     assert plan.scheduler_registered is False
     assert plan.betting_enabled is False
     assert plan.ledger_mutation_enabled is False
+
+
+def test_isports_evidence_identity_does_not_switch_production_authority():
+    *_context, plan = _inputs()
+    isports_plan = replace(plan, candidate_provider="isports_api")
+    isports_plan.validate(now=NOW)
+
+    assert isports_plan.evidence_provider == "isports_api"
+    assert isports_plan.provider_authority == "the_odds_api"
+    assert isports_plan.plan_digest != plan.plan_digest
+    assert isports_plan.publication_enabled is False
+    assert isports_plan.scheduler_registered is False
+    assert isports_plan.betting_enabled is False
+    assert isports_plan.ledger_mutation_enabled is False
+
+
+def test_activation_evidence_provider_allowlist_fails_closed():
+    assert validate_activation_evidence_provider("isports_api") == "isports_api"
+    with pytest.raises(DurableActivationError, match="not allowlisted"):
+        validate_activation_evidence_provider("unknown_provider")
+    with pytest.raises(DurableActivationError, match="do not match"):
+        validate_activation_evidence_provider("isports_api", "therundown_experimental")
+    assert (
+        validate_activation_manifest_evidence_provider(
+            {"evidence_provider": "isports_api"}
+        )
+        == "isports_api"
+    )
+    with pytest.raises(DurableActivationError, match="identities do not match"):
+        validate_activation_manifest_evidence_provider(
+            {
+                "evidence_provider": "isports_api",
+                "candidate_provider": "therundown_experimental",
+            }
+        )
 
 
 @pytest.mark.parametrize(
