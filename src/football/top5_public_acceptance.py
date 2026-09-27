@@ -344,7 +344,11 @@ class Top5PrepublicationArtifactV1:
         try:
             worker = serialize_top5_prepublication_candidate_product(worker_raw)
             static = serialize_top5_prepublication_candidate_product(static_raw)
-        except (AssertionError, PublicFootballCompatibilityError, TypeError, ValueError) as exc:
+        except TypeError as exc:
+            raise TypeError(
+                f"prepublication candidate payload rejected: {exc}"
+            ) from exc
+        except (AssertionError, PublicFootballCompatibilityError, ValueError) as exc:
             raise ValueError(f"prepublication candidate payload rejected: {exc}") from exc
         if worker != worker_raw or static != static_raw:
             raise ValueError("prepublication candidate payload is not canonical")
@@ -468,13 +472,17 @@ class Top5PrepublicationArtifactV1:
 def _timestamp(value: object, field: str) -> datetime:
     if isinstance(value, datetime):
         parsed = value
-    elif isinstance(value, str) and value.strip():
+    elif isinstance(value, str):
+        if not value.strip():
+            raise ValueError(f"{field} is missing")
         try:
             parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
         except ValueError as exc:
             raise ValueError(f"{field} is malformed") from exc
-    else:
+    elif value is None:
         raise ValueError(f"{field} is missing")
+    else:
+        raise TypeError(f"{field} must be a datetime or ISO-8601 string")
     if parsed.tzinfo is None or parsed.utcoffset() is None:
         raise ValueError(f"{field} must include timezone")
     return parsed.astimezone(timezone.utc)
