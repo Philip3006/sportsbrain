@@ -173,7 +173,7 @@ def predict_elo_asof(results: pd.DataFrame, matches: pd.DataFrame) -> dict[tuple
             predictions[key] = {
                 "probabilities": _probability_vector(np.asarray(probs, dtype=float)),
                 "training_max_date": None if pd.isna(max_training_date) else max_training_date.date().isoformat(),
-                "training_match_count": int(len(prefix)),
+                "training_match_count": len(prefix),
                 "training_cutoff_exclusive": match_date.date().isoformat(),
             }
     return predictions
@@ -208,7 +208,7 @@ def predict_dc_event_walk_forward(
             predictions[key] = {
                 "probabilities": _probability_vector(probs),
                 "training_max_date": train_max,
-                "training_match_count": int(len(training)),
+                "training_match_count": len(training),
                 "training_cutoff_exclusive": cutoff.date().isoformat(),
                 "fit_date": cutoff.date().isoformat(),
             }
@@ -222,7 +222,7 @@ def _reliability_by_class(probabilities: np.ndarray, outcomes: np.ndarray, n_bin
         p = probabilities[:, class_index]
         y = (outcomes == class_index).astype(float)
         bins: list[dict[str, Any]] = []
-        for bin_index, (lo, hi) in enumerate(zip(edges[:-1], edges[1:])):
+        for bin_index, (lo, hi) in enumerate(zip(edges[:-1], edges[1:], strict=True)):
             mask = (p >= lo) & (p < hi)
             if bin_index == n_bins - 1:
                 mask |= p == 1.0
@@ -440,7 +440,7 @@ def retrospective_frozen_diagnostic(
     competitive_series = compute_elo_series(filter_competitive(results))
     dc_rows: list[dict[str, Any]] = []
     gbt_rows: list[dict[str, Any]] = []
-    skipped = {"frozen_dc_unknown_team": 0, "frozen_gbt_feature_or_model_error": 0}
+    skipped = {"frozen_dc_unknown_team": 0}
 
     for _, row in matches.iterrows():
         base = _record(row)
@@ -453,31 +453,28 @@ def retrospective_frozen_diagnostic(
         except ValueError:
             skipped["frozen_dc_unknown_team"] += 1
 
-        try:
-            history_prefix = results.loc[results["date"] < match_date]
-            elo_prefix = competitive_series.loc[competitive_series["date"] < match_date]
-            features = build_feature_row(
-                home=home,
-                away=away,
-                match_date=match_date,
-                historical=history_prefix,
-                elo_series=elo_prefix,
-                dc_params=frozen_dc,
-                neutral=neutral,
-                tournament=TOURNAMENT,
-                market_odds=None,
-                statsbomb_xg=None,
-                player_xg_df=None,
-                fotmob_ratings_df=None,
-                ppda_df=None,
-            )
-            aligned = pd.DataFrame([features]).reindex(columns=feature_columns).fillna(0.0)
-            # Frozen HistGradientBoosting class order is canonical: away, draw, home.
-            raw = predict_proba(frozen_gbt, aligned)[0]
-            probs_home_draw_away = [float(raw[2]), float(raw[1]), float(raw[0])]
-            gbt_rows.append({**key_record, "probabilities": _probability_vector(probs_home_draw_away)})
-        except Exception:
-            skipped["frozen_gbt_feature_or_model_error"] += 1
+        history_prefix = results.loc[results["date"] < match_date]
+        elo_prefix = competitive_series.loc[competitive_series["date"] < match_date]
+        features = build_feature_row(
+            home=home,
+            away=away,
+            match_date=match_date,
+            historical=history_prefix,
+            elo_series=elo_prefix,
+            dc_params=frozen_dc,
+            neutral=neutral,
+            tournament=TOURNAMENT,
+            market_odds=None,
+            statsbomb_xg=None,
+            player_xg_df=None,
+            fotmob_ratings_df=None,
+            ppda_df=None,
+        )
+        aligned = pd.DataFrame([features]).reindex(columns=feature_columns).fillna(0.0)
+        # Frozen HistGradientBoosting class order is canonical: away, draw, home.
+        raw = predict_proba(frozen_gbt, aligned)[0]
+        probs_home_draw_away = [float(raw[2]), float(raw[1]), float(raw[0])]
+        gbt_rows.append({**key_record, "probabilities": _probability_vector(probs_home_draw_away)})
 
     metadata = json.loads((snapshot_dir / "metadata.json").read_text(encoding="utf-8"))
     return {
@@ -633,7 +630,7 @@ def run_validation(
         block_rows = matches.loc[matches["validation_period"].eq(block["id"])]
         historical_periods.append({
             **block,
-            "match_count": int(len(block_rows)),
+            "match_count": len(block_rows),
             "observed_start": block_rows["date"].min().date().isoformat() if not block_rows.empty else None,
             "observed_end": block_rows["date"].max().date().isoformat() if not block_rows.empty else None,
         })
@@ -652,7 +649,7 @@ def run_validation(
         "historical_periods": historical_periods,
         "no_lookahead_verified": bool(no_lookahead_verified),
         "strict_validation": {
-            "match_count": int(len(matches)),
+            "match_count": len(matches),
             "coverage": {
                 name: strict_variants[name]["coverage"] for name in ("dixon_coles", "elo")
             },
@@ -660,10 +657,10 @@ def run_validation(
             "paired_date_cluster_bootstrap": paired_bootstrap,
             "no_lookahead_audit": _no_lookahead_audit(audit_rows),
             "market_evidence": market,
-            "current_2026_27_observations_in_cache": int(len(current_rows)),
+            "current_2026_27_observations_in_cache": len(current_rows),
             "results_cache": {
                 "sha256": cache_sha256,
-                "row_count": int(len(results)),
+                "row_count": len(results),
                 "max_date": results["date"].max().date().isoformat(),
                 "local_file_only": True,
                 "network_fetch_performed": False,
