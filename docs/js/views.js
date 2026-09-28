@@ -933,6 +933,38 @@ function _topRecs24hHtml(signals, nowMs) {
   </div>`;
 }
 
+function _nationsLeagueHomePreviewHtml(payload, nowMs = Date.now()) {
+  // This is deliberately a fixture preview, never a signal or betting surface.
+  // The full public payload has already passed the canonical integrity gate in app.js.
+  if (!payload || payload.schema !== 'nations-league-public-v1' ||
+      payload.evidence_status !== 'WEAK_EVIDENCE_SHADOW_ONLY' ||
+      payload.lifecycle !== 'SHADOW_ONLY' || payload.no_bet !== true ||
+      payload.publication_enabled !== false || !Array.isArray(payload.fixtures)) return '';
+
+  const in24h = nowMs + 24 * 60 * 60 * 1000;
+  const upcoming = payload.fixtures
+    .filter((fixture) => fixture && typeof fixture.home === 'string' && typeof fixture.away === 'string' &&
+      Number.isFinite(Date.parse(fixture.kickoff || '')) && Date.parse(fixture.kickoff) > nowMs &&
+      Date.parse(fixture.kickoff) <= in24h)
+    .sort((a, b) => Date.parse(a.kickoff) - Date.parse(b.kickoff));
+  if (!upcoming.length) return '';
+
+  const rows = upcoming.map((fixture) => {
+    const kickoff = new Date(fixture.kickoff);
+    const date = kickoff.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit' });
+    const time = kickoff.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    return `<li><span><b>${esc(fixture.home)}</b><span class="nl-home-vs">vs</span><b>${esc(fixture.away)}</b></span><time datetime="${esc(fixture.kickoff)}">${esc(date)} · ${esc(time)}</time></li>`;
+  }).join('');
+  const rest = payload.fixtures.filter((fixture) => Date.parse(fixture?.kickoff || '') > in24h).length;
+  const more = rest > 0 ? ` · +${rest} weitere` : '';
+  return `<section class="nl-home-preview" aria-label="UEFA Nations League Shadow-Vorschau">
+    <div class="nl-home-preview-header"><div><span>UEFA Nations League</span><span class="nl-shadow-badge">Shadow</span></div><small>WEAK EVIDENCE · NO BET</small></div>
+    <p>Bevorstehende Spiele – reine Modellbeobachtung, keine Empfehlung.</p>
+    <ul>${rows}</ul>
+    <button type="button" class="nl-home-preview-link" onclick="navTo(document.querySelector('.nav-tab[data-view=\'football\']'))">Alle Shadow-Spiele ansehen${more}</button>
+  </section>`;
+}
+
 function renderHome() {
   const c = document.getElementById('home-container');
 
@@ -956,7 +988,7 @@ function renderHome() {
     const emptyBody = q
       ? `<div class="empty"><div class="icon">🔍</div><div>Keine Treffer für „${esc(q)}".<br><small>Versuche einen anderen Team-Namen.</small></div></div>`
       : `<div class="empty"><div class="icon">🔄</div><div>Keine anstehenden Spiele.<br><small>Letztes Update: ${document.getElementById('updated-time').textContent || '…'} · Nächster Scan: 08:00 UTC</small></div></div>`;
-    c.innerHTML = (q ? '' : _topRecs24hHtml(_signals, Date.now())) + emptyBody;
+    c.innerHTML = (q ? '' : _topRecs24hHtml(_signals, Date.now()) + _nationsLeagueHomePreviewHtml(_nationsLeague, Date.now())) + emptyBody;
     return;
   }
 
@@ -1150,7 +1182,7 @@ function renderHome() {
   }
 
   const topRecs24h = _topRecs24hHtml(_signals, Date.now());
-  let h = topRecs24h + todayHtml;
+  let h = topRecs24h + _nationsLeagueHomePreviewHtml(_nationsLeague, now) + todayHtml;
   for (const [dk, group] of Object.entries(days)) {
     // Day header
     if (dk === '__') {
