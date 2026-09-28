@@ -1,0 +1,2607 @@
+{
+  "artifact_digest": "8024b51682dd409380a546209c8473e373af5d606f2c5417c3b4258875fb27ec",
+  "candidate_table": [
+    {
+      "candidate_id": "nl-shadow-candidate:9169ca869eb2c93955e8ef1d504d17cb5407b535b8b2840e6556f717a4e9c3c8",
+      "confidence": "LOW",
+      "decimal_odds": 2.02,
+      "ev": 0.39786423999999987,
+      "ev_percent": 39.78642399999999,
+      "evaluation_bankroll_eur": 1000.0,
+      "fair_prob": 0.46937265067576683,
+      "kelly_fraction": 0.0975157450980392,
+      "ledger_mutation": false,
+      "market": "home",
+      "model_prob": 0.692012,
+      "no_bet": true,
+      "no_bet_flag": true,
+      "provider_event_id": "339418926",
+      "publication_enabled": false,
+      "shadow": true,
+      "signal_status": "SHADOW_ONLY",
+      "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+      "stake_label": "THEORETICAL_EVALUATION_ONLY",
+      "theoretical_stake_eur": 30.0
+    },
+    {
+      "candidate_id": "nl-shadow-candidate:1a23956c90d0d0c4a297fabcb772c76dbb4c181de2fe201ecfc4942fe46a9eec",
+      "confidence": "LOW",
+      "decimal_odds": 3.64,
+      "ev": 0.3834111200000001,
+      "ev_percent": 38.34111200000001,
+      "evaluation_bankroll_eur": 1000.0,
+      "fair_prob": 0.2605993263654988,
+      "kelly_fraction": 0.03630787121212122,
+      "ledger_mutation": false,
+      "market": "home",
+      "model_prob": 0.380058,
+      "no_bet": true,
+      "no_bet_flag": true,
+      "provider_event_id": "373418924",
+      "publication_enabled": false,
+      "shadow": true,
+      "signal_status": "SHADOW_ONLY",
+      "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+      "stake_label": "THEORETICAL_EVALUATION_ONLY",
+      "theoretical_stake_eur": 22.0
+    },
+    {
+      "candidate_id": "nl-shadow-candidate:9e0407e1de9cee29747c987a717a9d3a583447a7fde66d9636757139b36619c5",
+      "confidence": "LOW",
+      "decimal_odds": 4.81,
+      "ev": 0.33376008999999995,
+      "ev_percent": 33.376008999999996,
+      "evaluation_bankroll_eur": 1000.0,
+      "fair_prob": 0.19421760838497648,
+      "kelly_fraction": 0.021900268372703403,
+      "ledger_mutation": false,
+      "market": "home",
+      "model_prob": 0.277289,
+      "no_bet": true,
+      "no_bet_flag": true,
+      "provider_event_id": "204518929",
+      "publication_enabled": false,
+      "shadow": true,
+      "signal_status": "SHADOW_ONLY",
+      "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+      "stake_label": "THEORETICAL_EVALUATION_ONLY",
+      "theoretical_stake_eur": 22.0
+    },
+    {
+      "candidate_id": "nl-shadow-candidate:8e9211971b31e807020cb0d2329045f6f2eb052fa8e834356f17e9de154a18dc",
+      "confidence": "LOW",
+      "decimal_odds": 1.625,
+      "ev": 0.30834925,
+      "ev_percent": 30.834925000000002,
+      "evaluation_bankroll_eur": 1000.0,
+      "fair_prob": 0.5764491713437694,
+      "kelly_fraction": 0.12333970000000001,
+      "ledger_mutation": false,
+      "market": "home",
+      "model_prob": 0.805138,
+      "no_bet": true,
+      "no_bet_flag": true,
+      "provider_event_id": "345418923",
+      "publication_enabled": false,
+      "shadow": true,
+      "signal_status": "SHADOW_ONLY",
+      "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+      "stake_label": "THEORETICAL_EVALUATION_ONLY",
+      "theoretical_stake_eur": 40.0
+    },
+    {
+      "candidate_id": "nl-shadow-candidate:a1bb0a4091577102bf2d1d6d886d4d2a51b436f64c5d5041f87fb5177180a7e4",
+      "confidence": "LOW",
+      "decimal_odds": 1.465,
+      "ev": 0.26361524000000003,
+      "ev_percent": 26.361524000000003,
+      "evaluation_bankroll_eur": 1000.0,
+      "fair_prob": 0.6402554377201647,
+      "kelly_fraction": 0.14172862365591396,
+      "ledger_mutation": false,
+      "market": "home",
+      "model_prob": 0.862536,
+      "no_bet": true,
+      "no_bet_flag": true,
+      "provider_event_id": "364418924",
+      "publication_enabled": false,
+      "shadow": true,
+      "signal_status": "SHADOW_ONLY",
+      "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+      "stake_label": "THEORETICAL_EVALUATION_ONLY",
+      "theoretical_stake_eur": 40.0
+    },
+    {
+      "candidate_id": "nl-shadow-candidate:2c1b1ea7d64d0f20e75fc66da0da9309319d4ab84e59c1e8d0b9075eeef3ea18",
+      "confidence": "LOW",
+      "decimal_odds": 1.705,
+      "ev": 0.24406689000000004,
+      "ev_percent": 24.406689000000004,
+      "evaluation_bankroll_eur": 1000.0,
+      "fair_prob": 0.5497993097682454,
+      "kelly_fraction": 0.08654854255319153,
+      "ledger_mutation": false,
+      "market": "home",
+      "model_prob": 0.729658,
+      "no_bet": true,
+      "no_bet_flag": true,
+      "provider_event_id": "315418920",
+      "publication_enabled": false,
+      "shadow": true,
+      "signal_status": "SHADOW_ONLY",
+      "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+      "stake_label": "THEORETICAL_EVALUATION_ONLY",
+      "theoretical_stake_eur": 40.0
+    },
+    {
+      "candidate_id": "nl-shadow-candidate:b8abc37163c653e56edccfcafea482a99ed06225072dd5a0677c11f25dd59b56",
+      "confidence": "LOW",
+      "decimal_odds": 1.46,
+      "ev": 0.24234027999999985,
+      "ev_percent": 24.234027999999984,
+      "evaluation_bankroll_eur": 1000.0,
+      "fair_prob": 0.6424100947531913,
+      "kelly_fraction": 0.13170667391304344,
+      "ledger_mutation": false,
+      "market": "away",
+      "model_prob": 0.850918,
+      "no_bet": true,
+      "no_bet_flag": true,
+      "provider_event_id": "355418924",
+      "publication_enabled": false,
+      "shadow": true,
+      "signal_status": "SHADOW_ONLY",
+      "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+      "stake_label": "THEORETICAL_EVALUATION_ONLY",
+      "theoretical_stake_eur": 40.0
+    },
+    {
+      "candidate_id": "nl-shadow-candidate:2ab408c234e0a35d6d8d00c0ddda5969f6a861c6c7be45ef48c2af4145fc0c17",
+      "confidence": "MEDIUM",
+      "decimal_odds": 3.5,
+      "ev": 0.2218255,
+      "ev_percent": 22.18255,
+      "evaluation_bankroll_eur": 1000.0,
+      "fair_prob": 0.2693192512809788,
+      "kelly_fraction": 0.02218254999999999,
+      "ledger_mutation": false,
+      "market": "home",
+      "model_prob": 0.349093,
+      "no_bet": true,
+      "no_bet_flag": true,
+      "provider_event_id": "344418922",
+      "publication_enabled": false,
+      "shadow": true,
+      "signal_status": "SHADOW_ONLY",
+      "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+      "stake_label": "THEORETICAL_EVALUATION_ONLY",
+      "theoretical_stake_eur": 22.0
+    },
+    {
+      "candidate_id": "nl-shadow-candidate:031a1c56ac1327acfa0b9e319665041f723afce2a3d39a677d73c2050f6b03a8",
+      "confidence": "LOW",
+      "decimal_odds": 1.38,
+      "ev": 0.20937403999999993,
+      "ev_percent": 20.937403999999994,
+      "evaluation_bankroll_eur": 1000.0,
+      "fair_prob": 0.6856097298460877,
+      "kelly_fraction": 0.13774607894736837,
+      "ledger_mutation": false,
+      "market": "away",
+      "model_prob": 0.876358,
+      "no_bet": true,
+      "no_bet_flag": true,
+      "provider_event_id": "204418928",
+      "publication_enabled": false,
+      "shadow": true,
+      "signal_status": "SHADOW_ONLY",
+      "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+      "stake_label": "THEORETICAL_EVALUATION_ONLY",
+      "theoretical_stake_eur": 40.0
+    },
+    {
+      "candidate_id": "nl-shadow-candidate:3ead574c46b80aa9ddce7af4343981a96da52114f440d656526941e9b42a7a7c",
+      "confidence": "LOW",
+      "decimal_odds": 2.14,
+      "ev": 0.20325566000000017,
+      "ev_percent": 20.325566000000016,
+      "evaluation_bankroll_eur": 1000.0,
+      "fair_prob": 0.4390014868143047,
+      "kelly_fraction": 0.04457360964912282,
+      "ledger_mutation": false,
+      "market": "away",
+      "model_prob": 0.562269,
+      "no_bet": true,
+      "no_bet_flag": true,
+      "provider_event_id": "329418925",
+      "publication_enabled": false,
+      "shadow": true,
+      "signal_status": "SHADOW_ONLY",
+      "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+      "stake_label": "THEORETICAL_EVALUATION_ONLY",
+      "theoretical_stake_eur": 30.0
+    },
+    {
+      "candidate_id": "nl-shadow-candidate:889efecf3b143d26b300dfff5543d06a7ab7e6c08d7a6e7c570e727ca222dc10",
+      "confidence": "LOW",
+      "decimal_odds": 2.68,
+      "ev": 0.16776980000000008,
+      "ev_percent": 16.77698000000001,
+      "evaluation_bankroll_eur": 1000.0,
+      "fair_prob": 0.35334532962538856,
+      "kelly_fraction": 0.024965744047619056,
+      "ledger_mutation": false,
+      "market": "home",
+      "model_prob": 0.435735,
+      "no_bet": true,
+      "no_bet_flag": true,
+      "provider_event_id": "358418927",
+      "publication_enabled": false,
+      "shadow": true,
+      "signal_status": "SHADOW_ONLY",
+      "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+      "stake_label": "THEORETICAL_EVALUATION_ONLY",
+      "theoretical_stake_eur": 26.5
+    },
+    {
+      "candidate_id": "nl-shadow-candidate:872e3b05a1a4cdfa5c18cc75b83828b10b18b3a20c8a81b742c1c0a1ff67640b",
+      "confidence": "LOW",
+      "decimal_odds": 1.895,
+      "ev": 0.16525444999999994,
+      "ev_percent": 16.525444999999994,
+      "evaluation_bankroll_eur": 1000.0,
+      "fair_prob": 0.49443803311364914,
+      "kelly_fraction": 0.046160460893854734,
+      "ledger_mutation": false,
+      "market": "away",
+      "model_prob": 0.61491,
+      "no_bet": true,
+      "no_bet_flag": true,
+      "provider_event_id": "369418929",
+      "publication_enabled": false,
+      "shadow": true,
+      "signal_status": "SHADOW_ONLY",
+      "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+      "stake_label": "THEORETICAL_EVALUATION_ONLY",
+      "theoretical_stake_eur": 34.5
+    },
+    {
+      "candidate_id": "nl-shadow-candidate:a5c37956552b185d21efed4ccb73c2fe9aff6c51ce41b9feecd863cd94e2d705",
+      "confidence": "LOW",
+      "decimal_odds": 1.55,
+      "ev": 0.1423934,
+      "ev_percent": 14.23934,
+      "evaluation_bankroll_eur": 1000.0,
+      "fair_prob": 0.605077319380803,
+      "kelly_fraction": 0.06472427272727276,
+      "ledger_mutation": false,
+      "market": "home",
+      "model_prob": 0.737028,
+      "no_bet": true,
+      "no_bet_flag": true,
+      "provider_event_id": "335418922",
+      "publication_enabled": false,
+      "shadow": true,
+      "signal_status": "SHADOW_ONLY",
+      "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+      "stake_label": "THEORETICAL_EVALUATION_ONLY",
+      "theoretical_stake_eur": 30.5
+    },
+    {
+      "candidate_id": "nl-shadow-candidate:aaa0f893833e89558124607f793e83a56beed95bdd6af2976c7f70b551bc6c1b",
+      "confidence": "LOW",
+      "decimal_odds": 1.64,
+      "ev": 0.1417319199999998,
+      "ev_percent": 14.173191999999979,
+      "evaluation_bankroll_eur": 1000.0,
+      "fair_prob": 0.5739960685200787,
+      "kelly_fraction": 0.055364031249999945,
+      "ledger_mutation": false,
+      "market": "home",
+      "model_prob": 0.696178,
+      "no_bet": true,
+      "no_bet_flag": true,
+      "provider_event_id": "498418921",
+      "publication_enabled": false,
+      "shadow": true,
+      "signal_status": "SHADOW_ONLY",
+      "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+      "stake_label": "THEORETICAL_EVALUATION_ONLY",
+      "theoretical_stake_eur": 30.5
+    },
+    {
+      "candidate_id": "nl-shadow-candidate:441f9b6d65247f0199be5125749f9305e4d5b7f651b2bb837d4dba426bf691fb",
+      "confidence": "LOW",
+      "decimal_odds": 1.415,
+      "ev": 0.14062725500000006,
+      "ev_percent": 14.062725500000006,
+      "evaluation_bankroll_eur": 1000.0,
+      "fair_prob": 0.6623444908353896,
+      "kelly_fraction": 0.08471521385542165,
+      "ledger_mutation": false,
+      "market": "home",
+      "model_prob": 0.806097,
+      "no_bet": true,
+      "no_bet_flag": true,
+      "provider_event_id": "354418923",
+      "publication_enabled": false,
+      "shadow": true,
+      "signal_status": "SHADOW_ONLY",
+      "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+      "stake_label": "THEORETICAL_EVALUATION_ONLY",
+      "theoretical_stake_eur": 30.0
+    },
+    {
+      "candidate_id": "nl-shadow-candidate:b61dbb2c3f3b1d3f769df2f7c573f0bdd4eac20fb638dd3ea822b7a5aec7eaff",
+      "confidence": "LOW",
+      "decimal_odds": 1.965,
+      "ev": 0.13940918000000013,
+      "ev_percent": 13.940918000000014,
+      "evaluation_bankroll_eur": 1000.0,
+      "fair_prob": 0.47685307582061304,
+      "kelly_fraction": 0.0361163678756477,
+      "ledger_mutation": false,
+      "market": "away",
+      "model_prob": 0.579852,
+      "no_bet": true,
+      "no_bet_flag": true,
+      "provider_event_id": "325418921",
+      "publication_enabled": false,
+      "shadow": true,
+      "signal_status": "SHADOW_ONLY",
+      "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+      "stake_label": "THEORETICAL_EVALUATION_ONLY",
+      "theoretical_stake_eur": 30.0
+    },
+    {
+      "candidate_id": "nl-shadow-candidate:9b0e1f86fd89f716ebaa4f99b6cc0db5dce2c66737f9b7229cc10a41bbfee237",
+      "confidence": "MEDIUM",
+      "decimal_odds": 2.1,
+      "ev": 0.13358630000000016,
+      "ev_percent": 13.358630000000016,
+      "evaluation_bankroll_eur": 1000.0,
+      "fair_prob": 0.449438202247191,
+      "kelly_fraction": 0.03036052272727276,
+      "ledger_mutation": false,
+      "market": "away",
+      "model_prob": 0.539803,
+      "no_bet": true,
+      "no_bet_flag": true,
+      "provider_event_id": "214418929",
+      "publication_enabled": false,
+      "shadow": true,
+      "signal_status": "SHADOW_ONLY",
+      "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+      "stake_label": "THEORETICAL_EVALUATION_ONLY",
+      "theoretical_stake_eur": 23.0
+    },
+    {
+      "candidate_id": "nl-shadow-candidate:a29d4c09f48947e1c3ccce605f9049b4d11c0491b7602a27bf0174afb37b3141",
+      "confidence": "LOW",
+      "decimal_odds": 11.9,
+      "ev": 0.12042069999999994,
+      "ev_percent": 12.042069999999994,
+      "evaluation_bankroll_eur": 1000.0,
+      "fair_prob": 0.07885604615092781,
+      "kelly_fraction": 0.0027619426605504597,
+      "ledger_mutation": false,
+      "market": "away",
+      "model_prob": 0.094153,
+      "no_bet": true,
+      "no_bet_flag": true,
+      "provider_event_id": "367518928",
+      "publication_enabled": false,
+      "shadow": true,
+      "signal_status": "SHADOW_ONLY",
+      "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+      "stake_label": "THEORETICAL_EVALUATION_ONLY",
+      "theoretical_stake_eur": 13.0
+    },
+    {
+      "candidate_id": "nl-shadow-candidate:25d6bd0d0480a31aa495218711b5491daac1638bf8e465923bf55b91ae2be679",
+      "confidence": "MEDIUM",
+      "decimal_odds": 1.98,
+      "ev": 0.10769713999999997,
+      "ev_percent": 10.769713999999997,
+      "evaluation_bankroll_eur": 1000.0,
+      "fair_prob": 0.4737497390630126,
+      "kelly_fraction": 0.027473760204081654,
+      "ledger_mutation": false,
+      "market": "away",
+      "model_prob": 0.559443,
+      "no_bet": true,
+      "no_bet_flag": true,
+      "provider_event_id": "374418925",
+      "publication_enabled": false,
+      "shadow": true,
+      "signal_status": "SHADOW_ONLY",
+      "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+      "stake_label": "THEORETICAL_EVALUATION_ONLY",
+      "theoretical_stake_eur": 25.0
+    },
+    {
+      "candidate_id": "nl-shadow-candidate:aaf961ae6a46381f204ff543dfd7d4da212f0c6154b8618c751cd32d4a373b0a",
+      "confidence": "LOW",
+      "decimal_odds": 1.92,
+      "ev": 0.10219519999999993,
+      "ev_percent": 10.219519999999992,
+      "evaluation_bankroll_eur": 1000.0,
+      "fair_prob": 0.49103330486763447,
+      "kelly_fraction": 0.02777043478260871,
+      "ledger_mutation": false,
+      "market": "away",
+      "model_prob": 0.57406,
+      "no_bet": true,
+      "no_bet_flag": true,
+      "provider_event_id": "309418923",
+      "publication_enabled": false,
+      "shadow": true,
+      "signal_status": "SHADOW_ONLY",
+      "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+      "stake_label": "THEORETICAL_EVALUATION_ONLY",
+      "theoretical_stake_eur": 24.0
+    },
+    {
+      "candidate_id": "nl-shadow-candidate:89ff3d7cc618e2f9ef10fbbf02013681275e9142e1048cfbcc3494b8f5920f30",
+      "confidence": "LOW",
+      "decimal_odds": 1.2,
+      "ev": 0.10035679999999991,
+      "ev_percent": 10.035679999999992,
+      "evaluation_bankroll_eur": 1000.0,
+      "fair_prob": 0.790126519474076,
+      "kelly_fraction": 0.125446,
+      "ledger_mutation": false,
+      "market": "home",
+      "model_prob": 0.916964,
+      "no_bet": true,
+      "no_bet_flag": true,
+      "provider_event_id": "393418926",
+      "publication_enabled": false,
+      "shadow": true,
+      "signal_status": "SHADOW_ONLY",
+      "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+      "stake_label": "THEORETICAL_EVALUATION_ONLY",
+      "theoretical_stake_eur": 23.5
+    },
+    {
+      "candidate_id": "nl-shadow-candidate:c030a7c416b54959974bf56b70cd33fbcb3d1c0fb6635371ae2fe77af9a28d79",
+      "confidence": "LOW",
+      "decimal_odds": 6.145,
+      "ev": 0.09714673499999993,
+      "ev_percent": 9.714673499999993,
+      "evaluation_bankroll_eur": 1000.0,
+      "fair_prob": 0.14802464532637882,
+      "kelly_fraction": 0.0047204438775510175,
+      "ledger_mutation": false,
+      "market": "home",
+      "model_prob": 0.178543,
+      "no_bet": true,
+      "no_bet_flag": true,
+      "provider_event_id": "324518921",
+      "publication_enabled": false,
+      "shadow": true,
+      "signal_status": "SHADOW_ONLY",
+      "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+      "stake_label": "THEORETICAL_EVALUATION_ONLY",
+      "theoretical_stake_eur": 13.0
+    },
+    {
+      "candidate_id": "nl-shadow-candidate:31c552aeb9beb1b406f49f665f201f7ed6c01c2f7da991db77dec47b05e09769",
+      "confidence": "LOW",
+      "decimal_odds": 1.205,
+      "ev": 0.09637165999999997,
+      "ev_percent": 9.637165999999997,
+      "evaluation_bankroll_eur": 1000.0,
+      "fair_prob": 0.7770235415964808,
+      "kelly_fraction": 0.11752641463414637,
+      "ledger_mutation": false,
+      "market": "home",
+      "model_prob": 0.909852,
+      "no_bet": true,
+      "no_bet_flag": true,
+      "provider_event_id": "365418925",
+      "publication_enabled": false,
+      "shadow": true,
+      "signal_status": "SHADOW_ONLY",
+      "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+      "stake_label": "THEORETICAL_EVALUATION_ONLY",
+      "theoretical_stake_eur": 23.0
+    },
+    {
+      "candidate_id": "nl-shadow-candidate:a0a48f3e88dc50fd98160620e262c8e84b80fc2bb0cf7cc3c24c09105663fde7",
+      "confidence": "LOW",
+      "decimal_odds": 1.28,
+      "ev": 0.09500160000000002,
+      "ev_percent": 9.500160000000001,
+      "evaluation_bankroll_eur": 1000.0,
+      "fair_prob": 0.7318695941450433,
+      "kelly_fraction": 0.0848228571428571,
+      "ledger_mutation": false,
+      "market": "home",
+      "model_prob": 0.85547,
+      "no_bet": true,
+      "no_bet_flag": true,
+      "provider_event_id": "363518924",
+      "publication_enabled": false,
+      "shadow": true,
+      "signal_status": "SHADOW_ONLY",
+      "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+      "stake_label": "THEORETICAL_EVALUATION_ONLY",
+      "theoretical_stake_eur": 22.5
+    },
+    {
+      "candidate_id": "nl-shadow-candidate:6f8ca729979b4344fcf8ccc2c8dda80904cf45ac79e8ac2a8ff3dd908cd817d8",
+      "confidence": "LOW",
+      "decimal_odds": 1.17,
+      "ev": 0.08177614999999983,
+      "ev_percent": 8.177614999999982,
+      "evaluation_bankroll_eur": 1000.0,
+      "fair_prob": 0.8082971030604461,
+      "kelly_fraction": 0.12025904411764693,
+      "ledger_mutation": false,
+      "market": "home",
+      "model_prob": 0.924595,
+      "no_bet": true,
+      "no_bet_flag": true,
+      "provider_event_id": "384418926",
+      "publication_enabled": false,
+      "shadow": true,
+      "signal_status": "SHADOW_ONLY",
+      "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+      "stake_label": "THEORETICAL_EVALUATION_ONLY",
+      "theoretical_stake_eur": 20.5
+    },
+    {
+      "candidate_id": "nl-shadow-candidate:130416b3e4829f7bcc97ccada8eb2cb8d77e3aebcf0cd13e2878df1682003f58",
+      "confidence": "LOW",
+      "decimal_odds": 3.0,
+      "ev": 0.07745000000000002,
+      "ev_percent": 7.745000000000002,
+      "evaluation_bankroll_eur": 1000.0,
+      "fair_prob": 0.3103875968992248,
+      "kelly_fraction": 0.009681250000000016,
+      "ledger_mutation": false,
+      "market": "home",
+      "model_prob": 0.35915,
+      "no_bet": true,
+      "no_bet_flag": true,
+      "provider_event_id": "383518926",
+      "publication_enabled": false,
+      "shadow": true,
+      "signal_status": "SHADOW_ONLY",
+      "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+      "stake_label": "THEORETICAL_EVALUATION_ONLY",
+      "theoretical_stake_eur": 17.0
+    },
+    {
+      "candidate_id": "nl-shadow-candidate:635f3bbb5c486a0feed3bb119e005d1a538a65dd449056089bddda646ea444f1",
+      "confidence": "LOW",
+      "decimal_odds": 2.58,
+      "ev": 0.0743171600000001,
+      "ev_percent": 7.43171600000001,
+      "evaluation_bankroll_eur": 1000.0,
+      "fair_prob": 0.3642045596216661,
+      "kelly_fraction": 0.011759044303797466,
+      "ledger_mutation": false,
+      "market": "home",
+      "model_prob": 0.416402,
+      "no_bet": true,
+      "no_bet_flag": true,
+      "provider_event_id": "323518920",
+      "publication_enabled": false,
+      "shadow": true,
+      "signal_status": "SHADOW_ONLY",
+      "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+      "stake_label": "THEORETICAL_EVALUATION_ONLY",
+      "theoretical_stake_eur": 16.5
+    },
+    {
+      "candidate_id": "nl-shadow-candidate:838a70be04c3c5818018cde1c2f893e6aa3f626a1f143e272618c903b8e0f1fa",
+      "confidence": "LOW",
+      "decimal_odds": 1.65,
+      "ev": 0.06621184999999996,
+      "ev_percent": 6.621184999999996,
+      "evaluation_bankroll_eur": 1000.0,
+      "fair_prob": 0.5662285136501517,
+      "kelly_fraction": 0.02546609615384614,
+      "ledger_mutation": false,
+      "market": "home",
+      "model_prob": 0.646189,
+      "no_bet": true,
+      "no_bet_flag": true,
+      "provider_event_id": "373518925",
+      "publication_enabled": false,
+      "shadow": true,
+      "signal_status": "SHADOW_ONLY",
+      "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+      "stake_label": "THEORETICAL_EVALUATION_ONLY",
+      "theoretical_stake_eur": 18.0
+    },
+    {
+      "candidate_id": "nl-shadow-candidate:ba385a0faf6bbe44f3e00cb2be2bef1d1860cf52e31edf40db6fa33e3a5a191e",
+      "confidence": "LOW",
+      "decimal_odds": 1.58,
+      "ev": 0.03796678000000009,
+      "ev_percent": 3.796678000000009,
+      "evaluation_bankroll_eur": 1000.0,
+      "fair_prob": 0.58991141454607,
+      "kelly_fraction": 0.016364991379310356,
+      "ledger_mutation": false,
+      "market": "away",
+      "model_prob": 0.656941,
+      "no_bet": true,
+      "no_bet_flag": true,
+      "provider_event_id": "334418921",
+      "publication_enabled": false,
+      "shadow": true,
+      "signal_status": "SHADOW_ONLY",
+      "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+      "stake_label": "THEORETICAL_EVALUATION_ONLY",
+      "theoretical_stake_eur": 13.5
+    }
+  ],
+  "evaluation_bankroll_eur": 1000.0,
+  "fixture_count": 46,
+  "fixtures": [
+    {
+      "away": "Montenegro",
+      "detected_candidates": [],
+      "final_model_probabilities": {
+        "away": 0.407717,
+        "draw": 0.233229,
+        "home": 0.359054
+      },
+      "home": "Armenia",
+      "kickoff": "2026-09-28T16:00:00Z",
+      "market_odds_decimal": {
+        "away": 2.5,
+        "draw": 3.15,
+        "home": 2.86
+      },
+      "market_probabilities": {
+        "away": 0.374844,
+        "draw": 0.297495,
+        "home": 0.327661
+      },
+      "provider_event_id": "213518929",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.383223,
+        "draw": 0.372556,
+        "home": 0.244221
+      }
+    },
+    {
+      "away": "Cyprus",
+      "detected_candidates": [
+        {
+          "candidate_id": "nl-shadow-candidate:635f3bbb5c486a0feed3bb119e005d1a538a65dd449056089bddda646ea444f1",
+          "confidence": "LOW",
+          "decimal_odds": 2.58,
+          "ev": 0.0743171600000001,
+          "ev_percent": 7.43171600000001,
+          "evaluation_bankroll_eur": 1000.0,
+          "fair_prob": 0.3642045596216661,
+          "kelly_fraction": 0.011759044303797466,
+          "ledger_mutation": false,
+          "market": "home",
+          "model_prob": 0.416402,
+          "no_bet": true,
+          "no_bet_flag": true,
+          "provider_event_id": "323518920",
+          "publication_enabled": false,
+          "shadow": true,
+          "signal_status": "SHADOW_ONLY",
+          "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+          "stake_label": "THEORETICAL_EVALUATION_ONLY",
+          "theoretical_stake_eur": 16.5
+        }
+      ],
+      "final_model_probabilities": {
+        "away": 0.348168,
+        "draw": 0.23543,
+        "home": 0.416402
+      },
+      "home": "Latvia",
+      "kickoff": "2026-09-28T16:00:00Z",
+      "market_odds_decimal": {
+        "away": 2.8,
+        "draw": 3.13,
+        "home": 2.58
+      },
+      "market_probabilities": {
+        "away": 0.335588,
+        "draw": 0.300207,
+        "home": 0.364205
+      },
+      "provider_event_id": "323518920",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.345534,
+        "draw": 0.372804,
+        "home": 0.281662
+      }
+    },
+    {
+      "away": "Ukraine",
+      "detected_candidates": [
+        {
+          "candidate_id": "nl-shadow-candidate:889efecf3b143d26b300dfff5543d06a7ab7e6c08d7a6e7c570e727ca222dc10",
+          "confidence": "LOW",
+          "decimal_odds": 2.68,
+          "ev": 0.16776980000000008,
+          "ev_percent": 16.77698000000001,
+          "evaluation_bankroll_eur": 1000.0,
+          "fair_prob": 0.35334532962538856,
+          "kelly_fraction": 0.024965744047619056,
+          "ledger_mutation": false,
+          "market": "home",
+          "model_prob": 0.435735,
+          "no_bet": true,
+          "no_bet_flag": true,
+          "provider_event_id": "358418927",
+          "publication_enabled": false,
+          "shadow": true,
+          "signal_status": "SHADOW_ONLY",
+          "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+          "stake_label": "THEORETICAL_EVALUATION_ONLY",
+          "theoretical_stake_eur": 26.5
+        }
+      ],
+      "final_model_probabilities": {
+        "away": 0.333155,
+        "draw": 0.23111,
+        "home": 0.435735
+      },
+      "home": "Georgia",
+      "kickoff": "2026-09-28T16:00:00Z",
+      "market_odds_decimal": {
+        "away": 2.7,
+        "draw": 3.2,
+        "home": 2.68
+      },
+      "market_probabilities": {
+        "away": 0.350728,
+        "draw": 0.295927,
+        "home": 0.353345
+      },
+      "provider_event_id": "358418927",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.319594,
+        "draw": 0.346077,
+        "home": 0.334329
+      }
+    },
+    {
+      "away": "Hungary",
+      "detected_candidates": [],
+      "final_model_probabilities": {
+        "away": 0.19084,
+        "draw": 0.225784,
+        "home": 0.583376
+      },
+      "home": "Northern Ireland",
+      "kickoff": "2026-09-28T18:45:00Z",
+      "market_odds_decimal": {
+        "away": 2.755,
+        "draw": 3.0,
+        "home": 2.74
+      },
+      "market_probabilities": {
+        "away": 0.34202,
+        "draw": 0.314088,
+        "home": 0.343892
+      },
+      "provider_event_id": "368418928",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.109022,
+        "draw": 0.334821,
+        "home": 0.556157
+      }
+    },
+    {
+      "away": "France",
+      "detected_candidates": [
+        {
+          "candidate_id": "nl-shadow-candidate:1a23956c90d0d0c4a297fabcb772c76dbb4c181de2fe201ecfc4942fe46a9eec",
+          "confidence": "LOW",
+          "decimal_odds": 3.64,
+          "ev": 0.3834111200000001,
+          "ev_percent": 38.34111200000001,
+          "evaluation_bankroll_eur": 1000.0,
+          "fair_prob": 0.2605993263654988,
+          "kelly_fraction": 0.03630787121212122,
+          "ledger_mutation": false,
+          "market": "home",
+          "model_prob": 0.380058,
+          "no_bet": true,
+          "no_bet_flag": true,
+          "provider_event_id": "373418924",
+          "publication_enabled": false,
+          "shadow": true,
+          "signal_status": "SHADOW_ONLY",
+          "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+          "stake_label": "THEORETICAL_EVALUATION_ONLY",
+          "theoretical_stake_eur": 22.0
+        }
+      ],
+      "final_model_probabilities": {
+        "away": 0.414929,
+        "draw": 0.205013,
+        "home": 0.380058
+      },
+      "home": "Belgium",
+      "kickoff": "2026-09-28T18:45:00Z",
+      "market_odds_decimal": {
+        "away": 1.9,
+        "draw": 3.95,
+        "home": 3.64
+      },
+      "market_probabilities": {
+        "away": 0.499254,
+        "draw": 0.240147,
+        "home": 0.260599
+      },
+      "provider_event_id": "373418924",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.324501,
+        "draw": 0.265827,
+        "home": 0.409672
+      }
+    },
+    {
+      "away": "Bosnia and Herzegovina",
+      "detected_candidates": [],
+      "final_model_probabilities": {
+        "away": 0.110035,
+        "draw": 0.160336,
+        "home": 0.729629
+      },
+      "home": "Romania",
+      "kickoff": "2026-09-28T18:45:00Z",
+      "market_odds_decimal": {
+        "away": 3.3,
+        "draw": 3.35,
+        "home": 2.18
+      },
+      "market_probabilities": {
+        "away": 0.285809,
+        "draw": 0.281544,
+        "home": 0.432647
+      },
+      "provider_event_id": "378418929",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.045321,
+        "draw": 0.186935,
+        "home": 0.767744
+      }
+    },
+    {
+      "away": "Italy",
+      "detected_candidates": [],
+      "final_model_probabilities": {
+        "away": 0.536789,
+        "draw": 0.19141,
+        "home": 0.271801
+      },
+      "home": "Turkey",
+      "kickoff": "2026-09-28T18:45:00Z",
+      "market_odds_decimal": {
+        "away": 2.62,
+        "draw": 3.45,
+        "home": 2.6
+      },
+      "market_probabilities": {
+        "away": 0.361388,
+        "draw": 0.274445,
+        "home": 0.364167
+      },
+      "provider_event_id": "383418925",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.575131,
+        "draw": 0.291272,
+        "home": 0.133597
+      }
+    },
+    {
+      "away": "Poland",
+      "detected_candidates": [],
+      "final_model_probabilities": {
+        "away": 0.150269,
+        "draw": 0.167101,
+        "home": 0.68263
+      },
+      "home": "Sweden",
+      "kickoff": "2026-09-28T18:45:00Z",
+      "market_odds_decimal": {
+        "away": 3.26,
+        "draw": 3.6,
+        "home": 2.1
+      },
+      "market_probabilities": {
+        "away": 0.28919,
+        "draw": 0.261877,
+        "home": 0.448933
+      },
+      "provider_event_id": "488418920",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.150173,
+        "draw": 0.186934,
+        "home": 0.662893
+      }
+    },
+    {
+      "away": "Belarus",
+      "detected_candidates": [],
+      "final_model_probabilities": {
+        "away": 0.183289,
+        "draw": 0.213326,
+        "home": 0.603385
+      },
+      "home": "Finland",
+      "kickoff": "2026-09-29T16:00:00Z",
+      "market_odds_decimal": {
+        "away": 5.35,
+        "draw": 3.5,
+        "home": 1.68
+      },
+      "market_probabilities": {
+        "away": 0.175036,
+        "draw": 0.267556,
+        "home": 0.557408
+      },
+      "provider_event_id": "333518921",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.252536,
+        "draw": 0.479954,
+        "home": 0.26751
+      }
+    },
+    {
+      "away": "Faroe Islands",
+      "detected_candidates": [],
+      "final_model_probabilities": {
+        "away": 0.190263,
+        "draw": 0.239176,
+        "home": 0.570561
+      },
+      "home": "Moldova",
+      "kickoff": "2026-09-29T16:00:00Z",
+      "market_odds_decimal": {
+        "away": 2.74,
+        "draw": 2.9,
+        "home": 2.8
+      },
+      "market_probabilities": {
+        "away": 0.342067,
+        "draw": 0.323195,
+        "home": 0.334738
+      },
+      "provider_event_id": "353518923",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.091201,
+        "draw": 0.386166,
+        "home": 0.522633
+      }
+    },
+    {
+      "away": "England",
+      "detected_candidates": [
+        {
+          "candidate_id": "nl-shadow-candidate:031a1c56ac1327acfa0b9e319665041f723afce2a3d39a677d73c2050f6b03a8",
+          "confidence": "LOW",
+          "decimal_odds": 1.38,
+          "ev": 0.20937403999999993,
+          "ev_percent": 20.937403999999994,
+          "evaluation_bankroll_eur": 1000.0,
+          "fair_prob": 0.6856097298460877,
+          "kelly_fraction": 0.13774607894736837,
+          "ledger_mutation": false,
+          "market": "away",
+          "model_prob": 0.876358,
+          "no_bet": true,
+          "no_bet_flag": true,
+          "provider_event_id": "204418928",
+          "publication_enabled": false,
+          "shadow": true,
+          "signal_status": "SHADOW_ONLY",
+          "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+          "stake_label": "THEORETICAL_EVALUATION_ONLY",
+          "theoretical_stake_eur": 40.0
+        }
+      ],
+      "final_model_probabilities": {
+        "away": 0.876358,
+        "draw": 0.070399,
+        "home": 0.053243
+      },
+      "home": "Czechia",
+      "kickoff": "2026-09-29T18:45:00Z",
+      "market_odds_decimal": {
+        "away": 1.38,
+        "draw": 4.9,
+        "home": 7.8
+      },
+      "market_probabilities": {
+        "away": 0.68561,
+        "draw": 0.19309,
+        "home": 0.1213
+      },
+      "provider_event_id": "204418928",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.897126,
+        "draw": 0.072862,
+        "home": 0.030012
+      }
+    },
+    {
+      "away": "Switzerland",
+      "detected_candidates": [
+        {
+          "candidate_id": "nl-shadow-candidate:aaf961ae6a46381f204ff543dfd7d4da212f0c6154b8618c751cd32d4a373b0a",
+          "confidence": "LOW",
+          "decimal_odds": 1.92,
+          "ev": 0.10219519999999993,
+          "ev_percent": 10.219519999999992,
+          "evaluation_bankroll_eur": 1000.0,
+          "fair_prob": 0.49103330486763447,
+          "kelly_fraction": 0.02777043478260871,
+          "ledger_mutation": false,
+          "market": "away",
+          "model_prob": 0.57406,
+          "no_bet": true,
+          "no_bet_flag": true,
+          "provider_event_id": "309418923",
+          "publication_enabled": false,
+          "shadow": true,
+          "signal_status": "SHADOW_ONLY",
+          "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+          "stake_label": "THEORETICAL_EVALUATION_ONLY",
+          "theoretical_stake_eur": 24.0
+        }
+      ],
+      "final_model_probabilities": {
+        "away": 0.57406,
+        "draw": 0.208611,
+        "home": 0.217329
+      },
+      "home": "Scotland",
+      "kickoff": "2026-09-29T18:45:00Z",
+      "market_odds_decimal": {
+        "away": 1.92,
+        "draw": 3.45,
+        "home": 4.0
+      },
+      "market_probabilities": {
+        "away": 0.491033,
+        "draw": 0.273271,
+        "home": 0.235696
+      },
+      "provider_event_id": "309418923",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.479311,
+        "draw": 0.415098,
+        "home": 0.105591
+      }
+    },
+    {
+      "away": "Albania",
+      "detected_candidates": [],
+      "final_model_probabilities": {
+        "away": 0.497888,
+        "draw": 0.202125,
+        "home": 0.299987
+      },
+      "home": "San Marino",
+      "kickoff": "2026-09-29T18:45:00Z",
+      "market_odds_decimal": {
+        "away": 1.05,
+        "draw": 13.0,
+        "home": 35.0
+      },
+      "market_probabilities": {
+        "away": 0.900277,
+        "draw": 0.072715,
+        "home": 0.027008
+      },
+      "provider_event_id": "343518922",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.085476,
+        "draw": 0.490061,
+        "home": 0.424463
+      }
+    },
+    {
+      "away": "Kazakhstan",
+      "detected_candidates": [
+        {
+          "candidate_id": "nl-shadow-candidate:a0a48f3e88dc50fd98160620e262c8e84b80fc2bb0cf7cc3c24c09105663fde7",
+          "confidence": "LOW",
+          "decimal_odds": 1.28,
+          "ev": 0.09500160000000002,
+          "ev_percent": 9.500160000000001,
+          "evaluation_bankroll_eur": 1000.0,
+          "fair_prob": 0.7318695941450433,
+          "kelly_fraction": 0.0848228571428571,
+          "ledger_mutation": false,
+          "market": "home",
+          "model_prob": 0.85547,
+          "no_bet": true,
+          "no_bet_flag": true,
+          "provider_event_id": "363518924",
+          "publication_enabled": false,
+          "shadow": true,
+          "signal_status": "SHADOW_ONLY",
+          "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+          "stake_label": "THEORETICAL_EVALUATION_ONLY",
+          "theoretical_stake_eur": 22.5
+        }
+      ],
+      "final_model_probabilities": {
+        "away": 0.04592,
+        "draw": 0.09861,
+        "home": 0.85547
+      },
+      "home": "Slovakia",
+      "kickoff": "2026-09-29T18:45:00Z",
+      "market_odds_decimal": {
+        "away": 11.0,
+        "draw": 5.12,
+        "home": 1.28
+      },
+      "market_probabilities": {
+        "away": 0.085163,
+        "draw": 0.182967,
+        "home": 0.73187
+      },
+      "provider_event_id": "363518924",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.036165,
+        "draw": 0.304555,
+        "home": 0.65928
+      }
+    },
+    {
+      "away": "Estonia",
+      "detected_candidates": [
+        {
+          "candidate_id": "nl-shadow-candidate:838a70be04c3c5818018cde1c2f893e6aa3f626a1f143e272618c903b8e0f1fa",
+          "confidence": "LOW",
+          "decimal_odds": 1.65,
+          "ev": 0.06621184999999996,
+          "ev_percent": 6.621184999999996,
+          "evaluation_bankroll_eur": 1000.0,
+          "fair_prob": 0.5662285136501517,
+          "kelly_fraction": 0.02546609615384614,
+          "ledger_mutation": false,
+          "market": "home",
+          "model_prob": 0.646189,
+          "no_bet": true,
+          "no_bet_flag": true,
+          "provider_event_id": "373518925",
+          "publication_enabled": false,
+          "shadow": true,
+          "signal_status": "SHADOW_ONLY",
+          "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+          "stake_label": "THEORETICAL_EVALUATION_ONLY",
+          "theoretical_stake_eur": 18.0
+        }
+      ],
+      "final_model_probabilities": {
+        "away": 0.155463,
+        "draw": 0.198348,
+        "home": 0.646189
+      },
+      "home": "Bulgaria",
+      "kickoff": "2026-09-29T18:45:00Z",
+      "market_odds_decimal": {
+        "away": 5.6,
+        "draw": 3.5,
+        "home": 1.65
+      },
+      "market_probabilities": {
+        "away": 0.166835,
+        "draw": 0.266936,
+        "home": 0.566229
+      },
+      "provider_event_id": "373518925",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.216577,
+        "draw": 0.438036,
+        "home": 0.345387
+      }
+    },
+    {
+      "away": "Iceland",
+      "detected_candidates": [
+        {
+          "candidate_id": "nl-shadow-candidate:130416b3e4829f7bcc97ccada8eb2cb8d77e3aebcf0cd13e2878df1682003f58",
+          "confidence": "LOW",
+          "decimal_odds": 3.0,
+          "ev": 0.07745000000000002,
+          "ev_percent": 7.745000000000002,
+          "evaluation_bankroll_eur": 1000.0,
+          "fair_prob": 0.3103875968992248,
+          "kelly_fraction": 0.009681250000000016,
+          "ledger_mutation": false,
+          "market": "home",
+          "model_prob": 0.35915,
+          "no_bet": true,
+          "no_bet_flag": true,
+          "provider_event_id": "383518926",
+          "publication_enabled": false,
+          "shadow": true,
+          "signal_status": "SHADOW_ONLY",
+          "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+          "stake_label": "THEORETICAL_EVALUATION_ONLY",
+          "theoretical_stake_eur": 17.0
+        }
+      ],
+      "final_model_probabilities": {
+        "away": 0.415489,
+        "draw": 0.225361,
+        "home": 0.35915
+      },
+      "home": "Luxembourg",
+      "kickoff": "2026-09-29T18:45:00Z",
+      "market_odds_decimal": {
+        "away": 2.31,
+        "draw": 3.25,
+        "home": 3.0
+      },
+      "market_probabilities": {
+        "away": 0.4031,
+        "draw": 0.286512,
+        "home": 0.310388
+      },
+      "provider_event_id": "383518926",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.377571,
+        "draw": 0.339925,
+        "home": 0.282504
+      }
+    },
+    {
+      "away": "Croatia",
+      "detected_candidates": [
+        {
+          "candidate_id": "nl-shadow-candidate:89ff3d7cc618e2f9ef10fbbf02013681275e9142e1048cfbcc3494b8f5920f30",
+          "confidence": "LOW",
+          "decimal_odds": 1.2,
+          "ev": 0.10035679999999991,
+          "ev_percent": 10.035679999999992,
+          "evaluation_bankroll_eur": 1000.0,
+          "fair_prob": 0.790126519474076,
+          "kelly_fraction": 0.125446,
+          "ledger_mutation": false,
+          "market": "home",
+          "model_prob": 0.916964,
+          "no_bet": true,
+          "no_bet_flag": true,
+          "provider_event_id": "393418926",
+          "publication_enabled": false,
+          "shadow": true,
+          "signal_status": "SHADOW_ONLY",
+          "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+          "stake_label": "THEORETICAL_EVALUATION_ONLY",
+          "theoretical_stake_eur": 23.5
+        }
+      ],
+      "final_model_probabilities": {
+        "away": 0.026209,
+        "draw": 0.056827,
+        "home": 0.916964
+      },
+      "home": "Spain",
+      "kickoff": "2026-09-29T18:45:00Z",
+      "market_odds_decimal": {
+        "away": 12.74,
+        "draw": 7.0,
+        "home": 1.2
+      },
+      "market_probabilities": {
+        "away": 0.074423,
+        "draw": 0.13545,
+        "home": 0.790127
+      },
+      "provider_event_id": "393418926",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.004855,
+        "draw": 0.052225,
+        "home": 0.94292
+      }
+    },
+    {
+      "away": "North Macedonia",
+      "detected_candidates": [
+        {
+          "candidate_id": "nl-shadow-candidate:aaa0f893833e89558124607f793e83a56beed95bdd6af2976c7f70b551bc6c1b",
+          "confidence": "LOW",
+          "decimal_odds": 1.64,
+          "ev": 0.1417319199999998,
+          "ev_percent": 14.173191999999979,
+          "evaluation_bankroll_eur": 1000.0,
+          "fair_prob": 0.5739960685200787,
+          "kelly_fraction": 0.055364031249999945,
+          "ledger_mutation": false,
+          "market": "home",
+          "model_prob": 0.696178,
+          "no_bet": true,
+          "no_bet_flag": true,
+          "provider_event_id": "498418921",
+          "publication_enabled": false,
+          "shadow": true,
+          "signal_status": "SHADOW_ONLY",
+          "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+          "stake_label": "THEORETICAL_EVALUATION_ONLY",
+          "theoretical_stake_eur": 30.5
+        }
+      ],
+      "final_model_probabilities": {
+        "away": 0.118084,
+        "draw": 0.185738,
+        "home": 0.696178
+      },
+      "home": "Slovenia",
+      "kickoff": "2026-09-29T18:45:00Z",
+      "market_odds_decimal": {
+        "away": 5.6,
+        "draw": 3.65,
+        "home": 1.64
+      },
+      "market_probabilities": {
+        "away": 0.168099,
+        "draw": 0.257905,
+        "home": 0.573996
+      },
+      "provider_event_id": "498418921",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.130087,
+        "draw": 0.459393,
+        "home": 0.41052
+      }
+    },
+    {
+      "away": "Liechtenstein",
+      "detected_candidates": [],
+      "final_model_probabilities": {
+        "away": 0.093043,
+        "draw": 0.109285,
+        "home": 0.797672
+      },
+      "home": "Azerbaijan",
+      "kickoff": "2026-10-01T16:00:00Z",
+      "market_odds_decimal": {
+        "away": 42.0,
+        "draw": 8.07,
+        "home": 1.09
+      },
+      "market_probabilities": {
+        "away": 0.022353,
+        "draw": 0.116336,
+        "home": 0.861311
+      },
+      "provider_event_id": "357518927",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.32643,
+        "draw": 0.357794,
+        "home": 0.315776
+      }
+    },
+    {
+      "away": "Netherlands",
+      "detected_candidates": [
+        {
+          "candidate_id": "nl-shadow-candidate:9b0e1f86fd89f716ebaa4f99b6cc0db5dce2c66737f9b7229cc10a41bbfee237",
+          "confidence": "MEDIUM",
+          "decimal_odds": 2.1,
+          "ev": 0.13358630000000016,
+          "ev_percent": 13.358630000000016,
+          "evaluation_bankroll_eur": 1000.0,
+          "fair_prob": 0.449438202247191,
+          "kelly_fraction": 0.03036052272727276,
+          "ledger_mutation": false,
+          "market": "away",
+          "model_prob": 0.539803,
+          "no_bet": true,
+          "no_bet_flag": true,
+          "provider_event_id": "214418929",
+          "publication_enabled": false,
+          "shadow": true,
+          "signal_status": "SHADOW_ONLY",
+          "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+          "stake_label": "THEORETICAL_EVALUATION_ONLY",
+          "theoretical_stake_eur": 23.0
+        }
+      ],
+      "final_model_probabilities": {
+        "away": 0.539803,
+        "draw": 0.197683,
+        "home": 0.262514
+      },
+      "home": "Greece",
+      "kickoff": "2026-10-01T18:45:00Z",
+      "market_odds_decimal": {
+        "away": 2.1,
+        "draw": 3.5,
+        "home": 3.36
+      },
+      "market_probabilities": {
+        "away": 0.449438,
+        "draw": 0.269663,
+        "home": 0.280899
+      },
+      "provider_event_id": "214418929",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.496021,
+        "draw": 0.303715,
+        "home": 0.200264
+      }
+    },
+    {
+      "away": "Kosovo",
+      "detected_candidates": [],
+      "final_model_probabilities": {
+        "away": 0.269869,
+        "draw": 0.239811,
+        "home": 0.49032
+      },
+      "home": "Israel",
+      "kickoff": "2026-10-01T18:45:00Z",
+      "market_odds_decimal": {
+        "away": 2.36,
+        "draw": 3.3,
+        "home": 2.9
+      },
+      "market_probabilities": {
+        "away": 0.395421,
+        "draw": 0.282787,
+        "home": 0.321792
+      },
+      "provider_event_id": "319418924",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.186619,
+        "draw": 0.40381,
+        "home": 0.409571
+      }
+    },
+    {
+      "away": "Serbia",
+      "detected_candidates": [],
+      "final_model_probabilities": {
+        "away": 0.151124,
+        "draw": 0.137268,
+        "home": 0.711608
+      },
+      "home": "Germany",
+      "kickoff": "2026-10-01T18:45:00Z",
+      "market_odds_decimal": {
+        "away": 10.4,
+        "draw": 6.0,
+        "home": 1.24
+      },
+      "market_probabilities": {
+        "away": 0.089925,
+        "draw": 0.155869,
+        "home": 0.754206
+      },
+      "provider_event_id": "324418920",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.383651,
+        "draw": 0.327058,
+        "home": 0.289291
+      }
+    },
+    {
+      "away": "Austria",
+      "detected_candidates": [
+        {
+          "candidate_id": "nl-shadow-candidate:3ead574c46b80aa9ddce7af4343981a96da52114f440d656526941e9b42a7a7c",
+          "confidence": "LOW",
+          "decimal_odds": 2.14,
+          "ev": 0.20325566000000017,
+          "ev_percent": 20.325566000000016,
+          "evaluation_bankroll_eur": 1000.0,
+          "fair_prob": 0.4390014868143047,
+          "kelly_fraction": 0.04457360964912282,
+          "ledger_mutation": false,
+          "market": "away",
+          "model_prob": 0.562269,
+          "no_bet": true,
+          "no_bet_flag": true,
+          "provider_event_id": "329418925",
+          "publication_enabled": false,
+          "shadow": true,
+          "signal_status": "SHADOW_ONLY",
+          "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+          "stake_label": "THEORETICAL_EVALUATION_ONLY",
+          "theoretical_stake_eur": 30.0
+        }
+      ],
+      "final_model_probabilities": {
+        "away": 0.562269,
+        "draw": 0.192454,
+        "home": 0.245277
+      },
+      "home": "Ireland",
+      "kickoff": "2026-10-01T18:45:00Z",
+      "market_odds_decimal": {
+        "away": 2.14,
+        "draw": 3.3,
+        "home": 3.4
+      },
+      "market_probabilities": {
+        "away": 0.439001,
+        "draw": 0.284686,
+        "home": 0.276313
+      },
+      "provider_event_id": "329418925",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.531294,
+        "draw": 0.271168,
+        "home": 0.197538
+      }
+    },
+    {
+      "away": "Norway",
+      "detected_candidates": [
+        {
+          "candidate_id": "nl-shadow-candidate:ba385a0faf6bbe44f3e00cb2be2bef1d1860cf52e31edf40db6fa33e3a5a191e",
+          "confidence": "LOW",
+          "decimal_odds": 1.58,
+          "ev": 0.03796678000000009,
+          "ev_percent": 3.796678000000009,
+          "evaluation_bankroll_eur": 1000.0,
+          "fair_prob": 0.58991141454607,
+          "kelly_fraction": 0.016364991379310356,
+          "ledger_mutation": false,
+          "market": "away",
+          "model_prob": 0.656941,
+          "no_bet": true,
+          "no_bet_flag": true,
+          "provider_event_id": "334418921",
+          "publication_enabled": false,
+          "shadow": true,
+          "signal_status": "SHADOW_ONLY",
+          "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+          "stake_label": "THEORETICAL_EVALUATION_ONLY",
+          "theoretical_stake_eur": 13.5
+        }
+      ],
+      "final_model_probabilities": {
+        "away": 0.656941,
+        "draw": 0.164659,
+        "home": 0.1784
+      },
+      "home": "Wales",
+      "kickoff": "2026-10-01T18:45:00Z",
+      "market_odds_decimal": {
+        "away": 1.58,
+        "draw": 4.1,
+        "home": 5.1
+      },
+      "market_probabilities": {
+        "away": 0.589911,
+        "draw": 0.227332,
+        "home": 0.182757
+      },
+      "provider_event_id": "334418921",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.533469,
+        "draw": 0.292715,
+        "home": 0.173816
+      }
+    },
+    {
+      "away": "Portugal",
+      "detected_candidates": [
+        {
+          "candidate_id": "nl-shadow-candidate:2ab408c234e0a35d6d8d00c0ddda5969f6a861c6c7be45ef48c2af4145fc0c17",
+          "confidence": "MEDIUM",
+          "decimal_odds": 3.5,
+          "ev": 0.2218255,
+          "ev_percent": 22.18255,
+          "evaluation_bankroll_eur": 1000.0,
+          "fair_prob": 0.2693192512809788,
+          "kelly_fraction": 0.02218254999999999,
+          "ledger_mutation": false,
+          "market": "home",
+          "model_prob": 0.349093,
+          "no_bet": true,
+          "no_bet_flag": true,
+          "provider_event_id": "344418922",
+          "publication_enabled": false,
+          "shadow": true,
+          "signal_status": "SHADOW_ONLY",
+          "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+          "stake_label": "THEORETICAL_EVALUATION_ONLY",
+          "theoretical_stake_eur": 22.0
+        }
+      ],
+      "final_model_probabilities": {
+        "away": 0.419127,
+        "draw": 0.23178,
+        "home": 0.349093
+      },
+      "home": "Denmark",
+      "kickoff": "2026-10-01T18:45:00Z",
+      "market_odds_decimal": {
+        "away": 2.02,
+        "draw": 3.57,
+        "home": 3.5
+      },
+      "market_probabilities": {
+        "away": 0.466643,
+        "draw": 0.264038,
+        "home": 0.269319
+      },
+      "provider_event_id": "344418922",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.322219,
+        "draw": 0.399253,
+        "home": 0.278528
+      }
+    },
+    {
+      "away": "Gibraltar",
+      "detected_candidates": [
+        {
+          "candidate_id": "nl-shadow-candidate:a29d4c09f48947e1c3ccce605f9049b4d11c0491b7602a27bf0174afb37b3141",
+          "confidence": "LOW",
+          "decimal_odds": 11.9,
+          "ev": 0.12042069999999994,
+          "ev_percent": 12.042069999999994,
+          "evaluation_bankroll_eur": 1000.0,
+          "fair_prob": 0.07885604615092781,
+          "kelly_fraction": 0.0027619426605504597,
+          "ledger_mutation": false,
+          "market": "away",
+          "model_prob": 0.094153,
+          "no_bet": true,
+          "no_bet_flag": true,
+          "provider_event_id": "367518928",
+          "publication_enabled": false,
+          "shadow": true,
+          "signal_status": "SHADOW_ONLY",
+          "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+          "stake_label": "THEORETICAL_EVALUATION_ONLY",
+          "theoretical_stake_eur": 13.0
+        }
+      ],
+      "final_model_probabilities": {
+        "away": 0.094153,
+        "draw": 0.148112,
+        "home": 0.757735
+      },
+      "home": "Malta",
+      "kickoff": "2026-10-01T18:45:00Z",
+      "market_odds_decimal": {
+        "away": 11.9,
+        "draw": 4.775,
+        "home": 1.295
+      },
+      "market_probabilities": {
+        "away": 0.078856,
+        "draw": 0.196521,
+        "home": 0.724623
+      },
+      "provider_event_id": "367518928",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.189042,
+        "draw": 0.468592,
+        "home": 0.342366
+      }
+    },
+    {
+      "away": "Moldova",
+      "detected_candidates": [],
+      "final_model_probabilities": {
+        "away": 0.301449,
+        "draw": 0.214382,
+        "home": 0.484169
+      },
+      "home": "Kazakhstan",
+      "kickoff": "2026-10-02T14:00:00Z",
+      "market_odds_decimal": {
+        "away": 5.2,
+        "draw": 3.6,
+        "home": 1.68
+      },
+      "market_probabilities": {
+        "away": 0.180516,
+        "draw": 0.260745,
+        "home": 0.558739
+      },
+      "provider_event_id": "393518927",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.444092,
+        "draw": 0.428296,
+        "home": 0.127612
+      }
+    },
+    {
+      "away": "Montenegro",
+      "detected_candidates": [
+        {
+          "candidate_id": "nl-shadow-candidate:9e0407e1de9cee29747c987a717a9d3a583447a7fde66d9636757139b36619c5",
+          "confidence": "LOW",
+          "decimal_odds": 4.81,
+          "ev": 0.33376008999999995,
+          "ev_percent": 33.376008999999996,
+          "evaluation_bankroll_eur": 1000.0,
+          "fair_prob": 0.19421760838497648,
+          "kelly_fraction": 0.021900268372703403,
+          "ledger_mutation": false,
+          "market": "home",
+          "model_prob": 0.277289,
+          "no_bet": true,
+          "no_bet_flag": true,
+          "provider_event_id": "204518929",
+          "publication_enabled": false,
+          "shadow": true,
+          "signal_status": "SHADOW_ONLY",
+          "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+          "stake_label": "THEORETICAL_EVALUATION_ONLY",
+          "theoretical_stake_eur": 22.0
+        }
+      ],
+      "final_model_probabilities": {
+        "away": 0.485009,
+        "draw": 0.237702,
+        "home": 0.277289
+      },
+      "home": "Latvia",
+      "kickoff": "2026-10-02T16:00:00Z",
+      "market_odds_decimal": {
+        "away": 1.78,
+        "draw": 3.325,
+        "home": 4.81
+      },
+      "market_probabilities": {
+        "away": 0.524824,
+        "draw": 0.280958,
+        "home": 0.194218
+      },
+      "provider_event_id": "204518929",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.333109,
+        "draw": 0.431005,
+        "home": 0.235886
+      }
+    },
+    {
+      "away": "Armenia",
+      "detected_candidates": [],
+      "final_model_probabilities": {
+        "away": 0.164753,
+        "draw": 0.192413,
+        "home": 0.642834
+      },
+      "home": "Cyprus",
+      "kickoff": "2026-10-02T16:00:00Z",
+      "market_odds_decimal": {
+        "away": 3.09,
+        "draw": 3.08,
+        "home": 2.2
+      },
+      "market_probabilities": {
+        "away": 0.293445,
+        "draw": 0.294398,
+        "home": 0.412157
+      },
+      "provider_event_id": "314518920",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.139343,
+        "draw": 0.248712,
+        "home": 0.611945
+      }
+    },
+    {
+      "away": "Slovakia",
+      "detected_candidates": [
+        {
+          "candidate_id": "nl-shadow-candidate:c030a7c416b54959974bf56b70cd33fbcb3d1c0fb6635371ae2fe77af9a28d79",
+          "confidence": "LOW",
+          "decimal_odds": 6.145,
+          "ev": 0.09714673499999993,
+          "ev_percent": 9.714673499999993,
+          "evaluation_bankroll_eur": 1000.0,
+          "fair_prob": 0.14802464532637882,
+          "kelly_fraction": 0.0047204438775510175,
+          "ledger_mutation": false,
+          "market": "home",
+          "model_prob": 0.178543,
+          "no_bet": true,
+          "no_bet_flag": true,
+          "provider_event_id": "324518921",
+          "publication_enabled": false,
+          "shadow": true,
+          "signal_status": "SHADOW_ONLY",
+          "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+          "stake_label": "THEORETICAL_EVALUATION_ONLY",
+          "theoretical_stake_eur": 13.0
+        }
+      ],
+      "final_model_probabilities": {
+        "away": 0.621778,
+        "draw": 0.199679,
+        "home": 0.178543
+      },
+      "home": "Faroe Islands",
+      "kickoff": "2026-10-02T18:45:00Z",
+      "market_odds_decimal": {
+        "away": 1.525,
+        "draw": 3.56,
+        "home": 6.145
+      },
+      "market_probabilities": {
+        "away": 0.596466,
+        "draw": 0.255509,
+        "home": 0.148025
+      },
+      "provider_event_id": "324518921",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.447269,
+        "draw": 0.43918,
+        "home": 0.113551
+      }
+    },
+    {
+      "away": "Northern Ireland",
+      "detected_candidates": [
+        {
+          "candidate_id": "nl-shadow-candidate:9169ca869eb2c93955e8ef1d504d17cb5407b535b8b2840e6556f717a4e9c3c8",
+          "confidence": "LOW",
+          "decimal_odds": 2.02,
+          "ev": 0.39786423999999987,
+          "ev_percent": 39.78642399999999,
+          "evaluation_bankroll_eur": 1000.0,
+          "fair_prob": 0.46937265067576683,
+          "kelly_fraction": 0.0975157450980392,
+          "ledger_mutation": false,
+          "market": "home",
+          "model_prob": 0.692012,
+          "no_bet": true,
+          "no_bet_flag": true,
+          "provider_event_id": "339418926",
+          "publication_enabled": false,
+          "shadow": true,
+          "signal_status": "SHADOW_ONLY",
+          "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+          "stake_label": "THEORETICAL_EVALUATION_ONLY",
+          "theoretical_stake_eur": 30.0
+        }
+      ],
+      "final_model_probabilities": {
+        "away": 0.129091,
+        "draw": 0.178897,
+        "home": 0.692012
+      },
+      "home": "Ukraine",
+      "kickoff": "2026-10-02T18:45:00Z",
+      "market_odds_decimal": {
+        "away": 3.925,
+        "draw": 3.28,
+        "home": 2.02
+      },
+      "market_probabilities": {
+        "away": 0.241562,
+        "draw": 0.289065,
+        "home": 0.469373
+      },
+      "provider_event_id": "339418926",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.11089,
+        "draw": 0.27223,
+        "home": 0.61688
+      }
+    },
+    {
+      "away": "Georgia",
+      "detected_candidates": [],
+      "final_model_probabilities": {
+        "away": 0.355998,
+        "draw": 0.206804,
+        "home": 0.437198
+      },
+      "home": "Hungary",
+      "kickoff": "2026-10-02T18:45:00Z",
+      "market_odds_decimal": {
+        "away": 4.09,
+        "draw": 3.63,
+        "home": 1.825
+      },
+      "market_probabilities": {
+        "away": 0.228947,
+        "draw": 0.25796,
+        "home": 0.513093
+      },
+      "provider_event_id": "349418927",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.482288,
+        "draw": 0.364638,
+        "home": 0.153074
+      }
+    },
+    {
+      "away": "Italy",
+      "detected_candidates": [
+        {
+          "candidate_id": "nl-shadow-candidate:441f9b6d65247f0199be5125749f9305e4d5b7f651b2bb837d4dba426bf691fb",
+          "confidence": "LOW",
+          "decimal_odds": 1.415,
+          "ev": 0.14062725500000006,
+          "ev_percent": 14.062725500000006,
+          "evaluation_bankroll_eur": 1000.0,
+          "fair_prob": 0.6623444908353896,
+          "kelly_fraction": 0.08471521385542165,
+          "ledger_mutation": false,
+          "market": "home",
+          "model_prob": 0.806097,
+          "no_bet": true,
+          "no_bet_flag": true,
+          "provider_event_id": "354418923",
+          "publication_enabled": false,
+          "shadow": true,
+          "signal_status": "SHADOW_ONLY",
+          "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+          "stake_label": "THEORETICAL_EVALUATION_ONLY",
+          "theoretical_stake_eur": 30.0
+        }
+      ],
+      "final_model_probabilities": {
+        "away": 0.07493,
+        "draw": 0.118973,
+        "home": 0.806097
+      },
+      "home": "France",
+      "kickoff": "2026-10-02T18:45:00Z",
+      "market_odds_decimal": {
+        "away": 7.13,
+        "draw": 4.545,
+        "home": 1.415
+      },
+      "market_probabilities": {
+        "away": 0.131448,
+        "draw": 0.206208,
+        "home": 0.662344
+      },
+      "provider_event_id": "354418923",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.122746,
+        "draw": 0.249042,
+        "home": 0.628212
+      }
+    },
+    {
+      "away": "Romania",
+      "detected_candidates": [],
+      "final_model_probabilities": {
+        "away": 0.264536,
+        "draw": 0.172742,
+        "home": 0.562722
+      },
+      "home": "Poland",
+      "kickoff": "2026-10-02T18:45:00Z",
+      "market_odds_decimal": {
+        "away": 6.5,
+        "draw": 4.28,
+        "home": 1.475
+      },
+      "market_probabilities": {
+        "away": 0.144394,
+        "draw": 0.219291,
+        "home": 0.636315
+      },
+      "provider_event_id": "359418928",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.484999,
+        "draw": 0.291229,
+        "home": 0.223772
+      }
+    },
+    {
+      "away": "Turkey",
+      "detected_candidates": [
+        {
+          "candidate_id": "nl-shadow-candidate:a1bb0a4091577102bf2d1d6d886d4d2a51b436f64c5d5041f87fb5177180a7e4",
+          "confidence": "LOW",
+          "decimal_odds": 1.465,
+          "ev": 0.26361524000000003,
+          "ev_percent": 26.361524000000003,
+          "evaluation_bankroll_eur": 1000.0,
+          "fair_prob": 0.6402554377201647,
+          "kelly_fraction": 0.14172862365591396,
+          "ledger_mutation": false,
+          "market": "home",
+          "model_prob": 0.862536,
+          "no_bet": true,
+          "no_bet_flag": true,
+          "provider_event_id": "364418924",
+          "publication_enabled": false,
+          "shadow": true,
+          "signal_status": "SHADOW_ONLY",
+          "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+          "stake_label": "THEORETICAL_EVALUATION_ONLY",
+          "theoretical_stake_eur": 40.0
+        }
+      ],
+      "final_model_probabilities": {
+        "away": 0.048803,
+        "draw": 0.088661,
+        "home": 0.862536
+      },
+      "home": "Belgium",
+      "kickoff": "2026-10-02T18:45:00Z",
+      "market_odds_decimal": {
+        "away": 5.81,
+        "draw": 4.73,
+        "home": 1.465
+      },
+      "market_probabilities": {
+        "away": 0.161442,
+        "draw": 0.198303,
+        "home": 0.640255
+      },
+      "provider_event_id": "364418924",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.025257,
+        "draw": 0.086653,
+        "home": 0.88809
+      }
+    },
+    {
+      "away": "Sweden",
+      "detected_candidates": [
+        {
+          "candidate_id": "nl-shadow-candidate:872e3b05a1a4cdfa5c18cc75b83828b10b18b3a20c8a81b742c1c0a1ff67640b",
+          "confidence": "LOW",
+          "decimal_odds": 1.895,
+          "ev": 0.16525444999999994,
+          "ev_percent": 16.525444999999994,
+          "evaluation_bankroll_eur": 1000.0,
+          "fair_prob": 0.49443803311364914,
+          "kelly_fraction": 0.046160460893854734,
+          "ledger_mutation": false,
+          "market": "away",
+          "model_prob": 0.61491,
+          "no_bet": true,
+          "no_bet_flag": true,
+          "provider_event_id": "369418929",
+          "publication_enabled": false,
+          "shadow": true,
+          "signal_status": "SHADOW_ONLY",
+          "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+          "stake_label": "THEORETICAL_EVALUATION_ONLY",
+          "theoretical_stake_eur": 34.5
+        }
+      ],
+      "final_model_probabilities": {
+        "away": 0.61491,
+        "draw": 0.17203,
+        "home": 0.21306
+      },
+      "home": "Bosnia and Herzegovina",
+      "kickoff": "2026-10-02T18:45:00Z",
+      "market_odds_decimal": {
+        "away": 1.895,
+        "draw": 3.765,
+        "home": 3.65
+      },
+      "market_probabilities": {
+        "away": 0.494438,
+        "draw": 0.248861,
+        "home": 0.256701
+      },
+      "provider_event_id": "369418929",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.563164,
+        "draw": 0.259902,
+        "home": 0.176934
+      }
+    },
+    {
+      "away": "England",
+      "detected_candidates": [
+        {
+          "candidate_id": "nl-shadow-candidate:25d6bd0d0480a31aa495218711b5491daac1638bf8e465923bf55b91ae2be679",
+          "confidence": "MEDIUM",
+          "decimal_odds": 1.98,
+          "ev": 0.10769713999999997,
+          "ev_percent": 10.769713999999997,
+          "evaluation_bankroll_eur": 1000.0,
+          "fair_prob": 0.4737497390630126,
+          "kelly_fraction": 0.027473760204081654,
+          "ledger_mutation": false,
+          "market": "away",
+          "model_prob": 0.559443,
+          "no_bet": true,
+          "no_bet_flag": true,
+          "provider_event_id": "374418925",
+          "publication_enabled": false,
+          "shadow": true,
+          "signal_status": "SHADOW_ONLY",
+          "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+          "stake_label": "THEORETICAL_EVALUATION_ONLY",
+          "theoretical_stake_eur": 25.0
+        }
+      ],
+      "final_model_probabilities": {
+        "away": 0.559443,
+        "draw": 0.177816,
+        "home": 0.262741
+      },
+      "home": "Croatia",
+      "kickoff": "2026-10-03T16:00:00Z",
+      "market_odds_decimal": {
+        "away": 1.98,
+        "draw": 3.55,
+        "home": 3.58
+      },
+      "market_probabilities": {
+        "away": 0.47375,
+        "draw": 0.264232,
+        "home": 0.262018
+      },
+      "provider_event_id": "374418925",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.521207,
+        "draw": 0.180282,
+        "home": 0.298511
+      }
+    },
+    {
+      "away": "Czechia",
+      "detected_candidates": [
+        {
+          "candidate_id": "nl-shadow-candidate:6f8ca729979b4344fcf8ccc2c8dda80904cf45ac79e8ac2a8ff3dd908cd817d8",
+          "confidence": "LOW",
+          "decimal_odds": 1.17,
+          "ev": 0.08177614999999983,
+          "ev_percent": 8.177614999999982,
+          "evaluation_bankroll_eur": 1000.0,
+          "fair_prob": 0.8082971030604461,
+          "kelly_fraction": 0.12025904411764693,
+          "ledger_mutation": false,
+          "market": "home",
+          "model_prob": 0.924595,
+          "no_bet": true,
+          "no_bet_flag": true,
+          "provider_event_id": "384418926",
+          "publication_enabled": false,
+          "shadow": true,
+          "signal_status": "SHADOW_ONLY",
+          "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+          "stake_label": "THEORETICAL_EVALUATION_ONLY",
+          "theoretical_stake_eur": 20.5
+        }
+      ],
+      "final_model_probabilities": {
+        "away": 0.023179,
+        "draw": 0.052226,
+        "home": 0.924595
+      },
+      "home": "Spain",
+      "kickoff": "2026-10-03T18:45:00Z",
+      "market_odds_decimal": {
+        "away": 17.0,
+        "draw": 6.95,
+        "home": 1.17
+      },
+      "market_probabilities": {
+        "away": 0.05563,
+        "draw": 0.136073,
+        "home": 0.808297
+      },
+      "provider_event_id": "384418926",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.000505,
+        "draw": 0.021026,
+        "home": 0.978469
+      }
+    },
+    {
+      "away": "Germany",
+      "detected_candidates": [],
+      "final_model_probabilities": {
+        "away": 0.376468,
+        "draw": 0.204605,
+        "home": 0.418927
+      },
+      "home": "Greece",
+      "kickoff": "2026-10-04T18:45:00Z",
+      "market_odds_decimal": {
+        "away": 1.76,
+        "draw": 4.1,
+        "home": 4.22
+      },
+      "market_probabilities": {
+        "away": 0.541615,
+        "draw": 0.232498,
+        "home": 0.225887
+      },
+      "provider_event_id": "205418929",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.247991,
+        "draw": 0.238538,
+        "home": 0.513471
+      }
+    },
+    {
+      "away": "Norway",
+      "detected_candidates": [
+        {
+          "candidate_id": "nl-shadow-candidate:2c1b1ea7d64d0f20e75fc66da0da9309319d4ab84e59c1e8d0b9075eeef3ea18",
+          "confidence": "LOW",
+          "decimal_odds": 1.705,
+          "ev": 0.24406689000000004,
+          "ev_percent": 24.406689000000004,
+          "evaluation_bankroll_eur": 1000.0,
+          "fair_prob": 0.5497993097682454,
+          "kelly_fraction": 0.08654854255319153,
+          "ledger_mutation": false,
+          "market": "home",
+          "model_prob": 0.729658,
+          "no_bet": true,
+          "no_bet_flag": true,
+          "provider_event_id": "315418920",
+          "publication_enabled": false,
+          "shadow": true,
+          "signal_status": "SHADOW_ONLY",
+          "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+          "stake_label": "THEORETICAL_EVALUATION_ONLY",
+          "theoretical_stake_eur": 40.0
+        }
+      ],
+      "final_model_probabilities": {
+        "away": 0.116564,
+        "draw": 0.153778,
+        "home": 0.729658
+      },
+      "home": "Portugal",
+      "kickoff": "2026-10-04T18:45:00Z",
+      "market_odds_decimal": {
+        "away": 4.115,
+        "draw": 4.215,
+        "home": 1.705
+      },
+      "market_probabilities": {
+        "away": 0.227803,
+        "draw": 0.222398,
+        "home": 0.549799
+      },
+      "provider_event_id": "315418920",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.131839,
+        "draw": 0.29535,
+        "home": 0.572811
+      }
+    },
+    {
+      "away": "Denmark",
+      "detected_candidates": [
+        {
+          "candidate_id": "nl-shadow-candidate:b61dbb2c3f3b1d3f769df2f7c573f0bdd4eac20fb638dd3ea822b7a5aec7eaff",
+          "confidence": "LOW",
+          "decimal_odds": 1.965,
+          "ev": 0.13940918000000013,
+          "ev_percent": 13.940918000000014,
+          "evaluation_bankroll_eur": 1000.0,
+          "fair_prob": 0.47685307582061304,
+          "kelly_fraction": 0.0361163678756477,
+          "ledger_mutation": false,
+          "market": "away",
+          "model_prob": 0.579852,
+          "no_bet": true,
+          "no_bet_flag": true,
+          "provider_event_id": "325418921",
+          "publication_enabled": false,
+          "shadow": true,
+          "signal_status": "SHADOW_ONLY",
+          "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+          "stake_label": "THEORETICAL_EVALUATION_ONLY",
+          "theoretical_stake_eur": 30.0
+        }
+      ],
+      "final_model_probabilities": {
+        "away": 0.579852,
+        "draw": 0.188389,
+        "home": 0.231759
+      },
+      "home": "Wales",
+      "kickoff": "2026-10-04T18:45:00Z",
+      "market_odds_decimal": {
+        "away": 1.965,
+        "draw": 3.725,
+        "home": 3.45
+      },
+      "market_probabilities": {
+        "away": 0.476853,
+        "draw": 0.251548,
+        "home": 0.271599
+      },
+      "provider_event_id": "325418921",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.523169,
+        "draw": 0.328657,
+        "home": 0.148174
+      }
+    },
+    {
+      "away": "Serbia",
+      "detected_candidates": [],
+      "final_model_probabilities": {
+        "away": 0.056331,
+        "draw": 0.097527,
+        "home": 0.846142
+      },
+      "home": "Netherlands",
+      "kickoff": "2026-10-04T18:45:00Z",
+      "market_odds_decimal": {
+        "away": 18.1,
+        "draw": 6.985,
+        "home": 1.145
+      },
+      "market_probabilities": {
+        "away": 0.051549,
+        "draw": 0.133576,
+        "home": 0.814875
+      },
+      "provider_event_id": "394418927",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.14691,
+        "draw": 0.353658,
+        "home": 0.499432
+      }
+    },
+    {
+      "away": "Belgium",
+      "detected_candidates": [
+        {
+          "candidate_id": "nl-shadow-candidate:a5c37956552b185d21efed4ccb73c2fe9aff6c51ce41b9feecd863cd94e2d705",
+          "confidence": "LOW",
+          "decimal_odds": 1.55,
+          "ev": 0.1423934,
+          "ev_percent": 14.23934,
+          "evaluation_bankroll_eur": 1000.0,
+          "fair_prob": 0.605077319380803,
+          "kelly_fraction": 0.06472427272727276,
+          "ledger_mutation": false,
+          "market": "home",
+          "model_prob": 0.737028,
+          "no_bet": true,
+          "no_bet_flag": true,
+          "provider_event_id": "335418922",
+          "publication_enabled": false,
+          "shadow": true,
+          "signal_status": "SHADOW_ONLY",
+          "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+          "stake_label": "THEORETICAL_EVALUATION_ONLY",
+          "theoretical_stake_eur": 30.5
+        }
+      ],
+      "final_model_probabilities": {
+        "away": 0.121992,
+        "draw": 0.14098,
+        "home": 0.737028
+      },
+      "home": "France",
+      "kickoff": "2026-10-05T18:45:00Z",
+      "market_odds_decimal": {
+        "away": 5.01,
+        "draw": 4.515,
+        "home": 1.55
+      },
+      "market_probabilities": {
+        "away": 0.1872,
+        "draw": 0.207723,
+        "home": 0.605077
+      },
+      "provider_event_id": "335418922",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.209385,
+        "draw": 0.240861,
+        "home": 0.549754
+      }
+    },
+    {
+      "away": "Turkey",
+      "detected_candidates": [
+        {
+          "candidate_id": "nl-shadow-candidate:8e9211971b31e807020cb0d2329045f6f2eb052fa8e834356f17e9de154a18dc",
+          "confidence": "LOW",
+          "decimal_odds": 1.625,
+          "ev": 0.30834925,
+          "ev_percent": 30.834925000000002,
+          "evaluation_bankroll_eur": 1000.0,
+          "fair_prob": 0.5764491713437694,
+          "kelly_fraction": 0.12333970000000001,
+          "ledger_mutation": false,
+          "market": "home",
+          "model_prob": 0.805138,
+          "no_bet": true,
+          "no_bet_flag": true,
+          "provider_event_id": "345418923",
+          "publication_enabled": false,
+          "shadow": true,
+          "signal_status": "SHADOW_ONLY",
+          "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+          "stake_label": "THEORETICAL_EVALUATION_ONLY",
+          "theoretical_stake_eur": 40.0
+        }
+      ],
+      "final_model_probabilities": {
+        "away": 0.072963,
+        "draw": 0.121899,
+        "home": 0.805138
+      },
+      "home": "Italy",
+      "kickoff": "2026-10-05T18:45:00Z",
+      "market_odds_decimal": {
+        "away": 4.865,
+        "draw": 4.055,
+        "home": 1.625
+      },
+      "market_probabilities": {
+        "away": 0.192545,
+        "draw": 0.231006,
+        "home": 0.576449
+      },
+      "provider_event_id": "345418923",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.052704,
+        "draw": 0.191121,
+        "home": 0.756175
+      }
+    },
+    {
+      "away": "Spain",
+      "detected_candidates": [
+        {
+          "candidate_id": "nl-shadow-candidate:b8abc37163c653e56edccfcafea482a99ed06225072dd5a0677c11f25dd59b56",
+          "confidence": "LOW",
+          "decimal_odds": 1.46,
+          "ev": 0.24234027999999985,
+          "ev_percent": 24.234027999999984,
+          "evaluation_bankroll_eur": 1000.0,
+          "fair_prob": 0.6424100947531913,
+          "kelly_fraction": 0.13170667391304344,
+          "ledger_mutation": false,
+          "market": "away",
+          "model_prob": 0.850918,
+          "no_bet": true,
+          "no_bet_flag": true,
+          "provider_event_id": "355418924",
+          "publication_enabled": false,
+          "shadow": true,
+          "signal_status": "SHADOW_ONLY",
+          "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+          "stake_label": "THEORETICAL_EVALUATION_ONLY",
+          "theoretical_stake_eur": 40.0
+        }
+      ],
+      "final_model_probabilities": {
+        "away": 0.850918,
+        "draw": 0.082935,
+        "home": 0.066147
+      },
+      "home": "Croatia",
+      "kickoff": "2026-10-06T18:45:00Z",
+      "market_odds_decimal": {
+        "away": 1.46,
+        "draw": 4.66,
+        "home": 6.0
+      },
+      "market_probabilities": {
+        "away": 0.64241,
+        "draw": 0.20127,
+        "home": 0.15632
+      },
+      "provider_event_id": "355418924",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.858311,
+        "draw": 0.124816,
+        "home": 0.016873
+      }
+    },
+    {
+      "away": "Czechia",
+      "detected_candidates": [
+        {
+          "candidate_id": "nl-shadow-candidate:31c552aeb9beb1b406f49f665f201f7ed6c01c2f7da991db77dec47b05e09769",
+          "confidence": "LOW",
+          "decimal_odds": 1.205,
+          "ev": 0.09637165999999997,
+          "ev_percent": 9.637165999999997,
+          "evaluation_bankroll_eur": 1000.0,
+          "fair_prob": 0.7770235415964808,
+          "kelly_fraction": 0.11752641463414637,
+          "ledger_mutation": false,
+          "market": "home",
+          "model_prob": 0.909852,
+          "no_bet": true,
+          "no_bet_flag": true,
+          "provider_event_id": "365418925",
+          "publication_enabled": false,
+          "shadow": true,
+          "signal_status": "SHADOW_ONLY",
+          "source_snapshot_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+          "stake_label": "THEORETICAL_EVALUATION_ONLY",
+          "theoretical_stake_eur": 23.0
+        }
+      ],
+      "final_model_probabilities": {
+        "away": 0.028651,
+        "draw": 0.061497,
+        "home": 0.909852
+      },
+      "home": "England",
+      "kickoff": "2026-10-06T18:45:00Z",
+      "market_odds_decimal": {
+        "away": 13.5,
+        "draw": 6.095,
+        "home": 1.205
+      },
+      "market_probabilities": {
+        "away": 0.069356,
+        "draw": 0.15362,
+        "home": 0.777024
+      },
+      "provider_event_id": "365418925",
+      "raw_dixon_coles_probabilities": {
+        "away": 0.017217,
+        "draw": 0.06018,
+        "home": 0.922603
+      }
+    }
+  ],
+  "generated_from": "tests/fixtures/nations_league_public_incident_20260928.json",
+  "provenance": {
+    "candidate_generation_timestamp": "2026-09-28T16:15:39.270187+00:00",
+    "detector_implementation": "src.betting.value_detector.detect_value",
+    "detector_source_commit_sha": "aad04fbedb495621882411513c30c6ac723de366",
+    "detector_source_files_sha256": {
+      "src/betting/gates.py": "5c88dc25e5429e22bf6414410384f02691e1aad7f8e56f92afa0b9362d3226cd",
+      "src/betting/kelly.py": "fecb7adc159dae7d0e1c812e2a6285df068ceee5176de8d2bf32504a0de3478f",
+      "src/betting/odds_utils.py": "ad6adff88cab75fd8cad1fb4122e6ef1a7413fb766d6d19dd4909180db694b6c",
+      "src/betting/value_detector.py": "5b475ebbde2e1e85f49ca827ca70b11cac974323e7b92d0468359c77d51ead1a",
+      "src/config.py": "627cc0b0b2e8523df3103330025d277cb511bd374b3c086f83700295a691d63d"
+    },
+    "max_ev": 0.4,
+    "min_edge": 0.03,
+    "source_artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca",
+    "source_captured_at": "2026-09-28T00:31:25.441175+00:00",
+    "source_model_snapshot_digest": "746b7ab954a9b2bc987fd08a7f39fa1293d37653f8886a4a94c3229faeed0211",
+    "source_public_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a",
+    "source_source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712"
+  },
+  "safety": {
+    "ledger_mutation": false,
+    "live_scores_consumed": false,
+    "no_bet": true,
+    "provider_requests": 0,
+    "publication_enabled": false,
+    "results_consumed": false,
+    "shadow": true
+  },
+  "schema": "sportsbrain-nations-league-shadow-signal-candidates-v1",
+  "stake_handling": "THEORETICAL_EVALUATION_ONLY",
+  "summary": {
+    "candidate_count_by_confidence": {
+      "HIGH": 0,
+      "LOW": 26,
+      "MEDIUM": 3
+    },
+    "candidate_count_by_market": {
+      "away": 10,
+      "draw": 0,
+      "home": 19
+    },
+    "fixtures_with_candidates": 29,
+    "fixtures_without_candidates": 17,
+    "maximum_ev": 0.39786423999999987,
+    "mean_ev": 0.1688119444827586,
+    "median_ev": 0.14062725500000006,
+    "minimum_accepted_ev": 0.03796678000000009,
+    "total_candidates": 29,
+    "total_fixtures": 46
+  }
+}
