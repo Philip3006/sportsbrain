@@ -60,6 +60,10 @@ jobs:
             tests/test_monte_carlo.py \
             tests/scanner/test_rule7_gate_enforcement.py \
             tests/football/test_top5_provider_cascade.py \
+            tests/football/test_top5_b1_real_input_materializer.py \
+            tests/football/test_top5_signal_lifecycle.py \
+            tests/football/test_top5_b4_provider_neutral_evidence.py \
+            tests/football/test_top5_final_acceptance_composer.py \
             tests/football/test_top5_public_delivery.py \
             tests/football/test_top5_public_delivery_executor.py \
             tests/e2e/test_signal_pipeline_smoke.py

@@ -145,10 +145,17 @@ def test_initial_accepts_canonical_the_odds_api_source_forms(source: str) -> Non
     assert lifecycle.initial_version.snapshot_source == source
 
 
+def test_initial_retains_isports_evidence_source_without_changing_authority() -> None:
+    lifecycle = initial(snapshot_source="isports_api:bulk_odds:BL1")
+    assert lifecycle.initial_version.provider_identity == "the_odds_api"
+    assert lifecycle.initial_version.snapshot_source == "isports_api:bulk_odds:BL1"
+
+
 @pytest.mark.parametrize(
     "source",
     [
         "another_provider:prematch",
+        "therundown_experimental:prematch",
         "fake_the_odds_api",
         "the_odds_api_fake",
         "https://example.test/the_odds_api",
