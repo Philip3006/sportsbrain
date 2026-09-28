@@ -828,6 +828,8 @@ def _run_writer_refresh(
     football=None,
     tennis=None,
     schedule=None,
+    user=None,
+    default_snapshot=None,
 ):
     """Run the ordinary writer against isolated files and mocked side effects."""
     import src.notifications.web_dashboard as dashboard
@@ -838,8 +840,13 @@ def _run_writer_refresh(
     data_dir = active / "docs" / "data"
     data_dir.mkdir(parents=True)
     default_user = dashboard._DEFAULT_USER
-    user_path = data_dir / f"signals_{default_user}.json"
+    selected_user = user or default_user
+    user_path = data_dir / f"signals_{selected_user}.json"
     user_path.write_text(json.dumps(user_snapshot))
+    if default_snapshot is not None:
+        (data_dir / f"signals_{default_user}.json").write_text(
+            json.dumps(default_snapshot)
+        )
     shared_path = data_dir / "signals.json"
     if shared_snapshot is not None:
         shared_path.write_text(json.dumps(shared_snapshot))
@@ -883,11 +890,16 @@ def _run_writer_refresh(
             football=football,
             tennis=tennis,
             schedule=schedule,
-            user=default_user,
+            user=selected_user,
         )
         is True
     )
-    output_path = stage / "docs" / "data" / "signals.json"
+    output_name = (
+        "signals.json"
+        if selected_user == default_user
+        else f"signals_{selected_user}.json"
+    )
+    output_path = stage / "docs" / "data" / output_name
     assert output_path.is_file()
     return json.loads(output_path.read_text()), uploaded, provider_calls
 
@@ -983,6 +995,58 @@ def test_football_refresh_preserves_per_user_nations_league_and_updates_football
     assert all("provider_event_id" not in signal for signal in output["football"])
 
 
+def test_freshest_valid_snapshot_wins_across_target_default_and_shared_files(
+    tmp_path, monkeypatch
+):
+    now = datetime(2026, 9, 28, 12, 0, tzinfo=timezone.utc)
+    target = _move_public_kickoffs_after(
+        _fixed_public_bundle(now - timedelta(hours=6)), now
+    )
+    default = _move_public_kickoffs_after(
+        _fixed_public_bundle(now - timedelta(hours=4)), now
+    )
+    shared = _move_public_kickoffs_after(
+        _fixed_public_bundle(now - timedelta(hours=2)), now
+    )
+    output, _uploaded, _provider_calls = _run_writer_refresh(
+        tmp_path,
+        monkeypatch,
+        now=now,
+        user="reader",
+        user_snapshot={"football": [], "tennis": [], "nations_league": target},
+        default_snapshot={"football": [], "nations_league": default},
+        shared_snapshot={"football": [], "nations_league": shared},
+        tennis=[_writer_signal("tennis-2", "Alcaraz", "Sinner")],
+    )
+
+    assert output["nations_league"] == shared
+    assert len(output["tennis"]) == 1
+
+
+def test_invalid_newer_candidate_does_not_displace_older_valid_snapshot(
+    tmp_path, monkeypatch
+):
+    now = datetime(2026, 9, 28, 12, 0, tzinfo=timezone.utc)
+    valid = _move_public_kickoffs_after(
+        _fixed_public_bundle(now - timedelta(hours=6)), now
+    )
+    invalid_newer = _move_public_kickoffs_after(
+        _fixed_public_bundle(now - timedelta(hours=1)), now
+    )
+    invalid_newer["public_digest"] = "f" * 64
+    output, _uploaded, _provider_calls = _run_writer_refresh(
+        tmp_path,
+        monkeypatch,
+        now=now,
+        user_snapshot={"football": [], "tennis": [], "nations_league": valid},
+        shared_snapshot={"football": [], "nations_league": invalid_newer},
+        football=[_writer_signal("football-2", "Arsenal", "Chelsea")],
+    )
+
+    assert output["nations_league"] == valid
+    assert output["football"][0]["match"] == "Arsenal vs Chelsea"
+
+
 def test_writer_preserves_public_shadow_snapshot_for_several_hours(
     tmp_path, monkeypatch
 ):
@@ -999,6 +1063,30 @@ def test_writer_preserves_public_shadow_snapshot_for_several_hours(
     )
     assert output["nations_league"] == public
     assert output["football"][0]["match"] == "Arsenal vs Chelsea"
+
+
+def test_health_only_writer_refresh_preserves_valid_nations_league(
+    tmp_path, monkeypatch
+):
+    now = datetime(2026, 9, 28, 12, 0, tzinfo=timezone.utc)
+    public = _move_public_kickoffs_after(
+        _fixed_public_bundle(now - timedelta(hours=6)), now
+    )
+    output, _uploaded, _provider_calls = _run_writer_refresh(
+        tmp_path,
+        monkeypatch,
+        now=now,
+        user_snapshot={
+            "football": [],
+            "tennis": [],
+            "nations_league": public,
+        },
+    )
+
+    assert output["nations_league"] == public
+    assert output["football"] == []
+    assert output["tennis"] == []
+    assert output["updated"] == "2026-09-28T12:00:00Z"
 
 
 def test_missing_nations_league_is_not_fabricated(tmp_path, monkeypatch):

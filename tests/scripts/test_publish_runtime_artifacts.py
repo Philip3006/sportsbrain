@@ -1,11 +1,13 @@
 """Regression tests for isolated runtime artifact publication."""
 from __future__ import annotations
 
+import json
 import os
 import shlex
 import signal
 import subprocess
 import time
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -236,6 +238,62 @@ def test_staged_publication_leaves_active_checkout_completely_clean(tmp_path: Pa
     assert _git(["rev-parse", "HEAD"], active).stdout.strip() == head_before
     assert _git(["status", "--porcelain"], active).stdout == ""
     assert _git(["show", "main:docs/data/signals.json"], origin).stdout == staged_signal.read_text()
+
+
+def test_staged_publication_keeps_fresh_valid_nations_league_from_main(
+    tmp_path: Path,
+):
+    from tests.football.test_nations_league_public import (
+        _fixed_public_bundle,
+        _move_public_kickoffs_after,
+    )
+
+    origin, active, publisher = _seed(tmp_path)
+    now = datetime.now(timezone.utc).replace(microsecond=0)
+    public = _move_public_kickoffs_after(
+        _fixed_public_bundle(now - timedelta(hours=6)), now
+    )
+    canonical = _clone(origin, tmp_path / "canonical")
+    canonical_signals = canonical / "docs" / "data" / "signals.json"
+    canonical_snapshot = json.loads(canonical_signals.read_text())
+    canonical_snapshot["nations_league"] = public
+    canonical_snapshot["football"] = [{"signal_id": "canonical"}]
+    canonical_signals.write_text(json.dumps(canonical_snapshot))
+    (canonical / "docs" / "data" / "signals_philip.json").write_text(
+        '{"football": [{"signal_id": "old-user"}], "tennis": []}\n'
+    )
+    _git(["add", "docs/data/signals.json", "docs/data/signals_philip.json"], canonical)
+    _git(["commit", "-m", "canonical NL snapshot"], canonical)
+    _git(["push", "origin", "HEAD:main"], canonical)
+
+    stage = tmp_path / "stage"
+    staged_signal = stage / "docs" / "data" / "signals.json"
+    staged_signal.parent.mkdir(parents=True)
+    staged_signal.write_text('{"football": [{"signal_id": "staged"}], "tennis": []}\n')
+    staged_user_signal = stage / "docs" / "data" / "signals_philip.json"
+    staged_user_signal.write_text(
+        '{"football": [{"signal_id": "staged-user"}], "tennis": []}\n'
+    )
+
+    result = _run_staged(
+        active,
+        publisher,
+        stage,
+        tmp_path / "publish.log",
+        "docs/data/signals.json",
+        "docs/data/signals_philip.json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    published = json.loads(_git(["show", "main:docs/data/signals.json"], origin).stdout)
+    assert published["nations_league"] == public
+    assert published["football"] == [{"signal_id": "staged"}]
+    assert published["tennis"] == []
+    published_user = json.loads(
+        _git(["show", "main:docs/data/signals_philip.json"], origin).stdout
+    )
+    assert published_user["nations_league"] == public
+    assert published_user["football"] == [{"signal_id": "staged-user"}]
 
 
 def test_publisher_is_nounset_safe_with_macos_bash_without_bashpid(tmp_path: Path):

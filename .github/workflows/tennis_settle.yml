@@ -158,10 +158,15 @@ jobs:
           git add docs/data/signals_philip.json docs/data/signals.json || true
           git diff --staged --quiet && exit 0
           git commit -m "auto: tennis settle $(date +%Y-%m-%d\ %H:%M) UTC [lag=${{ steps.lag.outputs.lag_s || 0 }}s]"
+          source scripts/_git_safe_push.sh
           for i in 1 2 3 4 5; do
             git fetch origin main
-            git rebase --autostash --strategy-option=theirs origin/main \
-              || { git rebase --abort 2>/dev/null || true; echo "[push] rebase conflict on attempt $i, retrying"; }
+            if ! git rebase --autostash --strategy-option=theirs origin/main; then
+              git rebase --abort 2>/dev/null || true
+              echo "[push] rebase conflict on attempt $i, retrying"
+              continue
+            fi
+            _git_preserve_nations_league_after_rebase /dev/stderr || exit 1
             git push origin main && exit 0
             echo "[push] attempt $i failed, backoff..."
             sleep $((RANDOM % 20 + 10))

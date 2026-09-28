@@ -41,6 +41,10 @@ _publish_permitted() {
   esac
 }
 
+_publish_is_signals_json() {
+  [[ "$1" =~ ^docs/data/signals(_[a-z0-9_-]+)?\.json$ ]]
+}
+
 _publish_validate_checkout() {
   local checkout="$1"
   local expected_transport="$2"
@@ -209,7 +213,15 @@ _runtime_publish_from_dir() {
 
     for path in "$@"; do
       mkdir -p "$publish_dir/$(dirname "$path")"
-      cp "$artifact_dir/$path" "$publish_dir/$path"
+      if _publish_is_signals_json "$path"; then
+        if ! python3 "$_RUNTIME_PUBLISHER_SCRIPT_DIR/merge_nations_league_public.py" \
+            --target "$publish_dir/$path" --base "$artifact_dir/$path" >> "$log" 2>&1; then
+          echo "[runtime-publish] unable to preserve validated Nations League projection: $path" >> "$log"
+          exit 1
+        fi
+      else
+        cp "$artifact_dir/$path" "$publish_dir/$path"
+      fi
       git -C "$publish_dir" add -f -- "$path"
     done
     if git -C "$publish_dir" diff --cached --quiet; then

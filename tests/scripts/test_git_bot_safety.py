@@ -15,13 +15,11 @@ Scenarios covered:
   8. source file in unmerged index → fail-closed (no auto-resolve of src/)
 """
 
-import os
+import json
 import subprocess
 import textwrap
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
-
-import pytest
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -316,13 +314,18 @@ def test_stuck_unmerged_state_clears(tmp_path):
 
     # Force a merge conflict state in the index (stages 2+3)
     subprocess.run(
-        ["bash", "-c",
-         f"cd {local} && git fetch origin main && "
-         "git update-index --add --cacheinfo 100644,"
-         "$(git hash-object -w docs/data/health.json),docs/data/health.json && "
-         "git fetch origin main && "
-         "git update-index --add --cacheinfo 100644,"
-         "$(git rev-parse origin/main:docs/data/health.json),docs/data/health.json"],
+        [
+            "bash",
+            "-c",
+            (
+                f"cd {local} && git fetch origin main && "
+                "git update-index --add --cacheinfo 100644,"
+                "$(git hash-object -w docs/data/health.json),docs/data/health.json && "
+                "git fetch origin main && "
+                "git update-index --add --cacheinfo 100644,"
+                "$(git rev-parse origin/main:docs/data/health.json),docs/data/health.json"
+            ),
+        ],
         check=False, capture_output=True,
     )
 
@@ -379,3 +382,116 @@ def test_source_file_conflict_fail_closed(tmp_path):
     r = subprocess.run(["bash", "-c", script], capture_output=True, text=True, check=False)
     assert r.returncode == 0, r.stdout + r.stderr
     assert "OK" in r.stdout
+
+
+def test_post_rebase_reconciliation_restores_fresh_valid_nations_league(tmp_path):
+    from tests.football.test_nations_league_public import (
+        _fixed_public_bundle,
+        _move_public_kickoffs_after,
+    )
+
+    origin = _make_origin(tmp_path)
+    local = _make_clone(origin, tmp_path)
+    _seed_repo(local, origin)
+    now = datetime.now(timezone.utc).replace(microsecond=0)
+    public = _move_public_kickoffs_after(
+        _fixed_public_bundle(now - timedelta(hours=3)), now
+    )
+
+    ci = _make_clone(origin, tmp_path, "ci")
+    ci_signals = ci / "docs" / "data" / "signals.json"
+    ci_snapshot = json.loads(ci_signals.read_text())
+    ci_snapshot["nations_league"] = public
+    ci_snapshot["football"] = [{"match_id": "canonical"}]
+    ci_signals.write_text(json.dumps(ci_snapshot))
+    _git(["add", "docs/data/signals.json"], ci)
+    _git(["commit", "-m", "canonical Nations League snapshot"], ci)
+    _git(["push", "origin", "main"], ci)
+
+    local_signals = local / "docs" / "data" / "signals.json"
+    local_snapshot = json.loads(local_signals.read_text())
+    local_snapshot["football"] = [{"match_id": "bot-refresh"}]
+    local_signals.write_text(json.dumps(local_snapshot))
+    _git(["add", "docs/data/signals.json"], local)
+    _git(["commit", "-m", "auto: stale full signals refresh"], local)
+    _git(["fetch", "origin", "main"], local)
+    _git(["rebase", "--strategy-option=theirs", "origin/main"], local)
+
+    rebased_snapshot = json.loads(local_signals.read_text())
+    assert "nations_league" not in rebased_snapshot
+    log = tmp_path / "reconcile.log"
+    script = textwrap.dedent(
+        f"""\
+        #!/bin/bash
+        set -euo pipefail
+        cd {local}
+        source {SAFE_PUSH_SH}
+        _git_preserve_nations_league_after_rebase {log}
+        """
+    )
+    result = subprocess.run(
+        ["bash", "-c", script], capture_output=True, text=True, check=False
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    retained = json.loads(local_signals.read_text())
+    assert retained["nations_league"] == public
+    assert retained["football"] == [{"match_id": "bot-refresh"}]
+    _git(["push", "origin", "main"], local)
+    durable = json.loads(_git(["show", "main:docs/data/signals.json"], origin).stdout)
+    assert durable["nations_league"] == public
+
+
+def test_signal_conflict_union_keeps_freshest_valid_nations_league(tmp_path):
+    from tests.football.test_nations_league_public import (
+        _fixed_public_bundle,
+        _move_public_kickoffs_after,
+    )
+
+    origin = _make_origin(tmp_path)
+    local = _make_clone(origin, tmp_path)
+    _seed_repo(local, origin)
+    now = datetime.now(timezone.utc).replace(microsecond=0)
+    public = _move_public_kickoffs_after(
+        _fixed_public_bundle(now - timedelta(hours=2)), now
+    )
+
+    ci = _make_clone(origin, tmp_path, "ci")
+    ci_signals = ci / "docs" / "data" / "signals.json"
+    ci_snapshot = json.loads(ci_signals.read_text())
+    ci_snapshot["nations_league"] = public
+    ci_snapshot["football"] = [{"match_id": "remote", "market": "h2h"}]
+    ci_signals.write_text(json.dumps(ci_snapshot))
+    _git(["add", "docs/data/signals.json"], ci)
+    _git(["commit", "-m", "canonical Nations League snapshot"], ci)
+    _git(["push", "origin", "main"], ci)
+
+    local_signals = local / "docs" / "data" / "signals.json"
+    local_snapshot = json.loads(local_signals.read_text())
+    local_snapshot["football"] = [{"match_id": "local", "market": "h2h"}]
+    local_signals.write_text(json.dumps(local_snapshot))
+    _git(["add", "docs/data/signals.json"], local)
+    _git(["commit", "-m", "auto: local signals refresh"], local)
+    _git(["fetch", "origin", "main"], local)
+    conflict = _git(["merge", "origin/main"], local, check=False)
+    assert conflict.returncode != 0
+    assert _git(["ls-files", "--unmerged"], local).stdout
+
+    log = tmp_path / "union.log"
+    script = textwrap.dedent(
+        f"""\
+        #!/bin/bash
+        set -euo pipefail
+        cd {local}
+        source {SAFE_PUSH_SH}
+        _git_clear_unmerged {log}
+        """
+    )
+    result = subprocess.run(
+        ["bash", "-c", script], capture_output=True, text=True, check=False
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    merged = json.loads(local_signals.read_text())
+    assert merged["nations_league"] == public
+    assert {item["match_id"] for item in merged["football"]} == {"local", "remote"}

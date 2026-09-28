@@ -17,6 +17,8 @@
 # (not remote). Bots should only touch permitted runtime-data paths (see
 # _bot_permitted below). Source-file conflicts cause fail-closed.
 
+_GIT_SAFE_PUSH_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+
 # === Source-file guard ===
 # Permitted paths for bot commits. Anything outside this set is a source file;
 # conflicts or staged changes in source files cause fail-closed.
@@ -79,7 +81,7 @@ _git_signals_json_merge() {
   # Base = theirs (remote); union in ours' football/tennis signals by (match_id, market).
   # Ours' all_odds and model_tips also unioned (theirs wins on key collision — remote is newer).
   if jq -s '
-    def by_key(k1;k2): [.[] | {k: (.[k1] // "") + "|" + (.[k2] // ""), v: .}] | from_entries;
+    def by_key(k1;k2): [.[] | {key: ((.[k1] // "") + "|" + (.[k2] // "")), value: .}] | from_entries;
     .[1] as $theirs | .[0] as $ours |
     ($theirs.football // []) as $tf | ($ours.football // []) as $of |
     ($tf | by_key("match_id";"market")) as $tfm |
@@ -99,6 +101,13 @@ _git_signals_json_merge() {
     n_theirs=$(jq '((.football // []) | length) + ((.tennis // []) | length)' "$theirs_tmp" 2>/dev/null || echo 0)
     n_merged=$(jq '((.football // []) | length) + ((.tennis // []) | length)' "$merged_tmp" 2>/dev/null || echo 0)
     if [ "$n_merged" -ge "$n_theirs" ] && [ "$n_merged" -ge "$n_ours" ]; then
+      if ! python3 "$_GIT_SAFE_PUSH_SCRIPT_DIR/merge_nations_league_public.py" \
+          --target "$merged_tmp" --base "$merged_tmp" \
+          --candidate-file "$ours_tmp" --candidate-file "$theirs_tmp" >> "$LOG" 2>&1; then
+        echo "[$TS] git_safe_push: Nations League snapshot merge failed closed for $f" >> "$LOG"
+        rm -f "$ours_tmp" "$theirs_tmp" "$merged_tmp"
+        return 1
+      fi
       mv "$merged_tmp" "$f"
       echo "[$TS] git_safe_push: signals merged (ours=$n_ours theirs=$n_theirs → merged=$n_merged) for $f" >> "$LOG"
       rm -f "$ours_tmp" "$theirs_tmp"
@@ -108,6 +117,45 @@ _git_signals_json_merge() {
   fi
   rm -f "$ours_tmp" "$theirs_tmp" "$merged_tmp"
   return 1
+}
+
+# A successful rebase with -Xtheirs can silently choose the bot's older full
+# signals snapshot over a newer main snapshot. Reconcile changed signal files
+# against the freshly fetched main version before pushing.
+_git_preserve_nations_league_after_rebase() {
+  local LOG="$1"
+  local TS; TS="$(date '+%Y-%m-%d %H:%M:%S %Z')"
+  local f remote_tmp changed=0
+  local -a changed_paths=()
+  while IFS= read -r f; do
+    case "$f" in
+      docs/data/signals.json|docs/data/signals_*.json) ;;
+      *) continue ;;
+    esac
+    remote_tmp="$(mktemp)" || return 1
+    if git show "origin/main:$f" > "$remote_tmp" 2>/dev/null; then
+      if ! python3 "$_GIT_SAFE_PUSH_SCRIPT_DIR/merge_nations_league_public.py" \
+          --target "$f" --base "$f" --candidate-file "$remote_tmp" >> "$LOG" 2>&1; then
+        rm -f "$remote_tmp"
+        echo "[$TS] git_safe_push: post-rebase Nations League merge failed for $f" >> "$LOG"
+        return 1
+      fi
+      if ! git diff --quiet -- "$f"; then
+        git add -- "$f" >> "$LOG" 2>&1 || { rm -f "$remote_tmp"; return 1; }
+        changed_paths+=("$f")
+        changed=1
+      fi
+    fi
+    rm -f "$remote_tmp"
+  done < <(git diff --name-only origin/main...HEAD -- docs/data)
+
+  if [ "$changed" -eq 1 ]; then
+    if ! git commit -m "auto: retain validated Nations League public snapshot" \
+        -- "${changed_paths[@]}" >> "$LOG" 2>&1; then
+      echo "[$TS] git_safe_push: unable to commit reconciled Nations League snapshot" >> "$LOG"
+      return 1
+    fi
+  fi
 }
 
 _git_clear_unmerged() {
@@ -142,6 +190,8 @@ _git_clear_unmerged() {
           echo "[$TS] git_safe_push: staged merged $f" >> "$LOG"
           continue
         fi
+        echo "[$TS] git_safe_push: FAIL CLOSED — signals conflict merge failed: $f" >> "$LOG"
+        return 1
         ;;
     esac
 
@@ -186,7 +236,7 @@ _git_safe_push_body() {
   TS="$(date '+%Y-%m-%d %H:%M:%S %Z')"
 
   # Recover from any stuck unmerged state before attempting git operations
-  _git_clear_unmerged "$LOG"
+  _git_clear_unmerged "$LOG" || return 1
 
   git fetch origin main >> "$LOG" 2>&1
 
@@ -194,7 +244,7 @@ _git_safe_push_body() {
     echo "[$TS] git_safe_push: rebase conflict, aborting" >> "$LOG"
     git rebase --abort >> "$LOG" 2>&1 || true
     # Second chance: clear any unmerged state left by autostash and retry once
-    _git_clear_unmerged "$LOG"
+    _git_clear_unmerged "$LOG" || return 1
     git fetch origin main >> "$LOG" 2>&1
     if ! git pull --rebase --autostash --strategy-option=theirs origin main >> "$LOG" 2>&1; then
       echo "[$TS] git_safe_push: rebase failed after unmerged-clear, giving up" >> "$LOG"
@@ -202,6 +252,7 @@ _git_safe_push_body() {
       return 1
     fi
   fi
+  _git_preserve_nations_league_after_rebase "$LOG" || return 1
 
   if git push origin main >> "$LOG" 2>&1; then
     echo "[$TS] git_safe_push: push ok (attempt 1) — $(git log origin/main -1 --oneline 2>/dev/null)" >> "$LOG"
@@ -215,6 +266,7 @@ _git_safe_push_body() {
     git rebase --abort >> "$LOG" 2>&1 || true
     return 1
   fi
+  _git_preserve_nations_league_after_rebase "$LOG" || return 1
   if git push origin main >> "$LOG" 2>&1; then
     echo "[$TS] git_safe_push: push ok (attempt 2) — $(git log origin/main -1 --oneline 2>/dev/null)" >> "$LOG"
     return 0
@@ -227,6 +279,7 @@ _git_safe_push_body() {
     git rebase --abort >> "$LOG" 2>&1 || true
     return 1
   fi
+  _git_preserve_nations_league_after_rebase "$LOG" || return 1
   if git push origin main >> "$LOG" 2>&1; then
     echo "[$TS] git_safe_push: push ok (attempt 3) — $(git log origin/main -1 --oneline 2>/dev/null)" >> "$LOG"
     return 0
