@@ -926,6 +926,7 @@ def publication_precheck(
         "schema_version",
         "source_main_sha",
         "provider_authority",
+        "evidence_provider",
         "candidate_provider",
         "leagues",
         "research_sha",
@@ -933,6 +934,7 @@ def publication_precheck(
         "b4_proof_id",
         "b4_proof_evidence_digest",
         "b4_headroom_digest",
+        "b4_dossier_digest",
         "discovery_event_ids",
         "controlled_shadow_run_id",
         "qualification_session_id",
@@ -965,6 +967,19 @@ def publication_precheck(
     }
     manifest = accepted_evidence.get("manifest") if isinstance(accepted_evidence, Mapping) else None
     manifest_valid = False
+    manifest_evidence_provider = None
+    if isinstance(manifest, Mapping):
+        try:
+            from src.football.top5_durable_activation import (
+                DurableActivationError,
+                validate_activation_manifest_evidence_provider,
+            )
+
+            manifest_evidence_provider = validate_activation_manifest_evidence_provider(
+                manifest
+            )
+        except DurableActivationError:
+            manifest_evidence_provider = None
     if (
         isinstance(accepted_evidence, Mapping)
         and set(accepted_evidence) == {"status", "manifest"}
@@ -988,7 +1003,8 @@ def publication_precheck(
             and manifest.get("schema_version") == FINAL_ACCEPTANCE_SCHEMA_VERSION
             and manifest.get("readiness") == STATUS_VERIFIED
             and manifest.get("provider_authority") == TOP5_PUBLIC_PROVIDER_AUTHORITY
-            and manifest.get("candidate_provider") == "therundown_experimental"
+            and manifest_evidence_provider is not None
+            and manifest.get("candidate_provider") == manifest_evidence_provider
             and manifest.get("leagues") == sorted(TOP5_LEAGUES)
             and checks_valid
             and artifact is not None

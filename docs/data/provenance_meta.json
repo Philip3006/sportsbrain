@@ -1,11 +1,11 @@
 {
   "schema_version": "1",
-  "source_release_sha": "b297461a53b2eb097729d550e2c6ce9bd57f88d7",
+  "source_release_sha": "d2dca426129f3f6155f686569728575b6b605664",
   "source_ci": {
-    "run_id": "36360724798",
+    "run_id": "36362473079",
     "workflow": "CI Gates (compile + smoke tests + lint)",
     "status": "success",
-    "head_sha": "b297461a53b2eb097729d550e2c6ce9bd57f88d7"
+    "head_sha": "d2dca426129f3f6155f686569728575b6b605664"
   },
-  "recorded_at": "2026-09-28T00:03:56Z"
+  "recorded_at": "2026-09-28T00:31:17Z"
 }
