@@ -9,6 +9,7 @@ import pytest
 
 import src.notifications.nations_league_public as nations_public
 from scripts.stage_nations_league_public import stage_public_product
+from src.betting.value_detector import BetSignal
 from src.notifications.nations_league_public import (
     NationsLeaguePublicError,
     build_public_nations_league,
@@ -757,3 +758,261 @@ def test_duplicate_skipped_match_ids_are_rejected():
     _redigest(artifact)
     with pytest.raises(NationsLeaguePublicError, match="skipped target identities"):
         _public(artifact, now)
+
+
+def _writer_signal(match_id, home, away):
+    return BetSignal(
+        match_id=match_id,
+        home=home,
+        away=away,
+        market="home",
+        model_prob=0.55,
+        fair_prob=0.50,
+        decimal_odds=2.10,
+        ev=0.10,
+        kelly_f=0.05,
+        stake_pct=0.05,
+        confidence="MEDIUM",
+        stake_eur=5.0,
+    )
+
+
+def _run_writer_refresh(
+    tmp_path,
+    monkeypatch,
+    *,
+    now,
+    user_snapshot,
+    shared_snapshot=None,
+    football=None,
+    tennis=None,
+    schedule=None,
+):
+    """Run the ordinary writer against isolated files and mocked side effects."""
+    import src.notifications.web_dashboard as dashboard
+    from src.data import odds_api
+
+    active = tmp_path / "checkout"
+    stage = tmp_path / "stage"
+    data_dir = active / "docs" / "data"
+    data_dir.mkdir(parents=True)
+    default_user = dashboard._DEFAULT_USER
+    user_path = data_dir / f"signals_{default_user}.json"
+    user_path.write_text(json.dumps(user_snapshot))
+    shared_path = data_dir / "signals.json"
+    if shared_snapshot is not None:
+        shared_path.write_text(json.dumps(shared_snapshot))
+
+    class FixedDateTime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return now.astimezone(tz) if tz else now.replace(tzinfo=None)
+
+    monkeypatch.setattr(dashboard, "ROOT", active)
+    monkeypatch.setattr(dashboard, "datetime", FixedDateTime)
+    monkeypatch.setattr(nations_public, "datetime", FixedDateTime)
+    monkeypatch.setenv("SPORTSBRAIN_RUNTIME_ARTIFACT_STAGE_DIR", str(stage))
+    monkeypatch.setattr(
+        dashboard, "_ledger_path_for", lambda _user: tmp_path / "ledger.csv"
+    )
+    monkeypatch.setattr(dashboard, "_get_open_bets_from_ledger", lambda **_kwargs: [])
+    monkeypatch.setattr(dashboard, "_get_closed_bets", lambda **_kwargs: [])
+    monkeypatch.setattr(
+        dashboard, "_get_settled_bets_for_dashboard", lambda **_kwargs: []
+    )
+    monkeypatch.setattr(dashboard, "_build_history", lambda **_kwargs: [])
+    monkeypatch.setattr(dashboard, "_build_wm_stats", lambda **_kwargs: {})
+    monkeypatch.setattr(dashboard, "_build_tennis_stats", lambda **_kwargs: {})
+    monkeypatch.setattr(dashboard, "_build_player_form_cache", dict)
+    provider_calls = []
+    monkeypatch.setattr(
+        odds_api,
+        "fetch_wm_scores",
+        lambda **_kwargs: provider_calls.append("mocked") or [],
+    )
+    uploaded = {}
+    monkeypatch.setattr(
+        dashboard,
+        "upload_signals_to_cloud",
+        lambda **kwargs: uploaded.update(kwargs) or True,
+    )
+
+    assert (
+        dashboard.write_signals_json(
+            football=football,
+            tennis=tennis,
+            schedule=schedule,
+            user=default_user,
+        )
+        is True
+    )
+    output_path = stage / "docs" / "data" / "signals.json"
+    assert output_path.is_file()
+    return json.loads(output_path.read_text()), uploaded, provider_calls
+
+
+def _fixed_public_bundle(captured_at):
+    artifact, _ = _artifact(captured_at)
+    return _public(artifact, captured_at)
+
+
+def test_tennis_refresh_preserves_staged_nations_league_and_existing_merge_semantics(
+    tmp_path, monkeypatch
+):
+    from src.notifications import public_serializer
+
+    now = datetime(2026, 9, 28, 12, 0, tzinfo=timezone.utc)
+    public = _fixed_public_bundle(now)
+    default_user_snapshot = {
+        "football": [],
+        "tennis": [],
+        "schedule": [{"sport": "football", "home": "Germany", "away": "France"}],
+        "all_odds": {"kept": {"home": 2.0}},
+        "model_tips": {"kept": {"model": "existing"}},
+    }
+    validation_calls = []
+    original_validator = public_serializer.validate_public_nations_league
+
+    def spy_validator(value, **kwargs):
+        validation_calls.append(value)
+        return original_validator(value, **kwargs)
+
+    monkeypatch.setattr(
+        public_serializer, "validate_public_nations_league", spy_validator
+    )
+    output, uploaded, provider_calls = _run_writer_refresh(
+        tmp_path,
+        monkeypatch,
+        now=now,
+        user_snapshot=default_user_snapshot,
+        # The stage operation writes the shared static input, not the per-user file.
+        shared_snapshot={"football": [], "nations_league": public},
+        tennis=[_writer_signal("tennis-1", "Alcaraz", "Sinner")],
+        schedule=[{"sport": "tennis", "home": "Alcaraz", "away": "Sinner"}],
+    )
+
+    assert json.dumps(output["nations_league"], sort_keys=True) == json.dumps(
+        public, sort_keys=True
+    )
+    assert len(output["tennis"]) == 1
+    assert output["tennis"][0]["match"] == "Alcaraz vs Sinner"
+    assert output["football"] == []
+    assert {entry["sport"] for entry in output["schedule"]} == {"football", "tennis"}
+    assert output["all_odds"] == default_user_snapshot["all_odds"]
+    assert output["model_tips"] == default_user_snapshot["model_tips"]
+    assert validation_calls == [public]
+    assert uploaded["payload"]["nations_league"] == public
+    # Writer's existing scores hook is mocked; no external provider request occurs.
+    assert provider_calls == ["mocked"]
+
+
+def test_football_refresh_preserves_per_user_nations_league_and_updates_football(
+    tmp_path, monkeypatch
+):
+    now = datetime(2026, 9, 28, 12, 0, tzinfo=timezone.utc)
+    public = _fixed_public_bundle(now)
+    output, _uploaded, _provider_calls = _run_writer_refresh(
+        tmp_path,
+        monkeypatch,
+        now=now,
+        user_snapshot={
+            "football": [],
+            "tennis": [],
+            "nations_league": public,
+            "schedule": [{"sport": "tennis", "home": "Alcaraz", "away": "Sinner"}],
+        },
+        football=[_writer_signal("football-1", "Arsenal", "Chelsea")],
+        schedule=[{"sport": "football", "home": "Arsenal", "away": "Chelsea"}],
+    )
+
+    assert output["nations_league"] == public
+    assert len(output["football"]) == 1
+    assert output["football"][0]["match"] == "Arsenal vs Chelsea"
+    assert output["tennis"] == []
+    assert {entry["sport"] for entry in output["schedule"]} == {"football", "tennis"}
+    assert all("provider_event_id" not in signal for signal in output["football"])
+
+
+def test_missing_nations_league_is_not_fabricated(tmp_path, monkeypatch):
+    now = datetime(2026, 9, 28, 12, 0, tzinfo=timezone.utc)
+    output, _uploaded, _provider_calls = _run_writer_refresh(
+        tmp_path,
+        monkeypatch,
+        now=now,
+        user_snapshot={"football": [], "tennis": []},
+        football=[_writer_signal("football-1", "Arsenal", "Chelsea")],
+    )
+    assert "nations_league" not in output
+    assert output["football"][0]["match"] == "Arsenal vs Chelsea"
+
+
+@pytest.mark.parametrize("invalid_kind", ["stale", "malformed", "private_artifact"])
+def test_invalid_nations_league_is_omitted_without_blocking_other_refreshes(
+    invalid_kind, tmp_path, monkeypatch
+):
+    now = datetime(2026, 9, 28, 12, 0, tzinfo=timezone.utc)
+    captured_at = now - timedelta(minutes=20) if invalid_kind == "stale" else now
+    public = _fixed_public_bundle(captured_at)
+    if invalid_kind == "malformed":
+        public["public_digest"] = "f" * 64
+    elif invalid_kind == "private_artifact":
+        public, _ = _artifact(now)
+
+    output, _uploaded, _provider_calls = _run_writer_refresh(
+        tmp_path,
+        monkeypatch,
+        now=now,
+        user_snapshot={
+            "football": [],
+            "tennis": [],
+            "nations_league": public,
+        },
+        tennis=[_writer_signal("tennis-1", "Alcaraz", "Sinner")],
+    )
+
+    assert "nations_league" not in output
+    assert len(output["tennis"]) == 1
+    assert output["tennis"][0]["match"] == "Alcaraz vs Sinner"
+
+
+def test_public_serializer_rejects_private_fields_on_preserved_nations_league():
+    now = datetime(2026, 9, 28, 12, 0, tzinfo=timezone.utc)
+    private_value = {**_fixed_public_bundle(now), "provider_operation_manifest": []}
+    with pytest.raises(PublicFootballCompatibilityError, match="Nations League"):
+        serialize_public_product({"nations_league": private_value})
+
+
+def test_independent_serializer_rejection_drops_only_nations_league(
+    tmp_path, monkeypatch
+):
+    from src.notifications import public_serializer
+
+    now = datetime(2026, 9, 28, 12, 0, tzinfo=timezone.utc)
+    public = _fixed_public_bundle(now)
+    original_validator = public_serializer.validate_public_nations_league
+    rejected_values = []
+
+    def reject_at_final_gate(value, **kwargs):
+        if value == public:
+            rejected_values.append(value)
+            raise NationsLeaguePublicError("became stale at serialization")
+        return original_validator(value, **kwargs)
+
+    monkeypatch.setattr(
+        public_serializer, "validate_public_nations_league", reject_at_final_gate
+    )
+    output, _uploaded, _provider_calls = _run_writer_refresh(
+        tmp_path,
+        monkeypatch,
+        now=now,
+        user_snapshot={
+            "football": [],
+            "tennis": [],
+            "nations_league": public,
+        },
+        football=[_writer_signal("football-1", "Arsenal", "Chelsea")],
+    )
+
+    assert rejected_values == [public]
+    assert "nations_league" not in output
+    assert output["football"][0]["match"] == "Arsenal vs Chelsea"
