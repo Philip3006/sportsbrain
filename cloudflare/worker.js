@@ -610,6 +610,8 @@ export function serializePublicProduct(snapshot) {
   return pub;
 }
 
+const MAX_PUBLIC_NATIONS_LEAGUE_AGE_MS = 24 * 60 * 60 * 1000;
+
 function _validatePublicNationsLeague(value) {
   const fail = (reason) => { throw new Error(`invalid Nations League shadow: ${reason}`); };
   const hasExactKeys = (object, names) => {
@@ -636,7 +638,7 @@ function _validatePublicNationsLeague(value) {
       !/^[0-9a-f]{64}$/.test(value.model_snapshot_digest || '') ||
       !/^[0-9a-f]{64}$/.test(value.public_digest || '')) fail('malformed provenance');
   const captured = Date.parse(value.captured_at || '');
-  if (!Number.isFinite(captured) || captured > Date.now() || Date.now() - captured > 15 * 60 * 1000) {
+  if (!Number.isFinite(captured) || captured > Date.now() || Date.now() - captured > MAX_PUBLIC_NATIONS_LEAGUE_AGE_MS) {
     fail('stale or invalid capture time');
   }
   if (!Number.isSafeInteger(value.fixture_count) || value.fixture_count < 1 ||

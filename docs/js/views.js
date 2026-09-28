@@ -540,7 +540,7 @@ function renderNationsLeagueShadow(payload) {
     payload.publication_enabled === false && /^[0-9a-f]{40}$/.test(payload.source_sha || '') &&
     /^[0-9a-f]{64}$/.test(payload.artifact_digest || '') &&
     /^[0-9a-f]{64}$/.test(payload.public_digest || '') &&
-    Number.isFinite(captured) && captured <= now && now - captured <= 15 * 60 * 1000 &&
+    Number.isFinite(captured) && captured <= now && now - captured <= 24 * 60 * 60 * 1000 &&
     Number.isInteger(payload.fixture_count) && payload.fixture_count > 0 &&
     Array.isArray(payload.fixtures) && payload.fixtures.length === payload.fixture_count;
   if (!valid) {
@@ -548,6 +548,14 @@ function renderNationsLeagueShadow(payload) {
     container.hidden = true;
     return;
   }
+  const ageMs = now - captured;
+  const ageMinutes = Math.floor(ageMs / 60000);
+  const ageText = ageMinutes < 60
+    ? `${ageMinutes} Min.`
+    : `${Math.floor(ageMinutes / 60)} Std.`;
+  const staleLabel = ageMs > 60 * 60 * 1000
+    ? '<b class="nl-shadow-stale" style="color:var(--yellow)">Snapshot veraltet</b>'
+    : '';
   const pct = (value) => `${(Number(value) * 100).toFixed(1)}%`;
   const fixtures = payload.fixtures.map((fixture) => {
     const model = fixture?.model?.probabilities;
@@ -583,7 +591,7 @@ function renderNationsLeagueShadow(payload) {
     return;
   }
   container.hidden = false;
-  container.innerHTML = `<section class="nl-shadow-panel" aria-label="UEFA Nations League shadow model"><header><div><b>UEFA Nations League</b><span class="nl-shadow-badge">Shadow</span></div><small>WEAK EVIDENCE · NO BET · Kein Wett- oder Produktionssignal</small></header>${fixtures.join('')}</section>`;
+  container.innerHTML = `<section class="nl-shadow-panel" aria-label="UEFA Nations League shadow model"><header><div><b>UEFA Nations League</b><span class="nl-shadow-badge">Shadow</span></div><small>Shadow Snapshot · erfasst vor ${ageText} ${staleLabel}<br>WEAK EVIDENCE · NO BET · Kein Wett- oder Produktionssignal</small></header>${fixtures.join('')}</section>`;
 }
 
 function _footballCompatMetaHtml(s) {

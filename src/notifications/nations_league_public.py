@@ -19,7 +19,8 @@ PROVIDER = "isports_api"
 PROVIDER_LEAGUE_ID = 146819
 EVIDENCE_STATUS = "WEAK_EVIDENCE_SHADOW_ONLY"
 LIFECYCLE = "SHADOW_ONLY"
-MAX_ARTIFACT_AGE = timedelta(minutes=15)
+MAX_CAPTURE_ACCEPTANCE_AGE = timedelta(minutes=15)
+MAX_PUBLIC_SHADOW_AGE = timedelta(hours=24)
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _SOURCE_SHA = re.compile(r"^[0-9a-f]{40}$")
 _RUN_ID = re.compile(r"^unl-shadow-\d{8}T\d{6}Z-[0-9a-f]{12}$")
@@ -168,7 +169,7 @@ def validate_public_nations_league(
     value: object,
     *,
     now: datetime | None = None,
-    max_age: timedelta = MAX_ARTIFACT_AGE,
+    max_age: timedelta = MAX_PUBLIC_SHADOW_AGE,
 ) -> dict[str, Any]:
     """Validate the already-projected public bundle without private fields."""
     if not isinstance(value, Mapping):
@@ -351,7 +352,7 @@ def build_public_nations_league(
     captured = _timestamp(raw.get("captured_at"), "artifact captured_at")
     current = now.astimezone(timezone.utc) if now else datetime.now(timezone.utc)
     age = current - captured
-    if age < timedelta(0) or age > MAX_ARTIFACT_AGE:
+    if age < timedelta(0) or age > MAX_CAPTURE_ACCEPTANCE_AGE:
         raise NationsLeaguePublicError("shadow artifact is stale or future-dated")
     eligible_match_ids = _validate_isports_request_provenance(
         raw, captured_at=captured, current=current
@@ -695,7 +696,7 @@ def _validate_isports_request_provenance(
         if (
             started > completed
             or completed > captured_at
-            or current - completed > MAX_ARTIFACT_AGE
+            or current - completed > MAX_CAPTURE_ACCEPTANCE_AGE
         ):
             raise NationsLeaguePublicError(
                 "iSports operation time/provenance is invalid"

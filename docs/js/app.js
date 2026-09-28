@@ -93,6 +93,81 @@ async function _validNationsLeaguePublicDigest(value) {
   }
 }
 
+async function _validNationsLeaguePublicPayload(value, nowMs = Date.now()) {
+  const exactKeys = (object, keys) => {
+    if (!object || typeof object !== 'object' || Array.isArray(object)) return false;
+    const actual = Object.keys(object).sort();
+    const expected = [...keys].sort();
+    return actual.length === expected.length && actual.every((key, index) => key === expected[index]);
+  };
+  if (!await _validNationsLeaguePublicDigest(value) || !exactKeys(value, [
+    'schema', 'competition', 'provider', 'provider_league_id', 'evidence_status', 'lifecycle',
+    'no_bet', 'publication_enabled', 'captured_at', 'source_sha', 'artifact_digest',
+    'model_snapshot_digest', 'fixture_count', 'fixtures', 'public_digest',
+  ])) return false;
+  const captured = Date.parse(value.captured_at);
+  if (value.schema !== 'nations-league-public-v1' || value.competition !== 'UEFA Nations League' ||
+      value.provider !== 'isports_api' || value.provider_league_id !== 146819 ||
+      value.evidence_status !== 'WEAK_EVIDENCE_SHADOW_ONLY' || value.lifecycle !== 'SHADOW_ONLY' ||
+      value.no_bet !== true || value.publication_enabled !== false ||
+      !/^[0-9a-f]{40}$/.test(value.source_sha || '') ||
+      !/^[0-9a-f]{64}$/.test(value.artifact_digest || '') ||
+      !/^[0-9a-f]{64}$/.test(value.model_snapshot_digest || '') ||
+      !Number.isFinite(captured) || captured > nowMs || nowMs - captured > 24 * 60 * 60 * 1000 ||
+      !Number.isSafeInteger(value.fixture_count) || value.fixture_count < 1 ||
+      !Array.isArray(value.fixtures) || value.fixtures.length !== value.fixture_count) return false;
+  const validProbabilities = (probabilities) => exactKeys(probabilities, ['home', 'draw', 'away']) &&
+    ['home', 'draw', 'away'].every((key) => Number.isFinite(probabilities[key]) &&
+      probabilities[key] >= 0 && probabilities[key] <= 1 && Number.isInteger(probabilities[key] * 1e6)) &&
+    Math.abs(probabilities.home + probabilities.draw + probabilities.away - 1) <= 1e-6;
+  const ids = new Set();
+  for (const fixture of value.fixtures) {
+    if (!exactKeys(fixture, [
+      'provider_event_id', 'competition', 'kickoff', 'home', 'away', 'captured_at', 'model', 'market',
+      'source_sha', 'artifact_digest',
+    ]) || !exactKeys(fixture.model, ['probabilities', 'components']) ||
+        !exactKeys(fixture.model.components, ['raw_dixon_coles', 'raw_gbt', 'canonical_stacker']) ||
+        !exactKeys(fixture.market, ['bookmaker', 'odds_decimal', 'probabilities']) ||
+        !exactKeys(fixture.market.odds_decimal, ['home', 'draw', 'away']) ||
+        typeof fixture.provider_event_id !== 'string' || !fixture.provider_event_id ||
+        ids.has(fixture.provider_event_id) || fixture.competition !== value.competition ||
+        fixture.source_sha !== value.source_sha || fixture.artifact_digest !== value.artifact_digest ||
+        fixture.captured_at !== value.captured_at || typeof fixture.home !== 'string' || !fixture.home ||
+        typeof fixture.away !== 'string' || !fixture.away ||
+        !Number.isFinite(Date.parse(fixture.kickoff || '')) || Date.parse(fixture.kickoff) <= nowMs ||
+        !validProbabilities(fixture.model.probabilities) ||
+        !validProbabilities(fixture.market.probabilities) ||
+        !['raw_dixon_coles', 'raw_gbt', 'canonical_stacker'].every((key) =>
+          validProbabilities(fixture.model.components[key])) ||
+        !['home', 'draw', 'away'].every((key) =>
+          fixture.model.probabilities[key] === fixture.model.components.canonical_stacker[key]) ||
+        typeof fixture.market.bookmaker !== 'string' || !fixture.market.bookmaker ||
+        !['home', 'draw', 'away'].every((key) => Number.isFinite(fixture.market.odds_decimal[key]) &&
+          fixture.market.odds_decimal[key] > 1 && Number.isInteger(fixture.market.odds_decimal[key] * 1e6))) {
+      return false;
+    }
+    ids.add(fixture.provider_event_id);
+  }
+  return true;
+}
+
+async function _mergeStaticNationsLeagueIfMissing(payload, source, fetcher, nowMs = Date.now()) {
+  if (source !== 'worker' || !payload ||
+      Object.prototype.hasOwnProperty.call(payload, 'nations_league')) return payload;
+  try {
+    const response = await fetcher(DATA_URL + '?t=' + nowMs, { cache: 'no-store' });
+    if (!response?.ok) return payload;
+    const staticPayload = await response.json();
+    const nationsLeague = staticPayload?.nations_league;
+    if (await _validNationsLeaguePublicPayload(nationsLeague, nowMs)) {
+      return { ...payload, nations_league: nationsLeague };
+    }
+  } catch {
+    // The narrow static bridge is optional; Worker Football/Tennis stay usable.
+  }
+  return payload;
+}
+
 function _top5LifecycleError(message) {
   throw new Error(`invalid public Top-5 lifecycle: ${message}`);
 }
@@ -1207,7 +1282,9 @@ async function _load() {
     const fallback = await fetch(DATA_URL + ts, { cache: 'no-store' });
     if (!fallback.ok) throw workerReleaseError;
     d = _top5PublicReleaseGuard(await fallback.json(), 'static');
+    source = 'static';
   }
+  d = await _mergeStaticNationsLeagueIfMissing(d, source, fetch);
   if (d.nations_league && !(await _validNationsLeaguePublicDigest(d.nations_league))) {
     d = Object.assign({}, d, { nations_league: null });
   }
