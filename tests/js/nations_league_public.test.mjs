@@ -340,10 +340,15 @@ test('Worker still rejects unsafe public Nations League schema, provenance, and 
 });
 
 test('Worker accepts the canonical incident public bundle and verifies its Python digest', async () => {
-  const signals = JSON.parse(readFileSync(resolve(__dir, '../../docs/data/signals.json'), 'utf8'));
-  const bundle = signals.nations_league;
+  const bundle = JSON.parse(
+    readFileSync(
+      resolve(__dir, '../fixtures/nations_league_public_incident_20260928.json'),
+      'utf8',
+    ),
+  );
   assert.equal(bundle.schema, 'nations-league-public-v1');
   assert.equal(bundle.fixture_count, 46);
+  assert.equal(bundle.fixtures.length, 46);
   assert.equal(bundle.public_digest, '59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a');
   const serialized = JSON.stringify(bundle);
   assert.match(serialized, /0\.260599/);
