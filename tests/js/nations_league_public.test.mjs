@@ -291,6 +291,7 @@ test('Worker-missing NL bridge ignores tampered static NL and never replaces Wor
 test('Worker accepts six-decimal public values that are not exact IEEE-754 scaled integers', async () => {
   const bundle = sixDecimalBundle();
   assert.equal(await validatePublicNationsLeagueDigest(bundle), true);
+  assert.equal(await appNlHelpers().valid(bundle), true);
 
   const tooPrecise = structuredClone(bundle);
   tooPrecise.fixtures[0].model.probabilities = {

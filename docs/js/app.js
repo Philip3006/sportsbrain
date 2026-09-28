@@ -116,9 +116,17 @@ async function _validNationsLeaguePublicPayload(value, nowMs = Date.now()) {
       !Number.isFinite(captured) || captured > nowMs || nowMs - captured > 24 * 60 * 60 * 1000 ||
       !Number.isSafeInteger(value.fixture_count) || value.fixture_count < 1 ||
       !Array.isArray(value.fixtures) || value.fixtures.length !== value.fixture_count) return false;
+  // Decimal JSON is read as IEEE-754 in the browser. A value serialized to
+  // six decimals can therefore scale to e.g. 258377.00000000003, so test the
+  // declared precision with a tiny numeric tolerance rather than exact binary
+  // integer equality.
+  const hasPublicDecimalPrecision = (number) => {
+    const scaled = number * 1e6;
+    return Math.abs(scaled - Math.round(scaled)) <= 1e-6;
+  };
   const validProbabilities = (probabilities) => exactKeys(probabilities, ['home', 'draw', 'away']) &&
     ['home', 'draw', 'away'].every((key) => Number.isFinite(probabilities[key]) &&
-      probabilities[key] >= 0 && probabilities[key] <= 1 && Number.isInteger(probabilities[key] * 1e6)) &&
+      probabilities[key] >= 0 && probabilities[key] <= 1 && hasPublicDecimalPrecision(probabilities[key])) &&
     Math.abs(probabilities.home + probabilities.draw + probabilities.away - 1) <= 1e-6;
   const ids = new Set();
   for (const fixture of value.fixtures) {
@@ -143,7 +151,7 @@ async function _validNationsLeaguePublicPayload(value, nowMs = Date.now()) {
           fixture.model.probabilities[key] === fixture.model.components.canonical_stacker[key]) ||
         typeof fixture.market.bookmaker !== 'string' || !fixture.market.bookmaker ||
         !['home', 'draw', 'away'].every((key) => Number.isFinite(fixture.market.odds_decimal[key]) &&
-          fixture.market.odds_decimal[key] > 1 && Number.isInteger(fixture.market.odds_decimal[key] * 1e6))) {
+          fixture.market.odds_decimal[key] > 1 && hasPublicDecimalPrecision(fixture.market.odds_decimal[key]))) {
       return false;
     }
     ids.add(fixture.provider_event_id);
