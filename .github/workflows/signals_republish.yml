@@ -1,0 +1,55 @@
+name: Manual SportsBrain Worker signals republish
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_nl_digest:
+        description: Expected public digest of the validated Nations League snapshot
+        required: true
+        type: string
+        default: 59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a
+
+permissions:
+  contents: read
+
+jobs:
+  republish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Confirm manual dispatch selected main
+        env:
+          DISPATCH_REF: ${{ github.ref }}
+        run: test "$DISPATCH_REF" = "refs/heads/main"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install runtime dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Checkout private ledger read-only
+        uses: actions/checkout@v4
+        with:
+          repository: Philip3006/sportsbrain-ledger
+          token: ${{ secrets.LEDGER_PRIVATE_READ_PAT }}
+          path: private-ledger
+          fetch-depth: 1
+
+      - name: Set ledger directory
+        run: echo "SPORTSBRAIN_LEDGER_DIR=${{ github.workspace }}/private-ledger" >> "$GITHUB_ENV"
+
+      - name: Republish and verify canonical snapshot
+        env:
+          SIGNALS_CLOUD_URL: ${{ secrets.SIGNALS_CLOUD_URL }}
+          SIGNALS_API_TOKEN: ${{ secrets.SIGNALS_API_TOKEN }}
+          EXPECTED_NL_DIGEST: ${{ inputs.expected_nl_digest }}
+        run: python scripts/republish_signals_to_cloud.py --expected-nl-digest "$EXPECTED_NL_DIGEST"
