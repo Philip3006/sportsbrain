@@ -22,6 +22,13 @@ crons = [
   "15 6-22/2 * * *",
 ]
 
+[observability]
+enabled = true
+head_sampling_rate = 1
+
+[observability.logs]
+invocation_logs = true
+
 # Secrets (set via: wrangler secret put <NAME>)
 # API_TOKEN — shared secret between Python uploader and this Worker
 # GH_TOKEN  — GitHub PAT with actions:write + contents:read (for F5-C/D cron triggers)
