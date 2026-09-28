@@ -33225,9 +33225,9 @@
     "lifecycle": "SHADOW_ONLY",
     "no_bet": true,
     "publication_enabled": false,
-    "captured_at": "2026-09-28T18:03:35.741604+00:00",
+    "captured_at": "2026-09-28T18:10:44.744825+00:00",
     "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-    "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd",
+    "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022",
     "model_snapshot_digest": "746b7ab954a9b2bc987fd08a7f39fa1293d37653f8886a4a94c3229faeed0211",
     "fixture_count": 49,
     "fixtures": [
@@ -33237,7 +33237,7 @@
         "kickoff": "2026-09-28T18:45:00Z",
         "home": "Northern Ireland",
         "away": "Hungary",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.574307,
@@ -33276,7 +33276,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "373418924",
@@ -33284,12 +33284,12 @@
         "kickoff": "2026-09-28T18:45:00Z",
         "home": "Belgium",
         "away": "France",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
-            "home": 0.405979,
-            "draw": 0.209853,
-            "away": 0.384168
+            "home": 0.407286,
+            "draw": 0.209857,
+            "away": 0.382857
           },
           "components": {
             "raw_dixon_coles": {
@@ -33303,27 +33303,27 @@
               "away": 0.377467
             },
             "canonical_stacker": {
-              "home": 0.405979,
-              "draw": 0.209853,
-              "away": 0.384168
+              "home": 0.407286,
+              "draw": 0.209857,
+              "away": 0.382857
             }
           }
         },
         "market": {
           "bookmaker": "iSports European odds component-wise median",
           "odds_decimal": {
-            "home": 3.28,
+            "home": 3.265,
             "draw": 3.7,
-            "away": 2.12
+            "away": 2.13
           },
           "probabilities": {
-            "home": 0.291235,
-            "draw": 0.258176,
-            "away": 0.450589
+            "home": 0.2928,
+            "draw": 0.258377,
+            "away": 0.448823
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "378418929",
@@ -33331,12 +33331,12 @@
         "kickoff": "2026-09-28T18:45:00Z",
         "home": "Romania",
         "away": "Bosnia and Herzegovina",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
-            "home": 0.699535,
-            "draw": 0.173036,
-            "away": 0.127429
+            "home": 0.696938,
+            "draw": 0.174309,
+            "away": 0.128753
           },
           "components": {
             "raw_dixon_coles": {
@@ -33350,27 +33350,27 @@
               "away": 0.041583
             },
             "canonical_stacker": {
-              "home": 0.699535,
-              "draw": 0.173036,
-              "away": 0.127429
+              "home": 0.696938,
+              "draw": 0.174309,
+              "away": 0.128753
             }
           }
         },
         "market": {
           "bookmaker": "iSports European odds component-wise median",
           "odds_decimal": {
-            "home": 2.45,
+            "home": 2.49,
             "draw": 3.25,
             "away": 2.9
           },
           "probabilities": {
-            "home": 0.384812,
-            "draw": 0.290089,
-            "away": 0.325099
+            "home": 0.380985,
+            "draw": 0.291893,
+            "away": 0.327122
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "383418925",
@@ -33378,12 +33378,12 @@
         "kickoff": "2026-09-28T18:45:00Z",
         "home": "Turkey",
         "away": "Italy",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
-            "home": 0.260563,
-            "draw": 0.189451,
-            "away": 0.549986
+            "home": 0.26066,
+            "draw": 0.189883,
+            "away": 0.549457
           },
           "components": {
             "raw_dixon_coles": {
@@ -33397,27 +33397,27 @@
               "away": 0.460211
             },
             "canonical_stacker": {
-              "home": 0.260563,
-              "draw": 0.189451,
-              "away": 0.549986
+              "home": 0.26066,
+              "draw": 0.189883,
+              "away": 0.549457
             }
           }
         },
         "market": {
           "bookmaker": "iSports European odds component-wise median",
           "odds_decimal": {
-            "home": 2.72,
-            "draw": 3.48,
+            "home": 2.71,
+            "draw": 3.45,
             "away": 2.5
           },
           "probabilities": {
-            "home": 0.34848,
-            "draw": 0.272375,
-            "away": 0.379145
+            "home": 0.348492,
+            "draw": 0.273743,
+            "away": 0.377765
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "488418920",
@@ -33425,12 +33425,12 @@
         "kickoff": "2026-09-28T18:45:00Z",
         "home": "Sweden",
         "away": "Poland",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
-            "home": 0.707057,
-            "draw": 0.157574,
-            "away": 0.135369
+            "home": 0.704101,
+            "draw": 0.159235,
+            "away": 0.136664
           },
           "components": {
             "raw_dixon_coles": {
@@ -33444,27 +33444,27 @@
               "away": 0.070344
             },
             "canonical_stacker": {
-              "home": 0.707057,
-              "draw": 0.157574,
-              "away": 0.135369
+              "home": 0.704101,
+              "draw": 0.159235,
+              "away": 0.136664
             }
           }
         },
         "market": {
           "bookmaker": "iSports European odds component-wise median",
           "odds_decimal": {
-            "home": 1.95,
-            "draw": 3.75,
+            "home": 1.97,
+            "draw": 3.7,
             "away": 3.6
           },
           "probabilities": {
-            "home": 0.485044,
-            "draw": 0.252223,
-            "away": 0.262733
+            "home": 0.480849,
+            "draw": 0.25602,
+            "away": 0.263131
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "333518921",
@@ -33472,7 +33472,7 @@
         "kickoff": "2026-09-29T16:00:00Z",
         "home": "Finland",
         "away": "Belarus",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.63117,
@@ -33511,7 +33511,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "353518923",
@@ -33519,7 +33519,7 @@
         "kickoff": "2026-09-29T16:00:00Z",
         "home": "Moldova",
         "away": "Faroe Islands",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.570206,
@@ -33558,7 +33558,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "204418928",
@@ -33566,7 +33566,7 @@
         "kickoff": "2026-09-29T18:45:00Z",
         "home": "Czechia",
         "away": "England",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.05131,
@@ -33605,7 +33605,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "309418923",
@@ -33613,7 +33613,7 @@
         "kickoff": "2026-09-29T18:45:00Z",
         "home": "Scotland",
         "away": "Switzerland",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.210191,
@@ -33652,7 +33652,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "343518922",
@@ -33660,12 +33660,12 @@
         "kickoff": "2026-09-29T18:45:00Z",
         "home": "San Marino",
         "away": "Albania",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
-            "home": 0.299884,
-            "draw": 0.202018,
-            "away": 0.498098
+            "home": 0.299987,
+            "draw": 0.202125,
+            "away": 0.497888
           },
           "components": {
             "raw_dixon_coles": {
@@ -33679,9 +33679,9 @@
               "away": 0.892676
             },
             "canonical_stacker": {
-              "home": 0.299884,
-              "draw": 0.202018,
-              "away": 0.498098
+              "home": 0.299987,
+              "draw": 0.202125,
+              "away": 0.497888
             }
           }
         },
@@ -33690,16 +33690,16 @@
           "odds_decimal": {
             "home": 35.0,
             "draw": 13.0,
-            "away": 1.045
+            "away": 1.05
           },
           "probabilities": {
-            "home": 0.026892,
-            "draw": 0.072403,
-            "away": 0.900705
+            "home": 0.027008,
+            "draw": 0.072715,
+            "away": 0.900277
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "363518924",
@@ -33707,7 +33707,7 @@
         "kickoff": "2026-09-29T18:45:00Z",
         "home": "Slovakia",
         "away": "Kazakhstan",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.858402,
@@ -33746,7 +33746,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "373518925",
@@ -33754,12 +33754,12 @@
         "kickoff": "2026-09-29T18:45:00Z",
         "home": "Bulgaria",
         "away": "Estonia",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
-            "home": 0.649915,
-            "draw": 0.196451,
-            "away": 0.153634
+            "home": 0.649698,
+            "draw": 0.196488,
+            "away": 0.153814
           },
           "components": {
             "raw_dixon_coles": {
@@ -33773,9 +33773,9 @@
               "away": 0.302124
             },
             "canonical_stacker": {
-              "home": 0.649915,
-              "draw": 0.196451,
-              "away": 0.153634
+              "home": 0.649698,
+              "draw": 0.196488,
+              "away": 0.153814
             }
           }
         },
@@ -33784,16 +33784,16 @@
           "odds_decimal": {
             "home": 1.64,
             "draw": 3.55,
-            "away": 5.68
+            "away": 5.66
           },
           "probabilities": {
-            "home": 0.571199,
-            "draw": 0.263878,
-            "away": 0.164923
+            "home": 0.570866,
+            "draw": 0.263724,
+            "away": 0.16541
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "383518926",
@@ -33801,7 +33801,7 @@
         "kickoff": "2026-09-29T18:45:00Z",
         "home": "Luxembourg",
         "away": "Iceland",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.356392,
@@ -33840,7 +33840,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "393418926",
@@ -33848,7 +33848,7 @@
         "kickoff": "2026-09-29T18:45:00Z",
         "home": "Spain",
         "away": "Croatia",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.917207,
@@ -33887,7 +33887,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "498418921",
@@ -33895,7 +33895,7 @@
         "kickoff": "2026-09-29T18:45:00Z",
         "home": "Slovenia",
         "away": "North Macedonia",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.695906,
@@ -33934,7 +33934,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "357518927",
@@ -33942,7 +33942,7 @@
         "kickoff": "2026-10-01T16:00:00Z",
         "home": "Azerbaijan",
         "away": "Liechtenstein",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.772079,
@@ -33981,7 +33981,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "214418929",
@@ -33989,7 +33989,7 @@
         "kickoff": "2026-10-01T18:45:00Z",
         "home": "Greece",
         "away": "Netherlands",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.271492,
@@ -34028,7 +34028,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "319418924",
@@ -34036,7 +34036,7 @@
         "kickoff": "2026-10-01T18:45:00Z",
         "home": "Israel",
         "away": "Kosovo",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.478969,
@@ -34075,7 +34075,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "324418920",
@@ -34083,7 +34083,7 @@
         "kickoff": "2026-10-01T18:45:00Z",
         "home": "Germany",
         "away": "Serbia",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.716047,
@@ -34122,7 +34122,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "329418925",
@@ -34130,7 +34130,7 @@
         "kickoff": "2026-10-01T18:45:00Z",
         "home": "Ireland",
         "away": "Austria",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.24485,
@@ -34169,7 +34169,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "334418921",
@@ -34177,7 +34177,7 @@
         "kickoff": "2026-10-01T18:45:00Z",
         "home": "Wales",
         "away": "Norway",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.169451,
@@ -34216,7 +34216,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "344418922",
@@ -34224,7 +34224,7 @@
         "kickoff": "2026-10-01T18:45:00Z",
         "home": "Denmark",
         "away": "Portugal",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.353985,
@@ -34263,7 +34263,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "367518928",
@@ -34271,7 +34271,7 @@
         "kickoff": "2026-10-01T18:45:00Z",
         "home": "Malta",
         "away": "Gibraltar",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.759382,
@@ -34310,7 +34310,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "393518927",
@@ -34318,7 +34318,7 @@
         "kickoff": "2026-10-02T14:00:00Z",
         "home": "Kazakhstan",
         "away": "Moldova",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.482538,
@@ -34357,7 +34357,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "204518929",
@@ -34365,7 +34365,7 @@
         "kickoff": "2026-10-02T16:00:00Z",
         "home": "Latvia",
         "away": "Montenegro",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.289776,
@@ -34404,7 +34404,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "314518920",
@@ -34412,7 +34412,7 @@
         "kickoff": "2026-10-02T16:00:00Z",
         "home": "Cyprus",
         "away": "Armenia",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.63115,
@@ -34451,7 +34451,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "324518921",
@@ -34459,7 +34459,7 @@
         "kickoff": "2026-10-02T18:45:00Z",
         "home": "Faroe Islands",
         "away": "Slovakia",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.178543,
@@ -34498,7 +34498,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "339418926",
@@ -34506,7 +34506,7 @@
         "kickoff": "2026-10-02T18:45:00Z",
         "home": "Ukraine",
         "away": "Northern Ireland",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.692097,
@@ -34545,7 +34545,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "349418927",
@@ -34553,7 +34553,7 @@
         "kickoff": "2026-10-02T18:45:00Z",
         "home": "Hungary",
         "away": "Georgia",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.437198,
@@ -34592,7 +34592,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "354418923",
@@ -34600,7 +34600,7 @@
         "kickoff": "2026-10-02T18:45:00Z",
         "home": "France",
         "away": "Italy",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.806097,
@@ -34639,7 +34639,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "359418928",
@@ -34647,7 +34647,7 @@
         "kickoff": "2026-10-02T18:45:00Z",
         "home": "Poland",
         "away": "Romania",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.563843,
@@ -34686,7 +34686,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "364418924",
@@ -34694,7 +34694,7 @@
         "kickoff": "2026-10-02T18:45:00Z",
         "home": "Belgium",
         "away": "Turkey",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.862536,
@@ -34733,7 +34733,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "369418929",
@@ -34741,7 +34741,7 @@
         "kickoff": "2026-10-02T18:45:00Z",
         "home": "Bosnia and Herzegovina",
         "away": "Sweden",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.21306,
@@ -34780,7 +34780,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "374418925",
@@ -34788,7 +34788,7 @@
         "kickoff": "2026-10-03T16:00:00Z",
         "home": "Croatia",
         "away": "England",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.261491,
@@ -34827,7 +34827,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "384418926",
@@ -34835,7 +34835,7 @@
         "kickoff": "2026-10-03T18:45:00Z",
         "home": "Spain",
         "away": "Czechia",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.926555,
@@ -34874,7 +34874,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "489418921",
@@ -34882,7 +34882,7 @@
         "kickoff": "2026-10-03T18:45:00Z",
         "home": "North Macedonia",
         "away": "Scotland",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.471153,
@@ -34921,7 +34921,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "200518925",
@@ -34929,7 +34929,7 @@
         "kickoff": "2026-10-04T18:45:00Z",
         "home": "Ireland",
         "away": "Israel",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.441733,
@@ -34968,7 +34968,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "205418929",
@@ -34976,7 +34976,7 @@
         "kickoff": "2026-10-04T18:45:00Z",
         "home": "Greece",
         "away": "Germany",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.457548,
@@ -35015,7 +35015,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "315418920",
@@ -35023,7 +35023,7 @@
         "kickoff": "2026-10-04T18:45:00Z",
         "home": "Portugal",
         "away": "Norway",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.749961,
@@ -35062,7 +35062,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "325418921",
@@ -35070,7 +35070,7 @@
         "kickoff": "2026-10-04T18:45:00Z",
         "home": "Wales",
         "away": "Denmark",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.224762,
@@ -35109,7 +35109,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "394418927",
@@ -35117,7 +35117,7 @@
         "kickoff": "2026-10-04T18:45:00Z",
         "home": "Netherlands",
         "away": "Serbia",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.841737,
@@ -35156,7 +35156,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "210518926",
@@ -35164,7 +35164,7 @@
         "kickoff": "2026-10-05T18:45:00Z",
         "home": "Ukraine",
         "away": "Hungary",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.700365,
@@ -35203,7 +35203,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "220518927",
@@ -35211,7 +35211,7 @@
         "kickoff": "2026-10-05T18:45:00Z",
         "home": "Northern Ireland",
         "away": "Georgia",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.442958,
@@ -35250,7 +35250,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "230518928",
@@ -35258,7 +35258,7 @@
         "kickoff": "2026-10-05T18:45:00Z",
         "home": "Romania",
         "away": "Sweden",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.492414,
@@ -35297,7 +35297,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "240518929",
@@ -35305,7 +35305,7 @@
         "kickoff": "2026-10-05T18:45:00Z",
         "home": "Bosnia and Herzegovina",
         "away": "Poland",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.324418,
@@ -35344,7 +35344,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "335418922",
@@ -35352,7 +35352,7 @@
         "kickoff": "2026-10-05T18:45:00Z",
         "home": "France",
         "away": "Belgium",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.737028,
@@ -35391,7 +35391,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "345418923",
@@ -35399,7 +35399,7 @@
         "kickoff": "2026-10-05T18:45:00Z",
         "home": "Italy",
         "away": "Turkey",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.805138,
@@ -35438,7 +35438,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "355418924",
@@ -35446,7 +35446,7 @@
         "kickoff": "2026-10-06T18:45:00Z",
         "home": "Croatia",
         "away": "Spain",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.059411,
@@ -35485,7 +35485,7 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       },
       {
         "provider_event_id": "365418925",
@@ -35493,7 +35493,7 @@
         "kickoff": "2026-10-06T18:45:00Z",
         "home": "England",
         "away": "Czechia",
-        "captured_at": "2026-09-28T18:03:35.741604+00:00",
+        "captured_at": "2026-09-28T18:10:44.744825+00:00",
         "model": {
           "probabilities": {
             "home": 0.913788,
@@ -35532,9 +35532,9 @@
           }
         },
         "source_sha": "ec1634e23a482ae0a944056477fec28fec27357b",
-        "artifact_digest": "6f75327c60703301d74bba938e9709f26e9890134c1687d5014685b6d60090bd"
+        "artifact_digest": "62a4031f1e7655577e4279e7ef4f4e2b925b78a8007cacb97fac5055f0c73022"
       }
     ],
-    "public_digest": "2c5b7f70b5a7ed69c060b5e36fb5518e85221cf74691c0ee4d75f3433428cbb3"
+    "public_digest": "3abc3fee8d03ef17ccd2d34cc9619c325e37c134a75b09a4aa4bbde7750cf00a"
   }
 }
