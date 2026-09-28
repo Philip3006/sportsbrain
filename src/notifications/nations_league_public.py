@@ -6,7 +6,7 @@ import hashlib
 import json
 import math
 import re
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -304,6 +304,32 @@ def validate_public_nations_league(
         if fixture.get("captured_at") != payload.get("captured_at"):
             raise NationsLeaguePublicError("public fixture capture time mismatch")
     return payload
+
+
+def select_freshest_valid_public_nations_league(
+    candidates: Iterable[object],
+    *,
+    now: datetime | None = None,
+) -> dict[str, Any] | None:
+    """Return the freshest valid public shadow; earlier candidates win ties.
+
+    Candidate order is an explicit precedence only for equal capture times.
+    Invalid, private, tampered, future-dated, or expired candidates are ignored
+    so that they cannot displace a still-valid public projection.
+    """
+    current = now.astimezone(timezone.utc) if now else datetime.now(timezone.utc)
+    selected: dict[str, Any] | None = None
+    selected_capture: datetime | None = None
+    for candidate in candidates:
+        try:
+            validated = validate_public_nations_league(candidate, now=current)
+        except NationsLeaguePublicError:
+            continue
+        captured = _timestamp(validated.get("captured_at"), "captured_at")
+        if selected_capture is None or captured > selected_capture:
+            selected = validated
+            selected_capture = captured
+    return selected
 
 
 def build_public_nations_league(

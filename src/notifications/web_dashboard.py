@@ -1055,26 +1055,31 @@ def write_signals_json(
                 "um stilles Daten-Wipe zu verhindern."
             ) from e
 
-    # The Nations League staging command updates the shared public signals.json,
-    # while scanner refreshes normally read the per-user signals_{user}.json.
-    # For the default user, use the staged public value only when the per-user
-    # input has no Nations League key. Never fall back when an explicit per-user
-    # value exists but is invalid; that value must fail closed for NL.
-    nations_league_input_present = "nations_league" in existing
-    nations_league_input = existing.get("nations_league")
-    if not nations_league_input_present and user == _DEFAULT_USER:
-        shared_public_path = ROOT / "docs" / "data" / "signals.json"
-        if shared_public_path != source_json_path and shared_public_path.exists():
-            try:
-                shared_public_input = json.loads(shared_public_path.read_text())
-            except (OSError, json.JSONDecodeError):
-                shared_public_input = None
-            if (
-                isinstance(shared_public_input, dict)
-                and "nations_league" in shared_public_input
-            ):
-                nations_league_input_present = True
-                nations_league_input = shared_public_input["nations_league"]
+    # A scanner checkout can lag the canonical public snapshot. Consider the
+    # current per-user file, then the default-user and shared snapshots; the
+    # freshest valid public projection wins, while invalid/stale candidates
+    # cannot displace another still-valid snapshot.
+    nations_league_candidates: list[object] = []
+    if "nations_league" in existing:
+        nations_league_candidates.append(existing["nations_league"])
+    candidate_paths = (
+        ROOT / "docs" / "data" / f"signals_{_DEFAULT_USER}.json",
+        ROOT / "docs" / "data" / "signals.json",
+    )
+    seen_candidate_paths = {source_json_path}
+    for candidate_path in candidate_paths:
+        if candidate_path in seen_candidate_paths:
+            continue
+        seen_candidate_paths.add(candidate_path)
+        try:
+            candidate_snapshot = json.loads(candidate_path.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        if (
+            isinstance(candidate_snapshot, dict)
+            and "nations_league" in candidate_snapshot
+        ):
+            nations_league_candidates.append(candidate_snapshot["nations_league"])
 
     updated = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -1228,21 +1233,16 @@ def write_signals_json(
     # cache below (Wave 3A invariant).
     _now_utc = datetime.now(timezone.utc)
 
-    # Preserve only the canonical public-v1 projection. Invalid or stale NL
-    # data is omitted without blocking the unrelated Football/Tennis refresh.
-    nations_league_data = None
-    if nations_league_input_present:
-        from src.notifications.nations_league_public import (
-            NationsLeaguePublicError,
-            validate_public_nations_league,
-        )
+    # Preserve only a validated public-v1 projection. Invalid, private, or
+    # expired candidates are skipped so NL fails closed without blocking the
+    # unrelated Football/Tennis refresh.
+    from src.notifications.nations_league_public import (
+        select_freshest_valid_public_nations_league,
+    )
 
-        try:
-            nations_league_data = validate_public_nations_league(
-                nations_league_input, now=_now_utc
-            )
-        except NationsLeaguePublicError:
-            nations_league_data = None
+    nations_league_data = select_freshest_valid_public_nations_league(
+        nations_league_candidates, now=_now_utc
+    )
 
     def _name_key(s: str) -> str:
         return (s or "").lower().strip().replace(" & ", " and ")

@@ -60,6 +60,10 @@ for i in 1 2 3 4 5; do
     echo "[$(TS)] _bot_commit_push: rebase conflict attempt $i" >> "$LOG"
     continue
   fi
+  if ! _git_preserve_nations_league_after_rebase "$LOG"; then
+    echo "[$(TS)] _bot_commit_push: Nations League reconciliation failed closed" >> "$LOG"
+    exit 1
+  fi
   if git push origin main >> "$LOG" 2>&1; then
     echo "[$(TS)] _bot_commit_push: push ok (attempt $i) — $(git log origin/main -1 --oneline 2>/dev/null)" >> "$LOG"
     exit 0
