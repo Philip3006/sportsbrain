@@ -9,7 +9,12 @@ from monitoring.top5.governed_runtime_evidence import (
     observe_governed_runtime,
     verify_artifact_digest,
 )
+from src.football.top5_b4_provider_neutral_evidence import (
+    Top5B4ProviderNeutralEvidenceDossierV1,
+)
 from src.football.top5_final_acceptance import (
+    ACTIVE_PROVIDER,
+    CANDIDATE_PROVIDER,
     FINAL_ACCEPTANCE_SCHEMA_VERSION,
     TOP5_LEAGUES,
     Top5FinalAcceptanceError,
@@ -176,7 +181,7 @@ def _model_runtime(
 
 def compose_top5_final_acceptance_bundle(
     *,
-    b4_dossier: Top5B4EvidenceDossierV1,
+    b4_dossier: Top5B4EvidenceDossierV1 | Top5B4ProviderNeutralEvidenceDossierV1,
     lifecycles: Sequence[Top5SignalLifecycle],
     prepublication_artifact: Top5PrepublicationArtifactV1,
     now: datetime,
@@ -237,6 +242,24 @@ def compose_top5_final_acceptance_bundle(
         "runtime_evidence": runtime_evidence,
         "public": prepublication_artifact.as_payload(),
     }
+    if isinstance(b4_dossier, Top5B4ProviderNeutralEvidenceDossierV1):
+        evidence_provider = b4_dossier.controlled_shadow.provider_identity
+        bundle.update(
+            {
+                "b4_provider_neutral_dossier": b4_dossier.as_payload(now=now),
+                "provider_authority": ACTIVE_PROVIDER,
+                "evidence_provider": evidence_provider,
+                "candidate_provider": evidence_provider,
+            }
+        )
+    elif isinstance(b4_dossier, Top5B4EvidenceDossierV1):
+        bundle.update(
+            {
+                "provider_authority": ACTIVE_PROVIDER,
+                "evidence_provider": CANDIDATE_PROVIDER,
+                "candidate_provider": CANDIDATE_PROVIDER,
+            }
+        )
     try:
         verify_final_acceptance(
             bundle,
