@@ -224,7 +224,7 @@ def test_stale_banner_shown_for_old_data(page: Page, server_url: str) -> None:
 
 
 def test_home_integrates_read_only_nations_league_shadow_games(page: Page, server_url: str) -> None:
-    """Upcoming Shadow fixtures use normal Home rows without becoming bet UI."""
+    """Shadow fixtures open read-only details without becoming bet UI."""
     payload = {**_BASE, "nations_league": _nations_league_shadow_payload()}
     _inject_signals(page, payload)
     page.goto(server_url, wait_until="domcontentloaded")
@@ -238,8 +238,21 @@ def test_home_integrates_read_only_nations_league_shadow_games(page: Page, serve
     expect(today_rows).not_to_contain_text("Finland")
     expect(today_rows.locator(".nl-shadow-display-odd")).to_have_count(9)
     expect(today_rows.locator("button")).to_have_count(0)
+    expect(today_rows.first).to_have_attribute("role", "button")
+    expect(today_rows.first).to_have_attribute("tabindex", "0")
     expect(page.locator(".comp-name", has_text="UEFA Nations League · Shadow")).to_be_visible()
     expect(page.locator(".nl-home-preview")).to_have_count(0)
+
+    today_rows.first.click()
+    expect(page.locator("#view-detail")).to_be_visible()
+    expect(page.locator("#detail-header")).to_contain_text("Armenia vs Montenegro")
+    detail = page.locator(".nl-shadow-detail-card")
+    expect(detail).to_be_visible()
+    expect(detail).to_contain_text("SHADOW · NO BET")
+    expect(detail.locator(".nl-shadow-detail-outcome")).to_have_count(3)
+    expect(detail).to_contain_text("2.00")
+    expect(detail.locator("button")).to_have_count(0)
+    expect(page.locator("#bet-modal-bd")).not_to_be_visible()
 
 
 # ── P0-A focused tests ────────────────────────────────────────────────────────
