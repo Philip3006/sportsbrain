@@ -184,7 +184,8 @@ def test_schedule_normalizes_provider_identity_utc_neutral_and_status():
     assert item.kickoff_utc.tzinfo == timezone.utc
     assert item.neutral is False
     assert item.status == 0
-    assert item.prematch_eligible
+    # Keep the fixture test independent of the wall clock: this fixture's
+    # fixed kickoff date eventually passes in real time.
     assert item.prematch_eligible_at(NOW) is True
 
 
