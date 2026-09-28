@@ -488,6 +488,47 @@ def test_stale_artifact_and_malformed_digest_are_rejected():
         _public(artifact, now)
 
 
+def test_private_capture_age_remains_strictly_limited_to_fifteen_minutes():
+    now = datetime(2026, 9, 28, 12, 0, tzinfo=timezone.utc)
+    captured = now - timedelta(minutes=14, seconds=59)
+    artifact, _ = _artifact(captured)
+    for operation in artifact["provider_operation_manifest"]:
+        operation["completed_at"] = artifact["captured_at"]
+    _redigest(artifact)
+    assert _public(artifact, now)["fixture_count"] == 2
+
+    too_old, _ = _artifact(now - timedelta(minutes=15, seconds=1))
+    for operation in too_old["provider_operation_manifest"]:
+        operation["completed_at"] = too_old["captured_at"]
+    _redigest(too_old)
+    with pytest.raises(NationsLeaguePublicError, match="stale"):
+        _public(too_old, now)
+
+
+def _public_bundle_for_retention(captured_at, now):
+    public = _fixed_public_bundle(captured_at)
+    for index, fixture in enumerate(public["fixtures"]):
+        fixture["kickoff"] = (
+            (now + timedelta(days=2, hours=index)).isoformat().replace("+00:00", "Z")
+        )
+    public["public_digest"] = nations_public._public_digest(public)
+    return public
+
+
+@pytest.mark.parametrize("age", [timedelta(minutes=16), timedelta(hours=6)])
+def test_already_projected_public_shadow_is_accepted_within_twenty_four_hours(age):
+    now = datetime(2026, 9, 28, 12, 0, tzinfo=timezone.utc)
+    public = _public_bundle_for_retention(now - age, now)
+    assert nations_public.validate_public_nations_league(public, now=now) == public
+
+
+def test_already_projected_public_shadow_expires_after_twenty_four_hours():
+    now = datetime(2026, 9, 28, 12, 0, tzinfo=timezone.utc)
+    public = _public_bundle_for_retention(now - timedelta(hours=24, seconds=1), now)
+    with pytest.raises(NationsLeaguePublicError, match="stale"):
+        nations_public.validate_public_nations_league(public, now=now)
+
+
 def test_public_bundle_digest_and_fixture_provenance_are_bound():
     artifact, now = _artifact()
     public = _public(artifact, now)
@@ -856,6 +897,15 @@ def _fixed_public_bundle(captured_at):
     return _public(artifact, captured_at)
 
 
+def _move_public_kickoffs_after(public, now):
+    for index, fixture in enumerate(public["fixtures"]):
+        fixture["kickoff"] = (
+            (now + timedelta(days=2, hours=index)).isoformat().replace("+00:00", "Z")
+        )
+    public["public_digest"] = nations_public._public_digest(public)
+    return public
+
+
 def test_tennis_refresh_preserves_staged_nations_league_and_existing_merge_semantics(
     tmp_path, monkeypatch
 ):
@@ -933,6 +983,24 @@ def test_football_refresh_preserves_per_user_nations_league_and_updates_football
     assert all("provider_event_id" not in signal for signal in output["football"])
 
 
+def test_writer_preserves_public_shadow_snapshot_for_several_hours(
+    tmp_path, monkeypatch
+):
+    now = datetime(2026, 9, 28, 12, 0, tzinfo=timezone.utc)
+    public = _move_public_kickoffs_after(
+        _fixed_public_bundle(now - timedelta(hours=6)), now
+    )
+    output, _uploaded, _provider_calls = _run_writer_refresh(
+        tmp_path,
+        monkeypatch,
+        now=now,
+        user_snapshot={"football": [], "tennis": [], "nations_league": public},
+        football=[_writer_signal("football-1", "Arsenal", "Chelsea")],
+    )
+    assert output["nations_league"] == public
+    assert output["football"][0]["match"] == "Arsenal vs Chelsea"
+
+
 def test_missing_nations_league_is_not_fabricated(tmp_path, monkeypatch):
     now = datetime(2026, 9, 28, 12, 0, tzinfo=timezone.utc)
     output, _uploaded, _provider_calls = _run_writer_refresh(
@@ -951,10 +1019,14 @@ def test_invalid_nations_league_is_omitted_without_blocking_other_refreshes(
     invalid_kind, tmp_path, monkeypatch
 ):
     now = datetime(2026, 9, 28, 12, 0, tzinfo=timezone.utc)
-    captured_at = now - timedelta(minutes=20) if invalid_kind == "stale" else now
+    captured_at = (
+        now - timedelta(hours=24, seconds=1) if invalid_kind == "stale" else now
+    )
     public = _fixed_public_bundle(captured_at)
     if invalid_kind == "malformed":
         public["public_digest"] = "f" * 64
+    elif invalid_kind == "stale":
+        _move_public_kickoffs_after(public, now)
     elif invalid_kind == "private_artifact":
         public, _ = _artifact(now)
 

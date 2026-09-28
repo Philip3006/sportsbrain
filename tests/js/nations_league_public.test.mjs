@@ -88,6 +88,18 @@ function render(payload) {
   return element;
 }
 
+function appNlHelpers() {
+  const context = { crypto: webcrypto, TextEncoder, JSON, Object, Array, Uint8Array, String, Date, Number, Math };
+  vm.createContext(context);
+  const start = appSource.indexOf('function _canonicalNationsLeagueJson(');
+  const end = appSource.indexOf('\nfunction _top5LifecycleError', start);
+  assert.notEqual(start, -1);
+  assert.notEqual(end, -1);
+  vm.runInContext(`const DATA_URL = 'data/signals.json';\n${appSource.slice(start, end)}\n` +
+    'globalThis.nlHelpers = { digest: _validNationsLeaguePublicDigest, valid: _validNationsLeaguePublicPayload, merge: _mergeStaticNationsLeagueIfMissing };', context);
+  return context.nlHelpers;
+}
+
 test('Worker public allowlist preserves the validated Nations League shadow envelope', () => {
   const source = { nations_league: publicBundle(), private_marker: 'must disappear' };
   const output = serializePublicProduct(source);
@@ -106,15 +118,24 @@ test('Worker and PWA verify the public projection digest and reject tampering', 
   tampered.fixtures[0].home = 'Changed after validation';
   await assert.rejects(validatePublicNationsLeagueDigest(tampered), /digest/i);
 
-  const context = { crypto: webcrypto, TextEncoder, JSON, Object, Array, Uint8Array, String };
-  vm.createContext(context);
-  const start = appSource.indexOf('function _canonicalNationsLeagueJson(');
-  const end = appSource.indexOf('\nfunction _top5LifecycleError', start);
-  assert.notEqual(start, -1);
-  assert.notEqual(end, -1);
-  vm.runInContext(`${appSource.slice(start, end)}\nglobalThis.verifyNlDigest = _validNationsLeaguePublicDigest;`, context);
-  assert.equal(await context.verifyNlDigest(bundle), true);
-  assert.equal(await context.verifyNlDigest(tampered), false);
+  const helpers = appNlHelpers();
+  assert.equal(await helpers.digest(bundle), true);
+  assert.equal(await helpers.digest(tampered), false);
+  assert.equal(await helpers.valid(bundle), true);
+});
+
+test('Worker retention accepts valid public shadow snapshots through 24 hours only', async () => {
+  const helpers = appNlHelpers();
+  const sixHoursOld = publicBundle({ captured_at: new Date(NOW - 6 * 3600000).toISOString() });
+  sixHoursOld.fixtures[0].captured_at = sixHoursOld.captured_at;
+  bindPublicDigest(sixHoursOld);
+  assert.equal(await validatePublicNationsLeagueDigest(sixHoursOld), true);
+  assert.equal(await helpers.valid(sixHoursOld), true);
+  const expired = publicBundle({ captured_at: new Date(NOW - 24 * 3600000 - 1).toISOString() });
+  expired.fixtures[0].captured_at = expired.captured_at;
+  bindPublicDigest(expired);
+  await assert.rejects(validatePublicNationsLeagueDigest(expired), /stale/i);
+  assert.equal(await helpers.valid(expired), false);
 });
 
 test('Worker GET /signals.json serves a bound shadow object and fails closed on digest mismatch', async () => {
@@ -154,11 +175,90 @@ test('PWA renders UEFA Nations League as read-only Shadow with model and market 
   assert.doesNotMatch(element.innerHTML, /place-bet|data-stake|wette abgeben/i);
 });
 
-test('PWA hides stale and incomplete Nations League bundles and keeps the shadow out of signals', () => {
-  const stale = render(publicBundle({ captured_at: new Date(NOW - 16 * 60 * 1000).toISOString() }));
-  assert.equal(stale.hidden, true);
+test('PWA renders a 16-minute Shadow snapshot with visible freshness and keeps it read-only', () => {
+  const capturedAt = new Date(NOW - 16 * 60 * 1000).toISOString();
+  const payload = publicBundle({ captured_at: capturedAt });
+  payload.fixtures[0].captured_at = capturedAt;
+  const visible = render(payload);
+  assert.equal(visible.hidden, false);
+  assert.match(visible.innerHTML, /Shadow Snapshot · erfasst vor 16 Min\./);
+  assert.match(visible.innerHTML, /WEAK EVIDENCE · NO BET/);
+  assert.doesNotMatch(visible.innerHTML, /place-bet|data-stake|wette abgeben/i);
+});
+
+test('PWA labels several-hours-old snapshots stale and hides snapshots over 24 hours', () => {
+  const capturedAt = new Date(NOW - 6 * 3600000).toISOString();
+  const old = publicBundle({ captured_at: capturedAt });
+  old.fixtures[0].captured_at = capturedAt;
+  const stale = render(old);
+  assert.equal(stale.hidden, false);
+  assert.match(stale.innerHTML, /Snapshot veraltet/);
+  const expiredAt = new Date(NOW - 24 * 3600000 - 1).toISOString();
+  const expired = publicBundle({ captured_at: expiredAt });
+  expired.fixtures[0].captured_at = expiredAt;
+  assert.equal(render(expired).hidden, true);
   const partial = render(publicBundle({ fixture_count: 2 }));
   assert.equal(partial.hidden, true);
   assert.match(appSource, /_signals\s*=\s*\[\.\.\.\(d\.football\|\|\[\]\),\s*\.\.\.\(d\.tennis\|\|\[\]\)\]/);
   assert.match(appSource, /renderNationsLeagueShadow\(d\.nations_league\s*\|\|\s*null\)/);
+});
+
+test('Worker-missing NL bridge merges only a valid static Nations League field', async () => {
+  const helpers = appNlHelpers();
+  const worker = { football: [{ id: 'worker-football' }], tennis: [{ id: 'worker-tennis' }], marker: 'worker' };
+  const nationsLeague = bindPublicDigest(publicBundle());
+  const staticPayload = {
+    football: [{ id: 'static-football' }],
+    tennis: [{ id: 'static-tennis' }],
+    nations_league: nationsLeague,
+    private_data: { must_not_copy: true },
+  };
+  let requests = 0;
+  const merged = await helpers.merge(worker, 'worker', async (url, options) => {
+    requests += 1;
+    assert.match(url, /^data\/signals\.json\?t=/);
+    assert.equal(options.cache, 'no-store');
+    return { ok: true, json: async () => staticPayload };
+  }, NOW);
+  assert.equal(requests, 1);
+  assert.deepEqual(JSON.parse(JSON.stringify(merged)), {
+    ...worker,
+    nations_league: nationsLeague,
+  });
+  assert.deepEqual(merged.football, worker.football);
+  assert.deepEqual(merged.tennis, worker.tennis);
+  assert.equal('_signals' in merged, false);
+  assert.equal(merged.nations_league.no_bet, true);
+});
+
+test('Worker-missing NL bridge ignores tampered static NL and never replaces Worker NL', async () => {
+  const helpers = appNlHelpers();
+  const worker = { football: [{ id: 'worker' }], tennis: [], marker: 'worker' };
+  const tampered = bindPublicDigest(publicBundle());
+  tampered.fixtures[0].home = 'tampered after digest';
+  const unchanged = await helpers.merge(worker, 'worker', async () => ({
+    ok: true,
+    json: async () => ({ football: [{ id: 'static' }], tennis: [], nations_league: tampered }),
+  }), NOW);
+  assert.deepEqual(JSON.parse(JSON.stringify(unchanged)), worker);
+
+  const rawPrivateArtifact = {
+    schema: 'nations-league-isports-shadow-v2',
+    provider_operation_manifest: [{ api_key: 'must-not-be-copied' }],
+  };
+  const privateUnchanged = await helpers.merge(worker, 'worker', async () => ({
+    ok: true,
+    json: async () => ({ nations_league: rawPrivateArtifact }),
+  }), NOW);
+  assert.deepEqual(JSON.parse(JSON.stringify(privateUnchanged)), worker);
+
+  const workerNl = bindPublicDigest(publicBundle());
+  const workerWithNl = { ...worker, nations_league: workerNl };
+  let requests = 0;
+  const preferred = await helpers.merge(workerWithNl, 'worker', async () => {
+    requests += 1;
+    return { ok: true, json: async () => ({ nations_league: publicBundle({ provider_event_id: 'static' }) }) };
+  }, NOW);
+  assert.equal(requests, 0);
+  assert.deepEqual(JSON.parse(JSON.stringify(preferred)), JSON.parse(JSON.stringify(workerWithNl)));
 });
