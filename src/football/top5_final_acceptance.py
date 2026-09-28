@@ -9,6 +9,11 @@ from datetime import datetime, timezone
 from hashlib import sha256
 
 from src.football.odds.therundown import THERUNDOWN_PROVIDER_NAME
+from src.football.top5_b4_provider_neutral_evidence import (
+    ProviderNeutralB4EvidenceError,
+    Top5B4ProviderNeutralEvidenceDossierV1,
+    canonical_evidence_digest,
+)
 from src.football.top5_research_binding import FROZEN_RESEARCH_SHA, M5_CANDIDATE_ID
 from src.football.top5_therundown_event_discovery import (
     DISCOVERY_EVIDENCE_SCHEMA_VERSION,
@@ -27,6 +32,20 @@ CANDIDATE_PROVIDER = THERUNDOWN_PROVIDER_NAME
 TOP5_LEAGUES = frozenset({"EPL", "BL1", "LL", "SA", "L1"})
 MAX_EVIDENCE_AGE_SECONDS = 900
 MAX_SHADOW_REQUESTS = 5
+NEUTRAL_B4_DOSSIER_KEY = "b4_provider_neutral_dossier"
+_B4_LOGICAL_INPUT_KEYS = (
+    "source_main_sha",
+    "b4_quota_proof_package",
+    "b4_quota_headroom",
+    "discovery_evidence",
+    "provider_native_discovery_provenance",
+    "controlled_shadow",
+    "b4_reconciliation",
+    "b4_qualification",
+    "b4_native_authorization",
+    "b4_dossier_digest",
+)
+_CANDIDATE_EVIDENCE_PROVIDERS = frozenset({CANDIDATE_PROVIDER, "isports_api"})
 _SHA_RE = re.compile(r"^[0-9a-fA-F]{40,64}$")
 
 
@@ -147,6 +166,89 @@ def _contains_candidate(value: object, path: str = "public") -> None:
     elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
         for index, item in enumerate(value):
             _contains_candidate(item, f"{path}[{index}]")
+
+
+def _validated_neutral_dossier(
+    bundle: Mapping[str, object], *, now: datetime, source_main_sha: str
+) -> tuple[Top5B4ProviderNeutralEvidenceDossierV1, str] | None:
+    raw_dossier = bundle.get(NEUTRAL_B4_DOSSIER_KEY)
+    if raw_dossier is None:
+        return None
+    try:
+        if isinstance(raw_dossier, Top5B4ProviderNeutralEvidenceDossierV1):
+            dossier = raw_dossier
+            dossier.validate(now=now)
+        else:
+            dossier = Top5B4ProviderNeutralEvidenceDossierV1.from_payload(
+                raw_dossier, now=now
+            )
+    except (ProviderNeutralB4EvidenceError, TypeError, ValueError) as exc:
+        raise Top5FinalAcceptanceError(
+            f"provider-neutral B4 dossier rejected: {exc}"
+        ) from exc
+
+    if dossier.source_main_sha != source_main_sha:
+        raise Top5FinalAcceptanceError(
+            "provider-neutral B4 source-main SHA does not match the B1 handoff"
+        )
+    try:
+        from src.football.top5_durable_activation import (
+            validate_activation_evidence_provider,
+        )
+
+        evidence_provider = validate_activation_evidence_provider(
+            dossier.controlled_shadow.provider_identity
+        )
+    except Exception as exc:
+        raise Top5FinalAcceptanceError(
+            f"provider-neutral B4 evidence identity is not activation-compatible: {exc}"
+        ) from exc
+
+    if bundle.get("provider_authority") != ACTIVE_PROVIDER:
+        raise Top5FinalAcceptanceError(
+            "B1 production provider authority must remain the_odds_api"
+        )
+    if bundle.get("evidence_provider") != evidence_provider:
+        raise Top5FinalAcceptanceError(
+            "B1 evidence provider identity does not match the validated B4 dossier"
+        )
+    if bundle.get("candidate_provider") != evidence_provider:
+        raise Top5FinalAcceptanceError(
+            "B1 candidate_provider must equal evidence_provider"
+        )
+
+    try:
+        handoff = dossier.b1_evidence_inputs(now=now)
+    except (ProviderNeutralB4EvidenceError, TypeError, ValueError) as exc:
+        raise Top5FinalAcceptanceError(
+            f"provider-neutral B4 logical handoff rejected: {exc}"
+        ) from exc
+    for key in _B4_LOGICAL_INPUT_KEYS:
+        if key not in bundle or _canonical(bundle[key]) != _canonical(handoff[key]):
+            raise Top5FinalAcceptanceError(
+                f"B1 {key} does not match the validated provider-neutral B4 dossier"
+            )
+    return dossier, evidence_provider
+
+
+def _reject_candidate_active_order(
+    runtime: Mapping[str, object], *, evidence_provider: str
+) -> None:
+    order = runtime.get("active_provider_order")
+    if not isinstance(order, Sequence) or isinstance(order, (str, bytes)):
+        return  # The governed-runtime validator reports the canonical shape error.
+    forbidden = _CANDIDATE_EVIDENCE_PROVIDERS | {evidence_provider}
+    if any(
+        isinstance(provider, str)
+        and any(
+            provider == candidate or provider.startswith(f"{candidate}:")
+            for candidate in forbidden
+        )
+        for provider in order
+    ):
+        raise Top5FinalAcceptanceError(
+            "candidate provider authority cannot appear in active provider order"
+        )
 
 
 def _validate_model_runtime(raw: Mapping[str, object]) -> dict[str, str]:
@@ -328,57 +430,118 @@ def verify_final_acceptance(
                 "acceptance bundle is not based on current main"
             )
         now_utc = _timestamp(now, "now")
+        neutral = _validated_neutral_dossier(
+            bundle, now=now_utc, source_main_sha=source_main_sha
+        )
         model = _validate_model_runtime(
             _mapping(bundle.get("model_runtime"), "model_runtime")
         )
-        quota_package = _mapping(
-            bundle.get("b4_quota_proof_package"), "B4 quota proof package"
-        )
-        proof = TheRundownB4QuotaProofV1.from_package(quota_package, now=now_utc)
-        proof.validate(now=now_utc)
-        headroom = TheRundownQuotaHeadroomEvidenceV1.from_payload(
-            bundle.get("b4_quota_headroom")
-        )
-        headroom.validate(expected_provider=CANDIDATE_PROVIDER, now=now_utc)
-        discovery_items = _validate_discovery(
-            bundle.get("discovery_evidence"), now=now_utc
-        )
-        native_provenance = bundle.get("provider_native_discovery_provenance")
-        if native_provenance is not None:
-            from src.football.top5_provider_native_evidence_bridge import (
-                ProviderNativeEvidenceBridgeError,
-                validate_native_provenance_against_legacy,
-            )
-
-            try:
-                validate_native_provenance_against_legacy(
-                    native_provenance, discovery_items
-                )
-            except ProviderNativeEvidenceBridgeError as exc:
+        if neutral is not None:
+            neutral_dossier, evidence_provider = neutral
+            if (
+                "provider_authority" in bundle
+                and bundle.get("provider_authority") != ACTIVE_PROVIDER
+            ):
                 raise Top5FinalAcceptanceError(
-                    f"provider-native discovery provenance rejected: {exc}"
-                ) from exc
-        discovery_by_league = {str(item["league"]): item for item in discovery_items}
-        (
-            run_id,
-            session_id,
-            authorization_id,
-            adapter_sha,
-            capture_digests,
-            shadow_digest,
-        ) = _validate_controlled_shadow(
-            _mapping(bundle.get("controlled_shadow"), "controlled_shadow"),
-            now=now_utc,
-            discovery=discovery_by_league,
+                    "B1 production provider authority must remain the_odds_api"
+                )
+            run = neutral_dossier.controlled_shadow
+            discovery_by_league = {
+                item.league: {
+                    "provider_event_id": item.provider_fixture_id,
+                    "provider_fixture_id": item.provider_fixture_id,
+                    "fixture_key": item.fixture_key,
+                }
+                for item in run.discovery_evidence
+            }
+            run_id = run.controlled_shadow_run_id
+            session_id = run.qualification_session_id
+            authorization_id = run.authorization_id
+            adapter_sha = run.adapter_source_sha
+            capture_digests = tuple(item.evidence_digest for item in run.captures)
+            shadow_digest = canonical_evidence_digest(run.as_payload(now=now_utc))
+            # Neutral readiness has no provider-billing proof identifier.
+            proof_id = None
+            proof_digest = None
+            headroom_digest = canonical_digest(bundle["b4_quota_headroom"])
+            b4_dossier_digest = neutral_dossier.dossier_digest
+        else:
+            authority_value = bundle.get("provider_authority", ACTIVE_PROVIDER)
+            if authority_value != ACTIVE_PROVIDER:
+                raise Top5FinalAcceptanceError(
+                    "B1 production provider authority must remain the_odds_api"
+                )
+            evidence_provider = bundle.get("evidence_provider", CANDIDATE_PROVIDER)
+            candidate_provider = bundle.get("candidate_provider", evidence_provider)
+            if evidence_provider != CANDIDATE_PROVIDER:
+                raise Top5FinalAcceptanceError(
+                    "legacy B4 evidence provider identity is unsupported"
+                )
+            if candidate_provider != evidence_provider:
+                raise Top5FinalAcceptanceError(
+                    "B1 candidate_provider must equal evidence_provider"
+                )
+            quota_package = _mapping(
+                bundle.get("b4_quota_proof_package"), "B4 quota proof package"
+            )
+            proof = TheRundownB4QuotaProofV1.from_package(quota_package, now=now_utc)
+            proof.validate(now=now_utc)
+            headroom = TheRundownQuotaHeadroomEvidenceV1.from_payload(
+                bundle.get("b4_quota_headroom")
+            )
+            headroom.validate(expected_provider=CANDIDATE_PROVIDER, now=now_utc)
+            discovery_items = _validate_discovery(
+                bundle.get("discovery_evidence"), now=now_utc
+            )
+            native_provenance = bundle.get("provider_native_discovery_provenance")
+            if native_provenance is not None:
+                from src.football.top5_provider_native_evidence_bridge import (
+                    ProviderNativeEvidenceBridgeError,
+                    validate_native_provenance_against_legacy,
+                )
+
+                try:
+                    validate_native_provenance_against_legacy(
+                        native_provenance, discovery_items
+                    )
+                except ProviderNativeEvidenceBridgeError as exc:
+                    raise Top5FinalAcceptanceError(
+                        f"provider-native discovery provenance rejected: {exc}"
+                    ) from exc
+            discovery_by_league = {
+                str(item["league"]): item for item in discovery_items
+            }
+            (
+                run_id,
+                session_id,
+                authorization_id,
+                adapter_sha,
+                capture_digests,
+                shadow_digest,
+            ) = _validate_controlled_shadow(
+                _mapping(bundle.get("controlled_shadow"), "controlled_shadow"),
+                now=now_utc,
+                discovery=discovery_by_league,
+            )
+            if (
+                headroom.controlled_shadow_run_id != run_id
+                or headroom.qualification_session_id != session_id
+                or headroom.authorization_id != authorization_id
+            ):
+                raise Top5FinalAcceptanceError(
+                    "B4 headroom/run identity binding mismatch"
+                )
+            proof_id = proof.proof_id
+            proof_digest = proof.evidence_digest
+            headroom_digest = headroom.evidence_digest
+            b4_dossier_digest = bundle.get("b4_dossier_digest")
+
+        runtime_raw = _mapping(bundle.get("runtime_evidence"), "runtime_evidence")
+        _reject_candidate_active_order(
+            runtime_raw, evidence_provider=str(evidence_provider)
         )
-        if (
-            headroom.controlled_shadow_run_id != run_id
-            or headroom.qualification_session_id != session_id
-            or headroom.authorization_id != authorization_id
-        ):
-            raise Top5FinalAcceptanceError("B4 headroom/run identity binding mismatch")
         runtime_data_sha = _validate_runtime(
-            _mapping(bundle.get("runtime_evidence"), "runtime_evidence"),
+            runtime_raw,
             now=now_utc,
             model=model,
         )
@@ -394,15 +557,20 @@ def verify_final_acceptance(
             "schema_version": FINAL_ACCEPTANCE_SCHEMA_VERSION,
             "source_main_sha": source_main_sha,
             "provider_authority": ACTIVE_PROVIDER,
-            "candidate_provider": CANDIDATE_PROVIDER,
+            "evidence_provider": evidence_provider,
+            "candidate_provider": evidence_provider,
             "leagues": sorted(TOP5_LEAGUES),
             "research_sha": model["research_sha"],
             "model_identity": model["candidate_id"],
-            "b4_proof_id": proof.proof_id,
-            "b4_proof_evidence_digest": proof.evidence_digest,
-            "b4_headroom_digest": headroom.evidence_digest,
+            "b4_proof_id": proof_id,
+            "b4_proof_evidence_digest": proof_digest,
+            "b4_headroom_digest": headroom_digest,
+            "b4_dossier_digest": b4_dossier_digest,
             "discovery_event_ids": {
-                league: discovery_by_league[league]["provider_event_id"]
+                league: discovery_by_league[league].get(
+                    "provider_event_id",
+                    discovery_by_league[league].get("provider_fixture_id"),
+                )
                 for league in sorted(TOP5_LEAGUES)
             },
             "controlled_shadow_run_id": run_id,
@@ -425,6 +593,7 @@ def verify_final_acceptance(
             ],
             "checks": {
                 "five_leagues": True,
+                # Retained for downstream v1 consumers; neutral input means B4 readiness validated.
                 "b4_quota_proof": True,
                 "discovery": True,
                 "controlled_shadow": True,
