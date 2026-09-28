@@ -32885,5 +32885,2185 @@
       },
       "surface_overrides": []
     }
+  },
+  "nations_league": {
+    "schema": "nations-league-public-v1",
+    "competition": "UEFA Nations League",
+    "provider": "isports_api",
+    "provider_league_id": 146819,
+    "evidence_status": "WEAK_EVIDENCE_SHADOW_ONLY",
+    "lifecycle": "SHADOW_ONLY",
+    "no_bet": true,
+    "publication_enabled": false,
+    "captured_at": "2026-09-28T00:31:25.441175+00:00",
+    "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+    "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca",
+    "model_snapshot_digest": "746b7ab954a9b2bc987fd08a7f39fa1293d37653f8886a4a94c3229faeed0211",
+    "fixture_count": 46,
+    "fixtures": [
+      {
+        "provider_event_id": "213518929",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-09-28T16:00:00Z",
+        "home": "Armenia",
+        "away": "Montenegro",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.359054,
+            "draw": 0.233229,
+            "away": 0.407717
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.244221,
+              "draw": 0.372556,
+              "away": 0.383223
+            },
+            "raw_gbt": {
+              "home": 0.239563,
+              "draw": 0.062845,
+              "away": 0.697592
+            },
+            "canonical_stacker": {
+              "home": 0.359054,
+              "draw": 0.233229,
+              "away": 0.407717
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 2.86,
+            "draw": 3.15,
+            "away": 2.5
+          },
+          "probabilities": {
+            "home": 0.327661,
+            "draw": 0.297495,
+            "away": 0.374844
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "323518920",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-09-28T16:00:00Z",
+        "home": "Latvia",
+        "away": "Cyprus",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.416402,
+            "draw": 0.23543,
+            "away": 0.348168
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.281662,
+              "draw": 0.372804,
+              "away": 0.345534
+            },
+            "raw_gbt": {
+              "home": 0.440073,
+              "draw": 0.253473,
+              "away": 0.306454
+            },
+            "canonical_stacker": {
+              "home": 0.416402,
+              "draw": 0.23543,
+              "away": 0.348168
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 2.58,
+            "draw": 3.13,
+            "away": 2.8
+          },
+          "probabilities": {
+            "home": 0.364205,
+            "draw": 0.300207,
+            "away": 0.335588
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "358418927",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-09-28T16:00:00Z",
+        "home": "Georgia",
+        "away": "Ukraine",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.435735,
+            "draw": 0.23111,
+            "away": 0.333155
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.334329,
+              "draw": 0.346077,
+              "away": 0.319594
+            },
+            "raw_gbt": {
+              "home": 0.325526,
+              "draw": 0.280523,
+              "away": 0.393951
+            },
+            "canonical_stacker": {
+              "home": 0.435735,
+              "draw": 0.23111,
+              "away": 0.333155
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 2.68,
+            "draw": 3.2,
+            "away": 2.7
+          },
+          "probabilities": {
+            "home": 0.353345,
+            "draw": 0.295927,
+            "away": 0.350728
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "368418928",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-09-28T18:45:00Z",
+        "home": "Northern Ireland",
+        "away": "Hungary",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.583376,
+            "draw": 0.225784,
+            "away": 0.19084
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.556157,
+              "draw": 0.334821,
+              "away": 0.109022
+            },
+            "raw_gbt": {
+              "home": 0.370718,
+              "draw": 0.428395,
+              "away": 0.200887
+            },
+            "canonical_stacker": {
+              "home": 0.583376,
+              "draw": 0.225784,
+              "away": 0.19084
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 2.74,
+            "draw": 3.0,
+            "away": 2.755
+          },
+          "probabilities": {
+            "home": 0.343892,
+            "draw": 0.314088,
+            "away": 0.34202
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "373418924",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-09-28T18:45:00Z",
+        "home": "Belgium",
+        "away": "France",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.380058,
+            "draw": 0.205013,
+            "away": 0.414929
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.409672,
+              "draw": 0.265827,
+              "away": 0.324501
+            },
+            "raw_gbt": {
+              "home": 0.449193,
+              "draw": 0.17334,
+              "away": 0.377467
+            },
+            "canonical_stacker": {
+              "home": 0.380058,
+              "draw": 0.205013,
+              "away": 0.414929
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 3.64,
+            "draw": 3.95,
+            "away": 1.9
+          },
+          "probabilities": {
+            "home": 0.260599,
+            "draw": 0.240147,
+            "away": 0.499254
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "378418929",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-09-28T18:45:00Z",
+        "home": "Romania",
+        "away": "Bosnia and Herzegovina",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.729629,
+            "draw": 0.160336,
+            "away": 0.110035
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.767744,
+              "draw": 0.186935,
+              "away": 0.045321
+            },
+            "raw_gbt": {
+              "home": 0.811348,
+              "draw": 0.147069,
+              "away": 0.041583
+            },
+            "canonical_stacker": {
+              "home": 0.729629,
+              "draw": 0.160336,
+              "away": 0.110035
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 2.18,
+            "draw": 3.35,
+            "away": 3.3
+          },
+          "probabilities": {
+            "home": 0.432647,
+            "draw": 0.281544,
+            "away": 0.285809
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "383418925",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-09-28T18:45:00Z",
+        "home": "Turkey",
+        "away": "Italy",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.271801,
+            "draw": 0.19141,
+            "away": 0.536789
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.133597,
+              "draw": 0.291272,
+              "away": 0.575131
+            },
+            "raw_gbt": {
+              "home": 0.322409,
+              "draw": 0.21738,
+              "away": 0.460211
+            },
+            "canonical_stacker": {
+              "home": 0.271801,
+              "draw": 0.19141,
+              "away": 0.536789
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 2.6,
+            "draw": 3.45,
+            "away": 2.62
+          },
+          "probabilities": {
+            "home": 0.364167,
+            "draw": 0.274445,
+            "away": 0.361388
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "488418920",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-09-28T18:45:00Z",
+        "home": "Sweden",
+        "away": "Poland",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.68263,
+            "draw": 0.167101,
+            "away": 0.150269
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.662893,
+              "draw": 0.186934,
+              "away": 0.150173
+            },
+            "raw_gbt": {
+              "home": 0.765887,
+              "draw": 0.163769,
+              "away": 0.070344
+            },
+            "canonical_stacker": {
+              "home": 0.68263,
+              "draw": 0.167101,
+              "away": 0.150269
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 2.1,
+            "draw": 3.6,
+            "away": 3.26
+          },
+          "probabilities": {
+            "home": 0.448933,
+            "draw": 0.261877,
+            "away": 0.28919
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "333518921",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-09-29T16:00:00Z",
+        "home": "Finland",
+        "away": "Belarus",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.603385,
+            "draw": 0.213326,
+            "away": 0.183289
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.26751,
+              "draw": 0.479954,
+              "away": 0.252536
+            },
+            "raw_gbt": {
+              "home": 0.325669,
+              "draw": 0.350317,
+              "away": 0.324014
+            },
+            "canonical_stacker": {
+              "home": 0.603385,
+              "draw": 0.213326,
+              "away": 0.183289
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 1.68,
+            "draw": 3.5,
+            "away": 5.35
+          },
+          "probabilities": {
+            "home": 0.557408,
+            "draw": 0.267556,
+            "away": 0.175036
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "353518923",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-09-29T16:00:00Z",
+        "home": "Moldova",
+        "away": "Faroe Islands",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.570561,
+            "draw": 0.239176,
+            "away": 0.190263
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.522633,
+              "draw": 0.386166,
+              "away": 0.091201
+            },
+            "raw_gbt": {
+              "home": 0.148129,
+              "draw": 0.281902,
+              "away": 0.569969
+            },
+            "canonical_stacker": {
+              "home": 0.570561,
+              "draw": 0.239176,
+              "away": 0.190263
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 2.8,
+            "draw": 2.9,
+            "away": 2.74
+          },
+          "probabilities": {
+            "home": 0.334738,
+            "draw": 0.323195,
+            "away": 0.342067
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "204418928",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-09-29T18:45:00Z",
+        "home": "Czechia",
+        "away": "England",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.053243,
+            "draw": 0.070399,
+            "away": 0.876358
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.030012,
+              "draw": 0.072862,
+              "away": 0.897126
+            },
+            "raw_gbt": {
+              "home": 0.073334,
+              "draw": 0.101598,
+              "away": 0.825068
+            },
+            "canonical_stacker": {
+              "home": 0.053243,
+              "draw": 0.070399,
+              "away": 0.876358
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 7.8,
+            "draw": 4.9,
+            "away": 1.38
+          },
+          "probabilities": {
+            "home": 0.1213,
+            "draw": 0.19309,
+            "away": 0.68561
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "309418923",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-09-29T18:45:00Z",
+        "home": "Scotland",
+        "away": "Switzerland",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.217329,
+            "draw": 0.208611,
+            "away": 0.57406
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.105591,
+              "draw": 0.415098,
+              "away": 0.479311
+            },
+            "raw_gbt": {
+              "home": 0.380093,
+              "draw": 0.358275,
+              "away": 0.261632
+            },
+            "canonical_stacker": {
+              "home": 0.217329,
+              "draw": 0.208611,
+              "away": 0.57406
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 4.0,
+            "draw": 3.45,
+            "away": 1.92
+          },
+          "probabilities": {
+            "home": 0.235696,
+            "draw": 0.273271,
+            "away": 0.491033
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "343518922",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-09-29T18:45:00Z",
+        "home": "San Marino",
+        "away": "Albania",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.299987,
+            "draw": 0.202125,
+            "away": 0.497888
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.424463,
+              "draw": 0.490061,
+              "away": 0.085476
+            },
+            "raw_gbt": {
+              "home": 0.055023,
+              "draw": 0.052301,
+              "away": 0.892676
+            },
+            "canonical_stacker": {
+              "home": 0.299987,
+              "draw": 0.202125,
+              "away": 0.497888
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 35.0,
+            "draw": 13.0,
+            "away": 1.05
+          },
+          "probabilities": {
+            "home": 0.027008,
+            "draw": 0.072715,
+            "away": 0.900277
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "363518924",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-09-29T18:45:00Z",
+        "home": "Slovakia",
+        "away": "Kazakhstan",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.85547,
+            "draw": 0.09861,
+            "away": 0.04592
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.65928,
+              "draw": 0.304555,
+              "away": 0.036165
+            },
+            "raw_gbt": {
+              "home": 0.721744,
+              "draw": 0.183504,
+              "away": 0.094752
+            },
+            "canonical_stacker": {
+              "home": 0.85547,
+              "draw": 0.09861,
+              "away": 0.04592
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 1.28,
+            "draw": 5.12,
+            "away": 11.0
+          },
+          "probabilities": {
+            "home": 0.73187,
+            "draw": 0.182967,
+            "away": 0.085163
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "373518925",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-09-29T18:45:00Z",
+        "home": "Bulgaria",
+        "away": "Estonia",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.646189,
+            "draw": 0.198348,
+            "away": 0.155463
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.345387,
+              "draw": 0.438036,
+              "away": 0.216577
+            },
+            "raw_gbt": {
+              "home": 0.365708,
+              "draw": 0.332168,
+              "away": 0.302124
+            },
+            "canonical_stacker": {
+              "home": 0.646189,
+              "draw": 0.198348,
+              "away": 0.155463
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 1.65,
+            "draw": 3.5,
+            "away": 5.6
+          },
+          "probabilities": {
+            "home": 0.566229,
+            "draw": 0.266936,
+            "away": 0.166835
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "383518926",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-09-29T18:45:00Z",
+        "home": "Luxembourg",
+        "away": "Iceland",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.35915,
+            "draw": 0.225361,
+            "away": 0.415489
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.282504,
+              "draw": 0.339925,
+              "away": 0.377571
+            },
+            "raw_gbt": {
+              "home": 0.184909,
+              "draw": 0.66659,
+              "away": 0.148501
+            },
+            "canonical_stacker": {
+              "home": 0.35915,
+              "draw": 0.225361,
+              "away": 0.415489
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 3.0,
+            "draw": 3.25,
+            "away": 2.31
+          },
+          "probabilities": {
+            "home": 0.310388,
+            "draw": 0.286512,
+            "away": 0.4031
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "393418926",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-09-29T18:45:00Z",
+        "home": "Spain",
+        "away": "Croatia",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.916964,
+            "draw": 0.056827,
+            "away": 0.026209
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.94292,
+              "draw": 0.052225,
+              "away": 0.004855
+            },
+            "raw_gbt": {
+              "home": 0.845028,
+              "draw": 0.110585,
+              "away": 0.044387
+            },
+            "canonical_stacker": {
+              "home": 0.916964,
+              "draw": 0.056827,
+              "away": 0.026209
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 1.2,
+            "draw": 7.0,
+            "away": 12.74
+          },
+          "probabilities": {
+            "home": 0.790127,
+            "draw": 0.13545,
+            "away": 0.074423
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "498418921",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-09-29T18:45:00Z",
+        "home": "Slovenia",
+        "away": "North Macedonia",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.696178,
+            "draw": 0.185738,
+            "away": 0.118084
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.41052,
+              "draw": 0.459393,
+              "away": 0.130087
+            },
+            "raw_gbt": {
+              "home": 0.292669,
+              "draw": 0.244631,
+              "away": 0.4627
+            },
+            "canonical_stacker": {
+              "home": 0.696178,
+              "draw": 0.185738,
+              "away": 0.118084
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 1.64,
+            "draw": 3.65,
+            "away": 5.6
+          },
+          "probabilities": {
+            "home": 0.573996,
+            "draw": 0.257905,
+            "away": 0.168099
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "357518927",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-10-01T16:00:00Z",
+        "home": "Azerbaijan",
+        "away": "Liechtenstein",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.797672,
+            "draw": 0.109285,
+            "away": 0.093043
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.315776,
+              "draw": 0.357794,
+              "away": 0.32643
+            },
+            "raw_gbt": {
+              "home": 0.573555,
+              "draw": 0.377584,
+              "away": 0.048861
+            },
+            "canonical_stacker": {
+              "home": 0.797672,
+              "draw": 0.109285,
+              "away": 0.093043
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 1.09,
+            "draw": 8.07,
+            "away": 42.0
+          },
+          "probabilities": {
+            "home": 0.861311,
+            "draw": 0.116336,
+            "away": 0.022353
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "214418929",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-10-01T18:45:00Z",
+        "home": "Greece",
+        "away": "Netherlands",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.262514,
+            "draw": 0.197683,
+            "away": 0.539803
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.200264,
+              "draw": 0.303715,
+              "away": 0.496021
+            },
+            "raw_gbt": {
+              "home": 0.158018,
+              "draw": 0.411346,
+              "away": 0.430636
+            },
+            "canonical_stacker": {
+              "home": 0.262514,
+              "draw": 0.197683,
+              "away": 0.539803
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 3.36,
+            "draw": 3.5,
+            "away": 2.1
+          },
+          "probabilities": {
+            "home": 0.280899,
+            "draw": 0.269663,
+            "away": 0.449438
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "319418924",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-10-01T18:45:00Z",
+        "home": "Israel",
+        "away": "Kosovo",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.49032,
+            "draw": 0.239811,
+            "away": 0.269869
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.409571,
+              "draw": 0.40381,
+              "away": 0.186619
+            },
+            "raw_gbt": {
+              "home": 0.135848,
+              "draw": 0.641243,
+              "away": 0.222909
+            },
+            "canonical_stacker": {
+              "home": 0.49032,
+              "draw": 0.239811,
+              "away": 0.269869
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 2.9,
+            "draw": 3.3,
+            "away": 2.36
+          },
+          "probabilities": {
+            "home": 0.321792,
+            "draw": 0.282787,
+            "away": 0.395421
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "324418920",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-10-01T18:45:00Z",
+        "home": "Germany",
+        "away": "Serbia",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.711608,
+            "draw": 0.137268,
+            "away": 0.151124
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.289291,
+              "draw": 0.327058,
+              "away": 0.383651
+            },
+            "raw_gbt": {
+              "home": 0.62397,
+              "draw": 0.218489,
+              "away": 0.157541
+            },
+            "canonical_stacker": {
+              "home": 0.711608,
+              "draw": 0.137268,
+              "away": 0.151124
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 1.24,
+            "draw": 6.0,
+            "away": 10.4
+          },
+          "probabilities": {
+            "home": 0.754206,
+            "draw": 0.155869,
+            "away": 0.089925
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "329418925",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-10-01T18:45:00Z",
+        "home": "Ireland",
+        "away": "Austria",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.245277,
+            "draw": 0.192454,
+            "away": 0.562269
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.197538,
+              "draw": 0.271168,
+              "away": 0.531294
+            },
+            "raw_gbt": {
+              "home": 0.338713,
+              "draw": 0.263324,
+              "away": 0.397963
+            },
+            "canonical_stacker": {
+              "home": 0.245277,
+              "draw": 0.192454,
+              "away": 0.562269
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 3.4,
+            "draw": 3.3,
+            "away": 2.14
+          },
+          "probabilities": {
+            "home": 0.276313,
+            "draw": 0.284686,
+            "away": 0.439001
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "334418921",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-10-01T18:45:00Z",
+        "home": "Wales",
+        "away": "Norway",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.1784,
+            "draw": 0.164659,
+            "away": 0.656941
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.173816,
+              "draw": 0.292715,
+              "away": 0.533469
+            },
+            "raw_gbt": {
+              "home": 0.235846,
+              "draw": 0.178909,
+              "away": 0.585245
+            },
+            "canonical_stacker": {
+              "home": 0.1784,
+              "draw": 0.164659,
+              "away": 0.656941
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 5.1,
+            "draw": 4.1,
+            "away": 1.58
+          },
+          "probabilities": {
+            "home": 0.182757,
+            "draw": 0.227332,
+            "away": 0.589911
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "344418922",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-10-01T18:45:00Z",
+        "home": "Denmark",
+        "away": "Portugal",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.349093,
+            "draw": 0.23178,
+            "away": 0.419127
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.278528,
+              "draw": 0.399253,
+              "away": 0.322219
+            },
+            "raw_gbt": {
+              "home": 0.147512,
+              "draw": 0.476021,
+              "away": 0.376467
+            },
+            "canonical_stacker": {
+              "home": 0.349093,
+              "draw": 0.23178,
+              "away": 0.419127
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 3.5,
+            "draw": 3.57,
+            "away": 2.02
+          },
+          "probabilities": {
+            "home": 0.269319,
+            "draw": 0.264038,
+            "away": 0.466643
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "367518928",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-10-01T18:45:00Z",
+        "home": "Malta",
+        "away": "Gibraltar",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.757735,
+            "draw": 0.148112,
+            "away": 0.094153
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.342366,
+              "draw": 0.468592,
+              "away": 0.189042
+            },
+            "raw_gbt": {
+              "home": 0.772257,
+              "draw": 0.172724,
+              "away": 0.055019
+            },
+            "canonical_stacker": {
+              "home": 0.757735,
+              "draw": 0.148112,
+              "away": 0.094153
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 1.295,
+            "draw": 4.775,
+            "away": 11.9
+          },
+          "probabilities": {
+            "home": 0.724623,
+            "draw": 0.196521,
+            "away": 0.078856
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "393518927",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-10-02T14:00:00Z",
+        "home": "Kazakhstan",
+        "away": "Moldova",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.484169,
+            "draw": 0.214382,
+            "away": 0.301449
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.127612,
+              "draw": 0.428296,
+              "away": 0.444092
+            },
+            "raw_gbt": {
+              "home": 0.557769,
+              "draw": 0.230073,
+              "away": 0.212158
+            },
+            "canonical_stacker": {
+              "home": 0.484169,
+              "draw": 0.214382,
+              "away": 0.301449
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 1.68,
+            "draw": 3.6,
+            "away": 5.2
+          },
+          "probabilities": {
+            "home": 0.558739,
+            "draw": 0.260745,
+            "away": 0.180516
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "204518929",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-10-02T16:00:00Z",
+        "home": "Latvia",
+        "away": "Montenegro",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.277289,
+            "draw": 0.237702,
+            "away": 0.485009
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.235886,
+              "draw": 0.431005,
+              "away": 0.333109
+            },
+            "raw_gbt": {
+              "home": 0.260358,
+              "draw": 0.243543,
+              "away": 0.496099
+            },
+            "canonical_stacker": {
+              "home": 0.277289,
+              "draw": 0.237702,
+              "away": 0.485009
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 4.81,
+            "draw": 3.325,
+            "away": 1.78
+          },
+          "probabilities": {
+            "home": 0.194218,
+            "draw": 0.280958,
+            "away": 0.524824
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "314518920",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-10-02T16:00:00Z",
+        "home": "Cyprus",
+        "away": "Armenia",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.642834,
+            "draw": 0.192413,
+            "away": 0.164753
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.611945,
+              "draw": 0.248712,
+              "away": 0.139343
+            },
+            "raw_gbt": {
+              "home": 0.540393,
+              "draw": 0.238946,
+              "away": 0.220661
+            },
+            "canonical_stacker": {
+              "home": 0.642834,
+              "draw": 0.192413,
+              "away": 0.164753
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 2.2,
+            "draw": 3.08,
+            "away": 3.09
+          },
+          "probabilities": {
+            "home": 0.412157,
+            "draw": 0.294398,
+            "away": 0.293445
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "324518921",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-10-02T18:45:00Z",
+        "home": "Faroe Islands",
+        "away": "Slovakia",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.178543,
+            "draw": 0.199679,
+            "away": 0.621778
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.113551,
+              "draw": 0.43918,
+              "away": 0.447269
+            },
+            "raw_gbt": {
+              "home": 0.279887,
+              "draw": 0.416561,
+              "away": 0.303552
+            },
+            "canonical_stacker": {
+              "home": 0.178543,
+              "draw": 0.199679,
+              "away": 0.621778
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 6.145,
+            "draw": 3.56,
+            "away": 1.525
+          },
+          "probabilities": {
+            "home": 0.148025,
+            "draw": 0.255509,
+            "away": 0.596466
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "339418926",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-10-02T18:45:00Z",
+        "home": "Ukraine",
+        "away": "Northern Ireland",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.692012,
+            "draw": 0.178897,
+            "away": 0.129091
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.61688,
+              "draw": 0.27223,
+              "away": 0.11089
+            },
+            "raw_gbt": {
+              "home": 0.659125,
+              "draw": 0.311294,
+              "away": 0.029581
+            },
+            "canonical_stacker": {
+              "home": 0.692012,
+              "draw": 0.178897,
+              "away": 0.129091
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 2.02,
+            "draw": 3.28,
+            "away": 3.925
+          },
+          "probabilities": {
+            "home": 0.469373,
+            "draw": 0.289065,
+            "away": 0.241562
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "349418927",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-10-02T18:45:00Z",
+        "home": "Hungary",
+        "away": "Georgia",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.437198,
+            "draw": 0.206804,
+            "away": 0.355998
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.153074,
+              "draw": 0.364638,
+              "away": 0.482288
+            },
+            "raw_gbt": {
+              "home": 0.121519,
+              "draw": 0.393306,
+              "away": 0.485175
+            },
+            "canonical_stacker": {
+              "home": 0.437198,
+              "draw": 0.206804,
+              "away": 0.355998
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 1.825,
+            "draw": 3.63,
+            "away": 4.09
+          },
+          "probabilities": {
+            "home": 0.513093,
+            "draw": 0.25796,
+            "away": 0.228947
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "354418923",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-10-02T18:45:00Z",
+        "home": "France",
+        "away": "Italy",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.806097,
+            "draw": 0.118973,
+            "away": 0.07493
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.628212,
+              "draw": 0.249042,
+              "away": 0.122746
+            },
+            "raw_gbt": {
+              "home": 0.776271,
+              "draw": 0.176821,
+              "away": 0.046908
+            },
+            "canonical_stacker": {
+              "home": 0.806097,
+              "draw": 0.118973,
+              "away": 0.07493
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 1.415,
+            "draw": 4.545,
+            "away": 7.13
+          },
+          "probabilities": {
+            "home": 0.662344,
+            "draw": 0.206208,
+            "away": 0.131448
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "359418928",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-10-02T18:45:00Z",
+        "home": "Poland",
+        "away": "Romania",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.562722,
+            "draw": 0.172742,
+            "away": 0.264536
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.223772,
+              "draw": 0.291229,
+              "away": 0.484999
+            },
+            "raw_gbt": {
+              "home": 0.559756,
+              "draw": 0.176626,
+              "away": 0.263618
+            },
+            "canonical_stacker": {
+              "home": 0.562722,
+              "draw": 0.172742,
+              "away": 0.264536
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 1.475,
+            "draw": 4.28,
+            "away": 6.5
+          },
+          "probabilities": {
+            "home": 0.636315,
+            "draw": 0.219291,
+            "away": 0.144394
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "364418924",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-10-02T18:45:00Z",
+        "home": "Belgium",
+        "away": "Turkey",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.862536,
+            "draw": 0.088661,
+            "away": 0.048803
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.88809,
+              "draw": 0.086653,
+              "away": 0.025257
+            },
+            "raw_gbt": {
+              "home": 0.819222,
+              "draw": 0.092195,
+              "away": 0.088583
+            },
+            "canonical_stacker": {
+              "home": 0.862536,
+              "draw": 0.088661,
+              "away": 0.048803
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 1.465,
+            "draw": 4.73,
+            "away": 5.81
+          },
+          "probabilities": {
+            "home": 0.640255,
+            "draw": 0.198303,
+            "away": 0.161442
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "369418929",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-10-02T18:45:00Z",
+        "home": "Bosnia and Herzegovina",
+        "away": "Sweden",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.21306,
+            "draw": 0.17203,
+            "away": 0.61491
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.176934,
+              "draw": 0.259902,
+              "away": 0.563164
+            },
+            "raw_gbt": {
+              "home": 0.235423,
+              "draw": 0.13101,
+              "away": 0.633567
+            },
+            "canonical_stacker": {
+              "home": 0.21306,
+              "draw": 0.17203,
+              "away": 0.61491
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 3.65,
+            "draw": 3.765,
+            "away": 1.895
+          },
+          "probabilities": {
+            "home": 0.256701,
+            "draw": 0.248861,
+            "away": 0.494438
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "374418925",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-10-03T16:00:00Z",
+        "home": "Croatia",
+        "away": "England",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.262741,
+            "draw": 0.177816,
+            "away": 0.559443
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.298511,
+              "draw": 0.180282,
+              "away": 0.521207
+            },
+            "raw_gbt": {
+              "home": 0.178752,
+              "draw": 0.341901,
+              "away": 0.479347
+            },
+            "canonical_stacker": {
+              "home": 0.262741,
+              "draw": 0.177816,
+              "away": 0.559443
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 3.58,
+            "draw": 3.55,
+            "away": 1.98
+          },
+          "probabilities": {
+            "home": 0.262018,
+            "draw": 0.264232,
+            "away": 0.47375
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "384418926",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-10-03T18:45:00Z",
+        "home": "Spain",
+        "away": "Czechia",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.924595,
+            "draw": 0.052226,
+            "away": 0.023179
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.978469,
+              "draw": 0.021026,
+              "away": 0.000505
+            },
+            "raw_gbt": {
+              "home": 0.863614,
+              "draw": 0.122836,
+              "away": 0.01355
+            },
+            "canonical_stacker": {
+              "home": 0.924595,
+              "draw": 0.052226,
+              "away": 0.023179
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 1.17,
+            "draw": 6.95,
+            "away": 17.0
+          },
+          "probabilities": {
+            "home": 0.808297,
+            "draw": 0.136073,
+            "away": 0.05563
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "205418929",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-10-04T18:45:00Z",
+        "home": "Greece",
+        "away": "Germany",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.418927,
+            "draw": 0.204605,
+            "away": 0.376468
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.513471,
+              "draw": 0.238538,
+              "away": 0.247991
+            },
+            "raw_gbt": {
+              "home": 0.182218,
+              "draw": 0.560432,
+              "away": 0.25735
+            },
+            "canonical_stacker": {
+              "home": 0.418927,
+              "draw": 0.204605,
+              "away": 0.376468
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 4.22,
+            "draw": 4.1,
+            "away": 1.76
+          },
+          "probabilities": {
+            "home": 0.225887,
+            "draw": 0.232498,
+            "away": 0.541615
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "315418920",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-10-04T18:45:00Z",
+        "home": "Portugal",
+        "away": "Norway",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.729658,
+            "draw": 0.153778,
+            "away": 0.116564
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.572811,
+              "draw": 0.29535,
+              "away": 0.131839
+            },
+            "raw_gbt": {
+              "home": 0.805027,
+              "draw": 0.126291,
+              "away": 0.068682
+            },
+            "canonical_stacker": {
+              "home": 0.729658,
+              "draw": 0.153778,
+              "away": 0.116564
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 1.705,
+            "draw": 4.215,
+            "away": 4.115
+          },
+          "probabilities": {
+            "home": 0.549799,
+            "draw": 0.222398,
+            "away": 0.227803
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "325418921",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-10-04T18:45:00Z",
+        "home": "Wales",
+        "away": "Denmark",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.231759,
+            "draw": 0.188389,
+            "away": 0.579852
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.148174,
+              "draw": 0.328657,
+              "away": 0.523169
+            },
+            "raw_gbt": {
+              "home": 0.330002,
+              "draw": 0.184282,
+              "away": 0.485716
+            },
+            "canonical_stacker": {
+              "home": 0.231759,
+              "draw": 0.188389,
+              "away": 0.579852
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 3.45,
+            "draw": 3.725,
+            "away": 1.965
+          },
+          "probabilities": {
+            "home": 0.271599,
+            "draw": 0.251548,
+            "away": 0.476853
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "394418927",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-10-04T18:45:00Z",
+        "home": "Netherlands",
+        "away": "Serbia",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.846142,
+            "draw": 0.097527,
+            "away": 0.056331
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.499432,
+              "draw": 0.353658,
+              "away": 0.14691
+            },
+            "raw_gbt": {
+              "home": 0.771471,
+              "draw": 0.199489,
+              "away": 0.02904
+            },
+            "canonical_stacker": {
+              "home": 0.846142,
+              "draw": 0.097527,
+              "away": 0.056331
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 1.145,
+            "draw": 6.985,
+            "away": 18.1
+          },
+          "probabilities": {
+            "home": 0.814875,
+            "draw": 0.133576,
+            "away": 0.051549
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "335418922",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-10-05T18:45:00Z",
+        "home": "France",
+        "away": "Belgium",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.737028,
+            "draw": 0.14098,
+            "away": 0.121992
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.549754,
+              "draw": 0.240861,
+              "away": 0.209385
+            },
+            "raw_gbt": {
+              "home": 0.854439,
+              "draw": 0.098895,
+              "away": 0.046666
+            },
+            "canonical_stacker": {
+              "home": 0.737028,
+              "draw": 0.14098,
+              "away": 0.121992
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 1.55,
+            "draw": 4.515,
+            "away": 5.01
+          },
+          "probabilities": {
+            "home": 0.605077,
+            "draw": 0.207723,
+            "away": 0.1872
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "345418923",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-10-05T18:45:00Z",
+        "home": "Italy",
+        "away": "Turkey",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.805138,
+            "draw": 0.121899,
+            "away": 0.072963
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.756175,
+              "draw": 0.191121,
+              "away": 0.052704
+            },
+            "raw_gbt": {
+              "home": 0.75371,
+              "draw": 0.200279,
+              "away": 0.046011
+            },
+            "canonical_stacker": {
+              "home": 0.805138,
+              "draw": 0.121899,
+              "away": 0.072963
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 1.625,
+            "draw": 4.055,
+            "away": 4.865
+          },
+          "probabilities": {
+            "home": 0.576449,
+            "draw": 0.231006,
+            "away": 0.192545
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "355418924",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-10-06T18:45:00Z",
+        "home": "Croatia",
+        "away": "Spain",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.066147,
+            "draw": 0.082935,
+            "away": 0.850918
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.016873,
+              "draw": 0.124816,
+              "away": 0.858311
+            },
+            "raw_gbt": {
+              "home": 0.048975,
+              "draw": 0.531628,
+              "away": 0.419397
+            },
+            "canonical_stacker": {
+              "home": 0.066147,
+              "draw": 0.082935,
+              "away": 0.850918
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 6.0,
+            "draw": 4.66,
+            "away": 1.46
+          },
+          "probabilities": {
+            "home": 0.15632,
+            "draw": 0.20127,
+            "away": 0.64241
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      },
+      {
+        "provider_event_id": "365418925",
+        "competition": "UEFA Nations League",
+        "kickoff": "2026-10-06T18:45:00Z",
+        "home": "England",
+        "away": "Czechia",
+        "captured_at": "2026-09-28T00:31:25.441175+00:00",
+        "model": {
+          "probabilities": {
+            "home": 0.909852,
+            "draw": 0.061497,
+            "away": 0.028651
+          },
+          "components": {
+            "raw_dixon_coles": {
+              "home": 0.922603,
+              "draw": 0.06018,
+              "away": 0.017217
+            },
+            "raw_gbt": {
+              "home": 0.932521,
+              "draw": 0.059012,
+              "away": 0.008467
+            },
+            "canonical_stacker": {
+              "home": 0.909852,
+              "draw": 0.061497,
+              "away": 0.028651
+            }
+          }
+        },
+        "market": {
+          "bookmaker": "iSports European odds component-wise median",
+          "odds_decimal": {
+            "home": 1.205,
+            "draw": 6.095,
+            "away": 13.5
+          },
+          "probabilities": {
+            "home": 0.777024,
+            "draw": 0.15362,
+            "away": 0.069356
+          }
+        },
+        "source_sha": "3137dc4425b11fefaddf0596334f3f1edded3712",
+        "artifact_digest": "c82ab661ab655ac5f01914d458388751977ba5c845250b758779389e161371ca"
+      }
+    ],
+    "public_digest": "59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a"
   }
 }
