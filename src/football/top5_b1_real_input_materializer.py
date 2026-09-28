@@ -66,7 +66,9 @@ from src.football.top5_signal_lifecycle import (
 from src.football.top5_signal_lifecycle_public_adapter import (
     project_top5_signal_lifecycles,
 )
-from src.notifications.public_serializer import map_prediction_to_public_football_signals
+from src.notifications.public_serializer import (
+    map_prediction_to_public_football_signals,
+)
 from src.runtime.paths import ROOT, governed_runtime_root
 
 _GIT_SHA_RE = re.compile(r"^[0-9a-fA-F]{40}$")
@@ -143,7 +145,9 @@ def _current_git_sha(repo_root: Path) -> str:
             timeout=5,
         )
     except (OSError, subprocess.SubprocessError, TimeoutError) as exc:
-        raise Top5B1MaterializationError("current source-main SHA is unavailable") from exc
+        raise Top5B1MaterializationError(
+            "current source-main SHA is unavailable"
+        ) from exc
     if result.returncode != 0:
         raise Top5B1MaterializationError("current source-main SHA is unavailable")
     return _sha_text(result.stdout.strip(), "current source-main SHA")
@@ -173,7 +177,9 @@ def _source_runtime_facts(repo_root: Path, *, now: datetime) -> dict[str, object
         or _sha_text(meta_ci.get("head_sha"), "provenance_meta.source_ci.head_sha")
         != source_release_sha
     ):
-        raise Top5B1MaterializationError("source release CI is not successful for its SHA")
+        raise Top5B1MaterializationError(
+            "source release CI is not successful for its SHA"
+        )
 
     provenance = _mapping(health.get("provenance"), "health.provenance")
     health_ci = _mapping(provenance.get("source_ci"), "health.provenance.source_ci")
@@ -193,8 +199,13 @@ def _source_runtime_facts(repo_root: Path, *, now: datetime) -> dict[str, object
     if provenance.get("source_runtime_consistent") is not True:
         raise Top5B1MaterializationError("source/runtime provenance is inconsistent")
     generated_at = _instant(health.get("generated_at"), "health.generated_at")
-    if generated_at > now or (now - generated_at).total_seconds() > _MAX_HEALTH_AGE_SECONDS:
-        raise Top5B1MaterializationError("health provenance is stale or from the future")
+    if (
+        generated_at > now
+        or (now - generated_at).total_seconds() > _MAX_HEALTH_AGE_SECONDS
+    ):
+        raise Top5B1MaterializationError(
+            "health provenance is stale or from the future"
+        )
     health_status = health.get("overall")
     if health_status not in {"ok", "degraded"}:
         raise Top5B1MaterializationError("health status is not governed-readable")
@@ -246,7 +257,9 @@ def _output_directory(
 ) -> tuple[Path, Path]:
     supplied = Path(raw_path).expanduser()
     if not supplied.is_absolute() or supplied.name in {"", ".", ".."}:
-        raise Top5B1MaterializationError("output directory must be an absolute new path")
+        raise Top5B1MaterializationError(
+            "output directory must be an absolute new path"
+        )
     if supplied.exists() or supplied.is_symlink():
         raise Top5B1MaterializationError("output directory already exists")
     try:
@@ -254,7 +267,11 @@ def _output_directory(
     except OSError as exc:
         raise Top5B1MaterializationError("output parent directory is missing") from exc
     target = parent / supplied.name
-    if _inside(target, repo_root) or _inside(target, publisher_root) or _inside(publisher_root, target):
+    if (
+        _inside(target, repo_root)
+        or _inside(target, publisher_root)
+        or _inside(publisher_root, target)
+    ):
         raise Top5B1MaterializationError(
             "private output must be separate from the repository and publisher workspace"
         )
@@ -268,7 +285,12 @@ def _validate_disabled_route(route: object) -> None:
         or current.get("activation_mode") != "DISABLED"
         or any(
             current.get(field) is not False
-            for field in ("publication", "betting", "ledger_mutation", "recurring_scheduler")
+            for field in (
+                "publication",
+                "betting",
+                "ledger_mutation",
+                "recurring_scheduler",
+            )
         )
     ):
         raise Top5B1MaterializationError(
@@ -283,11 +305,14 @@ def _league_inputs(
 ) -> dict[str, tuple[object, object, Fixture]]:
     shadow = dossier.controlled_shadow
     if shadow.provider_identity != "isports_api":
-        raise Top5B1MaterializationError("B1 real-input materializer requires isports_api evidence")
+        raise Top5B1MaterializationError(
+            "B1 real-input materializer requires isports_api evidence"
+        )
     if tuple(item.league for item in shadow.discovery_evidence) != TOP5_LEAGUE_ORDER:
         raise Top5B1MaterializationError("B4 dossier league order is not canonical")
     if any(
-        capture.evidence_kind != "REAL_OBSERVED" or capture.network_execution is not True
+        capture.evidence_kind != "REAL_OBSERVED"
+        or capture.network_execution is not True
         for capture in shadow.captures
     ):
         raise Top5B1MaterializationError("B4 dossier is not REAL_OBSERVED")
@@ -299,7 +324,9 @@ def _league_inputs(
         market = markets.get(discovery.league)
         capture = captures.get(discovery.league)
         if market is None or capture is None:
-            raise Top5B1MaterializationError("B4 discovery/market/capture join is incomplete")
+            raise Top5B1MaterializationError(
+                "B4 discovery/market/capture join is incomplete"
+            )
         if (
             market.provider_identity != "isports_api"
             or market.provider_fixture_id != discovery.provider_fixture_id
@@ -330,7 +357,9 @@ def _league_inputs(
             )
         result[discovery.league] = (discovery, market, fixture)
     if tuple(result) != TOP5_LEAGUE_ORDER:
-        raise Top5B1MaterializationError("B4 input does not cover the canonical five leagues")
+        raise Top5B1MaterializationError(
+            "B4 input does not cover the canonical five leagues"
+        )
     return result
 
 
@@ -392,7 +421,9 @@ def _build_models_and_lifecycles(
         inventory = inventory_for(league, M5_CANDIDATE_ID)
         model_hash = inventory.model_artifact_hash
         if not model_hash:
-            raise Top5B1MaterializationError(f"M5 inventory hash is missing for {league}")
+            raise Top5B1MaterializationError(
+                f"M5 inventory hash is missing for {league}"
+            )
         source = market.source_provenance
         snapshot_id = f"isports_api:{market.normalized_observation_digest}"
         snapshot = MarketSnapshot(
@@ -409,12 +440,20 @@ def _build_models_and_lifecycles(
         )
         snapshot.validate()
         features = feature_adapter.build(fixture, snapshot)
-        model_input = PredictionInput.create(fixture, snapshot, features, signal_time, now)
+        model_input = PredictionInput.create(
+            fixture, snapshot, features, signal_time, now
+        )
         probabilities = dict(model.predict(model_input))
-        inverse = {outcome: 1.0 / float(market_odds) for outcome, market_odds in snapshot.odds.items()}
+        inverse = {
+            outcome: 1.0 / float(market_odds)
+            for outcome, market_odds in snapshot.odds.items()
+        }
         inverse_total = sum(inverse.values())
         implied = {outcome: value / inverse_total for outcome, value in inverse.items()}
-        edges = {outcome: (probabilities[outcome] - implied[outcome]) * 100 for outcome in probabilities}
+        edges = {
+            outcome: (probabilities[outcome] - implied[outcome]) * 100
+            for outcome in probabilities
+        }
         capture = capture_by_league[league]
         provenance = {
             "evidence_provider": "isports_api",
@@ -442,9 +481,10 @@ def _build_models_and_lifecycles(
                 market.evidence_digest,
                 outcome,
             )
-            decision_id = "b1-materializer:" + sha256(
-                "|".join(decision_seed).encode("utf-8")
-            ).hexdigest()
+            decision_id = (
+                "b1-materializer:"
+                + sha256("|".join(decision_seed).encode("utf-8")).hexdigest()
+            )
             outcomes[outcome] = create_initial_signal(
                 fixture=fixture,
                 snapshot=snapshot,
@@ -502,7 +542,9 @@ def _build_models_and_lifecycles(
                 "edges_pp": edges,
                 "closing_used_for_prediction": False,
             },
-            "initial_lifecycles": [outcomes[key].as_payload() for key in ("home", "draw", "away")],
+            "initial_lifecycles": [
+                outcomes[key].as_payload() for key in ("home", "draw", "away")
+            ],
         }
         prediction_payload[league] = {
             "fixture": fixture,
@@ -567,7 +609,8 @@ def _build_prepublication(
             "prediction_artifact": {
                 "league_code": league,
                 "fixture_key": fixture.fixture_key,
-                "prediction_id": "top5-b1:" + sha256(
+                "prediction_id": "top5-b1:"
+                + sha256(
                     f"{shadow.controlled_shadow_run_id}|{league}|{fixture.fixture_key}|{snapshot.snapshot_id}".encode()
                 ).hexdigest(),
                 "model_identity": M5_CANDIDATE_ID,
@@ -640,7 +683,9 @@ def _build_prepublication(
         }
         league_records = map_prediction_to_public_football_signals(envelope)
         if len(league_records) != 3:
-            raise Top5B1MaterializationError(f"public serializer did not produce 3 outcomes for {league}")
+            raise Top5B1MaterializationError(
+                f"public serializer did not produce 3 outcomes for {league}"
+            )
         for record in league_records:
             # The serializer's generic public projection emits an empty
             # activation_id field.  Even an empty capability-adjacent field is
@@ -744,7 +789,9 @@ def _build_prepublication(
         ),
     )
     if len(artifact.worker_candidate_payload["football"]) != 15:
-        raise Top5B1MaterializationError("prepublication product must contain 15 outcomes")
+        raise Top5B1MaterializationError(
+            "prepublication product must contain 15 outcomes"
+        )
     return artifact
 
 
@@ -759,13 +806,16 @@ def _write_private_artifacts(output_dir: Path, artifacts: Mapping[str, object]) 
         os.chmod(output_dir, 0o700)
         for name in _OUTPUT_NAMES:
             path = output_dir / name
-            payload = json.dumps(
-                artifacts[name],
-                sort_keys=True,
-                separators=(",", ":"),
-                ensure_ascii=False,
-                allow_nan=False,
-            ).encode("utf-8") + b"\n"
+            payload = (
+                json.dumps(
+                    artifacts[name],
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    ensure_ascii=False,
+                    allow_nan=False,
+                ).encode("utf-8")
+                + b"\n"
+            )
             fd = os.open(
                 path,
                 os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0),
@@ -823,12 +873,16 @@ def _materialize_validated_dossier(
     try:
         dossier.validate(now=checked_now)
     except (ProviderNeutralB4EvidenceError, TypeError, ValueError) as exc:
-        raise Top5B1MaterializationError(f"validated B4 dossier rejected: {exc}") from exc
+        raise Top5B1MaterializationError(
+            f"validated B4 dossier rejected: {exc}"
+        ) from exc
 
     main_sha = current_source_main_sha or _current_git_sha(root)
     main_sha = _sha_text(main_sha, "current source-main SHA")
     if dossier.source_main_sha.lower() != main_sha:
-        raise Top5B1MaterializationError("B4 source_main_sha is not the current main SHA")
+        raise Top5B1MaterializationError(
+            "B4 source_main_sha is not the current main SHA"
+        )
 
     facts = _source_runtime_facts(root, now=checked_now)
     publisher_root = _publisher_workspace(
@@ -843,7 +897,9 @@ def _materialize_validated_dossier(
     )
     repo_clean, repo_reason = git_clean_check(root)
     if not repo_clean:
-        raise Top5B1MaterializationError(f"source checkout is dirty or unreadable: {repo_reason}")
+        raise Top5B1MaterializationError(
+            f"source checkout is dirty or unreadable: {repo_reason}"
+        )
 
     governed_root = (runtime_root or governed_runtime_root()).resolve()
     try:
@@ -863,7 +919,9 @@ def _materialize_validated_dossier(
 
     # This is the only authorized external write in the materialization path:
     # a governed observation record. Route and lifecycle stores are untouched.
-    state = _runtime_state(facts, publisher_root=publisher_root, runtime_root=governed_root)
+    state = _runtime_state(
+        facts, publisher_root=publisher_root, runtime_root=governed_root
+    )
     state_writer(state)
     runtime_evidence = runtime_observer()
     if not isinstance(runtime_evidence, dict):
@@ -883,10 +941,8 @@ def _materialize_validated_dossier(
         or observed_at > materialization_now
         or captured_at > materialization_now
         or captured_at < observed_at
-        or (materialization_now - observed_at).total_seconds()
-        > _MAX_HEALTH_AGE_SECONDS
-        or (materialization_now - captured_at).total_seconds()
-        > _MAX_HEALTH_AGE_SECONDS
+        or (materialization_now - observed_at).total_seconds() > _MAX_HEALTH_AGE_SECONDS
+        or (materialization_now - captured_at).total_seconds() > _MAX_HEALTH_AGE_SECONDS
     ):
         raise Top5B1MaterializationError(
             "governed runtime observation timestamps are stale or inconsistent"
@@ -905,7 +961,9 @@ def _materialize_validated_dossier(
         or runtime_evidence.get("publication_enabled") is not False
         or runtime_evidence.get("activation_state") != "DISABLED"
     ):
-        raise Top5B1MaterializationError("governed runtime observation is not READY and safe")
+        raise Top5B1MaterializationError(
+            "governed runtime observation is not READY and safe"
+        )
 
     anchors, lifecycle_evidence, model_payload = _build_models_and_lifecycles(
         inputs,
@@ -948,7 +1006,9 @@ def _materialize_validated_dossier(
         or public_precheck.get("production_mutation") is not False
         or public_precheck.get("provider_requests") != 0
     ):
-        raise Top5B1MaterializationError("read-only B3 publication precheck did not become READY")
+        raise Top5B1MaterializationError(
+            "read-only B3 publication precheck did not become READY"
+        )
 
     manifest = verification["manifest"]
     summary: dict[str, object] = {
@@ -965,7 +1025,9 @@ def _materialize_validated_dossier(
         "research_sha": FROZEN_RESEARCH_SHA,
         "lifecycle_stage": "INITIAL",
         "lifecycle_anchor_count": len(anchors),
-        "public_outcome_record_count": len(prepublication.worker_candidate_payload["football"]),
+        "public_outcome_record_count": len(
+            prepublication.worker_candidate_payload["football"]
+        ),
         "fixture_keys": {
             league: lifecycle_evidence[league]["fixture"]["fixture_key"]
             for league in TOP5_LEAGUE_ORDER
@@ -1045,7 +1107,9 @@ def materialize_top5_b1_real_inputs(
             raw, now=checked_now
         )
     except (ProviderNeutralB4EvidenceError, TypeError, ValueError) as exc:
-        raise Top5B1MaterializationError(f"B4 dossier validation failed: {exc}") from exc
+        raise Top5B1MaterializationError(
+            f"B4 dossier validation failed: {exc}"
+        ) from exc
     return _materialize_validated_dossier(
         dossier,
         publisher_workspace=publisher_workspace,

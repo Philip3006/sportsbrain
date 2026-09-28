@@ -59,9 +59,7 @@ def _dossier(*, kickoff_lead: timedelta = timedelta(hours=24)):
         discovery_evidence=tuple(discovery_items),
         captures=tuple(captures),
     )
-    return Top5B4ProviderNeutralEvidenceDossierV1.build(
-        shadow, now=b4_fixtures.NOW
-    )
+    return Top5B4ProviderNeutralEvidenceDossierV1.build(shadow, now=b4_fixtures.NOW)
 
 
 def _source_files(repo_root: Path, *, now=b4_fixtures.NOW, consistent: bool = True):
@@ -121,7 +119,11 @@ def _runtime_artifact(now, runtime_root: Path):
         "publisher_clean": True,
         "cleanliness_checks": {
             "checkout": {"root": "/source", "method": "git status", "result": "clean"},
-            "publisher": {"root": "/publisher", "method": "git status", "result": "clean"},
+            "publisher": {
+                "root": "/publisher",
+                "method": "git status",
+                "result": "clean",
+            },
         },
         "health_authority": "governed",
         "health_source": "docs/data/health.json",
@@ -136,7 +138,9 @@ def _runtime_artifact(now, runtime_root: Path):
     return payload
 
 
-def test_real_isports_dossier_materializes_verified_b1_and_read_only_b3(tmp_path, monkeypatch):
+def test_real_isports_dossier_materializes_verified_b1_and_read_only_b3(
+    tmp_path, monkeypatch
+):
     from src.football import top5_signal_lifecycle as lifecycle_module
 
     persisted: list[str] = []
@@ -188,9 +192,14 @@ def test_real_isports_dossier_materializes_verified_b1_and_read_only_b3(tmp_path
     assert lifecycles["provider_authority"] == ACTIVE_PROVIDER
     assert lifecycles["evidence_provider"] == "isports_api"
     assert len(lifecycles["anchors"]) == 5
-    assert all(len(lifecycles["leagues"][league]["initial_lifecycles"]) == 3 for league in TOP5_LEAGUE_ORDER)
     assert all(
-        lifecycles["leagues"][league]["market_snapshot"]["snapshot_source"].startswith("isports_api:")
+        len(lifecycles["leagues"][league]["initial_lifecycles"]) == 3
+        for league in TOP5_LEAGUE_ORDER
+    )
+    assert all(
+        lifecycles["leagues"][league]["market_snapshot"]["snapshot_source"].startswith(
+            "isports_api:"
+        )
         for league in TOP5_LEAGUE_ORDER
     )
     for league in TOP5_LEAGUE_ORDER:
@@ -205,11 +214,19 @@ def test_real_isports_dossier_materializes_verified_b1_and_read_only_b3(tmp_path
             evidence = version["confidence_metadata"]
             assert evidence["evidence_provider"] == "isports_api"
             assert evidence["source_main_sha"] == SOURCE_MAIN_SHA
-            assert evidence["controlled_shadow_run_id"] == result["controlled_shadow_run_id"]
-            assert evidence["qualification_session_id"] == result["qualification_session_id"]
+            assert (
+                evidence["controlled_shadow_run_id"]
+                == result["controlled_shadow_run_id"]
+            )
+            assert (
+                evidence["qualification_session_id"]
+                == result["qualification_session_id"]
+            )
             assert evidence["authorization_id"] == result["authorization_id"]
             assert evidence["provider_fixture_id"]
-            assert evidence["market_evidence_digest"] == market["market_evidence_digest"]
+            assert (
+                evidence["market_evidence_digest"] == market["market_evidence_digest"]
+            )
     assert verified["status"] == STATUS_VERIFIED
     assert verified["manifest"]["provider_authority"] == ACTIVE_PROVIDER
     assert verified["manifest"]["evidence_provider"] == "isports_api"
@@ -220,12 +237,17 @@ def test_real_isports_dossier_materializes_verified_b1_and_read_only_b3(tmp_path
     assert prepublication["capability_consumed"] is False
     assert prepublication["mutation_performed"] is False
     assert prepublication["provider_requests"] == 0
-    assert prepublication["worker_candidate_payload"] == prepublication["static_candidate_payload"]
+    assert (
+        prepublication["worker_candidate_payload"]
+        == prepublication["static_candidate_payload"]
+    )
     assert len(prepublication["worker_candidate_payload"]["football"]) == 15
-    assert prepublication["worker_candidate_payload"]["top5_release"]["publication_status"] == "PREPARED"
+    assert (
+        prepublication["worker_candidate_payload"]["top5_release"]["publication_status"]
+        == "PREPARED"
+    )
     assert all(
-        record["provider"] == ACTIVE_PROVIDER
-        and record["source"] == ACTIVE_PROVIDER
+        record["provider"] == ACTIVE_PROVIDER and record["source"] == ACTIVE_PROVIDER
         for record in prepublication["worker_candidate_payload"]["football"]
     )
     poisoned = json.loads(json.dumps(prepublication["worker_candidate_payload"]))
@@ -242,7 +264,9 @@ def test_real_isports_dossier_materializes_verified_b1_and_read_only_b3(tmp_path
     assert dry_run["production_mutation"] is False
     assert dry_run["provider_requests"] == 0
     assert stat.S_IMODE(output_dir.stat().st_mode) == 0o700
-    assert all(stat.S_IMODE(path.stat().st_mode) == 0o400 for path in output_dir.iterdir())
+    assert all(
+        stat.S_IMODE(path.stat().st_mode) == 0o400 for path in output_dir.iterdir()
+    )
     repeated, _repeat_calls, repeat_dir, _repeat_observed = (
         _case_with_composer_observer(tmp_path / "repeat", monkeypatch)
     )
@@ -436,9 +460,7 @@ def test_stale_or_future_runtime_observation_fails_closed(tmp_path, timestamp_ca
     _source_files(repo_root)
     observed = _runtime_artifact(b4_fixtures.NOW, runtime_root)
     if timestamp_case == "stale":
-        observed["captured_at"] = (
-            b4_fixtures.NOW - timedelta(seconds=901)
-        ).isoformat()
+        observed["captured_at"] = (b4_fixtures.NOW - timedelta(seconds=901)).isoformat()
     else:
         observed["runtime_state_observed_at"] = (
             b4_fixtures.NOW + timedelta(seconds=1)
@@ -527,7 +549,9 @@ def test_missing_source_provenance_or_stale_b4_market_fails_closed(
     output_parent.mkdir()
     _source_files(repo_root)
     writes = []
-    with pytest.raises(Top5B1MaterializationError, match="validated B4 dossier rejected"):
+    with pytest.raises(
+        Top5B1MaterializationError, match="validated B4 dossier rejected"
+    ):
         _materialize_validated_dossier(
             invalid_dossier,
             publisher_workspace=publisher_root,
@@ -607,7 +631,9 @@ def test_operator_cli_loads_private_external_dossier_and_materializes_offline(
     monkeypatch.setattr(
         materializer,
         "write_governed_runtime_state",
-        lambda state: writes.append(dict(state)) or runtime_root / "runtime-state-v1.json",
+        lambda state: (
+            writes.append(dict(state)) or runtime_root / "runtime-state-v1.json"
+        ),
     )
     monkeypatch.setattr(
         governed_runtime_evidence,
