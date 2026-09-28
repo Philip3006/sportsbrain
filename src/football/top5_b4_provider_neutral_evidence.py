@@ -40,7 +40,14 @@ MAX_ODDS_AGE_SECONDS = 300
 ZERO_RETRIES = 0
 _SHA_RE = re.compile(r"^[0-9a-fA-F]{64}$")
 _SOURCE_SHA_RE = re.compile(r"^[0-9a-fA-F]{40}$")
-_OPERATION_KINDS = frozenset({"competition_schedule", "fixture_discovery", "bulk_odds"})
+_OPERATION_KINDS = frozenset(
+    {
+        "competition_catalog",
+        "competition_schedule",
+        "fixture_discovery",
+        "bulk_odds",
+    }
+)
 _USAGE_STATES = frozenset({"available", "not_exposed", "unavailable"})
 _B1_LOGICAL_INPUT_KEYS = (
     "source_main_sha",
@@ -1213,9 +1220,19 @@ class B4ControlledShadowEvidenceV1:
             capture_fixtures.add(capture.fixture_key)
         if len(capture_fixtures) != 5:
             raise ProviderNeutralB4EvidenceError("fixture identities are duplicated")
-        referenced_operations = {
-            item.operation_id for item in self.discovery_evidence
-        } | {item.operation_id for item in self.market_evidence}
+        # A capture may also bind run-wide operations (for example the single
+        # competition-catalog response used to resolve every schedule ID).
+        # Keep the no-orphan invariant while allowing that operation to be
+        # represented truthfully instead of disguising it as a schedule call.
+        referenced_operations = (
+            {item.operation_id for item in self.discovery_evidence}
+            | {item.operation_id for item in self.market_evidence}
+            | {
+                operation_id
+                for capture in self.captures
+                for operation_id in capture.operation_evidence_ids
+            }
+        )
         if referenced_operations != set(operation_ids):
             raise ProviderNeutralB4EvidenceError("orphan provider operation evidence")
         if (
