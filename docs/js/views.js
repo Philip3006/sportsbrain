@@ -1154,7 +1154,7 @@ function renderHome() {
 
       const _mkAttr = mk.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
       const rowAttrs = _isNlShadow
-        ? `class="b365-row today-row nl-shadow-row" aria-label="${esc(g.home)} gegen ${esc(g.away)} · Shadow · keine Wette"`
+        ? `class="b365-row today-row nl-shadow-row" role="button" tabindex="0" aria-label="${esc(g.home)} gegen ${esc(g.away)} · Details öffnen · Shadow · keine Wette" data-match-key="${_mkAttr}" onclick="openNationsLeagueMatch(this.dataset.matchKey)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openNationsLeagueMatch(this.dataset.matchKey);}"`
         : `class="b365-row today-row" role="button" tabindex="0" aria-label="${esc(g.home)} gegen ${esc(g.away)}" data-match-key="${_mkAttr}" onclick="openMatch(this.dataset.matchKey)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openMatch(this.dataset.matchKey);}"`;
       todayHtml += `<div ${rowAttrs}>
         <div class="b365-left">
@@ -1247,7 +1247,7 @@ function renderHome() {
 
         const _mkAttr2 = mk.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
         const rowAttrs = isNlShadow
-          ? `class="b365-row nl-shadow-row" aria-label="${esc(g.home)} gegen ${esc(g.away)} · Shadow · keine Wette"`
+          ? `class="b365-row nl-shadow-row" role="button" tabindex="0" aria-label="${esc(g.home)} gegen ${esc(g.away)} · Details öffnen · Shadow · keine Wette" data-match-key="${_mkAttr2}" onclick="openNationsLeagueMatch(this.dataset.matchKey)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openNationsLeagueMatch(this.dataset.matchKey);}"`
           : `class="b365-row" role="button" tabindex="0" aria-label="${esc(g.home)} gegen ${esc(g.away)}" data-match-key="${_mkAttr2}" onclick="openMatch(this.dataset.matchKey)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openMatch(this.dataset.matchKey);}"`;
         h += `<div ${rowAttrs}>
           <div class="b365-left">
