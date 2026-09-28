@@ -941,11 +941,12 @@ function _nationsLeagueHomePreviewHtml(payload, nowMs = Date.now()) {
       payload.lifecycle !== 'SHADOW_ONLY' || payload.no_bet !== true ||
       payload.publication_enabled !== false || !Array.isArray(payload.fixtures)) return '';
 
+  const in24h = nowMs + 24 * 60 * 60 * 1000;
   const upcoming = payload.fixtures
     .filter((fixture) => fixture && typeof fixture.home === 'string' && typeof fixture.away === 'string' &&
-      Number.isFinite(Date.parse(fixture.kickoff || '')) && Date.parse(fixture.kickoff) > nowMs)
-    .sort((a, b) => Date.parse(a.kickoff) - Date.parse(b.kickoff))
-    .slice(0, 3);
+      Number.isFinite(Date.parse(fixture.kickoff || '')) && Date.parse(fixture.kickoff) > nowMs &&
+      Date.parse(fixture.kickoff) <= in24h)
+    .sort((a, b) => Date.parse(a.kickoff) - Date.parse(b.kickoff));
   if (!upcoming.length) return '';
 
   const rows = upcoming.map((fixture) => {
@@ -954,7 +955,7 @@ function _nationsLeagueHomePreviewHtml(payload, nowMs = Date.now()) {
     const time = kickoff.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
     return `<li><span><b>${esc(fixture.home)}</b><span class="nl-home-vs">vs</span><b>${esc(fixture.away)}</b></span><time datetime="${esc(fixture.kickoff)}">${esc(date)} · ${esc(time)}</time></li>`;
   }).join('');
-  const rest = payload.fixtures.filter((fixture) => Date.parse(fixture?.kickoff || '') > nowMs).length - upcoming.length;
+  const rest = payload.fixtures.filter((fixture) => Date.parse(fixture?.kickoff || '') > in24h).length;
   const more = rest > 0 ? ` · +${rest} weitere` : '';
   return `<section class="nl-home-preview" aria-label="UEFA Nations League Shadow-Vorschau">
     <div class="nl-home-preview-header"><div><span>UEFA Nations League</span><span class="nl-shadow-badge">Shadow</span></div><small>WEAK EVIDENCE · NO BET</small></div>

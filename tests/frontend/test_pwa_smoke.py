@@ -112,6 +112,12 @@ def _nations_league_shadow_payload() -> dict:
         "source_sha": "a" * 40,
         "artifact_digest": "b" * 64,
     }
+    fixtures = [
+        fixture,
+        {**fixture, "provider_event_id": "nl-shadow-fixture-2", "home": "Georgia", "away": "Ukraine", "kickoff": (_NOW + timedelta(hours=2)).isoformat()},
+        {**fixture, "provider_event_id": "nl-shadow-fixture-3", "home": "Latvia", "away": "Cyprus", "kickoff": (_NOW + timedelta(hours=23, minutes=30)).isoformat()},
+        {**fixture, "provider_event_id": "nl-shadow-fixture-4", "home": "Finland", "away": "Belarus", "kickoff": (_NOW + timedelta(hours=25)).isoformat()},
+    ]
     payload = {
         "schema": "nations-league-public-v1",
         "competition": "UEFA Nations League",
@@ -125,8 +131,8 @@ def _nations_league_shadow_payload() -> dict:
         "source_sha": "a" * 40,
         "artifact_digest": "b" * 64,
         "model_snapshot_digest": "c" * 64,
-        "fixture_count": 1,
-        "fixtures": [fixture],
+        "fixture_count": len(fixtures),
+        "fixtures": fixtures,
     }
     canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"))
     return {**payload, "public_digest": hashlib.sha256(canonical.encode()).hexdigest()}
@@ -228,6 +234,9 @@ def test_home_shows_read_only_nations_league_shadow_preview(page: Page, server_u
     expect(preview).to_contain_text("Armenia")
     expect(preview).to_contain_text("Montenegro")
     expect(preview).to_contain_text("NO BET")
+    expect(preview.locator("li")).to_have_count(3)
+    expect(preview).to_contain_text("Georgia")
+    expect(preview).not_to_contain_text("Finland")
     expect(preview.locator(".place-bet-btn")).to_have_count(0)
 
     preview.locator(".nl-home-preview-link").click()
