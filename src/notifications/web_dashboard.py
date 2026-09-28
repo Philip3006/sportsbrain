@@ -1055,6 +1055,27 @@ def write_signals_json(
                 "um stilles Daten-Wipe zu verhindern."
             ) from e
 
+    # The Nations League staging command updates the shared public signals.json,
+    # while scanner refreshes normally read the per-user signals_{user}.json.
+    # For the default user, use the staged public value only when the per-user
+    # input has no Nations League key. Never fall back when an explicit per-user
+    # value exists but is invalid; that value must fail closed for NL.
+    nations_league_input_present = "nations_league" in existing
+    nations_league_input = existing.get("nations_league")
+    if not nations_league_input_present and user == _DEFAULT_USER:
+        shared_public_path = ROOT / "docs" / "data" / "signals.json"
+        if shared_public_path != source_json_path and shared_public_path.exists():
+            try:
+                shared_public_input = json.loads(shared_public_path.read_text())
+            except (OSError, json.JSONDecodeError):
+                shared_public_input = None
+            if (
+                isinstance(shared_public_input, dict)
+                and "nations_league" in shared_public_input
+            ):
+                nations_league_input_present = True
+                nations_league_input = shared_public_input["nations_league"]
+
     updated = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     football_data = [
@@ -1206,6 +1227,23 @@ def write_signals_json(
     # evidence of LIVE for Tennis. Tennis LIVE status comes only from the authoritative live
     # cache below (Wave 3A invariant).
     _now_utc = datetime.now(timezone.utc)
+
+    # Preserve only the canonical public-v1 projection. Invalid or stale NL
+    # data is omitted without blocking the unrelated Football/Tennis refresh.
+    nations_league_data = None
+    if nations_league_input_present:
+        from src.notifications.nations_league_public import (
+            NationsLeaguePublicError,
+            validate_public_nations_league,
+        )
+
+        try:
+            nations_league_data = validate_public_nations_league(
+                nations_league_input, now=_now_utc
+            )
+        except NationsLeaguePublicError:
+            nations_league_data = None
+
     def _name_key(s: str) -> str:
         return (s or "").lower().strip().replace(" & ", " and ")
     _ko_lookup = {
@@ -1322,6 +1360,8 @@ def write_signals_json(
         "wm_stats": _build_wm_stats(ledger_path=ledger_path),
         "tennis_stats": _build_tennis_stats(ledger_path=ledger_path),
     }
+    if nations_league_data is not None:
+        payload["nations_league"] = nations_league_data
     payload["odds_history"] = odds_history if odds_history is not None else existing.get("odds_history", {})
 
     # WM Results: merge auto-fetched scores with existing — never overwrite existing entries
@@ -1358,8 +1398,21 @@ def write_signals_json(
     # P0C-001: static Pages artifacts must contain only public product data.
     # The full private payload is still uploaded to Cloudflare KV (below) so
     # the Worker POST /pending-bet validation retains bankroll_state and open_bets.
+    from src.notifications.public_serializer import PublicFootballCompatibilityError
     from src.notifications.public_serializer import serialize_public_product as _spp
-    public_payload = _spp(payload)
+
+    try:
+        public_payload = _spp(payload)
+    except PublicFootballCompatibilityError:
+        if "nations_league" not in payload:
+            raise
+        # The independent serializer may reject a bundle that expires between
+        # the writer precheck and serialization. Retry without NL so stale NL
+        # fails closed without taking unrelated Football/Tennis output down.
+        payload = {
+            key: value for key, value in payload.items() if key != "nations_league"
+        }
+        public_payload = _spp(payload)
     json_path.parent.mkdir(parents=True, exist_ok=True)
     atomic_write_json(json_path, public_payload, indent=2)
     # Backward-compat: default user also writes the legacy `signals.json`.
