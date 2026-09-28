@@ -41,6 +41,9 @@ LIFECYCLE_SET_STATE_RELATIVE_DIR = "football/top5/signal_lifecycle_sets"
 TOP5_H2H_OUTCOMES = ("home", "draw", "away")
 LIFECYCLE_STATE_RELATIVE_DIR = "football/top5/signal_lifecycle"
 EXPECTED_PROVIDER_IDENTITY = "the_odds_api"
+_SUPPORTED_SIGNAL_EVIDENCE_SOURCES = frozenset(
+    {EXPECTED_PROVIDER_IDENTITY, "isports_api"}
+)
 
 
 class SignalLifecycleError(ProductionContractError):
@@ -123,7 +126,7 @@ def _canonical_snapshot_provider(source: object) -> str | None:
     if not isinstance(source, str) or not source or source != source.strip():
         return None
     provider, separator, route = source.partition(":")
-    if provider != EXPECTED_PROVIDER_IDENTITY:
+    if provider not in _SUPPORTED_SIGNAL_EVIDENCE_SOURCES:
         return None
     if not separator:
         return provider
@@ -143,13 +146,17 @@ def _canonical_snapshot_provider(source: object) -> str | None:
 def _validate_snapshot_source_binding(
     provider_identity: str, snapshot_source: object
 ) -> None:
+    # ``provider_identity`` is the production authority binding and stays
+    # The Odds API.  The snapshot source records where accepted market
+    # evidence actually came from; a typed iSports candidate observation may
+    # be consumed without promoting it to production authority.
     if provider_identity != EXPECTED_PROVIDER_IDENTITY:
         raise SignalLifecycleError(
             "signal lifecycle provider identity is not the_odds_api"
         )
-    if _canonical_snapshot_provider(snapshot_source) != provider_identity:
+    if _canonical_snapshot_provider(snapshot_source) not in _SUPPORTED_SIGNAL_EVIDENCE_SOURCES:
         raise SignalLifecycleError(
-            "snapshot source does not canonically bind to the_odds_api"
+            "snapshot source does not canonically bind to an accepted evidence provider"
         )
 
 
