@@ -611,6 +611,13 @@ export function serializePublicProduct(snapshot) {
 }
 
 const MAX_PUBLIC_NATIONS_LEAGUE_AGE_MS = 24 * 60 * 60 * 1000;
+const PUBLIC_NATIONS_LEAGUE_DECIMAL_SCALE = 1e6;
+
+function _hasPublicNationsLeaguePrecision(value) {
+  return Number.isFinite(value) &&
+    Math.round(value * PUBLIC_NATIONS_LEAGUE_DECIMAL_SCALE) /
+      PUBLIC_NATIONS_LEAGUE_DECIMAL_SCALE === value;
+}
 
 function _validatePublicNationsLeague(value) {
   const fail = (reason) => { throw new Error(`invalid Nations League shadow: ${reason}`); };
@@ -648,7 +655,7 @@ function _validatePublicNationsLeague(value) {
   const ids = new Set();
   const probabilities = (item) => item && ['home', 'draw', 'away'].every((key) =>
     typeof item[key] === 'number' && Number.isFinite(item[key]) && item[key] >= 0 && item[key] <= 1 &&
-    Number.isInteger(item[key] * 1e6)) &&
+    _hasPublicNationsLeaguePrecision(item[key])) &&
     Math.abs(item.home + item.draw + item.away - 1) <= 1e-6;
   for (const fixture of value.fixtures) {
     if (!hasExactKeys(fixture, [
@@ -680,7 +687,7 @@ function _validatePublicNationsLeague(value) {
         typeof fixture.market.bookmaker !== 'string' || !fixture.market.bookmaker ||
         !['home', 'draw', 'away'].every((key) =>
           Number.isFinite(fixture.market?.odds_decimal?.[key]) && fixture.market.odds_decimal[key] > 1 &&
-          Number.isInteger(fixture.market.odds_decimal[key] * 1e6))) {
+          _hasPublicNationsLeaguePrecision(fixture.market.odds_decimal[key]))) {
       fail('malformed fixture or provenance');
     }
     ids.add(fixture.provider_event_id);

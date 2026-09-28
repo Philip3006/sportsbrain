@@ -64,6 +64,31 @@ function bindPublicDigest(payload) {
   return payload;
 }
 
+function sixDecimalBundle() {
+  const bundle = publicBundle();
+  const fixture = bundle.fixtures[0];
+  const modelProbabilities = { home: 0.260599, draw: 0.448933, away: 0.290468 };
+  fixture.model.probabilities = modelProbabilities;
+  fixture.model.components = {
+    raw_dixon_coles: { ...modelProbabilities },
+    raw_gbt: { home: 0.692012, draw: 0.260599, away: 0.047389 },
+    canonical_stacker: { ...modelProbabilities },
+  };
+  fixture.market.probabilities = { home: 0.692012, draw: 0.260599, away: 0.047389 };
+  fixture.market.odds_decimal = { home: 1.513093, draw: 2.410520, away: 3.380093 };
+  return bindPublicDigest(bundle);
+}
+
+async function withFrozenDateNow(nowMs, callback) {
+  const originalNow = Date.now;
+  Date.now = () => nowMs;
+  try {
+    return await callback();
+  } finally {
+    Date.now = originalNow;
+  }
+}
+
 function render(payload) {
   const element = {
     hidden: false,
@@ -261,4 +286,81 @@ test('Worker-missing NL bridge ignores tampered static NL and never replaces Wor
   }, NOW);
   assert.equal(requests, 0);
   assert.deepEqual(JSON.parse(JSON.stringify(preferred)), JSON.parse(JSON.stringify(workerWithNl)));
+});
+
+test('Worker accepts six-decimal public values that are not exact IEEE-754 scaled integers', async () => {
+  const bundle = sixDecimalBundle();
+  assert.equal(await validatePublicNationsLeagueDigest(bundle), true);
+
+  const tooPrecise = structuredClone(bundle);
+  tooPrecise.fixtures[0].model.probabilities = {
+    home: 0.1234567,
+    draw: 0.3,
+    away: 0.5765433,
+  };
+  tooPrecise.fixtures[0].model.components.canonical_stacker = {
+    ...tooPrecise.fixtures[0].model.probabilities,
+  };
+  bindPublicDigest(tooPrecise);
+  assert.throws(() => serializePublicProduct({ nations_league: tooPrecise }), /Nations League/);
+});
+
+test('Worker keeps public probability normalization and decimal-odds bounds', () => {
+  const nonNormalized = sixDecimalBundle();
+  nonNormalized.fixtures[0].model.probabilities = {
+    home: 0.5,
+    draw: 0.25,
+    away: 0.249998,
+  };
+  nonNormalized.fixtures[0].model.components.canonical_stacker = {
+    ...nonNormalized.fixtures[0].model.probabilities,
+  };
+  bindPublicDigest(nonNormalized);
+  assert.throws(() => serializePublicProduct({ nations_league: nonNormalized }), /Nations League/);
+
+  const invalidOdds = sixDecimalBundle();
+  invalidOdds.fixtures[0].market.odds_decimal.home = 1;
+  bindPublicDigest(invalidOdds);
+  assert.throws(() => serializePublicProduct({ nations_league: invalidOdds }), /Nations League/);
+});
+
+test('Worker still rejects unsafe public Nations League schema, provenance, and lifecycle mutations', () => {
+  const mutations = [
+    (bundle) => { bundle.schema = 'nations-league-public-v2'; },
+    (bundle) => { bundle.fixtures[0].source_sha = 'f'.repeat(40); },
+    (bundle) => { bundle.lifecycle = 'ACTIVE'; },
+    (bundle) => { bundle.no_bet = false; },
+    (bundle) => { bundle.publication_enabled = true; },
+  ];
+  for (const mutate of mutations) {
+    const bundle = structuredClone(publicBundle());
+    mutate(bundle);
+    assert.throws(() => serializePublicProduct({ nations_league: bundle }), /Nations League/);
+  }
+});
+
+test('Worker accepts the canonical incident public bundle and verifies its Python digest', async () => {
+  const bundle = JSON.parse(
+    readFileSync(
+      resolve(__dir, '../fixtures/nations_league_public_incident_20260928.json'),
+      'utf8',
+    ),
+  );
+  assert.equal(bundle.schema, 'nations-league-public-v1');
+  assert.equal(bundle.fixture_count, 46);
+  assert.equal(bundle.fixtures.length, 46);
+  assert.equal(bundle.public_digest, '59f5aa67e18c89177e24824473b36040d5508094871cadaee43ba9a1478b125a');
+  const serialized = JSON.stringify(bundle);
+  assert.match(serialized, /0\.260599/);
+  assert.match(serialized, /0\.448933/);
+  assert.match(serialized, /0\.692012/);
+
+  const now = Date.parse(bundle.captured_at) + 1;
+  await withFrozenDateNow(now, async () => {
+    assert.equal(await validatePublicNationsLeagueDigest(bundle), true);
+
+    const numericTamper = structuredClone(bundle);
+    numericTamper.fixtures[0].market.odds_decimal.home += 0.000001;
+    await assert.rejects(validatePublicNationsLeagueDigest(numericTamper), /digest/i);
+  });
 });
