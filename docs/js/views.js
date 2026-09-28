@@ -510,6 +510,7 @@ const _FOOTBALL_LEAGUE_LABELS = {
   champions_league: '🏆 Champions League',
   uefa_champs_league: '🏆 Champions League',
   soccer_uefa_champs_league: '🏆 Champions League',
+  nations_league_shadow: '🏆 UEFA Nations League · Shadow',
 };
 const _FOOTBALL_CL_KEYS = new Set([
   'ucl', 'champions_league', 'uefa_champs_league', 'soccer_uefa_champs_league',
@@ -933,36 +934,30 @@ function _topRecs24hHtml(signals, nowMs) {
   </div>`;
 }
 
-function _nationsLeagueHomePreviewHtml(payload, nowMs = Date.now()) {
-  // This is deliberately a fixture preview, never a signal or betting surface.
-  // The full public payload has already passed the canonical integrity gate in app.js.
+function _nationsLeagueHomeGames(payload, nowMs = Date.now()) {
+  // These records join the regular Home schedule, but remain marked so neither
+  // the bet modal nor the actionable signal collection can consume them.
   if (!payload || payload.schema !== 'nations-league-public-v1' ||
       payload.evidence_status !== 'WEAK_EVIDENCE_SHADOW_ONLY' ||
       payload.lifecycle !== 'SHADOW_ONLY' || payload.no_bet !== true ||
-      payload.publication_enabled !== false || !Array.isArray(payload.fixtures)) return '';
+      payload.publication_enabled !== false || !Array.isArray(payload.fixtures)) return [];
 
   const in24h = nowMs + 24 * 60 * 60 * 1000;
-  const upcoming = payload.fixtures
+  return payload.fixtures
     .filter((fixture) => fixture && typeof fixture.home === 'string' && typeof fixture.away === 'string' &&
       Number.isFinite(Date.parse(fixture.kickoff || '')) && Date.parse(fixture.kickoff) > nowMs &&
       Date.parse(fixture.kickoff) <= in24h)
-    .sort((a, b) => Date.parse(a.kickoff) - Date.parse(b.kickoff));
-  if (!upcoming.length) return '';
-
-  const rows = upcoming.map((fixture) => {
-    const kickoff = new Date(fixture.kickoff);
-    const date = kickoff.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit' });
-    const time = kickoff.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-    return `<li><span><b>${esc(fixture.home)}</b><span class="nl-home-vs">vs</span><b>${esc(fixture.away)}</b></span><time datetime="${esc(fixture.kickoff)}">${esc(date)} · ${esc(time)}</time></li>`;
-  }).join('');
-  const rest = payload.fixtures.filter((fixture) => Date.parse(fixture?.kickoff || '') > in24h).length;
-  const more = rest > 0 ? ` · +${rest} weitere` : '';
-  return `<section class="nl-home-preview" aria-label="UEFA Nations League Shadow-Vorschau">
-    <div class="nl-home-preview-header"><div><span>UEFA Nations League</span><span class="nl-shadow-badge">Shadow</span></div><small>WEAK EVIDENCE · NO BET</small></div>
-    <p>Bevorstehende Spiele – reine Modellbeobachtung, keine Empfehlung.</p>
-    <ul>${rows}</ul>
-    <button type="button" class="nl-home-preview-link" onclick="navTo(document.querySelector('.nav-tab[data-view=\'football\']'))">Alle Shadow-Spiele ansehen${more}</button>
-  </section>`;
+    .map((fixture) => ({
+      sport: 'football',
+      league: 'nations_league_shadow',
+      home: fixture.home,
+      away: fixture.away,
+      kickoff: fixture.kickoff,
+      odds_home: fixture.market?.odds_decimal?.home,
+      odds_draw: fixture.market?.odds_decimal?.draw,
+      odds_away: fixture.market?.odds_decimal?.away,
+      is_nations_league_shadow: true,
+    }));
 }
 
 function renderHome() {
@@ -973,6 +968,7 @@ function renderHome() {
     sport: s.sport, home: s.match.split(' vs ')[0].trim(),
     away: s.match.split(' vs ')[1].trim(), kickoff: s.kickoff||'', tour: s.tour||'',
   })).filter((g,i,a) => a.findIndex(x=>x.home===g.home&&x.away===g.away)===i);
+  games = [...games, ..._nationsLeagueHomeGames(_nationsLeague, Date.now())];
 
   // Suchfilter (Team-Name, normalisiert)
   const q = (_homeSearch || '').trim().toLowerCase();
@@ -988,7 +984,7 @@ function renderHome() {
     const emptyBody = q
       ? `<div class="empty"><div class="icon">🔍</div><div>Keine Treffer für „${esc(q)}".<br><small>Versuche einen anderen Team-Namen.</small></div></div>`
       : `<div class="empty"><div class="icon">🔄</div><div>Keine anstehenden Spiele.<br><small>Letztes Update: ${document.getElementById('updated-time').textContent || '…'} · Nächster Scan: 08:00 UTC</small></div></div>`;
-    c.innerHTML = (q ? '' : _topRecs24hHtml(_signals, Date.now()) + _nationsLeagueHomePreviewHtml(_nationsLeague, Date.now())) + emptyBody;
+    c.innerHTML = (q ? '' : _topRecs24hHtml(_signals, Date.now())) + emptyBody;
     return;
   }
 
@@ -1086,6 +1082,12 @@ function renderHome() {
     return `<button ${attrs}>${od.odds.toFixed(2)}</button>`;
   };
 
+  const shadowOdds = (game) => ['home', 'draw', 'away'].map((market) => {
+    const value = Number(game[`odds_${market}`]);
+    const label = Number.isFinite(value) && value > 1 ? value.toFixed(2) : '—';
+    return `<div class="b365-btn nl-shadow-display-odd" aria-label="Nur Anzeige · keine Wette">${label}</div>`;
+  }).join('');
+
   // ── Heute-Sektion (nächste 24h) ──────────────────────────────
   const in24h = now + 24 * 36e5;
   const todayGames = sorted.filter(g => {
@@ -1116,6 +1118,7 @@ function renderHome() {
       const kickoffTs = new Date(_gKo || g.kickoff).getTime();
       const minsLeft = Math.round((kickoffTs - now) / 60000);
       const _evStatus = g.event_status || '';
+      const _isNlShadow = g.is_nations_league_shadow === true;
       // W2: tennis LIVE must not be inferred from elapsed time alone — requires authoritative live evidence
       const _isTennis = g.sport === 'tennis';
       const isLive = !_isTennis && minsLeft < 0 && minsLeft > -110;
@@ -1145,16 +1148,20 @@ function renderHome() {
 
       // Odds buttons
       const isFootball = g.sport === 'football';
-      const odds = isFootball
+      const odds = _isNlShadow ? shadowOdds(g) : isFootball
         ? oddsBtn(nk,'home',g) + oddsBtn(nk,'draw',g) + oddsBtn(nk,'away',g)
         : oddsBtn(nk,'home',g) + oddsBtn(nk,'away',g);
 
       const _mkAttr = mk.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
-      todayHtml += `<div class="b365-row today-row" role="button" tabindex="0" aria-label="${esc(g.home)} gegen ${esc(g.away)}" data-match-key="${_mkAttr}" onclick="openMatch(this.dataset.matchKey)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openMatch(this.dataset.matchKey);}">
+      const rowAttrs = _isNlShadow
+        ? `class="b365-row today-row nl-shadow-row" aria-label="${esc(g.home)} gegen ${esc(g.away)} · Shadow · keine Wette"`
+        : `class="b365-row today-row" role="button" tabindex="0" aria-label="${esc(g.home)} gegen ${esc(g.away)}" data-match-key="${_mkAttr}" onclick="openMatch(this.dataset.matchKey)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openMatch(this.dataset.matchKey);}"`;
+      todayHtml += `<div ${rowAttrs}>
         <div class="b365-left">
           <div class="b365-time">
             ${timeStr}
             ${countdown}
+            ${_isNlShadow ? '<span class="nl-shadow-list-badge">SHADOW · NO BET</span>' : ''}
             ${lastCallBadge}
             ${n > 0 && !hasLastCall ? `<span class="b365-val-tag">${n} Value</span>` : ''}
           </div>
@@ -1182,7 +1189,7 @@ function renderHome() {
   }
 
   const topRecs24h = _topRecs24hHtml(_signals, Date.now());
-  let h = topRecs24h + _nationsLeagueHomePreviewHtml(_nationsLeague, now) + todayHtml;
+  let h = topRecs24h + todayHtml;
   for (const [dk, group] of Object.entries(days)) {
     // Day header
     if (dk === '__') {
@@ -1223,6 +1230,7 @@ function renderHome() {
         const _gKo2 = g.scheduled_start_current || g.kickoff;
         const timeStr = _gKo2 ? fmtTime(_gKo2) : '—';
         const isFootball = sport === 'football';
+        const isNlShadow = g.is_nations_league_shadow === true;
         const result = _wmResults[nk];
         const isCompleted = result && result.home_score != null && result.away_score != null;
 
@@ -1232,15 +1240,18 @@ function renderHome() {
             : result.away_score > result.home_score ? 'result-away' : 'result-draw';
           rightCol = `<div class="score-box ${resultClass}">${result.home_score}–${result.away_score}</div>`;
         } else {
-          rightCol = isFootball
+          rightCol = isNlShadow ? shadowOdds(g) : isFootball
             ? oddsBtn(nk,'home',g) + oddsBtn(nk,'draw',g) + oddsBtn(nk,'away',g)
             : oddsBtn(nk,'home',g) + oddsBtn(nk,'away',g);
         }
 
         const _mkAttr2 = mk.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
-        h += `<div class="b365-row" role="button" tabindex="0" aria-label="${esc(g.home)} gegen ${esc(g.away)}" data-match-key="${_mkAttr2}" onclick="openMatch(this.dataset.matchKey)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openMatch(this.dataset.matchKey);}">
+        const rowAttrs = isNlShadow
+          ? `class="b365-row nl-shadow-row" aria-label="${esc(g.home)} gegen ${esc(g.away)} · Shadow · keine Wette"`
+          : `class="b365-row" role="button" tabindex="0" aria-label="${esc(g.home)} gegen ${esc(g.away)}" data-match-key="${_mkAttr2}" onclick="openMatch(this.dataset.matchKey)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openMatch(this.dataset.matchKey);}"`;
+        h += `<div ${rowAttrs}>
           <div class="b365-left">
-            <div class="b365-time">${timeStr}${isCompleted?` <span style="font-size:10px;color:var(--muted);font-weight:700">FT</span>`:''} ${n>0&&!isCompleted?` <span class="b365-val-tag">${n} Value</span>`:''}</div>
+            <div class="b365-time">${timeStr}${isCompleted?` <span style="font-size:10px;color:var(--muted);font-weight:700">FT</span>`:''} ${isNlShadow ? '<span class="nl-shadow-list-badge">SHADOW · NO BET</span>' : ''} ${n>0&&!isCompleted?` <span class="b365-val-tag">${n} Value</span>`:''}</div>
             <div class="b365-teams">
               <span class="b365-team">${esc(g.home)} ${teamFlag(g.home)}</span>
               <span class="b365-team">${esc(g.away)} ${teamFlag(g.away)}</span>

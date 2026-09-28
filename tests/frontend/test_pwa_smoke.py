@@ -223,25 +223,23 @@ def test_stale_banner_shown_for_old_data(page: Page, server_url: str) -> None:
     expect(banner).to_be_visible(timeout=10_000)
 
 
-def test_home_shows_read_only_nations_league_shadow_preview(page: Page, server_url: str) -> None:
-    """Upcoming Shadow fixtures are visible on Home without becoming signal or bet UI."""
+def test_home_integrates_read_only_nations_league_shadow_games(page: Page, server_url: str) -> None:
+    """Upcoming Shadow fixtures use normal Home rows without becoming bet UI."""
     payload = {**_BASE, "nations_league": _nations_league_shadow_payload()}
     _inject_signals(page, payload)
     page.goto(server_url, wait_until="domcontentloaded")
 
-    preview = page.locator(".nl-home-preview")
-    expect(preview).to_be_visible(timeout=10_000)
-    expect(preview).to_contain_text("Armenia")
-    expect(preview).to_contain_text("Montenegro")
-    expect(preview).to_contain_text("NO BET")
-    expect(preview.locator("li")).to_have_count(3)
-    expect(preview).to_contain_text("Georgia")
-    expect(preview).not_to_contain_text("Finland")
-    expect(preview.locator(".place-bet-btn")).to_have_count(0)
-
-    preview.locator(".nl-home-preview-link").click()
-    expect(page.locator("#view-football")).to_be_visible(timeout=3_000)
-    expect(page.locator(".nl-shadow-panel")).to_be_visible(timeout=3_000)
+    today_rows = page.locator(".today-row.nl-shadow-row")
+    expect(today_rows).to_have_count(3, timeout=10_000)
+    expect(today_rows).to_contain_text("Armenia")
+    expect(today_rows).to_contain_text("Montenegro")
+    expect(today_rows).to_contain_text("Georgia")
+    expect(today_rows).to_contain_text("NO BET")
+    expect(today_rows).not_to_contain_text("Finland")
+    expect(today_rows.locator(".nl-shadow-display-odd")).to_have_count(9)
+    expect(today_rows.locator("button")).to_have_count(0)
+    expect(page.locator(".comp-name", has_text="UEFA Nations League · Shadow")).to_be_visible()
+    expect(page.locator(".nl-home-preview")).to_have_count(0)
 
 
 # ── P0-A focused tests ────────────────────────────────────────────────────────

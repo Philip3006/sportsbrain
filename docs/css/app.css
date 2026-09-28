@@ -691,5 +691,7 @@
 .nl-shadow-outcome{padding:5px 0;border-top:1px solid var(--border);font-size:11px}
 .nl-shadow-fixture details{margin-top:7px;color:var(--muted);font-size:10px}
 .nl-shadow-fixture details p{margin:5px 0;overflow-wrap:anywhere}
-.nl-home-preview{margin:12px 12px 8px;padding:12px;border:1px solid rgba(255,165,0,.42);border-radius:14px;background:rgba(255,165,0,.055);color:var(--text)}
-.nl-home-preview-header{display:flex;align-items:center;justify-content:space-between;gap:8px}.nl-home-preview-header>div{display:flex;align-items:center;gap:8px}.nl-home-preview-header>div>span:first-child{font-size:12px;font-weight:850}.nl-home-preview-header small{font-size:10px;color:var(--yellow);font-weight:800}.nl-home-preview p{margin:8px 0;color:var(--muted);font-size:11px;line-height:1.35}.nl-home-preview ul{margin:0;padding:0;list-style:none}.nl-home-preview li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--border);font-size:12px}.nl-home-preview li time{white-space:nowrap;color:var(--muted);font-size:10px}.nl-home-vs{margin:0 4px;color:var(--muted);font-size:10px;font-weight:500}.nl-home-preview-link{display:block;width:100%;margin-top:9px;padding:8px;border:1px solid rgba(255,165,0,.42);border-radius:8px;background:transparent;color:var(--yellow);font:inherit;font-size:11px;font-weight:800;cursor:pointer}
+.nl-shadow-row{cursor:default;border-left:3px solid rgba(255,165,0,.7);background:rgba(255,165,0,.035)}
+.nl-shadow-row:hover,.nl-shadow-row:active{background:rgba(255,165,0,.055)}
+.nl-shadow-list-badge{background:rgba(255,165,0,.12);border:1px solid rgba(255,165,0,.42);color:var(--yellow);font-size:9px;font-weight:850;border-radius:4px;padding:1px 5px;white-space:nowrap}
+.b365-btn.nl-shadow-display-odd{cursor:default;color:var(--text);border-color:rgba(255,165,0,.34);background:rgba(255,165,0,.07)}
