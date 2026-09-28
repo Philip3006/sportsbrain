@@ -1,5 +1,6 @@
 """Playwright smoke tests: PWA loads, bet-modal opens, stale-banner appears."""
 import base64
+import hashlib
 import json
 import functools
 import threading
@@ -80,6 +81,55 @@ _STALE: dict = {
     **_BASE,
     "updated": (_NOW - timedelta(hours=3)).isoformat(),
 }
+
+
+def _nations_league_shadow_payload() -> dict:
+    """A signed public shadow payload: displayable, but never actionable."""
+    captured_at = (_NOW - timedelta(minutes=10)).isoformat()
+    fixture = {
+        "provider_event_id": "nl-shadow-fixture-1",
+        "competition": "UEFA Nations League",
+        "kickoff": (_NOW + timedelta(minutes=25)).isoformat(),
+        "home": "Armenia",
+        "away": "Montenegro",
+        "captured_at": captured_at,
+        "model": {
+            "probabilities": {"home": 0.5, "draw": 0.25, "away": 0.25},
+            "components": {
+                "raw_dixon_coles": {"home": 0.5, "draw": 0.25, "away": 0.25},
+                "raw_gbt": {"home": 0.5, "draw": 0.25, "away": 0.25},
+                "canonical_stacker": {"home": 0.5, "draw": 0.25, "away": 0.25},
+            },
+        },
+        "market": {
+            "bookmaker": "Test book",
+            # Six-decimal values are deliberate: Python and JavaScript serialize
+            # whole-valued floats differently (2.0 vs 2), which would invalidate
+            # the cross-runtime public digest fixture.
+            "odds_decimal": {"home": 2.000001, "draw": 4.000001, "away": 4.000001},
+            "probabilities": {"home": 0.5, "draw": 0.25, "away": 0.25},
+        },
+        "source_sha": "a" * 40,
+        "artifact_digest": "b" * 64,
+    }
+    payload = {
+        "schema": "nations-league-public-v1",
+        "competition": "UEFA Nations League",
+        "provider": "isports_api",
+        "provider_league_id": 146819,
+        "evidence_status": "WEAK_EVIDENCE_SHADOW_ONLY",
+        "lifecycle": "SHADOW_ONLY",
+        "no_bet": True,
+        "publication_enabled": False,
+        "captured_at": captured_at,
+        "source_sha": "a" * 40,
+        "artifact_digest": "b" * 64,
+        "model_snapshot_digest": "c" * 64,
+        "fixture_count": 1,
+        "fixtures": [fixture],
+    }
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    return {**payload, "public_digest": hashlib.sha256(canonical.encode()).hexdigest()}
 
 
 @pytest.fixture(scope="module")
@@ -165,6 +215,24 @@ def test_stale_banner_shown_for_old_data(page: Page, server_url: str) -> None:
 
     banner = page.locator("#stale-banner")
     expect(banner).to_be_visible(timeout=10_000)
+
+
+def test_home_shows_read_only_nations_league_shadow_preview(page: Page, server_url: str) -> None:
+    """Upcoming Shadow fixtures are visible on Home without becoming signal or bet UI."""
+    payload = {**_BASE, "nations_league": _nations_league_shadow_payload()}
+    _inject_signals(page, payload)
+    page.goto(server_url, wait_until="domcontentloaded")
+
+    preview = page.locator(".nl-home-preview")
+    expect(preview).to_be_visible(timeout=10_000)
+    expect(preview).to_contain_text("Armenia")
+    expect(preview).to_contain_text("Montenegro")
+    expect(preview).to_contain_text("NO BET")
+    expect(preview.locator(".place-bet-btn")).to_have_count(0)
+
+    preview.locator(".nl-home-preview-link").click()
+    expect(page.locator("#view-football")).to_be_visible(timeout=3_000)
+    expect(page.locator(".nl-shadow-panel")).to_be_visible(timeout=3_000)
 
 
 # ── P0-A focused tests ────────────────────────────────────────────────────────

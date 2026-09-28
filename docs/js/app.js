@@ -570,6 +570,9 @@ let _schedule = [];
 let _allOdds = {};
 let _modelTips = {};
 let _modelEvals = {};
+// Nations League stays outside the actionable football/signal collections.
+// Home may render a read-only shadow preview from this separately validated payload.
+let _nationsLeague = null;
 let _openBets = [];
 let _settledBets = [];
 let _activeBetTab = 'open';
@@ -1317,6 +1320,7 @@ async function _load() {
   _allOdds = d.all_odds || {};
   _modelTips = d.model_tips || {};
   _modelEvals = d.model_evals || {};
+  _nationsLeague = d.nations_league || null;
   // P0C-002: private financial/identity state (open_bets, settled_bets,
   // bankroll_state, history, wm_stats) is NOT read from the public channel.
   // It is loaded exclusively from GET /me below via _fetchPrivateState().
