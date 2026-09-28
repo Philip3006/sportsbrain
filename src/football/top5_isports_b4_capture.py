@@ -51,6 +51,12 @@ from src.football.top5_b4_provider_neutral_evidence import (
     Top5B4ProviderNeutralEvidenceDossierV1,
     canonical_evidence_digest,
 )
+from src.football.top5_signal_lifecycle import (
+    DEFAULT_SIGNAL_LIFECYCLE_CONTRACT,
+    LifecyclePlanStatus,
+    SignalLifecycleStage,
+    plan_signal_lifecycle,
+)
 
 MAX_RUN_REQUESTS = 7
 ZERO_RETRIES = 0
@@ -169,6 +175,24 @@ def _utc(value: datetime) -> datetime:
     if value.tzinfo is None or value.utcoffset() is None:
         raise Top5ISportsB4CaptureError("clock_must_be_timezone_aware")
     return value.astimezone(timezone.utc)
+
+
+def _initial_window_eligible(fixture: ISportsFixture, reference_time: datetime) -> bool:
+    """Use the canonical B1 lifecycle planner for first-materialization scope."""
+
+    reference = _utc(reference_time)
+    if not fixture.prematch_eligible_at(reference):
+        return False
+    plan = plan_signal_lifecycle(
+        fixture.fixture,
+        reference,
+        lifecycle=None,
+        contract=DEFAULT_SIGNAL_LIFECYCLE_CONTRACT,
+    )
+    return (
+        plan.status is LifecyclePlanStatus.INITIAL_DUE
+        and plan.due_stage is SignalLifecycleStage.INITIAL
+    )
 
 
 def _run_configuration_digest(*, source_main_sha: str, adapter_source_sha: str) -> str:
@@ -310,6 +334,14 @@ def _build_dossier(
     operations: list[B4ProviderOperationEvidenceV1] = []
     discoveries: list[B4FixtureDiscoveryEvidenceV1] = []
     selected_by_league: dict[str, ISportsFixture] = {}
+    schedules_by_league: dict[
+        str,
+        tuple[
+            tuple[ISportsFixture, ...],
+            ISportsHttpResponse,
+            B4ProviderOperationEvidenceV1,
+        ],
+    ] = {}
 
     try:
         if client.request_count != 0:
@@ -330,10 +362,9 @@ def _build_dossier(
             "catalog_failed", request_count=client.request_count
         ) from None
 
-    missing_leagues: list[str] = []
-    for league in ISPORTS_TOP5_LEAGUES:
+    for schedule_index, league in enumerate(ISPORTS_TOP5_LEAGUES, start=1):
         try:
-            if client.request_count != 1 + len(discoveries) + len(missing_leagues):
+            if client.request_count != schedule_index:
                 raise Top5ISportsB4CaptureError("request_budget_exhausted")
             fixtures, schedule_response = client.schedule(competitions[league])
             schedule_operation = _operation(
@@ -342,33 +373,10 @@ def _build_dossier(
                 authorization=authorization,
             )
             operations.append(schedule_operation)
-            eligible = tuple(
-                fixture
-                for fixture in fixtures
-                if fixture.prematch_eligible_at(schedule_response.completed_at)
-            )
-            if not eligible:
-                missing_leagues.append(league)
-                continue
-            selected = min(
-                eligible,
-                key=lambda item: (item.kickoff_utc, item.provider_match_id),
-            )
-            selected_by_league[league] = selected
-            discoveries.append(
-                B4FixtureDiscoveryEvidenceV1(
-                    provider_identity=ISPORTS_PROVIDER_IDENTITY,
-                    league=league,
-                    provider_competition_id=selected.provider_league_id,
-                    provider_fixture_id=selected.provider_match_id,
-                    fixture_key=selected.fixture.fixture_key,
-                    home_team=selected.home_team,
-                    away_team=selected.away_team,
-                    kickoff=selected.kickoff_utc,
-                    discovered_at=schedule_response.completed_at,
-                    operation_id=schedule_operation.operation_id,
-                    complete=True,
-                )
+            schedules_by_league[league] = (
+                tuple(fixtures),
+                schedule_response,
+                schedule_operation,
             )
         except Top5ISportsB4CaptureError:
             raise
@@ -377,9 +385,53 @@ def _build_dossier(
                 "schedule_failed", request_count=client.request_count
             ) from None
 
+    # Selection is intentionally made only after every schedule response is
+    # available, using one shared clock sample for all five leagues.
+    selection_time = _utc(now())
+    if any(
+        response.completed_at > selection_time
+        for _fixtures, response, _operation_item in schedules_by_league.values()
+    ):
+        raise Top5ISportsB4CaptureError(
+            "selection_time_precedes_schedule_completion",
+            request_count=client.request_count,
+        )
+
+    missing_leagues: list[str] = []
+    for league in ISPORTS_TOP5_LEAGUES:
+        fixtures, schedule_response, schedule_operation = schedules_by_league[league]
+        eligible = tuple(
+            fixture
+            for fixture in fixtures
+            if _initial_window_eligible(fixture, selection_time)
+        )
+        if not eligible:
+            missing_leagues.append(league)
+            continue
+        selected = min(
+            eligible,
+            key=lambda item: (item.kickoff_utc, item.provider_match_id),
+        )
+        selected_by_league[league] = selected
+        discoveries.append(
+            B4FixtureDiscoveryEvidenceV1(
+                provider_identity=ISPORTS_PROVIDER_IDENTITY,
+                league=league,
+                provider_competition_id=selected.provider_league_id,
+                provider_fixture_id=selected.provider_match_id,
+                fixture_key=selected.fixture.fixture_key,
+                home_team=selected.home_team,
+                away_team=selected.away_team,
+                kickoff=selected.kickoff_utc,
+                discovered_at=schedule_response.completed_at,
+                operation_id=schedule_operation.operation_id,
+                complete=True,
+            )
+        )
+
     if missing_leagues:
         raise Top5ISportsB4CaptureError(
-            "future_fixture_missing",
+            "initial_window_fixture_missing",
             request_count=client.request_count,
             missing_leagues=missing_leagues,
         )
@@ -418,6 +470,23 @@ def _build_dossier(
         raise Top5ISportsB4CaptureError(
             "european_odds_failed", request_count=client.request_count
         ) from None
+
+    # The selection must still be INITIAL-eligible at the actual provider
+    # market-capture reference time. Never reselect after the bounded bulk call.
+    market_reference_time = _utc(european_response.completed_at)
+    timing_drift_leagues = tuple(
+        league
+        for league in TOP5_LEAGUE_ORDER
+        if not _initial_window_eligible(
+            selected_by_league[league], market_reference_time
+        )
+    )
+    if timing_drift_leagues:
+        raise Top5ISportsB4CaptureError(
+            "initial_window_expired_after_bulk",
+            request_count=client.request_count,
+            missing_leagues=timing_drift_leagues,
+        )
 
     if tuple(european_response.request_parameters) != ("matchId",) or (
         european_response.request_parameters.get("matchId") != ",".join(selected_ids)

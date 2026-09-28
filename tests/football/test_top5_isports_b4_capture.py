@@ -14,6 +14,7 @@ from src.football.odds.isports import (
     ISPORTS_TOP5_LEAGUES,
     ISportsClient,
 )
+from src.football.production_contracts import Fixture
 from src.football.provider_cascade.contracts import (
     CANDIDATE_ONLY_PROVIDER_IDENTITIES,
     DEFAULT_PROVIDER_ORDER,
@@ -35,6 +36,12 @@ from src.football.top5_isports_b4_capture import (
 )
 from src.football.top5_isports_b4_capture import (
     run_one_shot as production_run_one_shot,
+)
+from src.football.top5_signal_lifecycle import (
+    DEFAULT_SIGNAL_LIFECYCLE_CONTRACT,
+    LifecyclePlanStatus,
+    SignalLifecycleStage,
+    plan_signal_lifecycle,
 )
 
 NOW = datetime(2026, 9, 28, 12, 0, tzinfo=timezone.utc)
@@ -129,6 +136,7 @@ class ReplayTransport:
         self,
         *,
         missing_fixture: str | None = None,
+        missing_initial_fixture: str | None = None,
         duplicate_selected_ids: bool = False,
         missing_market: str | None = None,
         malformed_market: str | None = None,
@@ -136,11 +144,14 @@ class ReplayTransport:
         identity_mismatch: str | None = None,
         duplicate_bookmaker: str | None = None,
         market_age_seconds: int = 60,
+        initial_lead_seconds: int = 24 * 60 * 60,
+        bulk_completion_delay_seconds: float = 0.0,
         response_headers: dict[str, str] | None = None,
     ) -> None:
         self.calls: list[tuple[str, dict[str, str]]] = []
         self.keys: list[str] = []
         self.missing_fixture = missing_fixture
+        self.missing_initial_fixture = missing_initial_fixture
         self.duplicate_selected_ids = duplicate_selected_ids
         self.missing_market = missing_market
         self.malformed_market = malformed_market
@@ -148,7 +159,10 @@ class ReplayTransport:
         self.identity_mismatch = identity_mismatch
         self.duplicate_bookmaker = duplicate_bookmaker
         self.market_age_seconds = market_age_seconds
+        self.initial_lead_seconds = initial_lead_seconds
+        self.bulk_completion_delay_seconds = bulk_completion_delay_seconds
         self.response_headers = response_headers or {}
+        self.fixture_rows: dict[str, dict[str, object]] = {}
 
     def __call__(self, endpoint, params, api_key, timeout):
         ordinal = len(self.calls) + 1
@@ -157,6 +171,8 @@ class ReplayTransport:
         self.keys.append(api_key)
         start = NOW + timedelta(seconds=2 * ordinal)
         completed = start + timedelta(milliseconds=500)
+        if endpoint == ISPORTS_ENDPOINTS["european_odds"]:
+            completed += timedelta(seconds=self.bulk_completion_delay_seconds)
         if endpoint == ISPORTS_ENDPOINTS["catalog"]:
             payload = {
                 "code": 200,
@@ -177,6 +193,11 @@ class ReplayTransport:
             if league == self.missing_fixture:
                 payload = {"code": 200, "data": []}
             else:
+                candidate_lead_seconds = (
+                    30 * 60 * 60
+                    if league == self.missing_initial_fixture
+                    else self.initial_lead_seconds
+                )
                 selected_id = (
                     "BL1-shared-id"
                     if self.duplicate_selected_ids and league == "BL1"
@@ -184,26 +205,27 @@ class ReplayTransport:
                 )
                 if self.duplicate_selected_ids and league == "EPL":
                     selected_id = "BL1-shared-id"
+                generic_future = _fixture_row(
+                    league,
+                    f"{league}-early-generic-match",
+                    NOW + timedelta(hours=3),
+                )
+                lexical_later = _fixture_row(
+                    league,
+                    f"{league}-z-match",
+                    NOW + timedelta(seconds=candidate_lead_seconds),
+                    alternate_participants=True,
+                )
+                selected = _fixture_row(
+                    league,
+                    selected_id,
+                    NOW + timedelta(seconds=candidate_lead_seconds),
+                )
+                for row in (generic_future, lexical_later, selected):
+                    self.fixture_rows[str(row["matchId"])] = row
                 payload = {
                     "code": 200,
-                    "data": [
-                        _fixture_row(
-                            league,
-                            f"{league}-later-match",
-                            NOW + timedelta(hours=8),
-                        ),
-                        _fixture_row(
-                            league,
-                            f"{league}-z-match",
-                            NOW + timedelta(hours=3),
-                            alternate_participants=True,
-                        ),
-                        _fixture_row(
-                            league,
-                            selected_id,
-                            NOW + timedelta(hours=3),
-                        ),
-                    ],
+                    "data": [generic_future, lexical_later, selected],
                 }
         elif endpoint == ISPORTS_ENDPOINTS["european_odds"]:
             target_ids = params["matchId"].split(",")
@@ -213,14 +235,15 @@ class ReplayTransport:
                 match_id = target_ids[ISPORTS_TOP5_LEAGUES.index(league)]
                 if league == self.missing_market:
                     continue
+                fixture = self.fixture_rows[match_id]
                 provider_id, league_name, _short = LEAGUES[league]
                 row = {
                     "matchId": match_id,
                     "leagueId": provider_id,
                     "leagueName": league_name,
-                    "homeName": f"Home {league}",
-                    "awayName": f"Away {league}",
-                    "matchTime": int((NOW + timedelta(hours=3)).timestamp()),
+                    "homeName": fixture["homeName"],
+                    "awayName": fixture["awayName"],
+                    "matchTime": fixture["matchTime"],
                     "odds": [
                         {
                             "changeTime": int(
@@ -303,7 +326,11 @@ def _execute(
     def clock() -> datetime:
         nonlocal clock_calls
         clock_calls += 1
-        return NOW if clock_calls <= 2 else NOW + timedelta(seconds=100)
+        if clock_calls <= 2:
+            return NOW
+        if clock_calls == 3:
+            return NOW + timedelta(seconds=13)
+        return NOW + timedelta(seconds=15)
 
     def load_key() -> str:
         loads.append("read")
@@ -339,7 +366,17 @@ def test_exact_top5_path_builds_dossier_and_b1_ten_key_handoff(tmp_path):
     ] * 5
     assert transport.calls[6][0] == ISPORTS_ENDPOINTS["european_odds"]
     expected_ids = [f"{league}-a-match" for league in ISPORTS_TOP5_LEAGUES]
+    assert len(set(expected_ids)) == 5
     assert transport.calls[6][1] == {"matchId": ",".join(expected_ids)}
+    assert all(
+        endpoint != ISPORTS_ENDPOINTS["main_odds"]
+        for endpoint, _params in transport.calls
+    )
+    assert all(
+        params.get("leagueId") != LEAGUES["UCL"][0]
+        for endpoint, params in transport.calls
+        if endpoint == ISPORTS_ENDPOINTS["schedule"]
+    )
     assert all(key == TEST_KEY for key in transport.keys)
 
     payload = json.loads(result.output_path.read_text())
@@ -424,13 +461,35 @@ def test_production_entrypoint_does_not_allow_caller_injected_identity_or_transp
     assert "repository_root" not in parameters
 
 
-def test_selection_is_minimum_kickoff_then_native_match_id(tmp_path):
+def test_selection_ignores_earlier_outside_window_then_uses_kickoff_and_match_id(
+    tmp_path,
+):
     result, _transport, _loads = _execute(tmp_path)
     payload = json.loads(result.output_path.read_text())
     selected = payload["controlled_shadow"]["discovery_evidence"]
     assert [item["provider_fixture_id"] for item in selected] == [
         f"{league}-a-match" for league in TOP5_LEAGUE_ORDER
     ]
+    selection_time = NOW + timedelta(seconds=13)
+    market_reference_time = NOW + timedelta(seconds=14.5)
+    for item in selected:
+        kickoff = datetime.fromisoformat(item["kickoff"].replace("Z", "+00:00"))
+        fixture = Fixture(
+            fixture_key=item["fixture_key"],
+            league_code=item["league"],
+            home_team=item["home_team"],
+            away_team=item["away_team"],
+            kickoff=kickoff,
+        )
+        for reference_time in (selection_time, market_reference_time):
+            plan = plan_signal_lifecycle(
+                fixture,
+                reference_time,
+                lifecycle=None,
+                contract=DEFAULT_SIGNAL_LIFECYCLE_CONTRACT,
+            )
+            assert plan.status is LifecyclePlanStatus.INITIAL_DUE
+            assert plan.due_stage is SignalLifecycleStage.INITIAL
 
 
 def test_default_mode_is_preflight_only_and_does_not_read_key_or_consume_marker(
@@ -498,17 +557,32 @@ def test_replay_fails_before_second_credential_access_or_provider_request(tmp_pa
     assert result.marker_path.exists()
 
 
-def test_missing_future_fixture_stops_after_five_schedules_before_bulk(tmp_path):
+def test_missing_initial_window_fixture_stops_after_five_schedules_before_bulk(
+    tmp_path,
+):
     transport = ReplayTransport(missing_fixture="L1")
     with pytest.raises(Top5ISportsB4CaptureError) as error:
         _execute(tmp_path, transport=transport)
-    assert error.value.code == "future_fixture_missing"
+    assert error.value.code == "initial_window_fixture_missing"
     assert error.value.missing_leagues == ("L1",)
     assert error.value.request_count == 6
     assert len(transport.calls) == 6
     assert all(
         path != ISPORTS_ENDPOINTS["european_odds"] for path, _ in transport.calls
     )
+
+
+def test_initial_window_missing_for_one_league_stops_after_six_calls(tmp_path):
+    transport = ReplayTransport(missing_initial_fixture="LL")
+    with pytest.raises(Top5ISportsB4CaptureError) as error:
+        _execute(tmp_path, transport=transport)
+    assert error.value.code == "initial_window_fixture_missing"
+    assert error.value.missing_leagues == ("LL",)
+    assert error.value.request_count == 6
+    assert len(transport.calls) == 6
+    assert [path for path, _params in transport.calls].count(
+        ISPORTS_ENDPOINTS["european_odds"]
+    ) == 0
 
 
 def test_duplicate_selected_native_ids_stop_before_bulk(tmp_path):
@@ -519,6 +593,20 @@ def test_duplicate_selected_native_ids_stop_before_bulk(tmp_path):
         _execute(tmp_path, transport=transport)
     assert error.value.request_count == 6
     assert len(transport.calls) == 6
+
+
+def test_post_bulk_timing_drift_fails_closed_without_reselection(tmp_path):
+    # At the shared selection sample (+13s), kickoff is exactly 22h away.
+    # The bulk response completes at +14.5s, outside INITIAL; B4 must stop.
+    transport = ReplayTransport(initial_lead_seconds=22 * 60 * 60 + 13)
+    with pytest.raises(Top5ISportsB4CaptureError) as error:
+        _execute(tmp_path, transport=transport)
+    assert error.value.code == "initial_window_expired_after_bulk"
+    assert error.value.missing_leagues == TOP5_LEAGUE_ORDER
+    assert error.value.request_count == 7
+    assert len(transport.calls) == 7
+    assert transport.calls[-1][0] == ISPORTS_ENDPOINTS["european_odds"]
+    assert not (tmp_path / "top5-b4-dossier.json").exists()
 
 
 @pytest.mark.parametrize(
@@ -545,16 +633,16 @@ def test_invalid_or_incomplete_european_bulk_fails_without_dossier(
 
 def test_market_freshness_accepts_exact_300_second_b4_boundary(tmp_path):
     result, _transport, _loads = _execute(
-        tmp_path, transport=ReplayTransport(market_age_seconds=200)
+        tmp_path, transport=ReplayTransport(market_age_seconds=285)
     )
     assert result.status == "COMPLETED"
 
 
 def test_market_older_than_300_seconds_fails_closed(tmp_path):
-    transport = ReplayTransport(market_age_seconds=201)
+    transport = ReplayTransport(market_age_seconds=286)
     with pytest.raises(Top5ISportsB4CaptureError) as error:
         _execute(tmp_path, transport=transport)
-    assert error.value.code == "market_evidence_invalid"
+    assert error.value.code == "european_market_normalization_failed"
     assert error.value.missing_leagues == ("BL1",)
     assert not (tmp_path / "top5-b4-dossier.json").exists()
 
