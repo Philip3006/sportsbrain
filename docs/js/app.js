@@ -76,6 +76,7 @@ function _setSportFilter(sport, patch) {
 
 // ── Navigation ───────────────────────────────────────────────
 function navTo(tab) {
+  const previousTab = document.querySelector('.nav-tab.active')?.dataset.view;
   document.querySelectorAll('.nav-tab').forEach(t => {
     t.classList.remove('active');
     t.setAttribute('aria-selected', 'false');
@@ -83,6 +84,9 @@ function navTo(tab) {
   tab.classList.add('active');
   tab.setAttribute('aria-selected', 'true');
   _prevView = tab.dataset.view;
+  if (window.sbAnalytics && previousTab !== tab.dataset.view) {
+    window.sbAnalytics.capture('tab_opened', { tab: tab.dataset.view, previous_tab: previousTab });
+  }
   showView(tab.dataset.view);
 }
 function showView(id) {
@@ -157,6 +161,21 @@ function openMatch(displayKey) {
   const sport = s0?.sport || sched?.sport || 'football';
   const kickoff = s0?.kickoff || sched?.kickoff || '';
   const tour = s0?.tour || sched?.tour || '';
+  const analyticsProps = {
+    sport,
+    competition: s0?.competition || s0?.league || sched?.competition || tour,
+    fixture_id: s0?.fixture_id || s0?.fixture_key || sched?.fixture_id || sched?.fixture_key || displayKey,
+    lifecycle_stage: s0?.lifecycle_stage || s0?.stage,
+    source_view: window.sbAnalytics?.activeView?.(),
+  };
+  window.sbAnalytics?.capture('match_opened', analyticsProps);
+  const analyticsCompetition = String(analyticsProps.competition || '').toLowerCase();
+  if (analyticsCompetition.includes('nations league') || analyticsCompetition.includes('nations_league') || analyticsCompetition === 'nl') {
+    window.sbAnalytics?.capture('nl_match_opened', {
+      fixture_id: analyticsProps.fixture_id, lifecycle_stage: analyticsProps.lifecycle_stage,
+      publication_state: s0?.publication_state || s0?.signal_status || 'shadow', source_view: analyticsProps.source_view,
+    });
+  }
   const sportIcon = sport === 'football' ? '⚽' : '🎾';
   const metaStr = kickoff ? fmtKickoffCompact(kickoff) : '';
   const cdHtml = kickoff ? `<span class="match-countdown" data-kickoff="${esc(kickoff)}" data-sport="${esc(sport)}" style="margin-top:0;font-size:10px;padding:2px 7px">⏱ …</span>` : '';
@@ -188,6 +207,18 @@ function openMatch(displayKey) {
 
   const ouSigs = sigs.filter(s => /^o\/u/.test(s.market));
   const otherSigs = sigs.filter(s => !/^o\/u/.test(s.market));
+  if (tip || Object.keys(_modelEvals[displayKey] || {}).length) {
+    window.sbAnalytics?.capture('prediction_viewed', {
+      ...analyticsProps, model_version: tip?.model_version || _modelEvals[displayKey]?.model_version,
+      confidence: tip?.confidence || _modelEvals[displayKey]?.confidence,
+    });
+  }
+  if (otherSigs.length) {
+    window.sbAnalytics?.capture('signal_opened', {
+      ...analyticsProps, signal_status: otherSigs[0]?.signal_status || otherSigs[0]?.signal_state,
+      confidence: otherSigs[0]?.confidence,
+    });
+  }
 
   let cards = '';
   if (tip) cards += predCard(dh, da, tip, oddsEntry, nk, kickoff, sport);
@@ -871,4 +902,3 @@ async function load() {
 }
 
 setInterval(load, 60*1000);
-
