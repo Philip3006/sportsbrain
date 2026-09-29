@@ -11,7 +11,7 @@ import hashlib
 import json
 import unicodedata
 from collections import defaultdict
-from datetime import date, datetime, time, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -21,6 +21,10 @@ DEFAULT_SOURCE = ROOT / "data/research/nations_league/historical_results_source_
 DEFAULT_DATASET = ROOT / "results/research/nations_league_competition_state_v1.json"
 DEFAULT_COVERAGE = (
     ROOT / "results/audits/nations_league_competition_state_coverage_v1.json"
+)
+DEFAULT_TIMELINE = ROOT / "results/research/nations_league_fixture_timeline_v1.json"
+DEFAULT_TIMELINE_COVERAGE = (
+    ROOT / "results/audits/nations_league_fixture_timeline_coverage_v1.json"
 )
 DATASET_SCHEMA = "uefa-nations-league-causal-competition-state-v1"
 NORMALIZATION_VERSION = "sportsbrain-nl-team-aliases-v1"
@@ -45,6 +49,15 @@ def canonical_json_bytes(value: Any) -> bytes:
 
 def canonical_digest(value: Any) -> str:
     return hashlib.sha256(canonical_json_bytes(value)).hexdigest()
+
+
+def canonical_fixture_id(
+    edition: str, fixture_date: str, home_team: str, away_team: str
+) -> str:
+    identity = "|".join(
+        (edition, fixture_date, canonical_team(home_team), canonical_team(away_team))
+    )
+    return "uefa-nl:" + hashlib.sha256(identity.encode("utf-8")).hexdigest()[:24]
 
 
 def file_digest(path: Path) -> str:
@@ -173,20 +186,28 @@ def _table_before(
     *,
     edition: str,
     group: str,
-    fixture_date: date,
+    target_kickoff: datetime | None,
     matches: list[dict[str, Any]],
     contract: dict[str, Any],
     active_teams: set[str],
     team_map: dict[str, tuple[str, str]],
+    timeline_by_fixture: dict[str, dict[str, Any]],
 ) -> dict[str, Any]:
     group_teams = [canonical_team(t) for t in contract["groups"][group]]
     lines = {team: _empty_line(team) for team in group_teams}
     used_ids: list[str] = []
+    future_fixtures = [
+        item
+        for item in timeline_by_fixture.values()
+        if item.get("edition") == edition
+        and item.get("group") == group
+        and target_kickoff is not None
+        and item.get("kickoff_utc")
+        and datetime.fromisoformat(item["kickoff_utc"].replace("Z", "+00:00"))
+        > target_kickoff
+    ]
     for match in matches:
-        if (
-            match["edition"] != edition
-            or date.fromisoformat(match["date"]) >= fixture_date
-        ):
+        if match["edition"] != edition:
             continue
         if match["home_team"] not in team_map or match["away_team"] not in team_map:
             continue
@@ -200,6 +221,23 @@ def _table_before(
         if (
             match["home_team"] not in active_teams
             or match["away_team"] not in active_teams
+        ):
+            continue
+        fixture_id = canonical_fixture_id(
+            match["edition"],
+            match["date"],
+            match["home_team"],
+            match["away_team"],
+        )
+        timeline_record = timeline_by_fixture.get(fixture_id)
+        if timeline_record is None or target_kickoff is None:
+            continue
+        result_safe_at = timeline_record.get("result_safe_available_at")
+        if not result_safe_at:
+            continue
+        if (
+            datetime.fromisoformat(result_safe_at.replace("Z", "+00:00"))
+            >= target_kickoff
         ):
             continue
         home, away = lines[match["home_team"]], lines[match["away_team"]]
@@ -223,12 +261,11 @@ def _table_before(
             away["draws_before"] += 1
             home["points_before"] += 1
             away["points_before"] += 1
-        used_ids.append(_source_match_id(match))
+        used_ids.append(fixture_id)
     exception_map = {
         canonical_team(t): v
         for t, v in contract.get("participant_exceptions", {}).items()
     }
-    eligible_count = len(active_teams.intersection(group_teams))
     for team, line in lines.items():
         line["goal_difference_before"] = (
             line["goals_for_before"] - line["goals_against_before"]
@@ -238,9 +275,9 @@ def _table_before(
             line["competition_status"] = exception["status"]
             line["remaining_group_matches"] = 0
         elif team in active_teams:
-            total_group_matches = max(0, 2 * (eligible_count - 1))
-            line["remaining_group_matches"] = max(
-                0, total_group_matches - line["matches_played_before"]
+            line["remaining_group_matches"] = sum(
+                item["home_team"] == team or item["away_team"] == team
+                for item in future_fixtures
             )
             line["competition_status"] = "active"
         else:
@@ -295,7 +332,24 @@ def _table_before(
         "standing_rows": ordered,
         "rank_semantics": "rank_min/rank_max only reflect points; tied ranks are unresolved, not alphabetically ranked",
         "prior_result_fixture_ids": sorted(used_ids),
-        "remaining_schedule": {"status": "not_frozen_in_source", "fixtures": []},
+        "remaining_schedule": {
+            "status": "timeline_bound_without_future_results",
+            "fixtures": [
+                {
+                    "fixture_id": item["fixture_id"],
+                    "home_team": item["home_team"],
+                    "away_team": item["away_team"],
+                    "kickoff_utc": item["kickoff_utc"],
+                }
+                for item in sorted(
+                    future_fixtures,
+                    key=lambda value: (
+                        value["kickoff_utc"],
+                        value["fixture_id"],
+                    ),
+                )
+            ],
+        },
     }
 
 
@@ -307,8 +361,176 @@ def _source_match_id(match: dict[str, Any]) -> str:
     return f"result:{canonical_digest(identity)[:20]}"
 
 
+def _parse_utc(value: str | None) -> datetime | None:
+    if value is None:
+        return None
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if parsed.tzinfo is None or parsed.utcoffset() != timedelta(0):
+        raise ValueError("timeline timestamps must be timezone-aware UTC values")
+    return parsed
+
+
+def _qualification_slots(edition: str, tier: str) -> int | None:
+    if tier != "A":
+        return None
+    return 2 if edition == "2024/25" else 1
+
+
+def _promotion_slots(tier: str) -> int | None:
+    return 1 if tier in {"B", "C", "D"} else None
+
+
+def _points_bound_state(
+    *,
+    team: str,
+    table: dict[str, Any],
+    edition: str,
+    tier: str,
+    group: str,
+) -> dict[str, Any]:
+    rows = [
+        row for row in table["standing_rows"] if row["competition_status"] == "active"
+    ]
+    current = next((row for row in rows if row["team"] == team), None)
+    if current is None:
+        return {
+            "team": team,
+            "points_before": None,
+            "max_remaining_points": None,
+            "qualification": {
+                "can_still_qualify": False,
+                "mathematically_qualified": False,
+                "mathematically_eliminated": True,
+                "points_to_relevant_boundary": None,
+                "status": "fixed_non_participant_status",
+            },
+            "promotion": {
+                "can_be_promoted": False,
+                "mathematically_promoted": False,
+                "mathematically_eliminated_from_promotion": True,
+                "points_to_relevant_boundary": None,
+                "status": "fixed_non_participant_status",
+            },
+            "relegation": {
+                "can_be_relegated": False,
+                "mathematically_relegated": True,
+                "points_to_relevant_boundary": None,
+                "status": "fixed_non_participant_status",
+            },
+            "must_win_primitives": {
+                "win_required_for_mathematical_survival": False,
+                "win_required_for_mathematical_qualification": False,
+                "draw_sufficient_for_mathematical_goal": False,
+                "loss_eliminates": True,
+                "points_required_from_remaining_matches": None,
+                "status": "fixed_non_participant_status",
+            },
+        }
+    points = current["points_before"]
+    max_remaining = current["remaining_group_matches"] * 3
+    opponent_maxima = [
+        row["points_before"] + row["remaining_group_matches"] * 3
+        for row in rows
+        if row["team"] != team
+    ]
+
+    def top_state(slots: int | None) -> dict[str, Any]:
+        if slots is None:
+            return {
+                "can": None,
+                "qualified": None,
+                "eliminated": None,
+                "status": "not_applicable",
+            }
+        guaranteed = sum(value >= points for value in opponent_maxima) < slots
+        eliminated = (
+            sum(
+                row["points_before"] > points + max_remaining
+                for row in rows
+                if row["team"] != team
+            )
+            >= slots
+        )
+        return {
+            "can": not eliminated,
+            "qualified": guaranteed,
+            "eliminated": eliminated,
+            "status": "points_bounds_only_tiebreaks_preserved_as_unresolved",
+        }
+
+    qualification = top_state(_qualification_slots(edition, tier))
+    promotion = top_state(_promotion_slots(tier))
+    direct_relegation = tier in {"A", "B"}
+    relegation = {
+        "can": None,
+        "relegated": None,
+        "status": "unresolved_edition_specific_relegation_allocation"
+        if tier == "C"
+        else "not_applicable"
+        if tier == "D"
+        else "points_bounds_only_tiebreaks_preserved_as_unresolved",
+    }
+    if direct_relegation:
+        guaranteed_safe = any(
+            points > row["points_before"] + row["remaining_group_matches"] * 3
+            for row in rows
+            if row["team"] != team
+        )
+        mathematically_relegated = (
+            sum(
+                row["points_before"] > points + max_remaining
+                for row in rows
+                if row["team"] != team
+            )
+            >= len(rows) - 1
+        )
+        relegation.update(
+            {
+                "can": not guaranteed_safe,
+                "relegated": mathematically_relegated,
+            }
+        )
+    return {
+        "team": team,
+        "points_before": points,
+        "max_remaining_points": max_remaining,
+        "qualification": {
+            "can_still_qualify": qualification["can"],
+            "mathematically_qualified": qualification["qualified"],
+            "mathematically_eliminated": qualification["eliminated"],
+            "points_to_relevant_boundary": None,
+            "status": qualification["status"],
+        },
+        "promotion": {
+            "can_be_promoted": promotion["can"],
+            "mathematically_promoted": promotion["qualified"],
+            "mathematically_eliminated_from_promotion": promotion["eliminated"],
+            "points_to_relevant_boundary": None,
+            "status": promotion["status"],
+        },
+        "relegation": {
+            "can_be_relegated": relegation["can"],
+            "mathematically_relegated": relegation["relegated"],
+            "points_to_relevant_boundary": None,
+            "status": relegation["status"],
+        },
+        "must_win_primitives": {
+            "win_required_for_mathematical_survival": None,
+            "win_required_for_mathematical_qualification": None,
+            "draw_sufficient_for_mathematical_goal": None,
+            "loss_eliminates": None,
+            "points_required_from_remaining_matches": None,
+            "status": "not_computed_without_outcome_state_solver",
+        },
+    }
+
+
 def build_dataset(
-    source: dict[str, Any], contracts: dict[str, Any], *, built_at: str
+    source: dict[str, Any],
+    contracts: dict[str, Any],
+    *,
+    built_at: str,
+    timeline: dict[str, Any] | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     if source.get("schema_version") != "uefa-nl-canonical-result-source-v1":
         raise ValueError("Unsupported historical source schema")
@@ -322,6 +544,22 @@ def build_dataset(
     source_digest = canonical_digest(source_payload)
     if source.get("snapshot_digest") != source_digest:
         raise ValueError("Historical source snapshot digest mismatch")
+    if timeline is None:
+        timeline = _read_json(DEFAULT_TIMELINE)
+    if timeline.get("schema_version") != "uefa-nations-league-fixture-timeline-v1":
+        raise ValueError("Unsupported fixture timeline schema")
+    if timeline.get("results_source_digest") != source.get("snapshot_digest"):
+        raise ValueError("Fixture timeline does not bind to the historical source")
+    timeline_records = timeline.get("records")
+    if not isinstance(timeline_records, list):
+        raise TypeError("Fixture timeline records are missing")
+    timeline_by_fixture = {
+        record["fixture_id"]: record
+        for record in timeline_records
+        if isinstance(record, dict) and record.get("fixture_id")
+    }
+    if len(timeline_by_fixture) != len(timeline_records):
+        raise ValueError("Fixture timeline contains duplicate or invalid IDs")
     matches = [_parse_match(row) for row in source["matches"]]
     match_keys = [
         (
@@ -355,14 +593,26 @@ def build_dataset(
     records: list[dict[str, Any]] = []
     stage_counts: dict[str, int] = defaultdict(int)
     unresolved_points_ties = 0
+    timeline_joined = 0
+    missing_timeline_fixtures: list[str] = []
+    exact_cutoff_count = 0
     for match in matches:
         edition, contract = match["edition"], contracts["editions"][match["edition"]]
         stage, tier, group = _fixture_stage(match, maps[edition])
         stage_counts[f"{edition}:{stage}"] += 1
-        fixture_day = date.fromisoformat(match["date"])
-        cutoff = datetime.combine(
-            fixture_day - timedelta(days=1), time.min, tzinfo=timezone.utc
+        fixture_id = canonical_fixture_id(
+            edition, match["date"], match["home_team"], match["away_team"]
         )
+        timeline_record = timeline_by_fixture.get(fixture_id)
+        if timeline_record is None:
+            missing_timeline_fixtures.append(fixture_id)
+        else:
+            timeline_joined += 1
+        kickoff = timeline_record.get("kickoff_utc") if timeline_record else None
+        kickoff_dt = _parse_utc(kickoff)
+        cutoff = kickoff_dt
+        if cutoff is not None:
+            exact_cutoff_count += 1
         table_groups: list[str] = []
         if group:
             table_groups = [group]
@@ -375,11 +625,12 @@ def build_dataset(
             _table_before(
                 edition=edition,
                 group=g,
-                fixture_date=fixture_day,
+                target_kickoff=kickoff_dt,
                 matches=matches,
                 contract=contract,
                 active_teams=active_by_edition[edition],
                 team_map=maps[edition],
+                timeline_by_fixture=timeline_by_fixture,
             )
             for g in sorted(table_groups)
         ]
@@ -389,20 +640,37 @@ def build_dataset(
             for row in table["standing_rows"]
             if row["rank_status"] == "unresolved_points_tie"
         )
-        identity = {
-            "edition": edition,
-            "validation_period": match["validation_period"],
-            "stage": stage,
-            "fixture_date": match["date"],
-            "home_team": match["home_team"],
-            "away_team": match["away_team"],
-        }
         home_tier, home_group = maps[edition][match["home_team"]]
         away_tier, away_group = maps[edition][match["away_team"]]
+        future_schedule = []
+        if timeline_record and kickoff_dt is not None:
+            future_schedule = [
+                {
+                    "fixture_id": item["fixture_id"],
+                    "home_team": item["home_team"],
+                    "away_team": item["away_team"],
+                    "kickoff_utc": item["kickoff_utc"],
+                }
+                for item in timeline_records
+                if item.get("edition") == edition
+                and item.get("group") == group
+                and item.get("kickoff_utc")
+                and _parse_utc(item["kickoff_utc"]) > kickoff_dt
+            ]
+        participant_states = {}
+        if group and standings:
+            table = standings[0]
+            for team in (match["home_team"], match["away_team"]):
+                participant_states[team] = _points_bound_state(
+                    team=team,
+                    table=table,
+                    edition=edition,
+                    tier=tier or home_tier,
+                    group=group,
+                )
+        state_cutoff = cutoff.isoformat().replace("+00:00", "Z") if cutoff else None
         record = {
-            "fixture_id": f"unl:{edition.replace('/', '-')}: {canonical_digest(identity)[:24]}".replace(
-                " ", ""
-            ),
+            "fixture_id": fixture_id,
             "official_fixture_id": None,
             "competition": "UEFA Nations League",
             "edition": edition,
@@ -417,15 +685,26 @@ def build_dataset(
             "home_team": match["home_team"],
             "away_team": match["away_team"],
             "fixture_date": match["date"],
-            "kickoff": None,
-            "matchday": None,
+            "kickoff": kickoff,
+            "matchday": timeline_record.get("matchday") if timeline_record else None,
+            "result_safe_available_at": timeline_record.get("result_safe_available_at")
+            if timeline_record
+            else None,
             "home_score": match["home_score"],
             "away_score": match["away_score"],
             "neutral": match["neutral"],
-            "state_cutoff": cutoff.isoformat().replace("+00:00", "Z"),
-            "state_cutoff_basis": "00:00Z on the UTC calendar day before the source fixture date; same-day results excluded conservatively",
+            "state_cutoff": state_cutoff,
+            "state_cutoff_basis": "strict target kickoff instant; only result_safe_available_at strictly before kickoff is included",
             "standings_before": standings,
-            "remaining_schedule": {"status": "not_frozen_in_source", "fixtures": []},
+            "remaining_schedule": {
+                "status": "timeline_bound_without_future_results"
+                if timeline_record
+                else "unresolved_missing_timeline",
+                "fixtures": sorted(
+                    future_schedule,
+                    key=lambda item: (item["kickoff_utc"], item["fixture_id"]),
+                ),
+            },
             "qualification_state": {
                 "can_still_qualify": None,
                 "mathematically_qualified": None,
@@ -436,14 +715,16 @@ def build_dataset(
                 "mathematically_relegated": None,
                 "points_to_relevant_boundary": None,
                 "max_remaining_points": None,
-                "status": "unresolved_missing_complete_official_schedule_and_or_edition_rule_inputs",
+                "participants": participant_states,
+                "status": "points_bounds_computed; exact_tiebreak_and_rule_states_preserved_unresolved",
             },
             "relegation_state": {
                 "can_be_relegated": None,
                 "mathematically_relegated": None,
                 "points_to_relevant_boundary": None,
                 "max_remaining_points": None,
-                "status": "unresolved_missing_complete_official_schedule_and_or_edition_rule_inputs",
+                "participants": participant_states,
+                "status": "points_bounds_computed_where_direct_rule_applies; edition_specific_c_states_unresolved",
             },
             "must_win_primitives": {
                 "win_required_for_mathematical_survival": None,
@@ -453,12 +734,23 @@ def build_dataset(
                 "points_required_from_remaining_matches": None,
                 "status": "not_computed_without_complete_schedule_and_rules",
             },
-            "rule_version": f"uefa-unl-{edition.replace('/', '-')}-partial-v1",
+            "rule_version": f"uefa-unl-{edition.replace('/', '-')}-timeline-bound-v2",
             "edition_rule_digest": canonical_digest(contract),
             "source_digest": source_digest,
-            "source_fixture_identity_status": "internal_deterministic_identity_only_official_match_id_absent",
-            "kickoff_status": "missing_from_frozen_result_source",
-            "matchday_status": "missing_from_frozen_result_source",
+            "source_fixture_identity_status": "canonical_timeline_fixture_id; official_match_id_absent",
+            "kickoff_status": "verified_from_fixture_timeline"
+            if kickoff
+            else "missing_from_fixture_timeline",
+            "matchday_status": "verified_in_timeline"
+            if timeline_record and timeline_record.get("matchday") is not None
+            else "not_present_in_fixture_timeline_schedule_evidence",
+            "timeline_provenance": timeline_record.get("source_refs")
+            if timeline_record
+            else None,
+            "timeline_record_digest": timeline_record.get("record_digest")
+            if timeline_record
+            else None,
+            "timeline_dataset_digest": timeline.get("dataset_digest"),
             "record_digest": None,
         }
         payload = {
@@ -477,13 +769,31 @@ def build_dataset(
     }
     coverage = {
         "schema_version": "uefa-nations-league-competition-state-coverage-v1",
+        "status": "NL_COMPETITION_STATE_PARTIAL",
+        "ready_gate": {
+            "fixture_timeline_join_complete": timeline_joined == len(records)
+            and not missing_timeline_fixtures,
+            "all_kickoffs_verified": all(r["kickoff"] is not None for r in records),
+            "matchday_complete": all(r["matchday"] is not None for r in records),
+            "exact_rule_and_tiebreak_state_complete": False,
+            "status": "PARTIAL",
+        },
         "built_at": built_at,
         "expected_evaluation_fixture_count": 512,
         "source_fixture_count": len(matches),
         "output_record_count": len(records),
         "fixture_coverage_complete": len(matches) == 512 and len(records) == 512,
         "fixture_coverage_basis": "one-to-one coverage of the hash-verified existing 512-row evaluation source; not an independent official-UEFA-ID crosswalk",
-        "official_schedule_match_coverage_verified": False,
+        "timeline_join": {
+            "timeline_schema": timeline["schema_version"],
+            "timeline_dataset_digest": timeline.get("dataset_digest"),
+            "joined_records": timeline_joined,
+            "missing_fixture_ids": sorted(missing_timeline_fixtures),
+            "joined_complete": timeline_joined == len(records)
+            and not missing_timeline_fixtures,
+        },
+        "official_schedule_match_coverage_verified": timeline_joined == len(records)
+        and not missing_timeline_fixtures,
         "missing_source_fixtures": [],
         "period_counts": dict(sorted(_count_by(matches, "validation_period").items())),
         "stage_counts": dict(sorted(stage_counts.items())),
@@ -491,17 +801,17 @@ def build_dataset(
             "official_fixture_id": {
                 "present": 0,
                 "missing": len(records),
-                "status": "partial_blocker",
+                "status": "not_present_in_source_or_timeline; canonical_timeline_id_used",
             },
             "kickoff_timestamp": {
-                "present": 0,
-                "missing": len(records),
-                "status": "partial_blocker",
+                "present": sum(r["kickoff"] is not None for r in records),
+                "missing": sum(r["kickoff"] is None for r in records),
+                "status": "verified_from_fixture_timeline",
             },
             "matchday": {
-                "present": 0,
-                "missing": len(records),
-                "status": "partial_blocker",
+                "present": sum(r["matchday"] is not None for r in records),
+                "missing": sum(r["matchday"] is None for r in records),
+                "status": "not_frozen_in_fixture_timeline_schedule_evidence",
             },
             "canonical_participants": {
                 "present": len(records),
@@ -514,9 +824,9 @@ def build_dataset(
                 "status": "partial_knockout_records_have_no_single_group",
             },
             "causal_date_cutoff": {
-                "present": len(records),
-                "strict_kickoff_timestamp_comparison": 0,
-                "status": "conservative_date_only_cutoff; instant proof requires kickoffs",
+                "present": exact_cutoff_count,
+                "strict_kickoff_timestamp_comparison": exact_cutoff_count,
+                "status": "strict_target_kickoff; result-safe evidence must precede cutoff",
             },
             "standings_before": {
                 "present": sum(bool(r["standings_before"]) for r in records),
@@ -524,9 +834,12 @@ def build_dataset(
                 "status": "covered_where_official_group_mapping_exists",
             },
             "qualification_and_relegation_math": {
+                "computed_points_bounds": sum(
+                    bool(r["qualification_state"].get("participants")) for r in records
+                ),
                 "computed_exact": 0,
                 "unresolved": len(records),
-                "status": "partial_source_and_rules_required",
+                "status": "points_bounds_available; exact edition tie-break and allocation states remain unresolved",
             },
         },
         "unresolved_points_tie_rows": unresolved_points_ties,
@@ -542,8 +855,8 @@ def build_dataset(
             for edition, value in sorted(contracts["editions"].items())
         },
         "limitations": [
-            "Frozen 512-row match source contains calendar date, teams, score and neutral flag only; it contains no official fixture ID, kickoff timestamp or matchday.",
-            "The full edition-specific scheduled fixture list with its source snapshot digest has not been ingested; remaining opponent counts are therefore not promoted to a fully validated schedule feature.",
+            "Official provider match IDs are absent; the canonical fixture timeline ID is the stable cross-contract identity.",
+            "Matchday labels were not present in the completed timeline schedule evidence and remain null rather than inferred.",
             "2022/23 edition-specific Article 15 tie-break text was not frozen, so exact tie ranks and qualification/relegation boundary states remain unresolved.",
             "2020/21 and 2024/25 tie-break rules require disciplinary points and access-list values absent from the 512-result snapshot for some tied ranks.",
             "The 2022/23 delayed C/D play-out is represented as its observed two-leg pair; its provenance and exact two-leg result do not constitute the absent full scheduled fixture snapshot.",
@@ -595,12 +908,15 @@ def validate_dataset(
         if not fixture_id or fixture_id in fixture_ids:
             raise ValueError("Missing or duplicate canonical fixture ID")
         fixture_ids.add(fixture_id)
-        if (
-            record.get("official_fixture_id") is not None
-            or record.get("kickoff") is not None
-            or record.get("matchday") is not None
-        ):
-            raise ValueError("Unsupported source identifiers/times must remain null")
+        if record.get("kickoff") is not None:
+            kickoff = _parse_utc(record["kickoff"])
+            if record.get("state_cutoff") != record["kickoff"]:
+                raise ValueError("Exact causal cutoff must equal target kickoff")
+            result_safe = _parse_utc(record.get("result_safe_available_at"))
+            if result_safe is not None and result_safe <= kickoff:
+                raise ValueError("Result-safe time must follow kickoff")
+        if record.get("official_fixture_id") is not None:
+            raise ValueError("Unsupported official fixture IDs must remain null")
         if record.get("home_league_tier") not in {"A", "B", "C", "D"} or record.get(
             "away_league_tier"
         ) not in {"A", "B", "C", "D"}:
@@ -610,13 +926,14 @@ def validate_dataset(
         ) or record.get("away_group", "")[0:1] != record.get("away_league_tier"):
             raise ValueError("Fixture-side group does not match its league tier")
         fixture_day = date.fromisoformat(record["fixture_date"])
-        cutoff = datetime.fromisoformat(record["state_cutoff"].replace("Z", "+00:00"))
-        if (
-            cutoff.date() >= fixture_day
-            or cutoff.tzinfo is None
-            or cutoff.utcoffset() != timedelta(0)
+        cutoff_value = record.get("state_cutoff")
+        if cutoff_value is None:
+            raise ValueError("Timeline-bound state requires an exact causal cutoff")
+        cutoff = _parse_utc(cutoff_value)
+        if cutoff is None or cutoff <= datetime.combine(
+            fixture_day - timedelta(days=1), datetime.min.time(), tzinfo=timezone.utc
         ):
-            raise ValueError("State cutoff is not a conservative UTC day-before cutoff")
+            raise ValueError("State cutoff is not a valid exact kickoff instant")
         for table in record["standings_before"]:
             if table["group"] is None or table["league_tier"] != table["group"][0]:
                 raise ValueError("Invalid group/league identity")
@@ -637,6 +954,11 @@ def validate_dataset(
             raise ValueError("Record digest mismatch")
     if not coverage.get("leakage_checks", {}).get("same_day_results_excluded"):
         raise ValueError("Same-day results must be excluded")
+    timeline_join = coverage.get("timeline_join", {})
+    if not timeline_join.get("joined_complete"):
+        raise ValueError("Competition-state timeline join is incomplete")
+    if any(not record.get("timeline_record_digest") for record in records):
+        raise ValueError("Competition-state record is missing timeline provenance")
 
 
 def load_and_validate(

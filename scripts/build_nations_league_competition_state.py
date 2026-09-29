@@ -15,6 +15,7 @@ from src.analysis.nations_league_competition_state import (
     DEFAULT_COVERAGE,
     DEFAULT_DATASET,
     DEFAULT_SOURCE,
+    DEFAULT_TIMELINE,
     _read_json,
     build_dataset,
     validate_dataset,
@@ -37,10 +38,17 @@ def build(
     dataset_path: Path,
     coverage_path: Path,
     built_at: str | None = None,
+    timeline_path: Path = DEFAULT_TIMELINE,
 ) -> tuple[dict, dict]:
-    source, contracts = _read_json(source_path), _read_json(contract_path)
+    source, contracts, timeline = (
+        _read_json(source_path),
+        _read_json(contract_path),
+        _read_json(timeline_path),
+    )
     fixed_time = built_at or source["snapshot_committed_at"]
-    dataset, coverage = build_dataset(source, contracts, built_at=fixed_time)
+    dataset, coverage = build_dataset(
+        source, contracts, built_at=fixed_time, timeline=timeline
+    )
     validate_dataset(
         dataset, coverage, expected_source_digest=source["snapshot_digest"]
     )
@@ -55,13 +63,19 @@ def main() -> None:
     parser.add_argument("--contracts", type=Path, default=DEFAULT_CONTRACTS)
     parser.add_argument("--dataset", type=Path, default=DEFAULT_DATASET)
     parser.add_argument("--coverage", type=Path, default=DEFAULT_COVERAGE)
+    parser.add_argument("--timeline", type=Path, default=DEFAULT_TIMELINE)
     parser.add_argument(
         "--built-at",
         help="Fixed UTC build timestamp; defaults to source snapshot commit time",
     )
     args = parser.parse_args()
     dataset, coverage = build(
-        args.source, args.contracts, args.dataset, args.coverage, args.built_at
+        args.source,
+        args.contracts,
+        args.dataset,
+        args.coverage,
+        args.built_at,
+        args.timeline,
     )
     print(
         json.dumps(
@@ -71,6 +85,7 @@ def main() -> None:
                 "dataset_digest": coverage["dataset_digest"],
                 "coverage_digest": coverage["coverage_digest"],
                 "fixture_coverage_complete": coverage["fixture_coverage_complete"],
+                "status": coverage["status"],
                 "kickoff_timestamps_present": coverage["fields"]["kickoff_timestamp"][
                     "present"
                 ],

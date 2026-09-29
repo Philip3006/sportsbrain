@@ -3,23 +3,24 @@
 This is a research/data deliverable. It does not change a model, production
 provider, runtime, activation, publication, betting, or ledger path.
 
-## Current status: PARTIAL
+## Current status: NL_COMPETITION_STATE_PARTIAL
 
 The reproducible input snapshot contains all 512 matches in the SportsBrain
 evaluation block and exact final scores from the audited local results cache.
-It supports deterministic edition/group assignment for all league-phase
-fixtures and reconstructs point, W/D/L, goals-for/against, and goal-difference
-tables using only matches whose source date is strictly earlier than the
-fixture date. Same-day results are excluded. The state cutoff is set to 00:00
-UTC on the day before the fixture date, a conservative date-only cutoff.
+Every record is joined by the canonical `uefa-nl:` fixture ID to the completed
+fixture timeline. It propagates verified UTC kickoff, the conservative
+`result_safe_available_at`, schedule provenance, and an exact causal cutoff at
+target kickoff. Standings use only results whose safe-availability timestamp
+is strictly before that kickoff; future and same-cutoff results are excluded.
 
-This does **not** meet the full launch contract yet. The upstream 512-row cache
-has dates but no official UEFA match IDs, kickoff timestamps, matchday fields,
-or a frozen complete schedule. The v1 records consequently retain an internal
-deterministic fixture key while `official_fixture_id`, `kickoff`, and `matchday`
-remain `null`. Schedule-derived and mathematical qualification/relegation
-primitives also remain explicitly unresolved; final tables are never copied
-back into historical states.
+This does **not** meet the full competition-state readiness contract yet.
+Official UEFA match IDs and matchday labels are not present in the frozen
+timeline evidence, so the canonical timeline fixture ID is used and
+`matchday` remains null. Points-bound qualification, promotion, and direct
+relegation primitives are emitted where mathematically safe, while exact
+tie-break-dependent states, C-league allocation states, and must-win outcome
+primitives remain explicitly unresolved. Final tables are never copied back
+into historical states.
 
 The edition contract includes group membership and distinct edition formats.
 The 2022/23 B2 Russia exception is represented as an ineligible participant
@@ -35,9 +36,10 @@ For non-group fixtures, records retain `home_league_tier`, `away_league_tier`,
 delayed C/D play-out is labeled `C/D`. This avoids assigning a tie to
 whichever team happens to be at home.
 
-Do not use this partial dataset as a substitute for exact kickoff timestamps,
-official fixture IDs, matchday, or fully determined qualification/relegation
-states. No prediction uplift is evaluated here.
+The fixture timeline itself is independently `NL_FIXTURE_TIMELINE_READY`.
+This competition-state artifact remains partial because matchday evidence and
+edition-complete rule/tie-break state are not complete. No prediction uplift is
+evaluated here.
 
 ## Reproduction
 
@@ -56,6 +58,9 @@ python3 scripts/build_nations_league_competition_state.py
 ```
 
 The generator and validator are `src/analysis/nations_league_competition_state.py`.
+The canonical build consumes
+`results/research/nations_league_fixture_timeline_v1.json` and fails closed if
+its source digest does not bind to the historical result snapshot.
 The source snapshot digest, edition-contract digest, per-record digest, dataset
 digest, and coverage digest use sorted compact UTF-8 JSON with SHA-256. Change
 the pinned source or contracts only with a corresponding documented provenance
@@ -88,14 +93,13 @@ changing the pinned evidence.
 ## Schema and fail-closed semantics
 
 `uefa-nations-league-causal-competition-state-v1` emits one record per source
-fixture. `fixture_id` is a deterministic SportsBrain internal key, **not** an
-official UEFA ID. A record has a conservative `state_cutoff`, standings for
-the involved group(s), source and record digests, and explicit missing-field
-statuses. For a tied point table, the record reports `rank_min`/`rank_max` as
-null and status `unresolved_points_tie`; it never uses alphabetical ordering
-as a sporting tie-break. Qualification and relegation fields are null until
-the official full schedule and enough edition-specific rule inputs are
-available to prove the state.
+fixture. `fixture_id` is the canonical timeline identity, **not** an official
+UEFA ID. Records contain verified kickoff, result-safe bounds, exact causal
+cutoff, timeline provenance/digests, standings, remaining future schedule
+without future scores, and explicit missing-field statuses. Tied ranks remain
+unresolved rather than alphabetically sorted. Participant-level points-bound
+qualification, promotion, and direct-relegation states are included; unsupported
+exact rules remain null with a reason.
 
 ## Frozen primary-source references
 

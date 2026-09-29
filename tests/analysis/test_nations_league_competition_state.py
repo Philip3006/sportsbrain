@@ -1,5 +1,6 @@
 import copy
 import json
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -11,6 +12,7 @@ from src.analysis.nations_league_competition_state import (
     DEFAULT_SOURCE,
     build_dataset,
     canonical_digest,
+    canonical_fixture_id,
     load_and_validate,
     validate_dataset,
 )
@@ -48,7 +50,40 @@ def _match(day, home, away, hs, aws, edition="2020/21", period="2020/21"):
     }
 
 
-def test_committed_dataset_is_deterministic_full_512_result_coverage_and_explicitly_partial():
+def _timeline_for(source):
+    records = []
+    for match in source["matches"]:
+        kickoff = f"{match['date']}T18:45:00Z"
+        safe = datetime.fromisoformat(kickoff.replace("Z", "+00:00")) + timedelta(
+            hours=6
+        )
+        records.append(
+            {
+                "fixture_id": canonical_fixture_id(
+                    match["edition"],
+                    match["date"],
+                    match["home_team"],
+                    match["away_team"],
+                ),
+                "edition": match["edition"],
+                "group": None,
+                "home_team": match["home_team"],
+                "away_team": match["away_team"],
+                "kickoff_utc": kickoff,
+                "result_safe_available_at": safe.isoformat().replace("+00:00", "Z"),
+                "record_digest": "synthetic-timeline-record",
+                "source_refs": {"source": "synthetic-test-only"},
+            }
+        )
+    return {
+        "schema_version": "uefa-nations-league-fixture-timeline-v1",
+        "results_source_digest": source["snapshot_digest"],
+        "dataset_digest": "synthetic-timeline-digest",
+        "records": records,
+    }
+
+
+def test_committed_dataset_is_deterministic_and_timeline_bound():
     source, contracts = _json(DEFAULT_SOURCE), _json(DEFAULT_CONTRACTS)
     first, first_coverage = build_dataset(
         source, contracts, built_at=source["snapshot_committed_at"]
@@ -60,7 +95,14 @@ def test_committed_dataset_is_deterministic_full_512_result_coverage_and_explici
     assert first_coverage == second_coverage
     assert len(first["records"]) == 512
     assert first_coverage["fixture_coverage_complete"] is True
-    assert first_coverage["fields"]["kickoff_timestamp"]["present"] == 0
+    assert first_coverage["status"] == "NL_COMPETITION_STATE_PARTIAL"
+    assert first_coverage["fields"]["kickoff_timestamp"]["present"] == 512
+    assert (
+        first_coverage["fields"]["causal_date_cutoff"][
+            "strict_kickoff_timestamp_comparison"
+        ]
+        == 512
+    )
     assert first_coverage["fields"]["official_fixture_id"]["missing"] == 512
     assert (
         first_coverage["fields"]["qualification_and_relegation_math"]["computed_exact"]
@@ -82,15 +124,44 @@ def test_committed_dataset_is_deterministic_full_512_result_coverage_and_explici
 def test_published_json_reload_and_record_digests_validate():
     dataset, coverage = load_and_validate(DEFAULT_DATASET, DEFAULT_COVERAGE)
     assert len(dataset["records"]) == 512
+    assert all(
+        record["fixture_id"].startswith("uefa-nl:") for record in dataset["records"]
+    )
+    assert all(
+        record["kickoff"] == record["state_cutoff"] for record in dataset["records"]
+    )
+    assert all(record["timeline_record_digest"] for record in dataset["records"])
+    assert coverage["timeline_join"]["joined_complete"] is True
+    assert coverage["fields"]["kickoff_timestamp"]["present"] == 512
     assert coverage["coverage_digest"] == canonical_digest(
         {key: value for key, value in coverage.items() if key != "coverage_digest"}
     )
 
 
-def test_state_cutoff_is_conservative_day_before_and_source_same_day_results_do_not_leak():
+def test_timeline_join_rejects_a_different_historical_source():
+    source, contracts = _json(DEFAULT_SOURCE), _json(DEFAULT_CONTRACTS)
+    timeline = _json(Path("results/research/nations_league_fixture_timeline_v1.json"))
+    altered = copy.deepcopy(source)
+    altered["matches"][0]["home_score"] += 1
+    altered["snapshot_digest"] = canonical_digest(
+        {key: value for key, value in altered.items() if key != "snapshot_digest"}
+    )
+    with pytest.raises(ValueError, match="does not bind"):
+        build_dataset(
+            altered,
+            contracts,
+            built_at=source["snapshot_committed_at"],
+            timeline=timeline,
+        )
+
+
+def test_state_cutoff_is_exact_kickoff_and_future_results_do_not_leak():
     source, contracts = _json(DEFAULT_SOURCE), _json(DEFAULT_CONTRACTS)
     dataset, _ = build_dataset(
-        source, contracts, built_at=source["snapshot_committed_at"]
+        source,
+        contracts,
+        built_at=source["snapshot_committed_at"],
+        timeline=_timeline_for(source),
     )
     target = next(
         r
@@ -99,10 +170,12 @@ def test_state_cutoff_is_conservative_day_before_and_source_same_day_results_do_
         and r["fixture_date"] == "2020-09-07"
         and r["group"] == "A1"
     )
-    assert target["state_cutoff"] == "2020-09-06T00:00:00Z"
-    assert target["kickoff"] is None
+    assert target["state_cutoff"] == "2020-09-07T18:45:00Z"
+    assert target["kickoff"] == target["state_cutoff"]
     table = target["standings_before"][0]
-    assert "result:" in " ".join(table["prior_result_fixture_ids"])
+    assert all(
+        value.startswith("uefa-nl:") for value in table["prior_result_fixture_ids"]
+    )
 
     changed = copy.deepcopy(source)
     for match in changed["matches"]:
@@ -115,12 +188,38 @@ def test_state_cutoff_is_conservative_day_before_and_source_same_day_results_do_
     payload = {key: value for key, value in changed.items() if key != "snapshot_digest"}
     changed["snapshot_digest"] = canonical_digest(payload)
     changed_dataset, _ = build_dataset(
-        changed, contracts, built_at=source["snapshot_committed_at"]
+        changed,
+        contracts,
+        built_at=source["snapshot_committed_at"],
+        timeline=_timeline_for(changed),
     )
     changed_target = next(
         r for r in changed_dataset["records"] if r["fixture_id"] == target["fixture_id"]
     )
     assert changed_target["standings_before"] == target["standings_before"]
+
+
+def test_same_day_result_is_used_only_after_result_safe_time_precedes_target():
+    contracts = _json(DEFAULT_CONTRACTS)
+    source = _source(
+        [
+            _match("2020-09-07", "Netherlands", "Italy", 2, 0),
+            _match("2020-09-07", "Bosnia and Herzegovina", "Poland", 1, 1),
+        ]
+    )
+    timeline = _timeline_for(source)
+    timeline["records"][0]["kickoff_utc"] = "2020-09-07T12:00:00Z"
+    timeline["records"][0]["result_safe_available_at"] = "2020-09-07T19:00:00Z"
+    timeline["records"][1]["kickoff_utc"] = "2020-09-07T18:45:00Z"
+    timeline["records"][1]["result_safe_available_at"] = "2020-09-08T00:45:00Z"
+    dataset, _ = build_dataset(
+        source,
+        contracts,
+        built_at=source["snapshot_committed_at"],
+        timeline=timeline,
+    )
+    target = dataset["records"][1]
+    assert target["standings_before"][0]["prior_result_fixture_ids"] == []
 
 
 def test_points_table_arithmetic_and_unresolved_points_tie_are_explicit():
@@ -133,7 +232,10 @@ def test_points_table_arithmetic_and_unresolved_points_tie_are_explicit():
         ]
     )
     dataset, _ = build_dataset(
-        source, contracts, built_at=source["snapshot_committed_at"]
+        source,
+        contracts,
+        built_at=source["snapshot_committed_at"],
+        timeline=_timeline_for(source),
     )
     target = dataset["records"][-1]
     rows = {row["team"]: row for row in target["standings_before"][0]["standing_rows"]}
@@ -184,7 +286,10 @@ def test_2022_russia_is_fixed_fourth_and_not_counted_as_an_active_match_opponent
         ]
     )
     dataset, _ = build_dataset(
-        source, contracts, built_at=source["snapshot_committed_at"]
+        source,
+        contracts,
+        built_at=source["snapshot_committed_at"],
+        timeline=_timeline_for(source),
     )
     table = next(
         t
@@ -228,7 +333,7 @@ def test_2022_delayed_playout_is_separate_and_2024_knockouts_are_not_group_fixtu
 def test_unsupported_fixture_or_kickoff_ids_cannot_be_filled_without_source():
     dataset, coverage = load_and_validate(DEFAULT_DATASET, DEFAULT_COVERAGE)
     altered = copy.deepcopy(dataset)
-    altered["records"][0]["kickoff"] = "2020-09-03T18:45:00Z"
+    altered["records"][0]["kickoff"] = "2020-09-03T19:45:00Z"
     with pytest.raises(ValueError, match="Dataset digest"):
         validate_dataset(altered, coverage)
 
