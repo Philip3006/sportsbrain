@@ -124,6 +124,228 @@ def test_recency_window_definitions_are_fixed_and_modern_slices_are_present():
     assert backtest.CALENDAR_ERAS["2016_2019"] == ("2016-01-01", "2020-01-01")
 
 
+def test_cadence_periods_use_exact_calendar_cutoffs_and_skip_no_targets():
+    frame = _normalized(
+        [
+            _row("2015-12-31", "France", "Spain", 1, 0, "UEFA Euro qualification"),
+            _row("2016-01-01", "Germany", "Italy", 2, 0),
+            _row("2016-04-01", "Spain", "Portugal", 0, 0),
+            _row("2017-07-01", "France", "Germany", 1, 1),
+        ]
+    )
+    annual = backtest._cadence_periods(frame, "annual")
+    quarterly = backtest._cadence_periods(frame, "quarterly")
+
+    assert annual[16]["cutoff"] == pd.Timestamp("2016-01-01")
+    assert annual[16]["end_exclusive"] == pd.Timestamp("2017-01-01")
+    assert quarterly[0]["period"] == "2016Q1"
+    assert quarterly[0]["cutoff"] == pd.Timestamp("2016-01-01")
+    assert quarterly[0]["end_exclusive"] == pd.Timestamp("2016-04-01")
+    assert quarterly[1]["period"] == "2016Q2"
+    assert quarterly[1]["cutoff"] == pd.Timestamp("2016-04-01")
+    assert quarterly[1]["end_exclusive"] == pd.Timestamp("2016-07-01")
+    assert quarterly[5]["period"] == "2017Q2"
+    assert quarterly[5]["eligible_target_count"] == 0
+    assert quarterly[6]["period"] == "2017Q3"
+    assert quarterly[6]["eligible_target_count"] == 1
+
+
+def test_cadence_models_fit_strictly_before_shared_boundary_and_freeze(monkeypatch):
+    rows = [
+        _row("1999-12-31", "Italy", "France", 1, 0, "UEFA Euro qualification"),
+        _row("2015-12-31", "France", "Spain", 1, 0, "UEFA Euro qualification"),
+        _row("2016-01-01", "Germany", "Italy", 2, 0),
+        _row("2016-01-01", "Portugal", "Netherlands", 1, 1, "Friendly"),
+        _row("2016-04-01", "Germany", "Portugal", 0, 0),
+    ]
+    frame = _normalized(rows)
+    fit_calls = []
+
+    def fake_fit(training, today, max_iter, prior_params):
+        fit_calls.append((training.copy(), today))
+        return {"cutoff": today}
+
+    monkeypatch.setattr(backtest.dc, "fit", fake_fit)
+    monkeypatch.setattr(
+        backtest.dc,
+        "predict_match",
+        lambda home, away, params, neutral: {
+            "p_home": 0.5,
+            "p_draw": 0.3,
+            "p_away": 0.2,
+        },
+    )
+    cutoffs = [pd.Timestamp("2016-01-01"), pd.Timestamp("2016-04-01")]
+    snapshots = backtest.build_elo_state_snapshots_before(frame, cutoffs)
+    predictions, blocks = backtest.predict_cadence_matched(
+        frame,
+        cadence="quarterly",
+        elo_snapshots=snapshots,
+        boundary_cache={},
+    )
+
+    assert [cutoff for _, cutoff in fit_calls] == cutoffs
+    for training, cutoff in fit_calls:
+        assert training["date"].max() < cutoff
+        assert not training["date"].ge(cutoff).any()
+    assert snapshots[pd.Timestamp("2016-01-01")]["training_max_date"] == "2015-12-31"
+    assert snapshots[pd.Timestamp("2016-01-01")]["training_match_count"] == 2
+    assert snapshots[pd.Timestamp("2016-04-01")]["training_max_date"] == "2016-01-01"
+    assert predictions[2]["elo"]["training_cutoff_exclusive"] == "2016-01-01"
+    assert predictions[3]["elo"]["training_cutoff_exclusive"] == "2016-01-01"
+    assert predictions[4]["elo"]["training_cutoff_exclusive"] == "2016-04-01"
+    assert all(
+        block["both_models_share_cutoff"]
+        for block in blocks
+        if block["status"] == "fit"
+    )
+    assert all(
+        block["strict_prior_cutoff"] for block in blocks if block["status"] == "fit"
+    )
+
+    fit_calls.clear()
+    annual_cutoff = pd.Timestamp("2016-01-01")
+    annual_snapshots = backtest.build_elo_state_snapshots_before(
+        frame, [pd.Timestamp("2015-01-01"), annual_cutoff]
+    )
+    annual_predictions, annual_blocks = backtest.predict_cadence_matched(
+        frame,
+        cadence="annual",
+        elo_snapshots=annual_snapshots,
+        boundary_cache={},
+    )
+    assert [cutoff for _, cutoff in fit_calls] == [
+        pd.Timestamp("2015-01-01"),
+        annual_cutoff,
+    ]
+    assert fit_calls[0][0]["date"].max() == pd.Timestamp("1999-12-31")
+    assert fit_calls[1][0]["date"].max() == pd.Timestamp("2015-12-31")
+    assert annual_predictions[2]["elo"]["training_cutoff_exclusive"] == "2016-01-01"
+    assert annual_predictions[3]["elo"]["training_cutoff_exclusive"] == "2016-01-01"
+    annual_fit = next(block for block in annual_blocks if block["status"] == "fit")
+    assert annual_fit["both_models_share_cutoff"] is True
+    assert annual_fit["strict_prior_cutoff"] is True
+
+    changed_rows = list(rows)
+    changed_rows[2] = {**changed_rows[2], "home_score": 0, "away_score": 5}
+    changed = _normalized(changed_rows)
+    changed_snapshots = backtest.build_elo_state_snapshots_before(changed, cutoffs)
+    changed_predictions, _ = backtest.predict_cadence_matched(
+        changed,
+        cadence="quarterly",
+        elo_snapshots=changed_snapshots,
+        boundary_cache={},
+    )
+    assert (
+        predictions[2]["elo"]["probabilities"]
+        == changed_predictions[2]["elo"]["probabilities"]
+    )
+    assert (
+        predictions[3]["elo"]["probabilities"]
+        == changed_predictions[3]["elo"]["probabilities"]
+    )
+    assert (
+        predictions[4]["elo"]["probabilities"]
+        != changed_predictions[4]["elo"]["probabilities"]
+    )
+
+
+def test_cadence_paired_metrics_use_identical_rows_and_bootstrap_is_deterministic():
+    frame = _normalized(
+        [
+            _row("2016-01-01", "Germany", "Italy", 2, 0),
+            _row("2016-06-01", "France", "Spain", 0, 0),
+            _row("2016-12-31", "Portugal", "Netherlands", 1, 0),
+        ]
+    )
+    records = []
+    for row in frame.itertuples(index=False):
+        predictions = {
+            backtest.ANNUAL_DC_MODEL: {"probabilities": [0.55, 0.25, 0.20]},
+        }
+        if int(row.source_row_id) != 2:
+            predictions[backtest.ANNUAL_ELO_MODEL] = {
+                "probabilities": [0.35, 0.35, 0.30]
+            }
+        records.append(
+            {
+                "source_row_id": int(row.source_row_id),
+                "date": row.date.date().isoformat(),
+                "outcome": int(row.outcome),
+                "predictions": predictions,
+            }
+        )
+    cohorts = backtest.build_cohorts(frame, backtest.build_uefa_team_set(frame))
+    report = backtest._cadence_metric_report(
+        frame,
+        records,
+        cohorts,
+        cadence="annual",
+        bootstrap_replicates=25,
+    )
+    entry = report["cohorts"]["all_competitive"]["2016_onward"]
+    pair = entry["paired_comparison"]
+
+    assert entry["eligible_matches"] == 3
+    assert entry["models"][backtest.ANNUAL_DC_MODEL]["matches_evaluated"] == 3
+    assert entry["models"][backtest.ANNUAL_ELO_MODEL]["matches_evaluated"] == 2
+    assert pair["same_fixtures_for_both_models"] is True
+    assert pair["paired_matches"] == 2
+    assert (
+        pair["model_metrics_on_paired_fixtures"][backtest.ANNUAL_DC_MODEL][
+            "matches_evaluated"
+        ]
+        == 2
+    )
+    expected = backtest._bootstrap_paired_dc_elo_brier(
+        records,
+        dc_model=backtest.ANNUAL_DC_MODEL,
+        elo_model=backtest.ANNUAL_ELO_MODEL,
+        replicates=25,
+        seed=20261203,
+    )
+    assert pair["date_cluster_bootstrap"] == expected
+    assert pair["date_cluster_bootstrap"]["paired_matches"] == 2
+    assert (
+        "expected_calibration_error_10_bins_mean_one_vs_rest"
+        in pair["model_metrics_on_paired_fixtures"][backtest.ANNUAL_DC_MODEL]["metrics"]
+    )
+
+
+def test_launch_relevance_uses_only_cadence_matched_intervals():
+    report = {
+        cadence: {
+            "cohorts": {
+                cohort: {
+                    window: {
+                        "paired_comparison": {
+                            "date_cluster_bootstrap": {
+                                "difference_interval": {
+                                    "lower_95": 0.001,
+                                    "upper_95": 0.02,
+                                }
+                            }
+                        }
+                    }
+                    for cohort, window in (
+                        ("all_competitive", "2016_onward"),
+                        ("all_competitive", "2020_onward"),
+                        ("uefa_competitive_non_nl", "2016_onward"),
+                        ("uefa_competitive_non_nl", "2020_onward"),
+                    )
+                }
+                for cohort in ("all_competitive", "uefa_competitive_non_nl")
+            }
+        }
+        for cadence in ("annual", "quarterly")
+    }
+    result = backtest._classify_cadence_launch_relevance(report)
+    assert result["classification"] == "CRITICAL_MODEL_RED_FLAG"
+    assert result["basis"].startswith("cadence_matched_evaluations_only")
+    assert len(result["significant_positive_dc_minus_elo"]["annual"]) == 4
+    assert len(result["significant_positive_dc_minus_elo"]["quarterly"]) == 4
+
+
 def test_metric_computation_reports_multiclass_scores_calibration_and_favorites():
     rows = [
         {"outcome": 0, "probabilities": [0.7, 0.2, 0.1]},
@@ -274,6 +496,7 @@ def test_backtest_output_keeps_market_model_unavailable_and_side_effects_false(
             _row("1999-12-31", "France", "Spain", 1, 0, "UEFA Euro qualification"),
             _row("2000-01-01", "Germany", "Italy", 2, 0, "UEFA Nations League"),
             _row("2001-01-01", "Spain", "Portugal", 0, 0, "Friendly"),
+            _row("2016-01-01", "Italy", "France", 1, 1),
         ]
     )
     monkeypatch.setattr(backtest.dc, "fit", lambda *args, **kwargs: object())
@@ -326,3 +549,23 @@ def test_backtest_output_keeps_market_model_unavailable_and_side_effects_false(
     )
     assert first["safety"]["provider_requests"] == 0
     assert first["safety"]["runtime_mutations"] == 0
+    assert first["models"]["dixon_coles"]["comparison_label"] == (
+        "COARSE_STALENESS_SENSITIVITY"
+    )
+    assert first["models"]["elo"]["comparison_label"] == (
+        "POINT_IN_TIME_ELO_HIGH_FRESHNESS_BASELINE"
+    )
+    assert first["comparison_hierarchy"]["primary_modern_sensitivity"] == (
+        "QUARTERLY_CADENCE_MATCHED_PRIMARY_MODERN_SENSITIVITY"
+    )
+    assert first["launch_relevance"]["basis"].startswith(
+        "cadence_matched_evaluations_only"
+    )
+    assert first["no_lookahead_audit"]["cadence_matched_verified"] is True
+    assert first["paired_date_cluster_bootstrap"]["all_competitive_2016_onward"]
+    report = backtest.render_markdown_report(first)
+    assert report.index("Cadence-matched model-family comparison") < report.index(
+        "COARSE_STALENESS_SENSITIVITY"
+    )
+    assert "POINT_IN_TIME_ELO_HIGH_FRESHNESS_BASELINE" in report
+    assert "Paired date-cluster bootstrap (95% intervals)" in report

@@ -2,8 +2,9 @@
 
 This module consumes a caller-supplied local copy of the canonical
 ``martj42/international_results`` CSV. It never downloads data, reads odds from
-providers, or calls production/runtime/betting code. The only causal model
-predictions emitted are block-frozen Dixon-Coles and point-in-time Elo scores.
+providers, or calls production/runtime/betting code. Causal model predictions include
+five-year, annual, and quarterly frozen Dixon-Coles sensitivities plus annual,
+quarterly, and point-in-time Elo baselines.
 """
 
 from __future__ import annotations
@@ -55,6 +56,16 @@ CALENDAR_ERAS: dict[str, tuple[str, str]] = {
 }
 TEAM_METRIC_MIN_APPEARANCES = 25
 MODEL_NAMES = ("dixon_coles", "elo", "empirical_frequency")
+ANNUAL_DC_MODEL = "dixon_coles_annual_frozen"
+ANNUAL_ELO_MODEL = "elo_annual_frozen"
+QUARTERLY_DC_MODEL = "dixon_coles_quarterly_frozen"
+QUARTERLY_ELO_MODEL = "elo_quarterly_frozen"
+CADENCE_MODEL_NAMES = (
+    ANNUAL_DC_MODEL,
+    ANNUAL_ELO_MODEL,
+    QUARTERLY_DC_MODEL,
+    QUARTERLY_ELO_MODEL,
+)
 CURRENT_RELEVANT_TEAMS = {
     "Germany",
     "France",
@@ -248,30 +259,71 @@ def predict_elo_point_in_time(results: pd.DataFrame) -> dict[int, dict[str, Any]
                     training_cutoff_exclusive=match_date.date().isoformat(),
                 )
 
-        base_ratings = {
-            team: ratings.get(team, ELO_DEFAULT)
-            for team in set(day.home_team) | set(day.away_team)
-        }
-        daily_deltas: defaultdict[str, float] = defaultdict(float)
-        for row in day.itertuples(index=False):
-            updated = update_ratings(
-                base_ratings,
-                str(row.home_team),
-                str(row.away_team),
-                int(row.home_score),
-                int(row.away_score),
-                k=_elo_k_for_tournament(str(row.tournament)),
-                neutral=bool(row.neutral),
-            )
-            for team in (str(row.home_team), str(row.away_team)):
-                daily_deltas[team] += updated[team] - base_ratings.get(
-                    team, ELO_DEFAULT
-                )
-        for team, delta in daily_deltas.items():
-            ratings[team] = base_ratings.get(team, ELO_DEFAULT) + delta
+        ratings = _update_elo_date_block(ratings, day)
         seen_matches += len(day)
         max_training_date = pd.Timestamp(match_date)
     return predictions
+
+
+def _update_elo_date_block(
+    ratings: dict[str, float], day: pd.DataFrame
+) -> dict[str, float]:
+    """Apply one date's results simultaneously, preserving the PIT Elo convention."""
+    base_ratings = {
+        team: ratings.get(team, ELO_DEFAULT)
+        for team in set(day.home_team) | set(day.away_team)
+    }
+    daily_deltas: defaultdict[str, float] = defaultdict(float)
+    for row in day.itertuples(index=False):
+        updated = update_ratings(
+            base_ratings,
+            str(row.home_team),
+            str(row.away_team),
+            int(row.home_score),
+            int(row.away_score),
+            k=_elo_k_for_tournament(str(row.tournament)),
+            neutral=bool(row.neutral),
+        )
+        for team in (str(row.home_team), str(row.away_team)):
+            daily_deltas[team] += updated[team] - base_ratings.get(team, ELO_DEFAULT)
+    next_ratings = dict(ratings)
+    for team, delta in daily_deltas.items():
+        next_ratings[team] = base_ratings.get(team, ELO_DEFAULT) + delta
+    return next_ratings
+
+
+def build_elo_state_snapshots_before(
+    results: pd.DataFrame, cutoffs: list[pd.Timestamp]
+) -> dict[pd.Timestamp, dict[str, Any]]:
+    """Build exact pre-cutoff Elo states in one chronological pass."""
+    ordered = results.sort_values(["date", "source_row_id"], kind="mergesort")
+    date_blocks = [
+        (pd.Timestamp(day_date), day.sort_values("source_row_id", kind="mergesort"))
+        for day_date, day in ordered.groupby("date", sort=True)
+    ]
+    snapshots: dict[pd.Timestamp, dict[str, Any]] = {}
+    ratings: dict[str, float] = {}
+    processed_matches = 0
+    training_max_date: pd.Timestamp | None = None
+    cursor = 0
+    for cutoff in sorted({pd.Timestamp(value) for value in cutoffs}):
+        while cursor < len(date_blocks) and date_blocks[cursor][0] < cutoff:
+            day_date, day = date_blocks[cursor]
+            ratings = _update_elo_date_block(ratings, day)
+            processed_matches += len(day)
+            training_max_date = day_date
+            cursor += 1
+        if training_max_date is not None and training_max_date >= cutoff:
+            raise AssertionError("Elo snapshot includes data on/after its cutoff")
+        snapshots[cutoff] = {
+            "ratings": dict(ratings),
+            "training_match_count": processed_matches,
+            "training_max_date": training_max_date.date().isoformat()
+            if training_max_date is not None
+            else None,
+            "training_cutoff_exclusive": cutoff.date().isoformat(),
+        }
+    return snapshots
 
 
 def predict_dc_block_frozen(
@@ -354,6 +406,197 @@ def predict_dc_block_frozen(
             }
         )
     return predictions, blocks
+
+
+def _cadence_periods(results: pd.DataFrame, cadence: str) -> list[dict[str, Any]]:
+    """Return deterministic annual or quarterly evaluation intervals."""
+    if results.empty:
+        return []
+    last_date = pd.Timestamp(results["date"].max())
+    periods: list[dict[str, Any]] = []
+    if cadence == "annual":
+        for year in range(EVALUATION_START.year, last_date.year + 1):
+            start = pd.Timestamp(year=year, month=1, day=1)
+            end = pd.Timestamp(year=year + 1, month=1, day=1)
+            targets = results.loc[
+                results["date"].ge(max(start, EVALUATION_START))
+                & results["date"].lt(end)
+            ]
+            periods.append(
+                {
+                    "period": str(year),
+                    "cutoff": max(start, EVALUATION_START),
+                    "end_exclusive": end,
+                    "eligible_target_count": len(targets),
+                }
+            )
+    elif cadence == "quarterly":
+        cursor = pd.Timestamp("2016-01-01")
+        while cursor <= last_date:
+            end = (
+                pd.Timestamp(year=cursor.year + 1, month=1, day=1)
+                if cursor.month == 10
+                else pd.Timestamp(year=cursor.year, month=cursor.month + 3, day=1)
+            )
+            targets = results.loc[results["date"].ge(cursor) & results["date"].lt(end)]
+            periods.append(
+                {
+                    "period": f"{cursor.year}Q{((cursor.month - 1) // 3) + 1}",
+                    "cutoff": cursor,
+                    "end_exclusive": end,
+                    "eligible_target_count": len(targets),
+                }
+            )
+            cursor = end
+    else:
+        raise ValueError("cadence must be 'annual' or 'quarterly'")
+    return periods
+
+
+def predict_cadence_matched(
+    results: pd.DataFrame,
+    *,
+    cadence: str,
+    max_iter: int = 2000,
+    elo_snapshots: dict[pd.Timestamp, dict[str, Any]] | None = None,
+    boundary_cache: dict[pd.Timestamp, dict[str, Any]] | None = None,
+) -> tuple[dict[int, dict[str, dict[str, Any]]], list[dict[str, Any]]]:
+    """Freeze canonical DC and Elo from the same prior-only annual/quarter cutoff."""
+    periods = _cadence_periods(results, cadence)
+    nonempty_cutoffs = [
+        pd.Timestamp(period["cutoff"])
+        for period in periods
+        if period["eligible_target_count"]
+    ]
+    snapshots = elo_snapshots or build_elo_state_snapshots_before(
+        results, nonempty_cutoffs
+    )
+    cache = boundary_cache if boundary_cache is not None else {}
+    predictions: dict[int, dict[str, dict[str, Any]]] = {}
+    audit_blocks: list[dict[str, Any]] = []
+    for period in periods:
+        cutoff = pd.Timestamp(period["cutoff"])
+        end = pd.Timestamp(period["end_exclusive"])
+        target = results.loc[results["date"].ge(cutoff) & results["date"].lt(end)]
+        if target.empty:
+            audit_blocks.append(
+                {
+                    "period": period["period"],
+                    "cadence": cadence,
+                    "status": "skipped_empty_period",
+                    "cutoff": cutoff.date().isoformat(),
+                    "end_exclusive": end.date().isoformat(),
+                    "eligible_target_count": 0,
+                }
+            )
+            continue
+        if cutoff not in snapshots:
+            raise AssertionError("Missing prior-only Elo state for cadence boundary")
+        if cutoff not in cache:
+            prior = results.loc[
+                results["is_competitive"] & results["date"].lt(cutoff)
+            ].copy()
+            if prior.empty or not pd.Timestamp(prior["date"].max()) < cutoff:
+                raise ValueError(
+                    f"No strict prior competitive data for {cutoff.date()}"
+                )
+            params = dc.fit(prior, today=cutoff, max_iter=max_iter, prior_params=None)
+            if hasattr(params, "attack") and hasattr(dc, "_check_bounds_hit"):
+                bound_hits = [
+                    {
+                        "parameter_group": group,
+                        "team": str(team),
+                        "value": float(value),
+                        "side": str(side),
+                    }
+                    for group, items in dc._check_bounds_hit(params).items()
+                    for team, value, side in items
+                ]
+            else:
+                bound_hits = []
+            elo_state = snapshots[cutoff]
+            if elo_state["training_max_date"] is not None and not (
+                pd.Timestamp(elo_state["training_max_date"]) < cutoff
+            ):
+                raise AssertionError(
+                    "Cadence Elo state is not strictly prior to cutoff"
+                )
+            cache[cutoff] = {
+                "params": params,
+                "training_match_count": len(prior),
+                "training_max_date": pd.Timestamp(prior["date"].max())
+                .date()
+                .isoformat(),
+                "optimizer_bound_hits": bound_hits,
+                "elo_state": elo_state,
+                "first_cadence": cadence,
+            }
+        prepared = cache[cutoff]
+        params = prepared["params"]
+        elo_state = prepared["elo_state"]
+        predicted_dc = 0
+        for row in target.itertuples(index=False):
+            source_id = int(row.source_row_id)
+            try:
+                dc_probs = dc.predict_match(
+                    str(row.home_team),
+                    str(row.away_team),
+                    params,
+                    neutral=bool(row.neutral),
+                )
+            except ValueError:
+                dc_prediction = None
+            else:
+                dc_prediction = _model_record(
+                    (dc_probs["p_home"], dc_probs["p_draw"], dc_probs["p_away"]),
+                    training_max_date=prepared["training_max_date"],
+                    training_match_count=prepared["training_match_count"],
+                    training_cutoff_exclusive=cutoff.date().isoformat(),
+                    fit_date=cutoff.date().isoformat(),
+                )
+                predicted_dc += 1
+            elo_probs = elo_win_probability(
+                elo_state["ratings"].get(str(row.home_team), ELO_DEFAULT),
+                elo_state["ratings"].get(str(row.away_team), ELO_DEFAULT),
+                neutral=bool(row.neutral),
+            )
+            predictions[source_id] = {
+                "dixon_coles": dc_prediction,
+                "elo": _model_record(
+                    elo_probs,
+                    training_max_date=elo_state["training_max_date"],
+                    training_match_count=elo_state["training_match_count"],
+                    training_cutoff_exclusive=cutoff.date().isoformat(),
+                    fit_date=cutoff.date().isoformat(),
+                ),
+            }
+        audit_blocks.append(
+            {
+                "period": period["period"],
+                "cadence": cadence,
+                "status": "fit",
+                "cutoff": cutoff.date().isoformat(),
+                "end_exclusive": end.date().isoformat(),
+                "eligible_target_count": len(target),
+                "predicted_dc_count": predicted_dc,
+                "predicted_elo_count": len(target),
+                "dc_training_match_count": prepared["training_match_count"],
+                "dc_training_max_date": prepared["training_max_date"],
+                "elo_training_match_count": elo_state["training_match_count"],
+                "elo_training_max_date": elo_state["training_max_date"],
+                "both_models_share_cutoff": True,
+                "strict_prior_cutoff": bool(
+                    pd.Timestamp(prepared["training_max_date"]) < cutoff
+                    and (
+                        elo_state["training_max_date"] is None
+                        or pd.Timestamp(elo_state["training_max_date"]) < cutoff
+                    )
+                ),
+                "optimizer_bound_hits": prepared["optimizer_bound_hits"],
+                "shared_boundary_fit_reused": prepared["first_cadence"] != cadence,
+            }
+        )
+    return predictions, audit_blocks
 
 
 def predict_empirical_prior(results: pd.DataFrame) -> dict[int, dict[str, Any]]:
@@ -615,6 +858,79 @@ def _bootstrap_brier(
     }
 
 
+def _bootstrap_paired_dc_elo_brier(
+    records: list[dict[str, Any]],
+    *,
+    dc_model: str,
+    elo_model: str,
+    replicates: int = 1000,
+    seed: int = 20260928,
+) -> dict[str, Any]:
+    """Date-cluster bootstrap for a cadence-matched pair on identical fixtures."""
+    paired = [
+        row
+        for row in records
+        if row.get("predictions", {}).get(dc_model)
+        and row.get("predictions", {}).get(elo_model)
+    ]
+    if not paired:
+        return {"status": "not_available", "reason": "No paired DC/Elo forecasts"}
+    outcomes = np.asarray([row["outcome"] for row in paired], dtype=int)
+    probabilities = {
+        model: np.asarray(
+            [row["predictions"][model]["probabilities"] for row in paired],
+            dtype=float,
+        )
+        for model in (dc_model, elo_model)
+    }
+    grouped: defaultdict[str, list[int]] = defaultdict(list)
+    for index, row in enumerate(paired):
+        grouped[str(row["date"])].append(index)
+    dates = sorted(grouped)
+    clusters = [np.asarray(grouped[date], dtype=int) for date in dates]
+    one_hot = np.zeros((len(paired), 3), dtype=float)
+    one_hot[np.arange(len(paired)), outcomes] = 1.0
+    row_losses = {
+        model: np.square(probabilities[model] - one_hot).sum(axis=1)
+        for model in (dc_model, elo_model)
+    }
+    cluster_losses = {
+        model: np.asarray([row_losses[model][cluster].sum() for cluster in clusters])
+        for model in (dc_model, elo_model)
+    }
+    cluster_sizes = np.asarray([len(cluster) for cluster in clusters], dtype=float)
+    point_scores = {
+        model: float(row_losses[model].mean()) for model in (dc_model, elo_model)
+    }
+    point_difference = point_scores[dc_model] - point_scores[elo_model]
+    rng = np.random.default_rng(seed)
+    selected = rng.integers(0, len(clusters), size=(replicates, len(clusters)))
+    sample_sizes = cluster_sizes[selected].sum(axis=1)
+    deltas = (
+        cluster_losses[dc_model][selected].sum(axis=1)
+        - cluster_losses[elo_model][selected].sum(axis=1)
+    ) / sample_sizes
+    return {
+        "status": "computed",
+        "method": "paired date-cluster bootstrap; same-date fixtures resampled together, both models scored on identical fixtures",
+        "confidence_level": 0.95,
+        "replicates": replicates,
+        "seed": seed,
+        "date_clusters": len(dates),
+        "paired_matches": len(paired),
+        "paired_point_estimates": {
+            f"{dc_model}_brier": point_scores[dc_model],
+            f"{elo_model}_brier": point_scores[elo_model],
+            "dixon_coles_minus_elo_brier": point_difference,
+        },
+        "difference_interval": {
+            "lower_95": float(np.quantile(deltas, 0.025)),
+            "median": float(np.quantile(deltas, 0.5)),
+            "upper_95": float(np.quantile(deltas, 0.975)),
+        },
+    }
+
+
 def audit_historical_odds(path: Path | None, results: pd.DataFrame) -> dict[str, Any]:
     """Audit local odds snapshots with a conservative date-only pre-match cutoff."""
     if path is None or not Path(path).is_file():
@@ -730,6 +1046,246 @@ def _summaries_by_model(
             _model_rows(records, model), eligible_count=eligible_count
         )
         for model in MODEL_NAMES
+    }
+
+
+def _cadence_metric_report(
+    results: pd.DataFrame,
+    records: list[dict[str, Any]],
+    cohorts: dict[str, pd.Series],
+    *,
+    cadence: str,
+    bootstrap_replicates: int,
+) -> dict[str, Any]:
+    """Summarize each frozen cadence with marginal coverage and paired metrics."""
+    if cadence == "annual":
+        dc_model, elo_model = ANNUAL_DC_MODEL, ANNUAL_ELO_MODEL
+        windows: dict[str, pd.Series] = {
+            name: results["date"].ge(pd.Timestamp(start))
+            for name, start in RECENCY_WINDOWS.items()
+        }
+    elif cadence == "quarterly":
+        dc_model, elo_model = QUARTERLY_DC_MODEL, QUARTERLY_ELO_MODEL
+        windows = {
+            name: results["date"].ge(pd.Timestamp(RECENCY_WINDOWS[name]))
+            for name in (
+                "2016_onward",
+                "2020_onward",
+            )
+        }
+    else:
+        raise ValueError("cadence must be 'annual' or 'quarterly'")
+    latest_complete_year = int(results["date"].max().year)
+    if results["date"].max().month < 12:
+        latest_complete_year -= 1
+    windows["latest_available_complete_calendar_year"] = results["date"].dt.year.eq(
+        latest_complete_year
+    )
+    reports: dict[str, Any] = {}
+    cohort_names = (
+        "uefa_nations_league",
+        "uefa_competitive_non_nl",
+        "all_competitive",
+        "friendlies",
+    )
+    for cohort_index, cohort_name in enumerate(cohort_names):
+        reports[cohort_name] = {}
+        for window_index, (window_name, window_mask) in enumerate(windows.items()):
+            mask = cohorts[cohort_name] & window_mask
+            eligible = int(mask.sum())
+            selected = _filter_records(records, mask)
+            paired = [
+                row
+                for row in selected
+                if row.get("predictions", {}).get(dc_model)
+                and row.get("predictions", {}).get(elo_model)
+            ]
+            model_reports = {
+                dc_model: summarize_prediction_rows(
+                    _model_rows(selected, dc_model), eligible_count=eligible
+                ),
+                elo_model: summarize_prediction_rows(
+                    _model_rows(selected, elo_model), eligible_count=eligible
+                ),
+            }
+            paired_summaries = {
+                model: summarize_prediction_rows(
+                    _model_rows(paired, model), eligible_count=eligible
+                )
+                for model in (dc_model, elo_model)
+            }
+            dc_metrics = paired_summaries[dc_model]["metrics"]
+            elo_metrics = paired_summaries[elo_model]["metrics"]
+            paired_comparison = {
+                "paired_matches": len(paired),
+                "paired_coverage": len(paired) / eligible if eligible else 0.0,
+                "same_fixtures_for_both_models": True,
+                "model_metrics_on_paired_fixtures": paired_summaries,
+                "brier_difference_dc_minus_elo": (
+                    dc_metrics["brier_score_multiclass"]
+                    - elo_metrics["brier_score_multiclass"]
+                    if dc_metrics and elo_metrics
+                    else None
+                ),
+                "date_cluster_bootstrap": _bootstrap_paired_dc_elo_brier(
+                    selected,
+                    dc_model=dc_model,
+                    elo_model=elo_model,
+                    replicates=bootstrap_replicates,
+                    seed=20261001 + cohort_index * 100 + window_index,
+                ),
+            }
+            reports[cohort_name][window_name] = {
+                "eligible_matches": eligible,
+                "models": model_reports,
+                "paired_comparison": paired_comparison,
+            }
+    return {
+        "cadence": cadence,
+        "comparison_label": "ANNUAL_CADENCE_MATCHED_MODEL_FAMILY"
+        if cadence == "annual"
+        else "QUARTERLY_CADENCE_MATCHED_PRIMARY_MODERN_SENSITIVITY",
+        "models_frozen_together": True,
+        "training_cutoff_rule": "both DC and Elo use only matches strictly before the same calendar boundary and remain frozen until the next boundary",
+        "cohorts": reports,
+    }
+
+
+def _cadence_gap_decomposition(
+    results: pd.DataFrame,
+    records: list[dict[str, Any]],
+    cohorts: dict[str, pd.Series],
+) -> dict[str, Any]:
+    """Compare coarse and cadence-matched gaps on one common fixture intersection."""
+    compared_models = (
+        "dixon_coles",
+        "elo",
+        ANNUAL_DC_MODEL,
+        ANNUAL_ELO_MODEL,
+        QUARTERLY_DC_MODEL,
+        QUARTERLY_ELO_MODEL,
+    )
+    windows: dict[str, pd.Series] = {
+        name: results["date"].ge(pd.Timestamp(RECENCY_WINDOWS[name]))
+        for name in ("2016_onward", "2020_onward")
+    }
+    latest_complete_year = int(results["date"].max().year)
+    if results["date"].max().month < 12:
+        latest_complete_year -= 1
+    windows["latest_available_complete_calendar_year"] = results["date"].dt.year.eq(
+        latest_complete_year
+    )
+    output: dict[str, Any] = {}
+    for cohort_name in (
+        "uefa_nations_league",
+        "uefa_competitive_non_nl",
+        "all_competitive",
+        "friendlies",
+    ):
+        output[cohort_name] = {}
+        for window_name, window_mask in windows.items():
+            mask = cohorts[cohort_name] & window_mask
+            selected = _filter_records(records, mask)
+            common = [
+                row
+                for row in selected
+                if all(
+                    row.get("predictions", {}).get(model) for model in compared_models
+                )
+            ]
+            if not common:
+                output[cohort_name][window_name] = {
+                    "status": "not_available",
+                    "common_fixture_count": 0,
+                }
+                continue
+            outcomes = np.asarray([row["outcome"] for row in common], dtype=int)
+            scores = {
+                model: float(
+                    brier_score_multiclass(
+                        np.asarray(
+                            [
+                                row["predictions"][model]["probabilities"]
+                                for row in common
+                            ],
+                            dtype=float,
+                        ),
+                        outcomes,
+                    )
+                )
+                for model in compared_models
+            }
+            coarse_gap = scores["dixon_coles"] - scores["elo"]
+            annual_gap = scores[ANNUAL_DC_MODEL] - scores[ANNUAL_ELO_MODEL]
+            quarterly_gap = scores[QUARTERLY_DC_MODEL] - scores[QUARTERLY_ELO_MODEL]
+            output[cohort_name][window_name] = {
+                "status": "computed",
+                "common_fixture_count": len(common),
+                "common_fixture_coverage": len(common) / int(mask.sum())
+                if int(mask.sum())
+                else 0.0,
+                "brier_scores_on_same_fixtures": scores,
+                "coarse_5_year_dc_minus_point_in_time_elo": coarse_gap,
+                "annual_dc_minus_annual_elo": annual_gap,
+                "quarterly_dc_minus_quarterly_elo": quarterly_gap,
+                "annual_gap_remaining_fraction_of_coarse": annual_gap / coarse_gap
+                if abs(coarse_gap) > 1e-12
+                else None,
+                "quarterly_gap_remaining_fraction_of_coarse": quarterly_gap / coarse_gap
+                if abs(coarse_gap) > 1e-12
+                else None,
+                "interpretation": "Fractions compare signed Brier gaps on the same common fixture intersection; negative or above-1 values indicate reversal or a larger matched gap.",
+            }
+    return output
+
+
+def _classify_cadence_launch_relevance(
+    cadence_reports: dict[str, Any],
+) -> dict[str, Any]:
+    """Base model warning only on matched annual/quarterly confidence intervals."""
+    principal = (
+        ("all_competitive", "2016_onward"),
+        ("all_competitive", "2020_onward"),
+        ("uefa_competitive_non_nl", "2016_onward"),
+        ("uefa_competitive_non_nl", "2020_onward"),
+    )
+    significant: dict[str, list[dict[str, Any]]] = {"annual": [], "quarterly": []}
+    for cadence in ("annual", "quarterly"):
+        report = cadence_reports[cadence]["cohorts"]
+        for cohort_name, window_name in principal:
+            comparison = report[cohort_name][window_name]["paired_comparison"]
+            interval = comparison["date_cluster_bootstrap"].get(
+                "difference_interval", {}
+            )
+            lower = interval.get("lower_95")
+            if lower is not None and lower > 0:
+                significant[cadence].append(
+                    {
+                        "cohort": cohort_name,
+                        "window": window_name,
+                        "lower_95": lower,
+                    }
+                )
+    if len(significant["annual"]) == len(principal) and len(
+        significant["quarterly"]
+    ) == len(principal):
+        classification = "CRITICAL_MODEL_RED_FLAG"
+        reason = "Every principal all-competitive and UEFA non-NL modern interval is above zero under both annual and quarterly matched cadence."
+    elif significant["quarterly"] or significant["annual"]:
+        classification = "MODEL_WARNING"
+        reason = "At least one principal annual or quarterly cadence-matched modern comparison has a paired 95% Brier-difference interval wholly above zero."
+    else:
+        classification = "NO_CRITICAL_MODEL_RED_FLAG"
+        reason = "The cadence-matched principal modern comparisons do not show replicated DC-over-Elo Brier loss with date-clustered 95% intervals wholly above zero. This is not evidence of market edge or launch authorization."
+    return {
+        "classification": classification,
+        "basis": "cadence_matched_evaluations_only; coarse 5-year DC vs point-in-time Elo is excluded from launch classification",
+        "principal_cohorts": [
+            {"cohort": cohort, "window": window} for cohort, window in principal
+        ],
+        "significant_positive_dc_minus_elo": significant,
+        "reason": reason,
+        "production_authority_or_activation": "not granted by research metrics",
     }
 
 
@@ -915,7 +1471,7 @@ def run_backtest(
     dc_max_iter: int = 2000,
     bootstrap_replicates: int = 1000,
 ) -> dict[str, Any]:
-    """Run descriptive cohorts and modern block-frozen causal predictions."""
+    """Run descriptive cohorts and causal predictions across frozen cadences."""
     normalized_row_count = len(results)
     clean = add_classification(results)
     duplicate_conflicts = clean.duplicated(
@@ -940,6 +1496,31 @@ def run_backtest(
     elo_predictions = predict_elo_point_in_time(clean)
     dc_predictions, dc_blocks = predict_dc_block_frozen(clean, max_iter=dc_max_iter)
     empirical_predictions = predict_empirical_prior(clean)
+    annual_periods = _cadence_periods(clean, "annual")
+    quarterly_periods = _cadence_periods(clean, "quarterly")
+    cadence_cutoffs = sorted(
+        {
+            pd.Timestamp(period["cutoff"])
+            for period in annual_periods + quarterly_periods
+            if period["eligible_target_count"]
+        }
+    )
+    elo_snapshots = build_elo_state_snapshots_before(clean, cadence_cutoffs)
+    cadence_boundary_cache: dict[pd.Timestamp, dict[str, Any]] = {}
+    annual_predictions, annual_blocks = predict_cadence_matched(
+        clean,
+        cadence="annual",
+        max_iter=dc_max_iter,
+        elo_snapshots=elo_snapshots,
+        boundary_cache=cadence_boundary_cache,
+    )
+    quarterly_predictions, quarterly_blocks = predict_cadence_matched(
+        clean,
+        cadence="quarterly",
+        max_iter=dc_max_iter,
+        elo_snapshots=elo_snapshots,
+        boundary_cache=cadence_boundary_cache,
+    )
 
     evaluation_rows: list[dict[str, Any]] = []
     for row in clean.loc[clean["date"].ge(EVALUATION_START)].itertuples(index=False):
@@ -952,6 +1533,15 @@ def run_backtest(
         ):
             if source_id in mapping:
                 predictions[name] = mapping[source_id]
+        for model_name, mapping, component in (
+            (ANNUAL_DC_MODEL, annual_predictions, "dixon_coles"),
+            (ANNUAL_ELO_MODEL, annual_predictions, "elo"),
+            (QUARTERLY_DC_MODEL, quarterly_predictions, "dixon_coles"),
+            (QUARTERLY_ELO_MODEL, quarterly_predictions, "elo"),
+        ):
+            details = mapping.get(source_id, {}).get(component)
+            if details is not None:
+                predictions[model_name] = details
         evaluation_rows.append(
             {
                 "source_row_id": source_id,
@@ -1172,6 +1762,60 @@ def run_backtest(
                 },
             }
 
+    cadence_matched_evaluations = {
+        "annual": _cadence_metric_report(
+            clean,
+            evaluation_rows,
+            cohorts,
+            cadence="annual",
+            bootstrap_replicates=bootstrap_replicates,
+        ),
+        "quarterly": _cadence_metric_report(
+            clean,
+            evaluation_rows,
+            cohorts,
+            cadence="quarterly",
+            bootstrap_replicates=bootstrap_replicates,
+        ),
+    }
+    cadence_launch_relevance = _classify_cadence_launch_relevance(
+        cadence_matched_evaluations
+    )
+    cadence_gap_comparison = _cadence_gap_decomposition(clean, evaluation_rows, cohorts)
+    cadence_audit = {
+        "annual_blocks": annual_blocks,
+        "quarterly_blocks": quarterly_blocks,
+        "both_models_share_each_cutoff": all(
+            block.get("both_models_share_cutoff") is True
+            for block in annual_blocks + quarterly_blocks
+            if block["status"] == "fit"
+        ),
+        "all_fitted_blocks_strictly_prior": all(
+            block.get("strict_prior_cutoff") is True
+            for block in annual_blocks + quarterly_blocks
+            if block["status"] == "fit"
+        ),
+        "same_day_or_same_period_results_used_before_next_boundary": False,
+        "empty_quarters_skipped_deterministically": all(
+            block["eligible_target_count"] == 0
+            for block in quarterly_blocks
+            if block["status"] == "skipped_empty_period"
+        ),
+        "unique_fit_boundaries": len(cadence_boundary_cache),
+        "shared_annual_quarterly_fit_boundaries": sum(
+            block.get("shared_boundary_fit_reused", False)
+            for block in quarterly_blocks
+            if block["status"] == "fit"
+        ),
+        "prediction_training_dates_strictly_before_prediction_dates": all(
+            pd.Timestamp(details["training_max_date"]) < pd.Timestamp(row["date"])
+            for row in evaluation_rows
+            for model in CADENCE_MODEL_NAMES
+            if (details := row["predictions"].get(model)) is not None
+            and details.get("training_max_date") is not None
+        ),
+    }
+
     # Conflicted source identities are not silently resolved.
     conflict_details = [
         {
@@ -1333,9 +1977,14 @@ def run_backtest(
                 row["predictions"].get(model, {}).get("training_max_date") is not None
                 and row["predictions"][model]["training_max_date"] < row["date"]
                 for row in evaluation_rows
-                for model in MODEL_NAMES
+                for model in (*MODEL_NAMES, *CADENCE_MODEL_NAMES)
                 if model in row["predictions"]
             ),
+            "cadence_matched_verified": cadence_audit[
+                "prediction_training_dates_strictly_before_prediction_dates"
+            ]
+            and cadence_audit["both_models_share_each_cutoff"]
+            and cadence_audit["all_fitted_blocks_strictly_prior"],
             "dc_fit_blocks": dc_blocks,
             "dc_optimizer_bound_hit_count": sum(
                 len(block.get("optimizer_bound_hits", [])) for block in dc_blocks
@@ -1347,9 +1996,12 @@ def run_backtest(
             "evaluated_fixture_count": len(evaluation_rows),
             "model_prediction_counts": {
                 model: sum(model in row["predictions"] for row in evaluation_rows)
-                for model in MODEL_NAMES
+                for model in (*MODEL_NAMES, *CADENCE_MODEL_NAMES)
             },
         },
+        "cadence_matched_evaluations": cadence_matched_evaluations,
+        "cadence_matched_audit": cadence_audit,
+        "cadence_gap_decomposition": cadence_gap_comparison,
         "paired_date_cluster_bootstrap": bootstrap_reports,
         "calibration_and_signal_diagnostics": {
             "uefa_nations_league_causal_metrics_2000_onward": draw_metrics,
@@ -1371,6 +2023,7 @@ def run_backtest(
         },
         "models": {
             "dixon_coles": {
+                "comparison_label": "COARSE_STALENESS_SENSITIVITY",
                 "status": "causal_block_frozen_walk_forward",
                 "implementation": "src.models.dixon_coles.fit / predict_match",
                 "training_universe": "canonical competitive rows strictly before each five-year block cutoff",
@@ -1378,14 +2031,36 @@ def run_backtest(
                 "no_future_or_same_day_results": True,
             },
             "elo": {
+                "comparison_label": "POINT_IN_TIME_ELO_HIGH_FRESHNESS_BASELINE",
                 "status": "causal_point_in_time",
                 "implementation": "src.models.elo.update_ratings / elo_win_probability",
                 "training_universe": "all earlier source results; SportsBrain tournament K factors; date-block predictions precede same-day updates",
                 "no_future_or_same_day_results": True,
             },
             "empirical_frequency": {
+                "comparison_label": "COARSE_STALENESS_SENSITIVITY_BASELINE",
                 "status": "causal_baseline",
                 "training_universe": "strictly prior canonical competitive results, Laplace smoothed, refit per five-year block",
+            },
+            ANNUAL_DC_MODEL: {
+                "comparison_label": "ANNUAL_CADENCE_MATCHED_MODEL_FAMILY",
+                "status": "causal_annual_frozen",
+                "training_cutoff": "January 1; competitive training rows strictly before cutoff; frozen through calendar year",
+            },
+            ANNUAL_ELO_MODEL: {
+                "comparison_label": "ANNUAL_CADENCE_MATCHED_MODEL_FAMILY",
+                "status": "causal_annual_frozen",
+                "training_cutoff": "January 1; all source results strictly before same cutoff; frozen through calendar year",
+            },
+            QUARTERLY_DC_MODEL: {
+                "comparison_label": "QUARTERLY_CADENCE_MATCHED_PRIMARY_MODERN_SENSITIVITY",
+                "status": "causal_quarterly_frozen",
+                "training_cutoff": "January 1, April 1, July 1, October 1; competitive training rows strictly before cutoff; frozen through quarter",
+            },
+            QUARTERLY_ELO_MODEL: {
+                "comparison_label": "QUARTERLY_CADENCE_MATCHED_PRIMARY_MODERN_SENSITIVITY",
+                "status": "causal_quarterly_frozen",
+                "training_cutoff": "January 1, April 1, July 1, October 1; all source results strictly before same cutoff; frozen through quarter",
             },
             "causal_gbt": {
                 "status": "unavailable_without_historical_point_in_time_feature_store",
@@ -1415,35 +2090,14 @@ def run_backtest(
             "nations_league_shadow_signals_20260928": prior_shadow,
             "artifacts_modified": False,
         },
-        "launch_relevance": {
-            "classification": "MODEL_WARNING",
-            "reasons": [
-                "On the paired modern all-competitive sample, Dixon-Coles has a materially higher (worse) multiclass Brier score than Elo in both 2016+ and 2020+; the date-clustered 95% intervals for DC minus Elo are wholly above zero.",
-                "The UEFA non-Nations-League 2016+ transfer cohort shows the same DC-versus-Elo ordering; this is a warning about the results-only DC component, not a launch-size gate or production decision.",
-                "Causal GBT and the authentic-market stacker cannot be reconstructed without point-in-time feature and odds inputs, so market edge/EV and settlement ROI remain unverified.",
-                "No automatic production authority, activation, or betting conclusion follows from this research classification.",
-            ],
-            "decision_basis": {
-                "no_arbitrary_sample_threshold": True,
-                "evidence": {
-                    key: {
-                        "paired_point_estimates": value.get("paired_point_estimates"),
-                        "dc_minus_elo_95pct": value.get("intervals", {}).get(
-                            "dixon_coles_minus_elo_brier"
-                        ),
-                        "paired_matches": value.get("paired_matches"),
-                    }
-                    for key, value in bootstrap_reports.items()
-                    if key
-                    in {
-                        "all_competitive_2016_onward",
-                        "all_competitive_2020_onward",
-                        "uefa_non_nl_2016_onward",
-                    }
-                },
-            },
-            "production_authority_or_activation": "not granted by research metrics",
+        "comparison_hierarchy": {
+            "primary_modern_sensitivity": "QUARTERLY_CADENCE_MATCHED_PRIMARY_MODERN_SENSITIVITY",
+            "annual_comparison": "ANNUAL_CADENCE_MATCHED_MODEL_FAMILY",
+            "coarse_sensitivity": "COARSE_STALENESS_SENSITIVITY",
+            "high_freshness_reference": "POINT_IN_TIME_ELO_HIGH_FRESHNESS_BASELINE",
+            "legacy_cohort_and_tournament_model_fields": "retain the original five-year frozen DC versus point-in-time Elo summaries; interpret only as coarse staleness sensitivity",
         },
+        "launch_relevance": cadence_launch_relevance,
         "safety": {
             "provider_requests": 0,
             "credential_accesses": 0,
@@ -1494,16 +2148,142 @@ def render_markdown_report(payload: dict[str, Any]) -> str:
         f"- UEFA team set: {dataset['uefa_team_set_size']} canonical teams (source-derived + SportsBrain confederation map)",
         f"- Modern international universe: {payload['cohorts']['combined_all_international_diagnostic']['recency_and_causal_metrics']['2016_onward']['eligible_matches']:,} fixtures from 2016; {payload['cohorts']['combined_all_international_diagnostic']['recency_and_causal_metrics']['2020_onward']['eligible_matches']:,} from 2020.",
         "- One identical fixture key had contradictory source scores; both rows were excluded from training and scoring.",
-        "",
-        "## Causal model results",
-        "",
-        "Full-history counts are descriptive only. Proper-score interpretation emphasizes 2016+ and 2020+.",
-        "",
-        "Eligible fixtures and model-specific evaluated count/coverage are shown separately; DC excludes fixtures with teams absent from that block's fitted model.",
-        "",
-        "| Cohort | Window | Eligible | DC eval / cov. | DC Brier | DC log | DC acc. | Elo eval / cov. | Elo Brier | Elo log | Elo acc. | Empirical Brier |",
-        "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
+    lines.extend(
+        [
+            "",
+            "## Cadence-matched model-family comparison",
+            "",
+            "Primary modern sensitivity: DC and Elo are both refit from information strictly before identical Jan/Apr/Jul/Oct cutoffs, then frozen to the next boundary. Annual results are shown separately. Every paired score and interval uses identical fixtures; model-specific coverage is shown against the full eligible cohort.",
+            "`POINT_IN_TIME_ELO_HIGH_FRESHNESS_BASELINE` remains a separate operational-freshness reference; it is not treated as cadence-matched against frozen DC.",
+            "",
+            "### Cadence-matched metrics",
+            "",
+            "| Cadence | Cohort | Window | Eligible | DC N / cov. | Elo N / cov. | Paired N | DC Brier | DC log | DC acc. | DC ECE | Elo Brier | Elo log | Elo acc. | Elo ECE |",
+            "|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+        ]
+    )
+    cadence_windows = {
+        "annual": (
+            "2000_onward",
+            "2010_onward",
+            "2016_onward",
+            "2020_onward",
+            "latest_available_complete_calendar_year",
+        ),
+        "quarterly": (
+            "2016_onward",
+            "2020_onward",
+            "latest_available_complete_calendar_year",
+        ),
+    }
+    cadence_cohorts = (
+        "uefa_nations_league",
+        "uefa_competitive_non_nl",
+        "all_competitive",
+        "friendlies",
+    )
+    for cadence, window_names in cadence_windows.items():
+        cadence_data = payload["cadence_matched_evaluations"][cadence]
+        for cohort_name in cadence_cohorts:
+            for window_name in window_names:
+                entry = cadence_data["cohorts"][cohort_name][window_name]
+                pair = entry["paired_comparison"]
+                paired_models = pair["model_metrics_on_paired_fixtures"]
+                dc_name = ANNUAL_DC_MODEL if cadence == "annual" else QUARTERLY_DC_MODEL
+                elo_name = (
+                    ANNUAL_ELO_MODEL if cadence == "annual" else QUARTERLY_ELO_MODEL
+                )
+                dc_model = entry["models"][dc_name]
+                elo_model = entry["models"][elo_name]
+                dc_metrics = paired_models[dc_name]["metrics"] or {}
+                elo_metrics = paired_models[elo_name]["metrics"] or {}
+                dc_brier = dc_metrics.get("brier_score_multiclass")
+                elo_brier = elo_metrics.get("brier_score_multiclass")
+                lines.append(
+                    f"| {cadence} | {cohort_name} | {window_name} | {entry['eligible_matches']:,} | "
+                    f"{dc_model['matches_evaluated']:,} / {dc_model['coverage']:.1%} | "
+                    f"{elo_model['matches_evaluated']:,} / {elo_model['coverage']:.1%} | "
+                    f"{pair['paired_matches']:,} | {fmt(dc_brier)} | "
+                    f"{fmt(dc_metrics.get('multiclass_log_loss'))} | "
+                    f"{fmt(dc_metrics.get('accuracy_argmax'))} | "
+                    f"{fmt(dc_metrics.get('expected_calibration_error_10_bins_mean_one_vs_rest'))} | "
+                    f"{fmt(elo_brier)} | {fmt(elo_metrics.get('multiclass_log_loss'))} | "
+                    f"{fmt(elo_metrics.get('accuracy_argmax'))} | "
+                    f"{fmt(elo_metrics.get('expected_calibration_error_10_bins_mean_one_vs_rest'))} |"
+                )
+    lines.extend(
+        [
+            "",
+            "### Paired date-cluster bootstrap (95% intervals)",
+            "",
+            "The interval is annual/quarterly DC minus Elo Brier on paired fixtures; date clusters preserve same-day dependence.",
+            "",
+            "| Cadence | Cohort | Window | Paired N | DC − Elo Brier | 95% interval |",
+            "|---|---|---|---:|---:|---:|",
+        ]
+    )
+    for cadence, window_names in cadence_windows.items():
+        cadence_data = payload["cadence_matched_evaluations"][cadence]
+        for cohort_name in cadence_cohorts:
+            for window_name in window_names:
+                pair = cadence_data["cohorts"][cohort_name][window_name][
+                    "paired_comparison"
+                ]
+                bootstrap = pair["date_cluster_bootstrap"]
+                interval = bootstrap.get("difference_interval", {})
+                point = pair["brier_difference_dc_minus_elo"]
+                bounds = (
+                    f"[{interval['lower_95']:.4f}, {interval['upper_95']:.4f}]"
+                    if interval.get("lower_95") is not None
+                    else "—"
+                )
+                lines.append(
+                    f"| {cadence} | {cohort_name} | {window_name} | "
+                    f"{pair['paired_matches']:,} | {fmt(point)} | {bounds} |"
+                )
+    lines.extend(
+        [
+            "",
+            "### Common-fixture gap decomposition",
+            "",
+            "This decomposition compares the former coarse gap and matched-cadence gaps only on the common fixture intersection; it is descriptive, not a launch gate.",
+            "",
+            "| Cohort | Window | Common N | Coarse gap | Annual matched gap | Quarterly matched gap | Annual / coarse | Quarterly / coarse |",
+            "|---|---|---:|---:|---:|---:|---:|---:|",
+        ]
+    )
+    for cohort_name in cadence_cohorts:
+        for window_name in (
+            "2016_onward",
+            "2020_onward",
+            "latest_available_complete_calendar_year",
+        ):
+            entry = payload["cadence_gap_decomposition"][cohort_name][window_name]
+            if entry["status"] != "computed":
+                lines.append(
+                    f"| {cohort_name} | {window_name} | 0 | — | — | — | — | — |"
+                )
+                continue
+            lines.append(
+                f"| {cohort_name} | {window_name} | {entry['common_fixture_count']:,} | "
+                f"{fmt(entry['coarse_5_year_dc_minus_point_in_time_elo'])} | "
+                f"{fmt(entry['annual_dc_minus_annual_elo'])} | "
+                f"{fmt(entry['quarterly_dc_minus_quarterly_elo'])} | "
+                f"{fmt(entry['annual_gap_remaining_fraction_of_coarse'])} | "
+                f"{fmt(entry['quarterly_gap_remaining_fraction_of_coarse'])} |"
+            )
+    lines.extend(
+        [
+            "",
+            "## COARSE_STALENESS_SENSITIVITY — five-year frozen DC vs point-in-time Elo",
+            "",
+            "These preserved legacy cohort/tournament summaries use a five-year-frozen Dixon-Coles model against a point-in-time Elo baseline. They are retained as a coarse staleness sensitivity, not as the sole or primary comparison.",
+            "",
+            "| Cohort | Window | Eligible | DC eval / cov. | DC Brier | DC log | DC acc. | Elo eval / cov. | Elo Brier | Elo log | Elo acc. | Empirical Brier |",
+            "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+        ]
+    )
     for cohort_name in (
         "uefa_nations_league",
         "uefa_competitive_non_nl",
@@ -1584,6 +2364,8 @@ def render_markdown_report(payload: dict[str, Any]) -> str:
         "other_competitive",
         "other_international",
     ):
+        if class_name not in payload["tournament_breakdown"]:
+            continue
         entry = payload["tournament_breakdown"][class_name]["causal_recency_metrics"][
             "2016_onward"
         ]
@@ -1671,10 +2453,10 @@ def render_markdown_report(payload: dict[str, Any]) -> str:
             "",
             "## Findings and launch relevance",
             "",
-            f"- Classification: `{payload['launch_relevance']['classification']}`. Research warning only; no release-size gate or production authority follows.",
-            "- The modern paired comparisons show DC worse than Elo on multiclass Brier for all competitive matches in both 2016+ and 2020+; see clustered 95% intervals below.",
-            "- UEFA competitive non-NL 2016+: DC Brier 0.5143 vs Elo 0.4565 (1,543 paired fixtures), consistent with that warning.",
-            f"- NL 2016+: observed draw frequency {nl['models']['dixon_coles']['metrics']['observed_outcome_frequency']['draw']:.1%}; DC mean draw probability {nl['models']['dixon_coles']['metrics']['mean_probability_by_outcome']['draw']:.1%}, DRAW argmax {nl['models']['dixon_coles']['metrics']['predicted_argmax_share']['draw']:.1%}; HOME argmax {nl['models']['dixon_coles']['metrics']['predicted_argmax_share']['home']:.1%} vs observed home wins {nl['models']['dixon_coles']['metrics']['observed_outcome_frequency']['home']:.1%}.",
+            f"- Cadence-matched classification: `{payload['launch_relevance']['classification']}`. {payload['launch_relevance']['reason']}",
+            "- Classification uses only the annual/quarterly paired DC-versus-Elo date-cluster intervals for the principal modern all-competitive and UEFA non-NL comparisons; the coarse five-year/PIT comparison is excluded. No arbitrary sample threshold, authority change, or activation decision follows.",
+            "- Causal GBT and authentic-market stacker comparisons remain unavailable without point-in-time feature/odds inputs; market edge, EV and settlement ROI remain unverified.",
+            f"- NL 2016+ diagnostic (coarse five-year DC): observed draw frequency {nl['models']['dixon_coles']['metrics']['observed_outcome_frequency']['draw']:.1%}; mean draw probability {nl['models']['dixon_coles']['metrics']['mean_probability_by_outcome']['draw']:.1%}, DRAW argmax {nl['models']['dixon_coles']['metrics']['predicted_argmax_share']['draw']:.1%}; HOME argmax {nl['models']['dixon_coles']['metrics']['predicted_argmax_share']['home']:.1%} vs observed home wins {nl['models']['dixon_coles']['metrics']['observed_outcome_frequency']['home']:.1%}.",
             f"- Current unsettled shadow reference is {candidates.get('candidate_count')} candidates: {candidates.get('market_counts', {}).get('HOME', 0)} HOME / {candidates.get('market_counts', {}).get('DRAW', 0)} DRAW / {candidates.get('market_counts', {}).get('AWAY', 0)} AWAY; confidence {candidates.get('confidence_counts', {})}. It has no outcome labels and is selection-conditioned; zero DRAW candidates do not show that historical draws are absent.",
             "- High-EV overconfidence and canonical `detect_value()` ROI/CLV are not measurable without accepted genuine pre-match odds; no market edge is inferred from model-only results.",
             "- DC/Elo argmax disagreement (2000+): "
@@ -1687,7 +2469,7 @@ def render_markdown_report(payload: dict[str, Any]) -> str:
             + ".",
             "- Modern 2016+/2020+ cohort-specific DC/Elo disagreement rates are retained in JSON to distinguish competitive, friendly, NL and non-NL transfer behavior.",
             "",
-            "### Paired date-cluster bootstrap (95% intervals)",
+            "### Coarse-staleness paired date-cluster bootstrap (95% intervals)",
             "",
             "| Sample | Paired N | DC − Elo Brier | 95% interval |",
             "|---|---:|---:|---:|",
@@ -1701,6 +2483,9 @@ def render_markdown_report(payload: dict[str, Any]) -> str:
         "friendlies_2016_onward",
     ):
         entry = payload["paired_date_cluster_bootstrap"][key]
+        if "intervals" not in entry or "paired_point_estimates" not in entry:
+            lines.append(f"| {key} | 0 | — | — |")
+            continue
         bounds = entry["intervals"]["dixon_coles_minus_elo_brier"]
         point = entry["paired_point_estimates"]["dixon_coles_minus_elo_brier"]
         lines.append(
@@ -1711,7 +2496,7 @@ def render_markdown_report(payload: dict[str, Any]) -> str:
     lines.extend(
         [
             "",
-            "## UEFA team view (2016+ competitive appearances)",
+            "## UEFA team view — coarse DC / point-in-time Elo (2016+ competitive appearances)",
             "",
             "Counts accompany reported team metrics. Teams under 25 appearances remain count-only in JSON; 25 is a reporting convention, not a launch gate.",
             "",
@@ -1750,9 +2535,10 @@ def render_markdown_report(payload: dict[str, Any]) -> str:
             "",
             "## Validation limits",
             "",
-            "- Dixon-Coles: canonical model, fit on competitive results strictly before each 5-year block and frozen within that block; model-specific coverage is reported.",
+            "- `COARSE_STALENESS_SENSITIVITY`: canonical Dixon-Coles fit on competitive results strictly before each 5-year block and frozen within that block; model-specific coverage is reported. It is not the headline model-family comparison.",
+            "- Annual and quarterly cadence-matched DC and Elo use the same exact calendar cutoff, strict prior-only training, and freeze over the same held-out interval. Quarterly is the primary modern sensitivity; empty quarters are skipped and audited.",
             f"- Canonical DC optimizer emitted {payload['no_lookahead_audit']['dc_optimizer_bound_hit_count']} parameter-bound warning(s); exact affected block/team/parameter/value/side is retained in the JSON block audit.",
-            "- Elo: point-in-time ratings; each date's fixtures are scored before any result on that date updates ratings.",
+            "- `POINT_IN_TIME_ELO_HIGH_FRESHNESS_BASELINE`: date-level ratings; each date's fixtures are scored before any result on that date updates ratings. Annual and quarterly frozen Elo are separate models.",
             "- Causal GBT: unavailable because the 91-feature point-in-time market/squad/context store is absent. Frozen later-trained GBT performance is not presented as causal.",
             "- Canonical stacker and `detect_value()`: unavailable without authentic timestamped historical 1X2 market inputs; no synthetic or current odds were used.",
             "- See JSON for full per-class calibration, predicted/observed outcome mixes, sharpness, entropy, favorite bins, team metrics, source conflicts, and cutoff proof.",

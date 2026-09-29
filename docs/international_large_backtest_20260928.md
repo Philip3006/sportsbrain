@@ -1,7 +1,7 @@
 # Large causal international football backtest
 
-Generated: `2026-09-28T21:19:15.646443+00:00`
-Evaluated against main: `13c02a1c84c03733835e849e06e64f7c19e9c622`
+Generated: `2026-09-28T21:58:38.152225+00:00`
+Evaluated against main: `860952e35f01a68c625c8fbca4a6be3be2a026b1`
 
 ## Dataset
 
@@ -14,11 +14,109 @@ Evaluated against main: `13c02a1c84c03733835e849e06e64f7c19e9c622`
 - Modern international universe: 10,091 fixtures from 2016; 6,169 from 2020.
 - One identical fixture key had contradictory source scores; both rows were excluded from training and scoring.
 
-## Causal model results
+## Cadence-matched model-family comparison
 
-Full-history counts are descriptive only. Proper-score interpretation emphasizes 2016+ and 2020+.
+Primary modern sensitivity: DC and Elo are both refit from information strictly before identical Jan/Apr/Jul/Oct cutoffs, then frozen to the next boundary. Annual results are shown separately. Every paired score and interval uses identical fixtures; model-specific coverage is shown against the full eligible cohort.
+`POINT_IN_TIME_ELO_HIGH_FRESHNESS_BASELINE` remains a separate operational-freshness reference; it is not treated as cadence-matched against frozen DC.
 
-Eligible fixtures and model-specific evaluated count/coverage are shown separately; DC excludes fixtures with teams absent from that block's fitted model.
+### Cadence-matched metrics
+
+| Cadence | Cohort | Window | Eligible | DC N / cov. | Elo N / cov. | Paired N | DC Brier | DC log | DC acc. | DC ECE | Elo Brier | Elo log | Elo acc. | Elo ECE |
+|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| annual | uefa_nations_league | 2000_onward | 658 | 658 / 100.0% | 658 / 100.0% | 658 | 0.6104 | 1.0262 | 0.5000 | 0.0685 | 0.6023 | 1.0312 | 0.5365 | 0.0791 |
+| annual | uefa_nations_league | 2010_onward | 658 | 658 / 100.0% | 658 / 100.0% | 658 | 0.6104 | 1.0262 | 0.5000 | 0.0685 | 0.6023 | 1.0312 | 0.5365 | 0.0791 |
+| annual | uefa_nations_league | 2016_onward | 658 | 658 / 100.0% | 658 / 100.0% | 658 | 0.6104 | 1.0262 | 0.5000 | 0.0685 | 0.6023 | 1.0312 | 0.5365 | 0.0791 |
+| annual | uefa_nations_league | 2020_onward | 516 | 516 / 100.0% | 516 / 100.0% | 516 | 0.6049 | 1.0175 | 0.5078 | 0.0585 | 0.6127 | 1.0432 | 0.5174 | 0.0832 |
+| annual | uefa_nations_league | latest_available_complete_calendar_year | 28 | 28 / 100.0% | 28 / 100.0% | 28 | 0.6596 | 1.0877 | 0.5714 | 0.1981 | 0.6343 | 1.0802 | 0.4286 | 0.1689 |
+| annual | uefa_competitive_non_nl | 2000_onward | 3,978 | 3,966 / 99.7% | 3,978 / 100.0% | 3,966 | 0.5212 | 0.9022 | 0.5935 | 0.0526 | 0.4800 | 0.8532 | 0.6518 | 0.0681 |
+| annual | uefa_competitive_non_nl | 2010_onward | 2,466 | 2,458 / 99.7% | 2,466 / 100.0% | 2,458 | 0.5095 | 0.8810 | 0.6058 | 0.0485 | 0.4746 | 0.8434 | 0.6558 | 0.0637 |
+| annual | uefa_competitive_non_nl | 2016_onward | 1,561 | 1,557 / 99.7% | 1,561 / 100.0% | 1,557 | 0.4863 | 0.8374 | 0.6294 | 0.0417 | 0.4583 | 0.8200 | 0.6680 | 0.0632 |
+| annual | uefa_competitive_non_nl | 2020_onward | 931 | 931 / 100.0% | 931 / 100.0% | 931 | 0.4874 | 0.8342 | 0.6251 | 0.0420 | 0.4757 | 0.8505 | 0.6595 | 0.0734 |
+| annual | uefa_competitive_non_nl | latest_available_complete_calendar_year | 192 | 192 / 100.0% | 192 / 100.0% | 192 | 0.4090 | 0.7126 | 0.7188 | 0.0626 | 0.3914 | 0.7108 | 0.7135 | 0.0699 |
+| annual | all_competitive | 2000_onward | 12,264 | 12,199 / 99.5% | 12,264 / 100.0% | 12,199 | 0.5810 | 0.9995 | 0.5447 | 0.0721 | 0.5141 | 0.9041 | 0.6187 | 0.0666 |
+| annual | all_competitive | 2010_onward | 8,156 | 8,130 / 99.7% | 8,156 / 100.0% | 8,130 | 0.5785 | 0.9915 | 0.5460 | 0.0685 | 0.5199 | 0.9137 | 0.6139 | 0.0681 |
+| annual | all_competitive | 2016_onward | 5,711 | 5,691 / 99.6% | 5,711 / 100.0% | 5,691 | 0.5611 | 0.9579 | 0.5625 | 0.0603 | 0.5163 | 0.9082 | 0.6132 | 0.0698 |
+| annual | all_competitive | 2020_onward | 3,751 | 3,751 / 100.0% | 3,751 / 100.0% | 3,751 | 0.5537 | 0.9433 | 0.5708 | 0.0528 | 0.5246 | 0.9218 | 0.6073 | 0.0736 |
+| annual | all_competitive | latest_available_complete_calendar_year | 619 | 619 / 100.0% | 619 / 100.0% | 619 | 0.4733 | 0.8059 | 0.6688 | 0.0426 | 0.4676 | 0.8308 | 0.6414 | 0.0685 |
+| annual | friendlies | 2000_onward | 8,445 | 8,118 / 96.1% | 8,445 / 100.0% | 8,118 | 0.6723 | 1.1495 | 0.4616 | 0.1123 | 0.5999 | 1.0347 | 0.5338 | 0.0895 |
+| annual | friendlies | 2010_onward | 5,070 | 4,897 / 96.6% | 5,070 / 100.0% | 4,897 | 0.6620 | 1.1317 | 0.4697 | 0.1057 | 0.5849 | 1.0120 | 0.5491 | 0.0855 |
+| annual | friendlies | 2016_onward | 2,859 | 2,790 / 97.6% | 2,859 / 100.0% | 2,790 | 0.6533 | 1.1178 | 0.4767 | 0.1033 | 0.5796 | 1.0064 | 0.5581 | 0.0875 |
+| annual | friendlies | 2020_onward | 1,592 | 1,580 / 99.2% | 1,592 / 100.0% | 1,580 | 0.6451 | 1.1018 | 0.4709 | 0.0982 | 0.5516 | 0.9646 | 0.5854 | 0.0798 |
+| annual | friendlies | latest_available_complete_calendar_year | 221 | 220 / 99.5% | 221 / 100.0% | 220 | 0.5989 | 1.0142 | 0.5000 | 0.0847 | 0.5626 | 0.9939 | 0.5773 | 0.0997 |
+| quarterly | uefa_nations_league | 2016_onward | 658 | 658 / 100.0% | 658 / 100.0% | 658 | 0.6275 | 1.0674 | 0.4878 | 0.0982 | 0.5980 | 1.0233 | 0.5486 | 0.0804 |
+| quarterly | uefa_nations_league | 2020_onward | 516 | 516 / 100.0% | 516 / 100.0% | 516 | 0.6226 | 1.0509 | 0.4942 | 0.0908 | 0.6125 | 1.0420 | 0.5310 | 0.0878 |
+| quarterly | uefa_nations_league | latest_available_complete_calendar_year | 28 | 28 / 100.0% | 28 / 100.0% | 28 | 0.6453 | 1.0627 | 0.5714 | 0.1741 | 0.6365 | 1.0806 | 0.4286 | 0.1698 |
+| quarterly | uefa_competitive_non_nl | 2016_onward | 1,561 | 1,560 / 99.9% | 1,561 / 100.0% | 1,560 | 0.4779 | 0.8198 | 0.6301 | 0.0433 | 0.4550 | 0.8147 | 0.6718 | 0.0647 |
+| quarterly | uefa_competitive_non_nl | 2020_onward | 931 | 931 / 100.0% | 931 / 100.0% | 931 | 0.4821 | 0.8218 | 0.6273 | 0.0415 | 0.4738 | 0.8470 | 0.6606 | 0.0742 |
+| quarterly | uefa_competitive_non_nl | latest_available_complete_calendar_year | 192 | 192 / 100.0% | 192 / 100.0% | 192 | 0.3965 | 0.6983 | 0.7240 | 0.0602 | 0.3889 | 0.7086 | 0.7188 | 0.0647 |
+| quarterly | all_competitive | 2016_onward | 5,711 | 5,703 / 99.9% | 5,711 / 100.0% | 5,703 | 0.5621 | 0.9653 | 0.5562 | 0.0665 | 0.5135 | 0.9035 | 0.6181 | 0.0699 |
+| quarterly | all_competitive | 2020_onward | 3,751 | 3,751 / 100.0% | 3,751 / 100.0% | 3,751 | 0.5569 | 0.9494 | 0.5623 | 0.0607 | 0.5224 | 0.9184 | 0.6116 | 0.0746 |
+| quarterly | all_competitive | latest_available_complete_calendar_year | 619 | 619 / 100.0% | 619 / 100.0% | 619 | 0.4668 | 0.7937 | 0.6430 | 0.0365 | 0.4648 | 0.8279 | 0.6462 | 0.0704 |
+| quarterly | friendlies | 2016_onward | 2,859 | 2,790 / 97.6% | 2,859 / 100.0% | 2,790 | 0.6511 | 1.1138 | 0.4717 | 0.1017 | 0.5784 | 1.0046 | 0.5613 | 0.0876 |
+| quarterly | friendlies | 2020_onward | 1,592 | 1,580 / 99.2% | 1,592 / 100.0% | 1,580 | 0.6482 | 1.1060 | 0.4677 | 0.0984 | 0.5511 | 0.9638 | 0.5867 | 0.0802 |
+| quarterly | friendlies | latest_available_complete_calendar_year | 221 | 220 / 99.5% | 221 / 100.0% | 220 | 0.5983 | 1.0170 | 0.4909 | 0.0829 | 0.5641 | 0.9974 | 0.5636 | 0.1077 |
+
+### Paired date-cluster bootstrap (95% intervals)
+
+The interval is annual/quarterly DC minus Elo Brier on paired fixtures; date clusters preserve same-day dependence.
+
+| Cadence | Cohort | Window | Paired N | DC − Elo Brier | 95% interval |
+|---|---|---|---:|---:|---:|
+| annual | uefa_nations_league | 2000_onward | 658 | 0.0081 | [-0.0162, 0.0326] |
+| annual | uefa_nations_league | 2010_onward | 658 | 0.0081 | [-0.0159, 0.0309] |
+| annual | uefa_nations_league | 2016_onward | 658 | 0.0081 | [-0.0149, 0.0336] |
+| annual | uefa_nations_league | 2020_onward | 516 | -0.0077 | [-0.0323, 0.0193] |
+| annual | uefa_nations_league | latest_available_complete_calendar_year | 28 | 0.0252 | [-0.0893, 0.1676] |
+| annual | uefa_competitive_non_nl | 2000_onward | 3,966 | 0.0412 | [0.0290, 0.0534] |
+| annual | uefa_competitive_non_nl | 2010_onward | 2,458 | 0.0349 | [0.0208, 0.0495] |
+| annual | uefa_competitive_non_nl | 2016_onward | 1,557 | 0.0280 | [0.0103, 0.0477] |
+| annual | uefa_competitive_non_nl | 2020_onward | 931 | 0.0117 | [-0.0115, 0.0361] |
+| annual | uefa_competitive_non_nl | latest_available_complete_calendar_year | 192 | 0.0176 | [-0.0267, 0.0595] |
+| annual | all_competitive | 2000_onward | 12,199 | 0.0670 | [0.0586, 0.0759] |
+| annual | all_competitive | 2010_onward | 8,130 | 0.0587 | [0.0480, 0.0699] |
+| annual | all_competitive | 2016_onward | 5,691 | 0.0447 | [0.0332, 0.0562] |
+| annual | all_competitive | 2020_onward | 3,751 | 0.0291 | [0.0167, 0.0414] |
+| annual | all_competitive | latest_available_complete_calendar_year | 619 | 0.0057 | [-0.0255, 0.0352] |
+| annual | friendlies | 2000_onward | 8,118 | 0.0724 | [0.0627, 0.0814] |
+| annual | friendlies | 2010_onward | 4,897 | 0.0771 | [0.0641, 0.0905] |
+| annual | friendlies | 2016_onward | 2,790 | 0.0737 | [0.0560, 0.0915] |
+| annual | friendlies | 2020_onward | 1,580 | 0.0935 | [0.0686, 0.1206] |
+| annual | friendlies | latest_available_complete_calendar_year | 220 | 0.0363 | [-0.0337, 0.1032] |
+| quarterly | uefa_nations_league | 2016_onward | 658 | 0.0296 | [-0.0038, 0.0632] |
+| quarterly | uefa_nations_league | 2020_onward | 516 | 0.0101 | [-0.0291, 0.0504] |
+| quarterly | uefa_nations_league | latest_available_complete_calendar_year | 28 | 0.0088 | [-0.0968, 0.1149] |
+| quarterly | uefa_competitive_non_nl | 2016_onward | 1,560 | 0.0230 | [0.0073, 0.0382] |
+| quarterly | uefa_competitive_non_nl | 2020_onward | 931 | 0.0083 | [-0.0103, 0.0276] |
+| quarterly | uefa_competitive_non_nl | latest_available_complete_calendar_year | 192 | 0.0076 | [-0.0269, 0.0434] |
+| quarterly | all_competitive | 2016_onward | 5,703 | 0.0486 | [0.0371, 0.0617] |
+| quarterly | all_competitive | 2020_onward | 3,751 | 0.0345 | [0.0222, 0.0469] |
+| quarterly | all_competitive | latest_available_complete_calendar_year | 619 | 0.0020 | [-0.0179, 0.0237] |
+| quarterly | friendlies | 2016_onward | 2,790 | 0.0726 | [0.0551, 0.0922] |
+| quarterly | friendlies | 2020_onward | 1,580 | 0.0972 | [0.0699, 0.1253] |
+| quarterly | friendlies | latest_available_complete_calendar_year | 220 | 0.0342 | [-0.0406, 0.0957] |
+
+### Common-fixture gap decomposition
+
+This decomposition compares the former coarse gap and matched-cadence gaps only on the common fixture intersection; it is descriptive, not a launch gate.
+
+| Cohort | Window | Common N | Coarse gap | Annual matched gap | Quarterly matched gap | Annual / coarse | Quarterly / coarse |
+|---|---|---:|---:|---:|---:|---:|---:|
+| uefa_nations_league | 2016_onward | 652 | 0.0399 | 0.0059 | 0.0289 | 0.1469 | 0.7241 |
+| uefa_nations_league | 2020_onward | 516 | 0.0092 | -0.0077 | 0.0101 | -0.8343 | 1.0950 |
+| uefa_nations_league | latest_available_complete_calendar_year | 28 | 0.0178 | 0.0252 | 0.0088 | 1.4196 | 0.4975 |
+| uefa_competitive_non_nl | 2016_onward | 1,543 | 0.0565 | 0.0284 | 0.0221 | 0.5026 | 0.3901 |
+| uefa_competitive_non_nl | 2020_onward | 931 | 0.0289 | 0.0117 | 0.0083 | 0.4052 | 0.2875 |
+| uefa_competitive_non_nl | latest_available_complete_calendar_year | 192 | 0.0219 | 0.0176 | 0.0076 | 0.8044 | 0.3468 |
+| all_competitive | 2016_onward | 5,640 | 0.0725 | 0.0438 | 0.0473 | 0.6033 | 0.6522 |
+| all_competitive | 2020_onward | 3,751 | 0.0425 | 0.0291 | 0.0345 | 0.6857 | 0.8113 |
+| all_competitive | latest_available_complete_calendar_year | 619 | 0.0085 | 0.0057 | 0.0020 | 0.6726 | 0.2406 |
+| friendlies | 2016_onward | 2,784 | 0.0757 | 0.0732 | 0.0723 | 0.9665 | 0.9544 |
+| friendlies | 2020_onward | 1,580 | 0.0654 | 0.0935 | 0.0972 | 1.4292 | 1.4852 |
+| friendlies | latest_available_complete_calendar_year | 220 | 0.0389 | 0.0363 | 0.0342 | 0.9319 | 0.8781 |
+
+## COARSE_STALENESS_SENSITIVITY — five-year frozen DC vs point-in-time Elo
+
+These preserved legacy cohort/tournament summaries use a five-year-frozen Dixon-Coles model against a point-in-time Elo baseline. They are retained as a coarse staleness sensitivity, not as the sole or primary comparison.
 
 | Cohort | Window | Eligible | DC eval / cov. | DC Brier | DC log | DC acc. | Elo eval / cov. | Elo Brier | Elo log | Elo acc. | Empirical Brier |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -188,16 +286,16 @@ The JSON contains all cohort/window strata plus home/draw/away reliability bins.
 
 ## Findings and launch relevance
 
-- Classification: `MODEL_WARNING`. Research warning only; no release-size gate or production authority follows.
-- The modern paired comparisons show DC worse than Elo on multiclass Brier for all competitive matches in both 2016+ and 2020+; see clustered 95% intervals below.
-- UEFA competitive non-NL 2016+: DC Brier 0.5143 vs Elo 0.4565 (1,543 paired fixtures), consistent with that warning.
-- NL 2016+: observed draw frequency 25.0%; DC mean draw probability 26.3%, DRAW argmax 11.2%; HOME argmax 57.1% vs observed home wins 42.9%.
+- Cadence-matched classification: `MODEL_WARNING`. At least one principal annual or quarterly cadence-matched modern comparison has a paired 95% Brier-difference interval wholly above zero.
+- Classification uses only the annual/quarterly paired DC-versus-Elo date-cluster intervals for the principal modern all-competitive and UEFA non-NL comparisons; the coarse five-year/PIT comparison is excluded. No arbitrary sample threshold, authority change, or activation decision follows.
+- Causal GBT and authentic-market stacker comparisons remain unavailable without point-in-time feature/odds inputs; market edge, EV and settlement ROI remain unverified.
+- NL 2016+ diagnostic (coarse five-year DC): observed draw frequency 25.0%; mean draw probability 26.3%, DRAW argmax 11.2%; HOME argmax 57.1% vs observed home wins 42.9%.
 - Current unsettled shadow reference is 29 candidates: 19 HOME / 0 DRAW / 10 AWAY; confidence {'LOW': 26, 'MEDIUM': 3}. It has no outcome labels and is selection-conditioned; zero DRAW candidates do not show that historical draws are absent.
 - High-EV overconfidence and canonical `detect_value()` ROI/CLV are not measurable without accepted genuine pre-match odds; no market edge is inferred from model-only results.
-- DC/Elo argmax disagreement (2000+): uefa_nations_league 31.1% (N=652); uefa_competitive_non_nl 24.6% (N=3,945); all_competitive 29.2% (N=12,074).
+- DC/Elo argmax disagreement (2000+): all_competitive 29.2% (N=12,074); uefa_competitive_non_nl 24.6% (N=3,945); uefa_nations_league 31.1% (N=652).
 - Modern 2016+/2020+ cohort-specific DC/Elo disagreement rates are retained in JSON to distinguish competitive, friendly, NL and non-NL transfer behavior.
 
-### Paired date-cluster bootstrap (95% intervals)
+### Coarse-staleness paired date-cluster bootstrap (95% intervals)
 
 | Sample | Paired N | DC − Elo Brier | 95% interval |
 |---|---:|---:|---:|
@@ -207,7 +305,7 @@ The JSON contains all cohort/window strata plus home/draw/away reliability bins.
 | uefa_non_nl_2016_onward | 1,543 | 0.0565 | [0.0358, 0.0767] |
 | friendlies_2016_onward | 2,784 | 0.0757 | [0.0568, 0.0958] |
 
-## UEFA team view (2016+ competitive appearances)
+## UEFA team view — coarse DC / point-in-time Elo (2016+ competitive appearances)
 
 Counts accompany reported team metrics. Teams under 25 appearances remain count-only in JSON; 25 is a reporting convention, not a launch gate.
 
@@ -242,9 +340,10 @@ Counts accompany reported team metrics. Teams under 25 appearances remain count-
 
 ## Validation limits
 
-- Dixon-Coles: canonical model, fit on competitive results strictly before each 5-year block and frozen within that block; model-specific coverage is reported.
+- `COARSE_STALENESS_SENSITIVITY`: canonical Dixon-Coles fit on competitive results strictly before each 5-year block and frozen within that block; model-specific coverage is reported. It is not the headline model-family comparison.
+- Annual and quarterly cadence-matched DC and Elo use the same exact calendar cutoff, strict prior-only training, and freeze over the same held-out interval. Quarterly is the primary modern sensitivity; empty quarters are skipped and audited.
 - Canonical DC optimizer emitted 3 parameter-bound warning(s); exact affected block/team/parameter/value/side is retained in the JSON block audit.
-- Elo: point-in-time ratings; each date's fixtures are scored before any result on that date updates ratings.
+- `POINT_IN_TIME_ELO_HIGH_FRESHNESS_BASELINE`: date-level ratings; each date's fixtures are scored before any result on that date updates ratings. Annual and quarterly frozen Elo are separate models.
 - Causal GBT: unavailable because the 91-feature point-in-time market/squad/context store is absent. Frozen later-trained GBT performance is not presented as causal.
 - Canonical stacker and `detect_value()`: unavailable without authentic timestamped historical 1X2 market inputs; no synthetic or current odds were used.
 - See JSON for full per-class calibration, predicted/observed outcome mixes, sharpness, entropy, favorite bins, team metrics, source conflicts, and cutoff proof.
