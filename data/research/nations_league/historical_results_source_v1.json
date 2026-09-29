@@ -1,0 +1,5133 @@
+{
+  "competition": "UEFA Nations League",
+  "matches": [
+    {
+      "away_score": 1,
+      "away_team": "Ireland",
+      "date": "2020-09-03",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Bulgaria",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Malta",
+      "date": "2020-09-03",
+      "edition": "2020/21",
+      "home_score": 3,
+      "home_team": "Faroe Islands",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Wales",
+      "date": "2020-09-03",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Finland",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Spain",
+      "date": "2020-09-03",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Germany",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Andorra",
+      "date": "2020-09-03",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Latvia",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Kosovo",
+      "date": "2020-09-03",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Moldova",
+      "neutral": true,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Serbia",
+      "date": "2020-09-03",
+      "edition": "2020/21",
+      "home_score": 3,
+      "home_team": "Russia",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Greece",
+      "date": "2020-09-03",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Slovenia",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Hungary",
+      "date": "2020-09-03",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Turkey",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Switzerland",
+      "date": "2020-09-03",
+      "edition": "2020/21",
+      "home_score": 2,
+      "home_team": "Ukraine",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Albania",
+      "date": "2020-09-04",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Belarus",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Bosnia and Herzegovina",
+      "date": "2020-09-04",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Italy",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Kazakhstan",
+      "date": "2020-09-04",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Lithuania",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Poland",
+      "date": "2020-09-04",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Netherlands",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Austria",
+      "date": "2020-09-04",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Norway",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Northern Ireland",
+      "date": "2020-09-04",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Romania",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Israel",
+      "date": "2020-09-04",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Scotland",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 3,
+      "away_team": "Czechia",
+      "date": "2020-09-04",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Slovakia",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Luxembourg",
+      "date": "2020-09-05",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Azerbaijan",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Montenegro",
+      "date": "2020-09-05",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Cyprus",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Belgium",
+      "date": "2020-09-05",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Denmark",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Georgia",
+      "date": "2020-09-05",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Estonia",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "San Marino",
+      "date": "2020-09-05",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Gibraltar",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "England",
+      "date": "2020-09-05",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Iceland",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Armenia",
+      "date": "2020-09-05",
+      "edition": "2020/21",
+      "home_score": 2,
+      "home_team": "North Macedonia",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Croatia",
+      "date": "2020-09-05",
+      "edition": "2020/21",
+      "home_score": 4,
+      "home_team": "Portugal",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "France",
+      "date": "2020-09-05",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Sweden",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Faroe Islands",
+      "date": "2020-09-06",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Andorra",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 3,
+      "away_team": "Russia",
+      "date": "2020-09-06",
+      "edition": "2020/21",
+      "home_score": 2,
+      "home_team": "Hungary",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Finland",
+      "date": "2020-09-06",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Ireland",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Greece",
+      "date": "2020-09-06",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Kosovo",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Latvia",
+      "date": "2020-09-06",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Malta",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Turkey",
+      "date": "2020-09-06",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Serbia",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Moldova",
+      "date": "2020-09-06",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Slovenia",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Ukraine",
+      "date": "2020-09-06",
+      "edition": "2020/21",
+      "home_score": 4,
+      "home_team": "Spain",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Germany",
+      "date": "2020-09-06",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Switzerland",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Bulgaria",
+      "date": "2020-09-06",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Wales",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Lithuania",
+      "date": "2020-09-07",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Albania",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 3,
+      "away_team": "Romania",
+      "date": "2020-09-07",
+      "edition": "2020/21",
+      "home_score": 2,
+      "home_team": "Austria",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Poland",
+      "date": "2020-09-07",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Bosnia and Herzegovina",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Scotland",
+      "date": "2020-09-07",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Czechia",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Slovakia",
+      "date": "2020-09-07",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Israel",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Belarus",
+      "date": "2020-09-07",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Kazakhstan",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Italy",
+      "date": "2020-09-07",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Netherlands",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 5,
+      "away_team": "Norway",
+      "date": "2020-09-07",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Northern Ireland",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Estonia",
+      "date": "2020-09-08",
+      "edition": "2020/21",
+      "home_score": 2,
+      "home_team": "Armenia",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Iceland",
+      "date": "2020-09-08",
+      "edition": "2020/21",
+      "home_score": 5,
+      "home_team": "Belgium",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Azerbaijan",
+      "date": "2020-09-08",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Cyprus",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "England",
+      "date": "2020-09-08",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Denmark",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Croatia",
+      "date": "2020-09-08",
+      "edition": "2020/21",
+      "home_score": 4,
+      "home_team": "France",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "North Macedonia",
+      "date": "2020-09-08",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Georgia",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Montenegro",
+      "date": "2020-09-08",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Luxembourg",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Liechtenstein",
+      "date": "2020-09-08",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "San Marino",
+      "neutral": true,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Portugal",
+      "date": "2020-09-08",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Sweden",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Malta",
+      "date": "2020-10-10",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Andorra",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Latvia",
+      "date": "2020-10-10",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Faroe Islands",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Gibraltar",
+      "date": "2020-10-10",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Liechtenstein",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Cyprus",
+      "date": "2020-10-10",
+      "edition": "2020/21",
+      "home_score": 2,
+      "home_team": "Luxembourg",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Azerbaijan",
+      "date": "2020-10-10",
+      "edition": "2020/21",
+      "home_score": 2,
+      "home_team": "Montenegro",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Switzerland",
+      "date": "2020-10-10",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Spain",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Germany",
+      "date": "2020-10-10",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Ukraine",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Georgia",
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "home_score": 2,
+      "home_team": "Armenia",
+      "neutral": true,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Netherlands",
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Bosnia and Herzegovina",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Sweden",
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "home_score": 2,
+      "home_team": "Croatia",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Belgium",
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "home_score": 2,
+      "home_team": "England",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 3,
+      "away_team": "North Macedonia",
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "home_score": 3,
+      "home_team": "Estonia",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Bulgaria",
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "home_score": 2,
+      "home_team": "Finland",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Portugal",
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "France",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Moldova",
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "home_score": 2,
+      "home_team": "Greece",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 3,
+      "away_team": "Denmark",
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Iceland",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Wales",
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Ireland",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Czechia",
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Israel",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Albania",
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Kazakhstan",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Slovenia",
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Kosovo",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Belarus",
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "home_score": 2,
+      "home_team": "Lithuania",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Austria",
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Northern Ireland",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Romania",
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "home_score": 4,
+      "home_team": "Norway",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Italy",
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Poland",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Turkey",
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Russia",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Slovakia",
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Scotland",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Hungary",
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Serbia",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Cyprus",
+      "date": "2020-10-13",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Azerbaijan",
+      "neutral": true,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Andorra",
+      "date": "2020-10-13",
+      "edition": "2020/21",
+      "home_score": 2,
+      "home_team": "Faroe Islands",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 3,
+      "away_team": "Switzerland",
+      "date": "2020-10-13",
+      "edition": "2020/21",
+      "home_score": 3,
+      "home_team": "Germany",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Malta",
+      "date": "2020-10-13",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Latvia",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "San Marino",
+      "date": "2020-10-13",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Liechtenstein",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Luxembourg",
+      "date": "2020-10-13",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Montenegro",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Spain",
+      "date": "2020-10-13",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Ukraine",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Kazakhstan",
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "home_score": 2,
+      "home_team": "Belarus",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Wales",
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Bulgaria",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 2,
+      "away_team": "France",
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Croatia",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Denmark",
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "England",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Armenia",
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Estonia",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Ireland",
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Finland",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Kosovo",
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Greece",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Belgium",
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Iceland",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Netherlands",
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Italy",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Albania",
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Lithuania",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 4,
+      "away_team": "Slovenia",
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Moldova",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Georgia",
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "North Macedonia",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Northern Ireland",
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Norway",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Bosnia and Herzegovina",
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "home_score": 3,
+      "home_team": "Poland",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Sweden",
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "home_score": 3,
+      "home_team": "Portugal",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Austria",
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Romania",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Hungary",
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Russia",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Czechia",
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Scotland",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 3,
+      "away_team": "Israel",
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "home_score": 2,
+      "home_team": "Slovakia",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Serbia",
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "home_score": 2,
+      "home_team": "Turkey",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Montenegro",
+      "date": "2020-11-14",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Azerbaijan",
+      "neutral": true,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Luxembourg",
+      "date": "2020-11-14",
+      "edition": "2020/21",
+      "home_score": 2,
+      "home_team": "Cyprus",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Ukraine",
+      "date": "2020-11-14",
+      "edition": "2020/21",
+      "home_score": 3,
+      "home_team": "Germany",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Faroe Islands",
+      "date": "2020-11-14",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Latvia",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Andorra",
+      "date": "2020-11-14",
+      "edition": "2020/21",
+      "home_score": 3,
+      "home_team": "Malta",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "France",
+      "date": "2020-11-14",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Portugal",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Gibraltar",
+      "date": "2020-11-14",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "San Marino",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Croatia",
+      "date": "2020-11-14",
+      "edition": "2020/21",
+      "home_score": 2,
+      "home_team": "Sweden",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Spain",
+      "date": "2020-11-14",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Switzerland",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Kazakhstan",
+      "date": "2020-11-15",
+      "edition": "2020/21",
+      "home_score": 3,
+      "home_team": "Albania",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Northern Ireland",
+      "date": "2020-11-15",
+      "edition": "2020/21",
+      "home_score": 2,
+      "home_team": "Austria",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Lithuania",
+      "date": "2020-11-15",
+      "edition": "2020/21",
+      "home_score": 2,
+      "home_team": "Belarus",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "England",
+      "date": "2020-11-15",
+      "edition": "2020/21",
+      "home_score": 2,
+      "home_team": "Belgium",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Finland",
+      "date": "2020-11-15",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Bulgaria",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Israel",
+      "date": "2020-11-15",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Czechia",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Iceland",
+      "date": "2020-11-15",
+      "edition": "2020/21",
+      "home_score": 2,
+      "home_team": "Denmark",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Armenia",
+      "date": "2020-11-15",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Georgia",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Serbia",
+      "date": "2020-11-15",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Hungary",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Poland",
+      "date": "2020-11-15",
+      "edition": "2020/21",
+      "home_score": 2,
+      "home_team": "Italy",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Greece",
+      "date": "2020-11-15",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Moldova",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Bosnia and Herzegovina",
+      "date": "2020-11-15",
+      "edition": "2020/21",
+      "home_score": 3,
+      "home_team": "Netherlands",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Estonia",
+      "date": "2020-11-15",
+      "edition": "2020/21",
+      "home_score": 2,
+      "home_team": "North Macedonia",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Norway",
+      "date": "2020-11-15",
+      "edition": "2020/21",
+      "home_score": 3,
+      "home_team": "Romania",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Scotland",
+      "date": "2020-11-15",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Slovakia",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Kosovo",
+      "date": "2020-11-15",
+      "edition": "2020/21",
+      "home_score": 2,
+      "home_team": "Slovenia",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Russia",
+      "date": "2020-11-15",
+      "edition": "2020/21",
+      "home_score": 3,
+      "home_team": "Turkey",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Ireland",
+      "date": "2020-11-15",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Wales",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 5,
+      "away_team": "Latvia",
+      "date": "2020-11-17",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Andorra",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 3,
+      "away_team": "Portugal",
+      "date": "2020-11-17",
+      "edition": "2020/21",
+      "home_score": 2,
+      "home_team": "Croatia",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Sweden",
+      "date": "2020-11-17",
+      "edition": "2020/21",
+      "home_score": 4,
+      "home_team": "France",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Liechtenstein",
+      "date": "2020-11-17",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Gibraltar",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Azerbaijan",
+      "date": "2020-11-17",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Luxembourg",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Faroe Islands",
+      "date": "2020-11-17",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Malta",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Cyprus",
+      "date": "2020-11-17",
+      "edition": "2020/21",
+      "home_score": 4,
+      "home_team": "Montenegro",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Germany",
+      "date": "2020-11-17",
+      "edition": "2020/21",
+      "home_score": 6,
+      "home_team": "Spain",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Ukraine",
+      "date": "2020-11-17",
+      "edition": "2020/21",
+      "home_score": 3,
+      "home_team": "Switzerland",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Belarus",
+      "date": "2020-11-18",
+      "edition": "2020/21",
+      "home_score": 3,
+      "home_team": "Albania",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "North Macedonia",
+      "date": "2020-11-18",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Armenia",
+      "neutral": true,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Norway",
+      "date": "2020-11-18",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Austria",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Denmark",
+      "date": "2020-11-18",
+      "edition": "2020/21",
+      "home_score": 4,
+      "home_team": "Belgium",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Italy",
+      "date": "2020-11-18",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Bosnia and Herzegovina",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Slovakia",
+      "date": "2020-11-18",
+      "edition": "2020/21",
+      "home_score": 2,
+      "home_team": "Czechia",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Iceland",
+      "date": "2020-11-18",
+      "edition": "2020/21",
+      "home_score": 4,
+      "home_team": "England",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Estonia",
+      "date": "2020-11-18",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Georgia",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Slovenia",
+      "date": "2020-11-18",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Greece",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Turkey",
+      "date": "2020-11-18",
+      "edition": "2020/21",
+      "home_score": 2,
+      "home_team": "Hungary",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Bulgaria",
+      "date": "2020-11-18",
+      "edition": "2020/21",
+      "home_score": 0,
+      "home_team": "Ireland",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Scotland",
+      "date": "2020-11-18",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Israel",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Lithuania",
+      "date": "2020-11-18",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Kazakhstan",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Moldova",
+      "date": "2020-11-18",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Kosovo",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Romania",
+      "date": "2020-11-18",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Northern Ireland",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Netherlands",
+      "date": "2020-11-18",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Poland",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Russia",
+      "date": "2020-11-18",
+      "edition": "2020/21",
+      "home_score": 5,
+      "home_team": "Serbia",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Finland",
+      "date": "2020-11-18",
+      "edition": "2020/21",
+      "home_score": 3,
+      "home_team": "Wales",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Spain",
+      "date": "2021-10-06",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Italy",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 3,
+      "away_team": "France",
+      "date": "2021-10-07",
+      "edition": "2020/21",
+      "home_score": 2,
+      "home_team": "Belgium",
+      "neutral": true,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Belgium",
+      "date": "2021-10-10",
+      "edition": "2020/21",
+      "home_score": 2,
+      "home_team": "Italy",
+      "neutral": false,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 2,
+      "away_team": "France",
+      "date": "2021-10-10",
+      "edition": "2020/21",
+      "home_score": 1,
+      "home_team": "Spain",
+      "neutral": true,
+      "validation_period": "2020/21"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Wales",
+      "date": "2022-06-01",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Poland",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "North Macedonia",
+      "date": "2022-06-02",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Bulgaria",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Kosovo",
+      "date": "2022-06-02",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Cyprus",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Switzerland",
+      "date": "2022-06-02",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Czechia",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "San Marino",
+      "date": "2022-06-02",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Estonia",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Gibraltar",
+      "date": "2022-06-02",
+      "edition": "2022/23",
+      "home_score": 4,
+      "home_team": "Georgia",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Iceland",
+      "date": "2022-06-02",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Israel",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Greece",
+      "date": "2022-06-02",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Northern Ireland",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Norway",
+      "date": "2022-06-02",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Serbia",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Sweden",
+      "date": "2022-06-02",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Slovenia",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Portugal",
+      "date": "2022-06-02",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Spain",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Slovakia",
+      "date": "2022-06-03",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Belarus",
+      "neutral": true,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 4,
+      "away_team": "Netherlands",
+      "date": "2022-06-03",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Belgium",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 3,
+      "away_team": "Austria",
+      "date": "2022-06-03",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Croatia",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Denmark",
+      "date": "2022-06-03",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "France",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Azerbaijan",
+      "date": "2022-06-03",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Kazakhstan",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Andorra",
+      "date": "2022-06-03",
+      "edition": "2022/23",
+      "home_score": 3,
+      "home_team": "Latvia",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Moldova",
+      "date": "2022-06-03",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Liechtenstein",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Ireland",
+      "date": "2022-06-04",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Armenia",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Bosnia and Herzegovina",
+      "date": "2022-06-04",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Finland",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "England",
+      "date": "2022-06-04",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Hungary",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Germany",
+      "date": "2022-06-04",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Italy",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Luxembourg",
+      "date": "2022-06-04",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Lithuania",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Romania",
+      "date": "2022-06-04",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Montenegro",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Faroe Islands",
+      "date": "2022-06-04",
+      "edition": "2022/23",
+      "home_score": 4,
+      "home_team": "Turkey",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 5,
+      "away_team": "Georgia",
+      "date": "2022-06-05",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Bulgaria",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Northern Ireland",
+      "date": "2022-06-05",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Cyprus",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Spain",
+      "date": "2022-06-05",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Czechia",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 2,
+      "away_team": "North Macedonia",
+      "date": "2022-06-05",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Gibraltar",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Greece",
+      "date": "2022-06-05",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Kosovo",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Switzerland",
+      "date": "2022-06-05",
+      "edition": "2022/23",
+      "home_score": 4,
+      "home_team": "Portugal",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Malta",
+      "date": "2022-06-05",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "San Marino",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Slovenia",
+      "date": "2022-06-05",
+      "edition": "2022/23",
+      "home_score": 4,
+      "home_team": "Serbia",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Norway",
+      "date": "2022-06-05",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Sweden",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Moldova",
+      "date": "2022-06-06",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Andorra",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Denmark",
+      "date": "2022-06-06",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Austria",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Azerbaijan",
+      "date": "2022-06-06",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Belarus",
+      "neutral": true,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "France",
+      "date": "2022-06-06",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Croatia",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Albania",
+      "date": "2022-06-06",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Iceland",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Liechtenstein",
+      "date": "2022-06-06",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Latvia",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Kazakhstan",
+      "date": "2022-06-06",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Slovakia",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Romania",
+      "date": "2022-06-07",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Bosnia and Herzegovina",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Luxembourg",
+      "date": "2022-06-07",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Faroe Islands",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Montenegro",
+      "date": "2022-06-07",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Finland",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "England",
+      "date": "2022-06-07",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Germany",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Hungary",
+      "date": "2022-06-07",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Italy",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 6,
+      "away_team": "Turkey",
+      "date": "2022-06-07",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Lithuania",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Poland",
+      "date": "2022-06-08",
+      "edition": "2022/23",
+      "home_score": 6,
+      "home_team": "Belgium",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Ukraine",
+      "date": "2022-06-08",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Ireland",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Armenia",
+      "date": "2022-06-08",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Scotland",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Netherlands",
+      "date": "2022-06-08",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Wales",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Bulgaria",
+      "date": "2022-06-09",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Gibraltar",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Cyprus",
+      "date": "2022-06-09",
+      "edition": "2022/23",
+      "home_score": 3,
+      "home_team": "Greece",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Northern Ireland",
+      "date": "2022-06-09",
+      "edition": "2022/23",
+      "home_score": 3,
+      "home_team": "Kosovo",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Estonia",
+      "date": "2022-06-09",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Malta",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 3,
+      "away_team": "Georgia",
+      "date": "2022-06-09",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "North Macedonia",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Slovenia",
+      "date": "2022-06-09",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Norway",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Czechia",
+      "date": "2022-06-09",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Portugal",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Serbia",
+      "date": "2022-06-09",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Sweden",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Spain",
+      "date": "2022-06-09",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Switzerland",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Israel",
+      "date": "2022-06-10",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Albania",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Liechtenstein",
+      "date": "2022-06-10",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Andorra",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "France",
+      "date": "2022-06-10",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Austria",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Slovakia",
+      "date": "2022-06-10",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Azerbaijan",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Kazakhstan",
+      "date": "2022-06-10",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Belarus",
+      "neutral": true,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Croatia",
+      "date": "2022-06-10",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Denmark",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 4,
+      "away_team": "Latvia",
+      "date": "2022-06-10",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Moldova",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Italy",
+      "date": "2022-06-11",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "England",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Lithuania",
+      "date": "2022-06-11",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Faroe Islands",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Germany",
+      "date": "2022-06-11",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Hungary",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Scotland",
+      "date": "2022-06-11",
+      "edition": "2022/23",
+      "home_score": 3,
+      "home_team": "Ireland",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Turkey",
+      "date": "2022-06-11",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Luxembourg",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Bosnia and Herzegovina",
+      "date": "2022-06-11",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Montenegro",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Poland",
+      "date": "2022-06-11",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Netherlands",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Finland",
+      "date": "2022-06-11",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Romania",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Armenia",
+      "date": "2022-06-11",
+      "edition": "2022/23",
+      "home_score": 3,
+      "home_team": "Ukraine",
+      "neutral": true,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Belgium",
+      "date": "2022-06-11",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Wales",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Bulgaria",
+      "date": "2022-06-12",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Georgia",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Kosovo",
+      "date": "2022-06-12",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Greece",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "San Marino",
+      "date": "2022-06-12",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Malta",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Gibraltar",
+      "date": "2022-06-12",
+      "edition": "2022/23",
+      "home_score": 4,
+      "home_team": "North Macedonia",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Cyprus",
+      "date": "2022-06-12",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Northern Ireland",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Sweden",
+      "date": "2022-06-12",
+      "edition": "2022/23",
+      "home_score": 3,
+      "home_team": "Norway",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Serbia",
+      "date": "2022-06-12",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Slovenia",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Czechia",
+      "date": "2022-06-12",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Spain",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Portugal",
+      "date": "2022-06-12",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Switzerland",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Belarus",
+      "date": "2022-06-13",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Azerbaijan",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Austria",
+      "date": "2022-06-13",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Denmark",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Croatia",
+      "date": "2022-06-13",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "France",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Israel",
+      "date": "2022-06-13",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Iceland",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Slovakia",
+      "date": "2022-06-13",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Kazakhstan",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 4,
+      "away_team": "Scotland",
+      "date": "2022-06-14",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Armenia",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Finland",
+      "date": "2022-06-14",
+      "edition": "2022/23",
+      "home_score": 3,
+      "home_team": "Bosnia and Herzegovina",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 4,
+      "away_team": "Hungary",
+      "date": "2022-06-14",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "England",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Italy",
+      "date": "2022-06-14",
+      "edition": "2022/23",
+      "home_score": 5,
+      "home_team": "Germany",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Latvia",
+      "date": "2022-06-14",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Liechtenstein",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Faroe Islands",
+      "date": "2022-06-14",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Luxembourg",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Andorra",
+      "date": "2022-06-14",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Moldova",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Wales",
+      "date": "2022-06-14",
+      "edition": "2022/23",
+      "home_score": 3,
+      "home_team": "Netherlands",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Belgium",
+      "date": "2022-06-14",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Poland",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 3,
+      "away_team": "Montenegro",
+      "date": "2022-06-14",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Romania",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Lithuania",
+      "date": "2022-06-14",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Turkey",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Ireland",
+      "date": "2022-06-14",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Ukraine",
+      "neutral": true,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Ukraine",
+      "date": "2022-09-21",
+      "edition": "2022/23",
+      "home_score": 3,
+      "home_team": "Scotland",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Wales",
+      "date": "2022-09-22",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Belgium",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Denmark",
+      "date": "2022-09-22",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Croatia",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Austria",
+      "date": "2022-09-22",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "France",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Belarus",
+      "date": "2022-09-22",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Kazakhstan",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Moldova",
+      "date": "2022-09-22",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Latvia",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Andorra",
+      "date": "2022-09-22",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Liechtenstein",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Faroe Islands",
+      "date": "2022-09-22",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Lithuania",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Netherlands",
+      "date": "2022-09-22",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Poland",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Azerbaijan",
+      "date": "2022-09-22",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Slovakia",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 3,
+      "away_team": "Luxembourg",
+      "date": "2022-09-22",
+      "edition": "2022/23",
+      "home_score": 3,
+      "home_team": "Turkey",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Montenegro",
+      "date": "2022-09-23",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Bosnia and Herzegovina",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Gibraltar",
+      "date": "2022-09-23",
+      "edition": "2022/23",
+      "home_score": 5,
+      "home_team": "Bulgaria",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Malta",
+      "date": "2022-09-23",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Estonia",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Romania",
+      "date": "2022-09-23",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Finland",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "North Macedonia",
+      "date": "2022-09-23",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Georgia",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Hungary",
+      "date": "2022-09-23",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Germany",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "England",
+      "date": "2022-09-23",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Italy",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 5,
+      "away_team": "Ukraine",
+      "date": "2022-09-24",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Armenia",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Greece",
+      "date": "2022-09-24",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Cyprus",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 4,
+      "away_team": "Portugal",
+      "date": "2022-09-24",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Czechia",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Albania",
+      "date": "2022-09-24",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Israel",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Kosovo",
+      "date": "2022-09-24",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Northern Ireland",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Ireland",
+      "date": "2022-09-24",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Scotland",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Sweden",
+      "date": "2022-09-24",
+      "edition": "2022/23",
+      "home_score": 4,
+      "home_team": "Serbia",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Norway",
+      "date": "2022-09-24",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Slovenia",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Switzerland",
+      "date": "2022-09-24",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Spain",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Latvia",
+      "date": "2022-09-25",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Andorra",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 3,
+      "away_team": "Croatia",
+      "date": "2022-09-25",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Austria",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Kazakhstan",
+      "date": "2022-09-25",
+      "edition": "2022/23",
+      "home_score": 3,
+      "home_team": "Azerbaijan",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "France",
+      "date": "2022-09-25",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Denmark",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Turkey",
+      "date": "2022-09-25",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Faroe Islands",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Lithuania",
+      "date": "2022-09-25",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Luxembourg",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Liechtenstein",
+      "date": "2022-09-25",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Moldova",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Belgium",
+      "date": "2022-09-25",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Netherlands",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Belarus",
+      "date": "2022-09-25",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Slovakia",
+      "neutral": true,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Poland",
+      "date": "2022-09-25",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Wales",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 3,
+      "away_team": "Germany",
+      "date": "2022-09-26",
+      "edition": "2022/23",
+      "home_score": 3,
+      "home_team": "England",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Georgia",
+      "date": "2022-09-26",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Gibraltar",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Italy",
+      "date": "2022-09-26",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Hungary",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Finland",
+      "date": "2022-09-26",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Montenegro",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Bulgaria",
+      "date": "2022-09-26",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "North Macedonia",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Bosnia and Herzegovina",
+      "date": "2022-09-26",
+      "edition": "2022/23",
+      "home_score": 4,
+      "home_team": "Romania",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 4,
+      "away_team": "Estonia",
+      "date": "2022-09-26",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "San Marino",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Iceland",
+      "date": "2022-09-27",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Albania",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Northern Ireland",
+      "date": "2022-09-27",
+      "edition": "2022/23",
+      "home_score": 3,
+      "home_team": "Greece",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Armenia",
+      "date": "2022-09-27",
+      "edition": "2022/23",
+      "home_score": 3,
+      "home_team": "Ireland",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Cyprus",
+      "date": "2022-09-27",
+      "edition": "2022/23",
+      "home_score": 5,
+      "home_team": "Kosovo",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Serbia",
+      "date": "2022-09-27",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Norway",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Spain",
+      "date": "2022-09-27",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Portugal",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Slovenia",
+      "date": "2022-09-27",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Sweden",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Czechia",
+      "date": "2022-09-27",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Switzerland",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Scotland",
+      "date": "2022-09-27",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Ukraine",
+      "neutral": true,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 4,
+      "away_team": "Croatia",
+      "date": "2023-06-14",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Netherlands",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Italy",
+      "date": "2023-06-15",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Spain",
+      "neutral": true,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Spain",
+      "date": "2023-06-18",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Croatia",
+      "neutral": true,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 3,
+      "away_team": "Italy",
+      "date": "2023-06-18",
+      "edition": "2022/23",
+      "home_score": 2,
+      "home_team": "Netherlands",
+      "neutral": false,
+      "validation_period": "2022/23"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Lithuania",
+      "date": "2024-03-21",
+      "edition": "2022/23",
+      "home_score": 0,
+      "home_team": "Gibraltar",
+      "neutral": true,
+      "validation_period": "2022/23-delayed-relegation-playoffs"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Gibraltar",
+      "date": "2024-03-26",
+      "edition": "2022/23",
+      "home_score": 1,
+      "home_team": "Lithuania",
+      "neutral": false,
+      "validation_period": "2022/23-delayed-relegation-playoffs"
+    },
+    {
+      "away_score": 3,
+      "away_team": "Sweden",
+      "date": "2024-09-05",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Azerbaijan",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Bulgaria",
+      "date": "2024-09-05",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Belarus",
+      "neutral": true,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Switzerland",
+      "date": "2024-09-05",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "Denmark",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Slovakia",
+      "date": "2024-09-05",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Estonia",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Luxembourg",
+      "date": "2024-09-05",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "Northern Ireland",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Croatia",
+      "date": "2024-09-05",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "Portugal",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Liechtenstein",
+      "date": "2024-09-05",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "San Marino",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 3,
+      "away_team": "Poland",
+      "date": "2024-09-05",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "Scotland",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Spain",
+      "date": "2024-09-05",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Serbia",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Israel",
+      "date": "2024-09-06",
+      "edition": "2024/25",
+      "home_score": 3,
+      "home_team": "Belgium",
+      "neutral": true,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 3,
+      "away_team": "Italy",
+      "date": "2024-09-06",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "France",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Montenegro",
+      "date": "2024-09-06",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "Iceland",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Norway",
+      "date": "2024-09-06",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Kazakhstan",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 3,
+      "away_team": "Romania",
+      "date": "2024-09-06",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Kosovo",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Cyprus",
+      "date": "2024-09-06",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Lithuania",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Austria",
+      "date": "2024-09-06",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Slovenia",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Turkey",
+      "date": "2024-09-06",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Wales",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Latvia",
+      "date": "2024-09-07",
+      "edition": "2024/25",
+      "home_score": 4,
+      "home_team": "Armenia",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "North Macedonia",
+      "date": "2024-09-07",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Faroe Islands",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Czechia",
+      "date": "2024-09-07",
+      "edition": "2024/25",
+      "home_score": 4,
+      "home_team": "Georgia",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Hungary",
+      "date": "2024-09-07",
+      "edition": "2024/25",
+      "home_score": 5,
+      "home_team": "Germany",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Finland",
+      "date": "2024-09-07",
+      "edition": "2024/25",
+      "home_score": 3,
+      "home_team": "Greece",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "England",
+      "date": "2024-09-07",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Ireland",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Malta",
+      "date": "2024-09-07",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "Moldova",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Bosnia and Herzegovina",
+      "date": "2024-09-07",
+      "edition": "2024/25",
+      "home_score": 5,
+      "home_team": "Netherlands",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Albania",
+      "date": "2024-09-07",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Ukraine",
+      "neutral": true,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Northern Ireland",
+      "date": "2024-09-08",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Bulgaria",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Poland",
+      "date": "2024-09-08",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Croatia",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Serbia",
+      "date": "2024-09-08",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "Denmark",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Liechtenstein",
+      "date": "2024-09-08",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "Gibraltar",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Belarus",
+      "date": "2024-09-08",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Luxembourg",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Scotland",
+      "date": "2024-09-08",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "Portugal",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Azerbaijan",
+      "date": "2024-09-08",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "Slovakia",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Estonia",
+      "date": "2024-09-08",
+      "edition": "2024/25",
+      "home_score": 3,
+      "home_team": "Sweden",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 4,
+      "away_team": "Spain",
+      "date": "2024-09-08",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Switzerland",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 4,
+      "away_team": "Kosovo",
+      "date": "2024-09-09",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Cyprus",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Belgium",
+      "date": "2024-09-09",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "France",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Italy",
+      "date": "2024-09-09",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Israel",
+      "neutral": true,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Wales",
+      "date": "2024-09-09",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Montenegro",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Austria",
+      "date": "2024-09-09",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "Norway",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Lithuania",
+      "date": "2024-09-09",
+      "edition": "2024/25",
+      "home_score": 3,
+      "home_team": "Romania",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Kazakhstan",
+      "date": "2024-09-09",
+      "edition": "2024/25",
+      "home_score": 3,
+      "home_team": "Slovenia",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Iceland",
+      "date": "2024-09-09",
+      "edition": "2024/25",
+      "home_score": 3,
+      "home_team": "Turkey",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Georgia",
+      "date": "2024-09-10",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Albania",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Malta",
+      "date": "2024-09-10",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Andorra",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Ukraine",
+      "date": "2024-09-10",
+      "edition": "2024/25",
+      "home_score": 3,
+      "home_team": "Czechia",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Finland",
+      "date": "2024-09-10",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "England",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Bosnia and Herzegovina",
+      "date": "2024-09-10",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Hungary",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Greece",
+      "date": "2024-09-10",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Ireland",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Faroe Islands",
+      "date": "2024-09-10",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Latvia",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Germany",
+      "date": "2024-09-10",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "Netherlands",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Armenia",
+      "date": "2024-09-10",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "North Macedonia",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Kazakhstan",
+      "date": "2024-10-10",
+      "edition": "2024/25",
+      "home_score": 4,
+      "home_team": "Austria",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Greece",
+      "date": "2024-10-10",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "England",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Armenia",
+      "date": "2024-10-10",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "Faroe Islands",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Ireland",
+      "date": "2024-10-10",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Finland",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "San Marino",
+      "date": "2024-10-10",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Gibraltar",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 4,
+      "away_team": "France",
+      "date": "2024-10-10",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Israel",
+      "neutral": true,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Belgium",
+      "date": "2024-10-10",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "Italy",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 3,
+      "away_team": "North Macedonia",
+      "date": "2024-10-10",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Latvia",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Andorra",
+      "date": "2024-10-10",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "Moldova",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Slovenia",
+      "date": "2024-10-10",
+      "edition": "2024/25",
+      "home_score": 3,
+      "home_team": "Norway",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Germany",
+      "date": "2024-10-11",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Bosnia and Herzegovina",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Albania",
+      "date": "2024-10-11",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "Czechia",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Azerbaijan",
+      "date": "2024-10-11",
+      "edition": "2024/25",
+      "home_score": 3,
+      "home_team": "Estonia",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Netherlands",
+      "date": "2024-10-11",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Hungary",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Wales",
+      "date": "2024-10-11",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "Iceland",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Sweden",
+      "date": "2024-10-11",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "Slovakia",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Montenegro",
+      "date": "2024-10-11",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Turkey",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Georgia",
+      "date": "2024-10-11",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Ukraine",
+      "neutral": true,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Northern Ireland",
+      "date": "2024-10-12",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Belarus",
+      "neutral": true,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Luxembourg",
+      "date": "2024-10-12",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Bulgaria",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Scotland",
+      "date": "2024-10-12",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "Croatia",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 3,
+      "away_team": "Romania",
+      "date": "2024-10-12",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Cyprus",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Kosovo",
+      "date": "2024-10-12",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Lithuania",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 3,
+      "away_team": "Portugal",
+      "date": "2024-10-12",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Poland",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Switzerland",
+      "date": "2024-10-12",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "Serbia",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Denmark",
+      "date": "2024-10-12",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Spain",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "North Macedonia",
+      "date": "2024-10-13",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Armenia",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Norway",
+      "date": "2024-10-13",
+      "edition": "2024/25",
+      "home_score": 5,
+      "home_team": "Austria",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Latvia",
+      "date": "2024-10-13",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Faroe Islands",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 3,
+      "away_team": "England",
+      "date": "2024-10-13",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Finland",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Ireland",
+      "date": "2024-10-13",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "Greece",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Slovenia",
+      "date": "2024-10-13",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Kazakhstan",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Gibraltar",
+      "date": "2024-10-13",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Liechtenstein",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Moldova",
+      "date": "2024-10-13",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Malta",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 3,
+      "away_team": "Slovakia",
+      "date": "2024-10-14",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Azerbaijan",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "France",
+      "date": "2024-10-14",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Belgium",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Hungary",
+      "date": "2024-10-14",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Bosnia and Herzegovina",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 3,
+      "away_team": "Sweden",
+      "date": "2024-10-14",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Estonia",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Albania",
+      "date": "2024-10-14",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Georgia",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Netherlands",
+      "date": "2024-10-14",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Germany",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 4,
+      "away_team": "Turkey",
+      "date": "2024-10-14",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "Iceland",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Israel",
+      "date": "2024-10-14",
+      "edition": "2024/25",
+      "home_score": 4,
+      "home_team": "Italy",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Czechia",
+      "date": "2024-10-14",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Ukraine",
+      "neutral": true,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Montenegro",
+      "date": "2024-10-14",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Wales",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Luxembourg",
+      "date": "2024-10-15",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Belarus",
+      "neutral": true,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Cyprus",
+      "date": "2024-10-15",
+      "edition": "2024/25",
+      "home_score": 3,
+      "home_team": "Kosovo",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Romania",
+      "date": "2024-10-15",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Lithuania",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Bulgaria",
+      "date": "2024-10-15",
+      "edition": "2024/25",
+      "home_score": 5,
+      "home_team": "Northern Ireland",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 3,
+      "away_team": "Croatia",
+      "date": "2024-10-15",
+      "edition": "2024/25",
+      "home_score": 3,
+      "home_team": "Poland",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Portugal",
+      "date": "2024-10-15",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Scotland",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Serbia",
+      "date": "2024-10-15",
+      "edition": "2024/25",
+      "home_score": 3,
+      "home_team": "Spain",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Denmark",
+      "date": "2024-10-15",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "Switzerland",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Faroe Islands",
+      "date": "2024-11-14",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Armenia",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Italy",
+      "date": "2024-11-14",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Belgium",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Israel",
+      "date": "2024-11-14",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "France",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 3,
+      "away_team": "England",
+      "date": "2024-11-14",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Greece",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Finland",
+      "date": "2024-11-14",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Ireland",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Austria",
+      "date": "2024-11-14",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Kazakhstan",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Latvia",
+      "date": "2024-11-14",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "North Macedonia",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 4,
+      "away_team": "Norway",
+      "date": "2024-11-14",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Slovenia",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Lithuania",
+      "date": "2024-11-15",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "Cyprus",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Spain",
+      "date": "2024-11-15",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Denmark",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Bulgaria",
+      "date": "2024-11-15",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Luxembourg",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Belarus",
+      "date": "2024-11-15",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "Northern Ireland",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Poland",
+      "date": "2024-11-15",
+      "edition": "2024/25",
+      "home_score": 5,
+      "home_team": "Portugal",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Kosovo",
+      "date": "2024-11-15",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Romania",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Gibraltar",
+      "date": "2024-11-15",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "San Marino",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Croatia",
+      "date": "2024-11-15",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Scotland",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Serbia",
+      "date": "2024-11-15",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Switzerland",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Czechia",
+      "date": "2024-11-16",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Albania",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Moldova",
+      "date": "2024-11-16",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Andorra",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Estonia",
+      "date": "2024-11-16",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Azerbaijan",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Ukraine",
+      "date": "2024-11-16",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Georgia",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Bosnia and Herzegovina",
+      "date": "2024-11-16",
+      "edition": "2024/25",
+      "home_score": 7,
+      "home_team": "Germany",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Iceland",
+      "date": "2024-11-16",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Montenegro",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Hungary",
+      "date": "2024-11-16",
+      "edition": "2024/25",
+      "home_score": 4,
+      "home_team": "Netherlands",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Slovakia",
+      "date": "2024-11-16",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "Sweden",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Wales",
+      "date": "2024-11-16",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Turkey",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Slovenia",
+      "date": "2024-11-17",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Austria",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Ireland",
+      "date": "2024-11-17",
+      "edition": "2024/25",
+      "home_score": 5,
+      "home_team": "England",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Greece",
+      "date": "2024-11-17",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Finland",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Belgium",
+      "date": "2024-11-17",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Israel",
+      "neutral": true,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 3,
+      "away_team": "France",
+      "date": "2024-11-17",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Italy",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Armenia",
+      "date": "2024-11-17",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Latvia",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Faroe Islands",
+      "date": "2024-11-17",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "North Macedonia",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Kazakhstan",
+      "date": "2024-11-17",
+      "edition": "2024/25",
+      "home_score": 5,
+      "home_team": "Norway",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Belarus",
+      "date": "2024-11-18",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Bulgaria",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Portugal",
+      "date": "2024-11-18",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Croatia",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Lithuania",
+      "date": "2024-11-18",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Kosovo",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 3,
+      "away_team": "San Marino",
+      "date": "2024-11-18",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Liechtenstein",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Northern Ireland",
+      "date": "2024-11-18",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "Luxembourg",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Scotland",
+      "date": "2024-11-18",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Poland",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Cyprus",
+      "date": "2024-11-18",
+      "edition": "2024/25",
+      "home_score": 4,
+      "home_team": "Romania",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Denmark",
+      "date": "2024-11-18",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Serbia",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Switzerland",
+      "date": "2024-11-18",
+      "edition": "2024/25",
+      "home_score": 3,
+      "home_team": "Spain",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Ukraine",
+      "date": "2024-11-19",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Albania",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Netherlands",
+      "date": "2024-11-19",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Bosnia and Herzegovina",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Georgia",
+      "date": "2024-11-19",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "Czechia",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Germany",
+      "date": "2024-11-19",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Hungary",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Andorra",
+      "date": "2024-11-19",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Malta",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Turkey",
+      "date": "2024-11-19",
+      "edition": "2024/25",
+      "home_score": 3,
+      "home_team": "Montenegro",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Estonia",
+      "date": "2024-11-19",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Slovakia",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Azerbaijan",
+      "date": "2024-11-19",
+      "edition": "2024/25",
+      "home_score": 6,
+      "home_team": "Sweden",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Iceland",
+      "date": "2024-11-19",
+      "edition": "2024/25",
+      "home_score": 4,
+      "home_team": "Wales",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 3,
+      "away_team": "Georgia",
+      "date": "2025-03-20",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Armenia",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Serbia",
+      "date": "2025-03-20",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Austria",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Ireland",
+      "date": "2025-03-20",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Bulgaria",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "France",
+      "date": "2025-03-20",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "Croatia",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Portugal",
+      "date": "2025-03-20",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Denmark",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Scotland",
+      "date": "2025-03-20",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Greece",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Germany",
+      "date": "2025-03-20",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Italy",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Iceland",
+      "date": "2025-03-20",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "Kosovo",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Spain",
+      "date": "2025-03-20",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "Netherlands",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Slovenia",
+      "date": "2025-03-20",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Slovakia",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Hungary",
+      "date": "2025-03-20",
+      "edition": "2024/25",
+      "home_score": 3,
+      "home_team": "Turkey",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Belgium",
+      "date": "2025-03-20",
+      "edition": "2024/25",
+      "home_score": 3,
+      "home_team": "Ukraine",
+      "neutral": true,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Ukraine",
+      "date": "2025-03-23",
+      "edition": "2024/25",
+      "home_score": 3,
+      "home_team": "Belgium",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Croatia",
+      "date": "2025-03-23",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "France",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Armenia",
+      "date": "2025-03-23",
+      "edition": "2024/25",
+      "home_score": 6,
+      "home_team": "Georgia",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 3,
+      "away_team": "Italy",
+      "date": "2025-03-23",
+      "edition": "2024/25",
+      "home_score": 3,
+      "home_team": "Germany",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 3,
+      "away_team": "Turkey",
+      "date": "2025-03-23",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Hungary",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 3,
+      "away_team": "Kosovo",
+      "date": "2025-03-23",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Iceland",
+      "neutral": true,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 1,
+      "away_team": "Bulgaria",
+      "date": "2025-03-23",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "Ireland",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Denmark",
+      "date": "2025-03-23",
+      "edition": "2024/25",
+      "home_score": 5,
+      "home_team": "Portugal",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 3,
+      "away_team": "Greece",
+      "date": "2025-03-23",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Scotland",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Austria",
+      "date": "2025-03-23",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "Serbia",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 0,
+      "away_team": "Slovakia",
+      "date": "2025-03-23",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Slovenia",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 3,
+      "away_team": "Netherlands",
+      "date": "2025-03-23",
+      "edition": "2024/25",
+      "home_score": 3,
+      "home_team": "Spain",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Portugal",
+      "date": "2025-06-04",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team": "Germany",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 4,
+      "away_team": "France",
+      "date": "2025-06-05",
+      "edition": "2024/25",
+      "home_score": 5,
+      "home_team": "Spain",
+      "neutral": true,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "France",
+      "date": "2025-06-08",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team": "Germany",
+      "neutral": false,
+      "validation_period": "2024/25"
+    },
+    {
+      "away_score": 2,
+      "away_team": "Spain",
+      "date": "2025-06-08",
+      "edition": "2024/25",
+      "home_score": 2,
+      "home_team": "Portugal",
+      "neutral": true,
+      "validation_period": "2024/25"
+    }
+  ],
+  "normalization_version": "sportsbrain-nl-team-aliases-v1",
+  "schema_version": "uefa-nl-canonical-result-source-v1",
+  "snapshot_committed_at": "2026-09-29T16:00:59Z",
+  "snapshot_digest": "63678e75c4a4c12d5617f179ad11cc5247e7ffb3d5beb755857e543c64c15715",
+  "upstream_cache_retrieved_at": null,
+  "upstream_cache_sha256": "6b47d79b84891306d8bb2ce4c0abec810b11818c6e4c3fad9fa2415c228b7f2d",
+  "upstream_retrieval_note": "Original retrieval timestamp was not available in the ignored local cache metadata.",
+  "upstream_url": "https://raw.githubusercontent.com/martj42/international_results/master/results.csv"
+}

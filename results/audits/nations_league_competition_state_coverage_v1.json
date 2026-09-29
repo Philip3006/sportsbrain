@@ -1,0 +1,92 @@
+{
+  "built_at": "2026-09-29T16:00:59Z",
+  "coverage_digest": "476061d4cd2d46a72482ed27da282784080f138299980432e44e4d96bb745acc",
+  "dataset_digest": "4283e4246e1aa67e03d5c90dd8d3d22568420e6adfb9f1f3893a849f163520c3",
+  "edition_rule_coverage": {
+    "2020/21": "partially_source_verified",
+    "2022/23": "partially_source_verified",
+    "2024/25": "partially_source_verified"
+  },
+  "expected_evaluation_fixture_count": 512,
+  "fields": {
+    "canonical_participants": {
+      "missing": 0,
+      "present": 512,
+      "status": "covered"
+    },
+    "causal_date_cutoff": {
+      "present": 512,
+      "status": "conservative_date_only_cutoff; instant proof requires kickoffs",
+      "strict_kickoff_timestamp_comparison": 0
+    },
+    "kickoff_timestamp": {
+      "missing": 512,
+      "present": 0,
+      "status": "partial_blocker"
+    },
+    "league_and_group_mapping": {
+      "missing": 38,
+      "present": 474,
+      "status": "partial_knockout_records_have_no_single_group"
+    },
+    "matchday": {
+      "missing": 512,
+      "present": 0,
+      "status": "partial_blocker"
+    },
+    "official_fixture_id": {
+      "missing": 512,
+      "present": 0,
+      "status": "partial_blocker"
+    },
+    "qualification_and_relegation_math": {
+      "computed_exact": 0,
+      "status": "partial_source_and_rules_required",
+      "unresolved": 512
+    },
+    "standings_before": {
+      "missing": 0,
+      "present": 512,
+      "status": "covered_where_official_group_mapping_exists"
+    }
+  },
+  "fixture_coverage_basis": "one-to-one coverage of the hash-verified existing 512-row evaluation source; not an independent official-UEFA-ID crosswalk",
+  "fixture_coverage_complete": true,
+  "leakage_checks": {
+    "final_standings_backfilled": false,
+    "final_tables_read": false,
+    "future_match_scores_in_state": false,
+    "same_day_results_excluded": true,
+    "uses_only_result_dates_strictly_before_fixture_date": true
+  },
+  "limitations": [
+    "Frozen 512-row match source contains calendar date, teams, score and neutral flag only; it contains no official fixture ID, kickoff timestamp or matchday.",
+    "The full edition-specific scheduled fixture list with its source snapshot digest has not been ingested; remaining opponent counts are therefore not promoted to a fully validated schedule feature.",
+    "2022/23 edition-specific Article 15 tie-break text was not frozen, so exact tie ranks and qualification/relegation boundary states remain unresolved.",
+    "2020/21 and 2024/25 tie-break rules require disciplinary points and access-list values absent from the 512-result snapshot for some tied ranks.",
+    "The 2022/23 delayed C/D play-out is represented as its observed two-leg pair; its provenance and exact two-leg result do not constitute the absent full scheduled fixture snapshot."
+  ],
+  "missing_source_fixtures": [],
+  "official_schedule_match_coverage_verified": false,
+  "output_record_count": 512,
+  "period_counts": {
+    "2020/21": 166,
+    "2022/23": 160,
+    "2022/23-delayed-relegation-playoffs": 2,
+    "2024/25": 184
+  },
+  "schema_version": "uefa-nations-league-competition-state-coverage-v1",
+  "source_fixture_count": 512,
+  "stage_counts": {
+    "2020/21:league_a_finals": 4,
+    "2020/21:league_phase": 162,
+    "2022/23:league_a_finals": 4,
+    "2022/23:league_c_relegation_playout": 2,
+    "2022/23:league_phase": 156,
+    "2024/25:league_a_final_tournament": 4,
+    "2024/25:league_a_quarter_final": 8,
+    "2024/25:league_phase": 156,
+    "2024/25:promotion_relegation_playoff": 16
+  },
+  "unresolved_points_tie_rows": 954
+}
