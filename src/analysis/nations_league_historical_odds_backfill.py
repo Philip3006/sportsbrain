@@ -26,7 +26,7 @@ SPORT_KEY = "soccer_uefa_nations_league"
 REGION = "eu"
 MARKET = "h2h"
 EXPECTED_TIMELINE_DIGEST = (
-    "842c0cc608b4221d63cbda079756dc392524e53349c9c24af5e8116c1d27e1af"
+    "2c60c6b823b0cae948947fffe2a0e3456495c1fc5d510379ae95690e1c3fa6ef"
 )
 DEFAULT_PLAN_PATH = Path(
     "results/audits/nations_league_historical_odds_request_plan_20260929.json"

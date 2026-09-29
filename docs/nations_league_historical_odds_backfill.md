@@ -5,8 +5,10 @@ artifact without recomputing target timestamps or fixture identities.
 
 Current input commitments:
 
-- plan SHA-256: ab9fea3a925c0a9ccbb5a6d8d7d9fb1cd9cbe1c20941c19bf07d3e676ae13882
-- timeline digest: 842c0cc608b4221d63cbda079756dc392524e53349c9c24af5e8116c1d27e1af
+- plan SHA-256: f5611025da9d606ea056e720ab2e45a4a622dd7c6b397c7822b5c3df9d978c33
+- timeline digest: 2c60c6b823b0cae948947fffe2a0e3456495c1fc5d510379ae95690e1c3fa6ef
+- final timeline head: 065c6b40eb9911df3703d2e3079730a556136ee3
+- final plan: 279 provider-coverable fixtures; 0 pending kickoff mappings; two administrative exceptions are explicitly classified, with the after-coverage exception included in the provider plan.
 
 ## Dry run
 

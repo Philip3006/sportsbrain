@@ -32,7 +32,33 @@ def _plan():
     return load_plan(PLAN_PATH)
 
 
-def _context(plan, mode=ExecutionMode.DRY_RUN, *, credits=2_000, **overrides):
+def test_final_timeline_plan_includes_administrative_exception_and_zero_pending():
+    plan = _plan()
+    assert plan.raw["source"]["head_sha"] == (
+        "065c6b40eb9911df3703d2e3079730a556136ee3"
+    )
+    assert plan.raw["classification"]["category_counts"] == {
+        "before historical provider coverage": 232,
+        "after provider coverage with verified kickoff_utc": 278,
+        "after provider coverage but unresolved kickoff": 0,
+        "administrative / otherwise unusable exception": 2,
+    }
+    assert len(plan.fixture_targets) == 279
+    assert plan.raw["pending_manifest"] == []
+    assert {
+        item["fixture_id"]
+        for item in plan.raw["classification"]["administrative_exceptions"]
+    } == {
+        "uefa-nl:c07e17c2e1a35c4b056be0aa",
+        "uefa-nl:63f926e0ced3f284c077ee10",
+    }
+    assert any(
+        item["fixture_id"] == "uefa-nl:63f926e0ced3f284c077ee10"
+        for item in plan.fixture_targets
+    )
+
+
+def _context(plan, mode=ExecutionMode.DRY_RUN, *, credits=2_500, **overrides):
     values = {
         "historical_entitlement": True,
         "available_credits": credits,
@@ -172,10 +198,10 @@ def test_dry_run_reproduces_both_plan_costs_and_has_zero_side_effects():
     assert first == second
     assert first["network_requests"] == 0
     assert first["credential_accesses"] == 0
-    assert first["plans"]["PREDICTION_ONLY"]["unique_http_requests"] == 118
-    assert first["plans"]["PREDICTION_ONLY"]["estimated_credits"] == 1_180
-    assert first["plans"]["FULL_RESEARCH"]["unique_http_requests"] == 177
-    assert first["plans"]["FULL_RESEARCH"]["estimated_credits"] == 1_770
+    assert first["plans"]["PREDICTION_ONLY"]["unique_http_requests"] == 150
+    assert first["plans"]["PREDICTION_ONLY"]["estimated_credits"] == 1_500
+    assert first["plans"]["FULL_RESEARCH"]["unique_http_requests"] == 225
+    assert first["plans"]["FULL_RESEARCH"]["estimated_credits"] == 2_250
 
 
 @pytest.mark.parametrize(
