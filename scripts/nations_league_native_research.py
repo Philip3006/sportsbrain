@@ -67,6 +67,79 @@ def research_design() -> dict[str, Any]:
     }
 
 
+def assess_native_results(
+    baseline: dict[str, Any], native: dict[str, Any]
+) -> dict[str, Any]:
+    """Classify only robust grid-wide evidence; do not crown a holdout winner."""
+    fair_dc = baseline["strict_validation"]["model_variants"]["dixon_coles"]
+    fair_elo = baseline["strict_validation"]["model_variants"]["elo"]
+    dc_brier = fair_dc["metrics"]["brier_score_multiclass"]
+    elo_brier = fair_elo["metrics"]["brier_score_multiclass"]
+    available = [
+        row
+        for row in native["comparison_table"]
+        if row.get("multiclass_brier") is not None and row.get("n", 0) > 0
+    ]
+    if not available:
+        return {
+            "status": "NL_NATIVE_MODEL_BLOCKED",
+            "reason": "No weighted candidate variant was evaluated.",
+        }
+    descriptive_best = min(available, key=lambda row: row["multiclass_brier"])
+    best_name = descriptive_best["variant"]
+    best_intervals = native["paired_date_cluster_bootstrap"][best_name][
+        "brier_difference_intervals"
+    ]
+    all_better = all(
+        native["paired_date_cluster_bootstrap"][row["variant"]][
+            "brier_difference_intervals"
+        ][f"{row['variant']}_minus_{baseline_name}"]["upper_95"]
+        < 0.0
+        for row in available
+        for baseline_name in ("dixon_coles", "elo")
+    )
+    all_worse = all(
+        native["paired_date_cluster_bootstrap"][row["variant"]][
+            "brier_difference_intervals"
+        ][f"{row['variant']}_minus_{baseline_name}"]["lower_95"]
+        > 0.0
+        for row in available
+        for baseline_name in ("dixon_coles", "elo")
+    )
+    status = (
+        "NL_NATIVE_MODEL_PROMISING"
+        if all_better
+        else "NL_NATIVE_MODEL_REGRESSION"
+        if all_worse
+        else "NL_NATIVE_MODEL_NO_CLEAR_GAIN"
+    )
+    return {
+        "status": status,
+        "strongest_fair_reference_baseline": "Dixon-Coles",
+        "baseline_brier": {"dixon_coles": dc_brier, "elo": elo_brier},
+        "descriptive_best_grid_variant_not_selected_for_snapshot": best_name,
+        "descriptive_best_brier": descriptive_best["multiclass_brier"],
+        "descriptive_best_minus_dixon_coles_brier": (
+            descriptive_best["multiclass_brier"] - dc_brier
+        ),
+        "descriptive_best_paired_date_cluster_bootstrap_95": best_intervals[
+            f"{best_name}_minus_dixon_coles"
+        ],
+        "grid_wide_rule": (
+            "Promising/regression requires every evaluated predeclared variant's paired 95% interval "
+            "to be strictly below/above zero versus both Elo and Dixon-Coles; otherwise no clear gain."
+        ),
+        "hyperparameter_selection_caveat": (
+            "No best-on-holdout variant is promoted. Reported intervals are descriptive and not corrected "
+            "for comparing the full sensitivity grid."
+        ),
+        "recommendation": (
+            "Keep this as an offline research candidate only; if pursued, preregister a primary configuration "
+            "and seek later independent Nations League out-of-sample evidence. Do not write or route a production snapshot."
+        ),
+    }
+
+
 def _prior_reference(path: Path) -> dict[str, Any] | None:
     if not path.is_file():
         return None
@@ -306,6 +379,7 @@ def main() -> int:
         },
         "baseline_validation": baseline,
         "native_candidate": native,
+        "assessment": assess_native_results(baseline, native),
         "model_comparison_table": _evaluated_comparison_table(baseline, native),
         "snapshot_written": False,
         "production_or_publication_side_effects": "none",

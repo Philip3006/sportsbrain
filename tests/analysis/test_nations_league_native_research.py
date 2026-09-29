@@ -5,7 +5,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from scripts.nations_league_native_research import blocked_report
+from scripts.nations_league_native_research import (
+    assess_native_results,
+    blocked_report,
+)
 from src.analysis import nations_league_native_research as research
 from src.analysis import nations_league_validation as validation
 
@@ -329,3 +332,43 @@ def test_missing_explicit_cache_report_does_not_promote_prior_audit_to_current_e
     assert candidate["status"] == "NOT_EVALUATED"
     assert report["snapshot_written"] is False
     assert report["data_provenance"]["network_fetch_performed"] is False
+
+
+def test_overlapping_interval_against_dixon_coles_is_not_called_a_gain():
+    baseline = {
+        "strict_validation": {
+            "model_variants": {
+                "dixon_coles": {"metrics": {"brier_score_multiclass": 0.60}},
+                "elo": {"metrics": {"brier_score_multiclass": 0.61}},
+            }
+        }
+    }
+    native = {
+        "comparison_table": [
+            {
+                "variant": "candidate",
+                "n": 512,
+                "multiclass_brier": 0.58,
+            }
+        ],
+        "paired_date_cluster_bootstrap": {
+            "candidate": {
+                "brier_difference_intervals": {
+                    "candidate_minus_dixon_coles": {
+                        "lower_95": -0.05,
+                        "upper_95": 0.01,
+                    },
+                    "candidate_minus_elo": {
+                        "lower_95": -0.06,
+                        "upper_95": -0.01,
+                    },
+                }
+            }
+        },
+    }
+    result = assess_native_results(baseline, native)
+    assert result["status"] == "NL_NATIVE_MODEL_NO_CLEAR_GAIN"
+    assert (
+        result["descriptive_best_grid_variant_not_selected_for_snapshot"] == "candidate"
+    )
+    assert "not corrected" in result["hyperparameter_selection_caveat"]
