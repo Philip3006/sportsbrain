@@ -2708,6 +2708,18 @@ document.getElementById('glossary-modal-bd').addEventListener('click', (e) => {
 
 // ── Match-Detail-Modal (I7) ──
 function _openMatchDetail(match) {
+  const analyticsMatch = match || {};
+  const analyticsFixture = analyticsMatch.fixture_id || analyticsMatch.fixture_key || analyticsMatch.event_id;
+  const analyticsCompetition = analyticsMatch.competition || analyticsMatch.tour || analyticsMatch.league;
+  const analyticsLifecycle = analyticsMatch.lifecycle_stage || analyticsMatch.stage;
+  const analyticsProps = { sport: analyticsMatch.sport || 'football', competition: analyticsCompetition,
+    fixture_id: analyticsFixture, lifecycle_stage: analyticsLifecycle, source_view: window.sbAnalytics?.activeView?.() };
+  window.sbAnalytics?.capture('match_opened', analyticsProps);
+  const analyticsLeague = String(analyticsCompetition || '').toLowerCase();
+  if (analyticsLeague.includes('nations league') || analyticsLeague.includes('nations_league') || analyticsLeague === 'nl') {
+    window.sbAnalytics?.capture('nl_match_opened', { fixture_id: analyticsFixture, lifecycle_stage: analyticsLifecycle,
+      publication_state: analyticsMatch.publication_state || analyticsMatch.signal_status || 'shadow', source_view: analyticsProps.source_view });
+  }
   const title = `${teamFlag(match.home)} ${esc(match.home)} vs ${teamFlag(match.away)} ${esc(match.away)}`;
   document.getElementById('match-detail-modal-title').innerHTML = title;
 
@@ -2809,6 +2821,13 @@ function _openMatchDetail(match) {
   }
 
   if (!body) body = `<div class="modal-sub" style="text-align:center">Keine Prognose-Daten verfügbar.</div>`;
+  if (match.p_home !== undefined || match.p_away !== undefined || match.p_draw !== undefined) {
+    window.sbAnalytics?.capture('prediction_viewed', { ...analyticsProps, model_version: match.model_version, confidence: match.confidence });
+  }
+  if (match.signal_status || match.signal_state) {
+    window.sbAnalytics?.capture('signal_opened', { ...analyticsProps,
+      signal_status: match.signal_status || match.signal_state, confidence: match.confidence });
+  }
 
   document.getElementById('match-detail-modal-body').innerHTML = body;
   document.getElementById('match-detail-modal-bd').classList.add('show');
