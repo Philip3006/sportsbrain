@@ -38,7 +38,7 @@
   "production_hook": false,
   "publication_changed": false,
   "schema": "nations-league-context-ablation-audit-v1",
-  "source_main_sha": "98e992621c7eb5c860456b8264ffd1692c652f1e",
+  "source_main_sha": "f77f1d242b2bff67bbcfe3d7661d90019a967755",
   "stacker_recommendation": "Do not include until a canonical B4 dataset is ready and the paired causal ablation is complete.",
   "status": "NL_CONTEXT_BLOCKED",
   "strata": null,
