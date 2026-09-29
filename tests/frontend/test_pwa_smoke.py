@@ -96,8 +96,8 @@ def _nations_league_shadow_payload() -> dict:
         "model": {
             "probabilities": {"home": 0.5, "draw": 0.25, "away": 0.25},
             "components": {
-                "raw_dixon_coles": {"home": 0.5, "draw": 0.25, "away": 0.25},
-                "raw_gbt": {"home": 0.5, "draw": 0.25, "away": 0.25},
+                "raw_dixon_coles": {"home": 0.48, "draw": 0.27, "away": 0.25},
+                "raw_gbt": {"home": 0.53, "draw": 0.22, "away": 0.25},
                 "canonical_stacker": {"home": 0.5, "draw": 0.25, "away": 0.25},
             },
         },
@@ -231,16 +231,18 @@ def test_home_integrates_read_only_nations_league_shadow_games(page: Page, serve
 
     today_rows = page.locator(".today-row.nl-shadow-row")
     expect(today_rows).to_have_count(3, timeout=10_000)
-    expect(today_rows).to_contain_text("Armenia")
-    expect(today_rows).to_contain_text("Montenegro")
-    expect(today_rows).to_contain_text("Georgia")
-    expect(today_rows).to_contain_text("NO BET")
-    expect(today_rows).not_to_contain_text("Finland")
+    expect(today_rows.nth(0)).to_contain_text("Armenia")
+    expect(today_rows.nth(0)).to_contain_text("Montenegro")
+    expect(today_rows.nth(0)).to_contain_text("NO BET")
+    expect(today_rows.nth(1)).to_contain_text("Georgia")
+    assert all("Finland" not in text for text in today_rows.all_inner_texts())
     expect(today_rows.locator(".nl-shadow-display-odd")).to_have_count(9)
     expect(today_rows.locator("button")).to_have_count(0)
     expect(today_rows.first).to_have_attribute("role", "button")
     expect(today_rows.first).to_have_attribute("tabindex", "0")
-    expect(page.locator(".comp-name", has_text="UEFA Nations League · Shadow")).to_be_visible()
+    expect(
+        page.locator(".comp-name", has_text="UEFA Nations League · Shadow").first
+    ).to_be_visible()
     expect(page.locator(".nl-home-preview")).to_have_count(0)
 
     today_rows.first.click()
@@ -251,6 +253,17 @@ def test_home_integrates_read_only_nations_league_shadow_games(page: Page, serve
     expect(detail).to_contain_text("SHADOW · NO BET")
     expect(detail.locator(".nl-shadow-detail-outcome")).to_have_count(3)
     expect(detail).to_contain_text("2.00")
+    diagnostics = detail.locator(".nl-diagnostics")
+    expect(diagnostics).to_be_visible()
+    expect(diagnostics).to_contain_text("Final Model")
+    expect(diagnostics).to_contain_text("Dixon-Coles")
+    expect(diagnostics).to_contain_text("GBT")
+    expect(diagnostics).to_contain_text("Market")
+    expect(diagnostics).to_contain_text("Model − Market")
+    expect(diagnostics).to_contain_text("Confidence")
+    expect(diagnostics).to_contain_text("Nicht verfügbar")
+    expect(diagnostics).to_contain_text("Datenzeitpunkt")
+    expect(diagnostics).to_contain_text("SHADOW ONLY")
     expect(detail.locator("button")).to_have_count(0)
     expect(page.locator("#bet-modal-bd")).not_to_be_visible()
 

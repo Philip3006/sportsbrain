@@ -698,6 +698,99 @@ function closeDetail() { showView(_prevView); }
 })();
 
 // ── Open match detail ────────────────────────────────────────
+const _NL_DIAGNOSTIC_OUTCOMES = [
+  ['home', '1'],
+  ['draw', 'X'],
+  ['away', '2'],
+];
+
+function _nlDiagnosticProbability(value) {
+  return Number.isFinite(value) && value >= 0 && value <= 1 ? value : null;
+}
+
+function _nlDiagnosticProbabilityCell(value) {
+  const probability = _nlDiagnosticProbability(value);
+  return probability == null
+    ? '<span class="nl-diag-na" title="Nicht verfügbar">—</span>'
+    : `${(probability * 100).toFixed(1)}%`;
+}
+
+function _nlDiagnosticRow(label, probabilities, rowClass = '') {
+  const cells = _NL_DIAGNOSTIC_OUTCOMES.map(([key]) =>
+    `<span class="nl-diag-cell">${_nlDiagnosticProbabilityCell(probabilities?.[key])}</span>`
+  ).join('');
+  return `<div class="nl-diag-row ${rowClass}" role="row">
+    <strong class="nl-diag-label" role="rowheader">${esc(label)}</strong>${cells}
+  </div>`;
+}
+
+function _nlDiagnosticEdgeRow(finalProbabilities, marketProbabilities) {
+  const cells = _NL_DIAGNOSTIC_OUTCOMES.map(([key]) => {
+    const finalValue = _nlDiagnosticProbability(finalProbabilities?.[key]);
+    const marketValue = _nlDiagnosticProbability(marketProbabilities?.[key]);
+    if (finalValue == null || marketValue == null) {
+      return '<span class="nl-diag-cell nl-diag-na" title="Nicht verfügbar">—</span>';
+    }
+    const edge = (finalValue - marketValue) * 100;
+    const cls = edge > 0 ? 'positive' : edge < 0 ? 'negative' : 'neutral';
+    return `<span class="nl-diag-cell nl-diag-edge ${cls}">${edge > 0 ? '+' : ''}${edge.toFixed(1)} pp</span>`;
+  }).join('');
+  return `<div class="nl-diag-row nl-diag-edge-row" role="row">
+    <strong class="nl-diag-label" role="rowheader">Model − Market</strong>${cells}
+  </div>`;
+}
+
+function _nlDiagnosticConfidence(value) {
+  if (typeof value === 'string' && value.trim()) return esc(value.trim());
+  if (Number.isFinite(value) && value >= 0 && value <= 1) return `${(value * 100).toFixed(1)}%`;
+  return '<span class="nl-diag-na">Nicht verfügbar</span>';
+}
+
+function _nlDiagnosticTimestamp(value) {
+  const timestamp = Date.parse(value || '');
+  return Number.isFinite(timestamp)
+    ? esc(new Date(timestamp).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }))
+    : '<span class="nl-diag-na">Nicht verfügbar</span>';
+}
+
+function _nationsLeagueDiagnosticsHtml(fixture, payload) {
+  const model = fixture?.model || {};
+  const finalProbabilities = model.probabilities;
+  const components = model.components || {};
+  const marketProbabilities = fixture?.market?.probabilities;
+  const confidence = model.confidence ?? fixture?.confidence;
+  const lifecycle = typeof payload?.lifecycle === 'string' && payload.lifecycle
+    ? esc(payload.lifecycle.replaceAll('_', ' '))
+    : '<span class="nl-diag-na">Nicht verfügbar</span>';
+  const publication = payload?.publication_enabled === true ? 'Veröffentlicht' : 'Nicht veröffentlicht';
+
+  return `<section class="nl-diagnostics" aria-label="Prediction Diagnostics">
+    <div class="nl-diagnostics-heading">
+      <div>
+        <span class="nl-diagnostics-kicker">Prediction Diagnostics</span>
+        <strong>Modell- und Marktvergleich</strong>
+      </div>
+      <span class="nl-diagnostics-status">${lifecycle}</span>
+    </div>
+    <div class="nl-diag-table" role="table" aria-label="Wahrscheinlichkeiten nach Modellquelle">
+      <div class="nl-diag-row nl-diag-header" role="row">
+        <span class="nl-diag-label" role="columnheader">Quelle</span>
+        ${_NL_DIAGNOSTIC_OUTCOMES.map(([, label]) => `<span class="nl-diag-cell" role="columnheader">${label}</span>`).join('')}
+      </div>
+      ${_nlDiagnosticRow('Final Model', finalProbabilities, 'nl-diag-final')}
+      ${_nlDiagnosticRow('Dixon-Coles', components.raw_dixon_coles)}
+      ${_nlDiagnosticRow('GBT', components.raw_gbt)}
+      ${_nlDiagnosticRow('Market', marketProbabilities, 'nl-diag-market')}
+      ${_nlDiagnosticEdgeRow(finalProbabilities, marketProbabilities)}
+    </div>
+    <div class="nl-diag-meta-grid">
+      <div><span>Confidence</span><strong>${_nlDiagnosticConfidence(confidence)}</strong></div>
+      <div><span>Datenzeitpunkt</span><strong>${_nlDiagnosticTimestamp(fixture?.captured_at)}</strong></div>
+      <div><span>Status</span><strong>${lifecycle} · ${publication}</strong></div>
+    </div>
+  </section>`;
+}
+
 function openNationsLeagueMatch(displayKey) {
   const [dh, da] = displayKey.split(' vs ').map(x => x.trim());
   const nk = matchKey(dh, da);
@@ -720,9 +813,6 @@ function openNationsLeagueMatch(displayKey) {
     ['X', 'Unentschieden', probabilities.draw, odds.draw],
     ['2', da, probabilities.away, odds.away],
   ];
-  if (outcomes.some(([, , probability, price]) =>
-    !Number.isFinite(probability) || probability < 0 || probability > 1 ||
-    !Number.isFinite(price) || price <= 1)) return;
 
   const metaStr = kickoff ? fmtKickoffCompact(kickoff) : '';
   const cdHtml = kickoff
@@ -741,8 +831,8 @@ function openNationsLeagueMatch(displayKey) {
     <div class="nl-shadow-detail-outcome">
       <span class="nl-shadow-detail-market">${label}</span>
       <strong>${esc(name)}</strong>
-      <span>${(probability * 100).toFixed(1)}% Modell</span>
-      <b>${price.toFixed(2)}</b>
+      <span>${_nlDiagnosticProbabilityCell(probability)} Modell</span>
+      <b>${Number.isFinite(price) && price > 1 ? price.toFixed(2) : '<span class="nl-diag-na">—</span>'}</b>
     </div>`).join('');
   const capturedAt = fixture.captured_at
     ? new Date(fixture.captured_at).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })
@@ -752,6 +842,7 @@ function openNationsLeagueMatch(displayKey) {
       <div class="pred-title">🔬 Nations League Shadow-Analyse</div>
       <div class="nl-shadow-detail-safety">SHADOW · NO BET · KEIN FREIGEGEBENES SIGNAL</div>
       <div class="nl-shadow-detail-grid">${outcomeHtml}</div>
+      ${_nationsLeagueDiagnosticsHtml(fixture, payload)}
       <div class="nl-shadow-detail-meta">
         Marktquelle: ${esc(fixture.market?.bookmaker || '—')} · Stand: ${esc(capturedAt)}<br>
         Die Quoten und Modellwerte dienen nur der Vorschau. Es gibt hier keine Wettfunktion.
