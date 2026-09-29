@@ -382,6 +382,7 @@ const _PUBLIC_TOP_LEVEL_KEYS = new Set([
 
 const _PUBLIC_TOP5_RELEASE_FIELDS = new Set([
   'schema_version', 'release_type', 'generation_id', 'activation_state',
+  'batch_state',
   'activation_id', 'publication_status', 'publication_enabled',
   'publication_authorization_id', 'provider_authority', 'result_authority',
   'candidate_id', 'model_identity', 'evidence_digest', 'evidence_digests',
@@ -499,6 +500,12 @@ function _publicTop5Release(value) {
     'league_codes', 'generated_at', 'published_at', 'fallback_max_age_seconds', 'no_bet',
   ]) {
     if (!(key in out)) throw new Error(`incomplete top5_release: ${key}`);
+  }
+  // Legacy PUBLISHED v1 payloads are complete atomic generations; normalize
+  // them. New writers carry this field explicitly. Never expose a partial state.
+  if (!('batch_state' in out)) out.batch_state = 'COMMITTED';
+  if (out.batch_state !== 'COMMITTED') {
+    throw new Error('public Top-5 adapter accepts only COMMITTED batches');
   }
   if (out.activation_state !== 'CONTROLLED' || out.publication_status !== 'PUBLISHED' ||
       out.publication_enabled !== true || out.no_bet !== true || out.league_codes.length === 0) {

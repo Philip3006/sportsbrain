@@ -467,6 +467,7 @@ function _top5PublicReleaseGuard(payload, source, nowMs = Date.now()) {
   const validRelease = release && typeof release === 'object' &&
     release.schema_version === 'top5-public-release-v1' &&
     typeof release.generation_id === 'string' && release.generation_id &&
+    (release.batch_state === 'COMMITTED' || release.batch_state === undefined) &&
     release.activation_state === 'CONTROLLED' &&
     typeof release.activation_id === 'string' && release.activation_id &&
     release.publication_status === 'PUBLISHED' &&

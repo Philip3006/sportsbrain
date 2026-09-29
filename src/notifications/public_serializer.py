@@ -134,6 +134,7 @@ _PUBLIC_TOP5_RELEASE_FIELDS = frozenset(
         "prepublication_id",
         "generation_id",
         "activation_state",
+        "batch_state",
         "activation_id",
         "publication_status",
         "publication_enabled",
@@ -547,6 +548,14 @@ def _public_top5_release(
             or result["publication_enabled"] is not True
         ):
             raise PublicFootballCompatibilityError("top5_release is not published")
+        # Older PUBLISHED v1 payloads are a complete atomic generation by
+        # contract. Normalize them for the PWA; new writers emit this field.
+        if "batch_state" not in result:
+            result["batch_state"] = "COMMITTED"
+        if result["batch_state"] != "COMMITTED":
+            raise PublicFootballCompatibilityError(
+                "public Top-5 adapter accepts only COMMITTED batches"
+            )
     if result["no_bet"] is not True:
         raise PublicFootballCompatibilityError("top5_release must remain no-bet")
     if result.get("provider_authority") != TOP5_PUBLIC_PROVIDER_AUTHORITY:

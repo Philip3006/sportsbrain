@@ -156,6 +156,7 @@ def _validate_artifact(artifact: PublishedTop5BatchArtifact) -> tuple[
         "schema_version",
         "generation_id",
         "activation_state",
+        "batch_state",
         "activation_id",
         "publication_status",
         "publication_enabled",
@@ -177,6 +178,7 @@ def _validate_artifact(artifact: PublishedTop5BatchArtifact) -> tuple[
     if (
         release.get("schema_version") != "top5-public-release-v1"
         or release.get("activation_state") != "CONTROLLED"
+        or release.get("batch_state") != "COMMITTED"
         or release.get("publication_status") != "PUBLISHED"
         or release.get("publication_enabled") is not True
         or release.get("no_bet") is not True

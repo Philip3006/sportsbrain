@@ -10,6 +10,7 @@ ledger, or deploys Cloudflare.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from datetime import datetime, timezone
@@ -19,6 +20,12 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+from src.football.top5_canary_batch_storage import (
+    Top5CanaryBatchStorageError,
+    Top5CanaryBatchStore,
+    execute_stored_top5_batch,
+    rollback_committed_top5_batch,
+)
 from src.football.top5_public_delivery import (
     TOP5_DELIVERY_ACCEPTANCE_REQUIRED,
     TOP5_DELIVERY_IDEMPOTENT,
@@ -86,9 +93,7 @@ def _execute(args: argparse.Namespace) -> int:
     artifact = artifact_from_mapping(_read_object(args.artifact))
     current = _read_object(args.current_snapshot)
     plan = plan_from_mapping(_read_object(args.plan))
-    attestation = Top5DeliveryAttestation.from_mapping(
-        _read_object(args.attestation)
-    )
+    attestation = Top5DeliveryAttestation.from_mapping(_read_object(args.attestation))
     capability = _read_object(args.capability_token)
     if Path(args.capability_token).resolve().is_relative_to(ROOT):
         raise Top5DeliveryError("capability token must remain outside the repository")
@@ -117,24 +122,95 @@ def _execute(args: argparse.Namespace) -> int:
         publish_script=args.publish_script,
     )
     worker_transport = HttpWorkerDeliveryTransport(signals_url=args.worker_url)
-    result = Top5DeliveryExecutor(
+    executor = Top5DeliveryExecutor(
         static_transport=static_transport,
         worker_transport=worker_transport,
         capability_consumer=FileControlledDeliveryCapabilityConsumer(),
         clock=lambda: _now(args.now),
-    ).execute(
+    )
+    store = Top5CanaryBatchStore(root=args.batch_state_root)
+    result = execute_stored_top5_batch(
+        store=store,
+        executor=executor,
         artifact=artifact,
         current_public_snapshot=current,
         plan=plan,
         attestation=attestation,
         capability=capability,
-        dry_run=False,
+        now=_now(args.now),
     )
-    _print(result.as_payload())
-    return 0 if result.status in {
-        TOP5_DELIVERY_ACCEPTANCE_REQUIRED,
-        TOP5_DELIVERY_IDEMPOTENT,
-    } else 1
+    output = result.as_payload()
+    batch_state = store.load(plan.generation_id)
+    output["batch_state"] = batch_state.get("state") if batch_state else "MISSING"
+    output["batch_digest"] = (
+        batch_state.get("canonical_batch_digest") if batch_state else None
+    )
+    output["state_store_audit_events"] = (
+        len(batch_state.get("events", [])) if batch_state else 0
+    )
+    _print(output)
+    return (
+        0
+        if result.status
+        in {
+            TOP5_DELIVERY_ACCEPTANCE_REQUIRED,
+            TOP5_DELIVERY_IDEMPOTENT,
+        }
+        else 1
+    )
+
+
+def _rollback(args: argparse.Namespace) -> int:
+    store = Top5CanaryBatchStore(root=args.batch_state_root)
+    expected_digest = args.expected_current_digest
+    if not args.execute:
+        previous = store.rollback_payload(
+            args.batch_id,
+            expected_generation_id=args.expected_generation,
+            expected_current_digest=expected_digest,
+        )
+        _print(
+            {
+                "status": "TOP5_CANARY_ROLLBACK_READY",
+                "batch_id": args.batch_id,
+                "expected_generation_id": args.expected_generation,
+                "current_public_digest": expected_digest,
+                "previous_public_digest": hashlib.sha256(previous).hexdigest(),
+                "mutation_performed": False,
+            }
+        )
+        return 0
+
+    if not args.active_checkout or not args.stage_directory or not args.runtime_log:
+        raise Top5DeliveryError(
+            "--execute rollback requires --active-checkout, --stage-directory, and --runtime-log"
+        )
+    static_transport = RuntimePublisherStaticTransport(
+        active_checkout=args.active_checkout,
+        stage_directory=args.stage_directory,
+        log_path=args.runtime_log,
+        commit_message="rollback: restore verified Top5 public generation",
+        publish_script=args.publish_script,
+    )
+    worker_transport = HttpWorkerDeliveryTransport(signals_url=args.worker_url)
+    result = rollback_committed_top5_batch(
+        store=store,
+        batch_id=args.batch_id,
+        expected_generation_id=args.expected_generation,
+        expected_current_digest=expected_digest,
+        static_transport=static_transport,
+        worker_transport=worker_transport,
+        now=_now(args.now),
+    )
+    _print(
+        {
+            **result,
+            "batch_id": args.batch_id,
+            "mutation_performed": True,
+            "provider_requests": 0,
+        }
+    )
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -147,7 +223,9 @@ def main(argv: list[str] | None = None) -> int:
     prepare.add_argument("--plan-output", type=Path)
     prepare.set_defaults(handler=_prepare)
 
-    execute = subparsers.add_parser("execute", help="dry-run unless --execute is explicit")
+    execute = subparsers.add_parser(
+        "execute", help="dry-run unless --execute is explicit"
+    )
     execute.add_argument("--artifact", type=Path, required=True)
     execute.add_argument("--current-snapshot", type=Path, required=True)
     execute.add_argument("--plan", type=Path, required=True)
@@ -160,13 +238,39 @@ def main(argv: list[str] | None = None) -> int:
     execute.add_argument("--runtime-log", type=Path)
     execute.add_argument("--publish-script", type=Path)
     execute.add_argument("--worker-url")
-    execute.add_argument("--commit-message", default="publish: controlled Top5 public generation")
+    execute.add_argument(
+        "--commit-message", default="publish: controlled Top5 public generation"
+    )
+    execute.add_argument("--batch-state-root", type=Path)
     execute.set_defaults(handler=_execute)
+
+    rollback = subparsers.add_parser(
+        "rollback",
+        help="inspect or explicitly restore a verified prior public generation",
+    )
+    rollback.add_argument("--batch-id", required=True)
+    rollback.add_argument("--expected-generation", required=True)
+    rollback.add_argument("--expected-current-digest", required=True)
+    rollback.add_argument("--batch-state-root", type=Path)
+    rollback.add_argument("--now")
+    rollback.add_argument("--execute", action="store_true")
+    rollback.add_argument("--active-checkout", type=Path)
+    rollback.add_argument("--stage-directory", type=Path)
+    rollback.add_argument("--runtime-log", type=Path)
+    rollback.add_argument("--publish-script", type=Path)
+    rollback.add_argument("--worker-url")
+    rollback.set_defaults(handler=_rollback)
 
     args = parser.parse_args(argv)
     try:
         return args.handler(args)
-    except (OSError, TypeError, ValueError, Top5DeliveryError) as exc:
+    except (
+        OSError,
+        TypeError,
+        ValueError,
+        Top5DeliveryError,
+        Top5CanaryBatchStorageError,
+    ) as exc:
         _print({"status": "TOP5_DELIVERY_BLOCKED", "reason": str(exc)})
         return 1
 

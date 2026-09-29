@@ -647,6 +647,9 @@ def _top5_public_release(
         "release_type": "CONTROLLED_TOP5",
         "generation_id": "top5-generation-v1:" + _digest(seed),
         "activation_state": "CONTROLLED",
+        # The complete five-league JSON generation is the atomic public unit.
+        # PREPARING/FAILED/ROLLED_BACK stay in private batch storage only.
+        "batch_state": "COMMITTED",
         "activation_id": first.activation_id,
         "publication_status": "PUBLISHED",
         "publication_enabled": True,
