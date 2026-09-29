@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import sys
 from datetime import date, datetime
 from pathlib import Path
@@ -37,6 +38,12 @@ def canonical_digest(value: Any) -> str:
 
 def file_digest(path: Path) -> str:
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def validate_git_sha(name: str, value: str) -> str:
+    if not re.fullmatch(r"(?:[0-9a-fA-F]{40}|[0-9a-fA-F]{64})", value):
+        raise ValueError(f"{name} must be a full 40- or 64-character Git SHA")
+    return value.lower()
 
 
 def read_json(path: Path) -> dict[str, Any]:
@@ -315,6 +322,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--coverage", required=True, type=Path)
     parser.add_argument("--results-cache", required=True, type=Path)
     parser.add_argument("--source-main-sha", required=True)
+    parser.add_argument("--competition-state-source-sha", required=True)
+    parser.add_argument("--competition-state-source-pr", type=int)
     parser.add_argument(
         "--output-json",
         type=Path,
@@ -339,6 +348,19 @@ def _write_report(audit: dict[str, Any], json_path: Path, markdown_path: Path) -
 
 def main() -> int:
     args = build_parser().parse_args()
+    for name, value in (
+        ("--source-main-sha", args.source_main_sha),
+        ("--competition-state-source-sha", args.competition_state_source_sha),
+    ):
+        try:
+            validate_git_sha(name, value)
+        except ValueError as exc:
+            raise SystemExit(str(exc)) from exc
+    if (
+        args.competition_state_source_pr is not None
+        and args.competition_state_source_pr < 1
+    ):
+        raise SystemExit("--competition-state-source-pr must be positive")
     dataset = read_json(args.competition_state)
     coverage = read_json(args.coverage)
     blockers = validate_b4_artifact(dataset, coverage)
@@ -357,8 +379,11 @@ def main() -> int:
             ),
             "b4_coverage_digest": coverage.get("coverage_digest"),
             "b4_coverage_file_sha256": file_digest(args.coverage),
+            "competition_state_source_sha": args.competition_state_source_sha.lower(),
+            "competition_state_source_pr": args.competition_state_source_pr,
             "source_main_sha": args.source_main_sha,
-            "artifact_source_status": "unmerged_builder4_intermediate_not_ready",
+            "artifact_source_status": "builder4_source_artifact_not_ready",
+            "b4_readiness_validation_passed": False,
             "eligible_fixtures": len(dataset.get("records", [])),
             "fixtures_evaluated": 0,
             "coverage": 0.0,
@@ -450,11 +475,14 @@ def main() -> int:
             ),
             "b4_coverage_digest": coverage["coverage_digest"],
             "b4_coverage_file_sha256": file_digest(args.coverage),
+            "competition_state_source_sha": args.competition_state_source_sha.lower(),
+            "competition_state_source_pr": args.competition_state_source_pr,
             "baseline_source_sha256": baseline_source_sha,
             "baseline_method": "existing causal event-level Dixon-Coles walk-forward",
             "source_main_sha": args.source_main_sha,
         },
     )
+    audit["b4_readiness_validation_passed"] = True
     audit["excluded_features"] = [
         "causal GBT and stacker variants: no independently verified B1 row-level replay supplied",
         "subjective motivation: not defined or used",

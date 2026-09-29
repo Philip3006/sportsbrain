@@ -1745,6 +1745,8 @@ def render_context_ablation_markdown(audit: Mapping[str, Any]) -> str:
         "",
         f"- Status: `{status}`",
         f"- Competition-state SHA-256: `{provenance.get('competition_state_dataset_sha256', audit.get('competition_state_dataset_sha256', 'unavailable'))}`",
+        f"- B4 source commit: `{provenance.get('competition_state_source_sha', audit.get('competition_state_source_sha', 'unavailable'))}`",
+        f"- B4 source PR: `{provenance.get('competition_state_source_pr', audit.get('competition_state_source_pr', 'not supplied'))}`",
         f"- Baseline source SHA-256: `{provenance.get('baseline_source_sha256', audit.get('baseline_source_sha256', 'unavailable'))}`",
         f"- Source main SHA: `{provenance.get('source_main_sha', audit.get('source_main_sha', 'unavailable'))}`",
         f"- Eligible fixtures: {audit.get('eligible_fixtures', 'unavailable')}",
@@ -1755,6 +1757,16 @@ def render_context_ablation_markdown(audit: Mapping[str, Any]) -> str:
     ]
     if audit.get("artifact_source_status"):
         lines.extend([f"- B4 artifact state: `{audit['artifact_source_status']}`", ""])
+    if "b4_readiness_validation_passed" in audit:
+        lines.extend(
+            [
+                (
+                    "- B4 readiness validation passed: "
+                    f"{str(bool(audit['b4_readiness_validation_passed'])).lower()}"
+                ),
+                "",
+            ]
+        )
     if audit.get("blockers"):
         lines.extend(["## Blockers", ""])
         lines.extend(f"- `{blocker}`" for blocker in audit["blockers"])

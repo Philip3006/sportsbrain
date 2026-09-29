@@ -8,9 +8,11 @@ import pandas as pd
 import pytest
 
 from scripts.run_nations_league_context_ablation import (
+    build_parser,
     canonical_digest,
     derive_context_rows,
     validate_b4_artifact,
+    validate_git_sha,
 )
 from src.analysis.nations_league_context import (
     build_context_features,
@@ -565,3 +567,35 @@ def test_ablation_models_missing_context_as_unavailable_and_rejects_invalid_prob
         run_paired_ablation(
             examples, numeric_context=["context"], minimum_training_rows=3
         )
+
+
+def test_runner_binds_the_exact_b4_source_commit_and_optional_pr():
+    parser = build_parser()
+    common = [
+        "--competition-state",
+        "state.json",
+        "--coverage",
+        "coverage.json",
+        "--results-cache",
+        "results.csv",
+        "--source-main-sha",
+        "a" * 40,
+    ]
+    with pytest.raises(SystemExit):
+        parser.parse_args(common)
+    parsed = parser.parse_args(
+        [
+            *common,
+            "--competition-state-source-sha",
+            "B" * 40,
+            "--competition-state-source-pr",
+            "215",
+        ]
+    )
+    assert parsed.competition_state_source_sha == "B" * 40
+    assert parsed.competition_state_source_pr == 215
+    assert (
+        validate_git_sha("B4 source", parsed.competition_state_source_sha) == "b" * 40
+    )
+    with pytest.raises(ValueError, match="full 40- or 64-character Git SHA"):
+        validate_git_sha("B4 source", "short")

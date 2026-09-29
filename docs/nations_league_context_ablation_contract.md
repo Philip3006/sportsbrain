@@ -16,6 +16,10 @@ evaluation evidence.
   historical cohort.
 - Retain each B4 `record_digest`; reject absent digests, duplicate fixture
   identities, and any `state_cutoff >= kickoff`.
+- Bind every audit to the exact B4 source commit (and PR number when the
+  artifact is branch-scoped), alongside the canonical dataset and coverage
+  digests. A user-reported READY marker is not a substitute for passing the
+  file-level readiness and identity checks.
 - Generate the primary causal baseline from the existing offline Nations
   League walk-forward implementation and an explicitly supplied local results
   cache. No network fetch is permitted. Preserve its source digest and strict
@@ -86,4 +90,6 @@ signal-detector hook is allowed.
 
 The thresholds are research decision rules, not production or activation
 criteria. Every generated audit and Markdown report will state the exact B4
-artifact SHA-256, baseline source digest, cohort match count, and exclusions.
+artifact SHA-256, B4 source commit/PR, baseline source digest, cohort match
+count, and exclusions. The CLI requires `--competition-state-source-sha` and
+accepts `--competition-state-source-pr` for this provenance binding.

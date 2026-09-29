@@ -2,14 +2,18 @@
 
 - Status: `NL_CONTEXT_BLOCKED`
 - Competition-state SHA-256: `4283e4246e1aa67e03d5c90dd8d3d22568420e6adfb9f1f3893a849f163520c3`
+- B4 source commit: `71511e4fd9faec2e9aefbd97b644b7789f80171d`
+- B4 source PR: `215`
 - Baseline source SHA-256: `unavailable`
-- Source main SHA: `f77f1d242b2bff67bbcfe3d7661d90019a967755`
+- Source main SHA: `2d63420ac2d7e2a65b83240da6c52b2e36d0102a`
 - Eligible fixtures: 512
 - Paired OOS fixtures: 0
 - OOS coverage: 0.000
 - Synthetic evidence used: false
 
-- B4 artifact state: `unmerged_builder4_intermediate_not_ready`
+- B4 artifact state: `builder4_source_artifact_not_ready`
+
+- B4 readiness validation passed: false
 
 ## Blockers
 
