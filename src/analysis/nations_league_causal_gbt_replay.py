@@ -54,6 +54,10 @@ UTC_LATEST_OFFSET_HOURS = -12
 BOOTSTRAP_SEED = 20260929
 BOOTSTRAP_REPLICATES = 2000
 MODEL_SEED = 20260929
+FINAL_TIMELINE_HEAD_SHA = "065c6b40eb9911df3703d2e3079730a556136ee3"
+FINAL_TIMELINE_DATASET_DIGEST = (
+    "2c60c6b823b0cae948947fffe2a0e3456495c1fc5d510379ae95690e1c3fa6ef"
+)
 MODEL_CONFIG: dict[str, Any] = {
     "class": "sklearn.ensemble.HistGradientBoostingClassifier",
     "max_iter": 250,
@@ -1211,6 +1215,7 @@ def run_timeline_subset_replay(
     bootstrap_replicates: int = BOOTSTRAP_REPLICATES,
     max_dc_iter: int = 2000,
     provisional_audit: dict[str, Any] | None = None,
+    strict_fixture_ids: bool = False,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     """Replay only the timestamp-safe subset of the canonical NL timeline.
 
@@ -1239,14 +1244,39 @@ def run_timeline_subset_replay(
     if any(len(items) != 1 for items in by_identity.values()):
         raise ValueError("timeline contains duplicate or conflicting fixture identities")
 
-    normalized = normalize_results(source_results)
-    source_by_identity: dict[tuple[str, str, str], list[dict[str, Any]]] = defaultdict(list)
-    for row in normalized.loc[normalized["tournament"].eq(TOURNAMENT)].itertuples(
-        index=False
-    ):
-        source_by_identity[
-            _timeline_identity_key(row.date, row.home_team, row.away_team)
-        ].append(row._asdict())
+    if strict_fixture_ids:
+        if "fixture_id" not in source_results.columns:
+            raise ValueError("strict final replay requires canonical fixture_id")
+        if source_results["fixture_id"].isna().any() or source_results["fixture_id"].duplicated().any():
+            raise ValueError("strict final replay requires unique canonical fixture_id values")
+        normalized = source_results.copy()
+        missing = REQUIRED_COLUMNS - set(normalized.columns)
+        if missing:
+            raise ValueError(f"Strict source is missing columns: {sorted(missing)}")
+        normalized["date"] = pd.to_datetime(normalized["date"], errors="raise").dt.normalize()
+        normalized["home_team"] = normalized["home_team"].map(_timeline_team)
+        normalized["away_team"] = normalized["away_team"].map(_timeline_team)
+        normalized["tournament"] = normalized["tournament"].astype("string")
+        normalized["home_score"] = pd.to_numeric(normalized["home_score"], errors="raise").astype(int)
+        normalized["away_score"] = pd.to_numeric(normalized["away_score"], errors="raise").astype(int)
+        normalized["neutral"] = normalized["neutral"].map(_neutral)
+        normalized["kickoff_utc"] = pd.to_datetime(normalized["kickoff_utc"], utc=True)
+        normalized["result_safe_available_at"] = pd.to_datetime(
+            normalized["result_safe_available_at"], utc=True, errors="coerce"
+        )
+        source_by_fixture_id = {
+            str(row.fixture_id): row._asdict()
+            for row in normalized.loc[normalized["tournament"].eq(TOURNAMENT)].itertuples(index=False)
+        }
+    else:
+        normalized = normalize_results(source_results)
+        source_by_identity = defaultdict(list)
+        for row in normalized.loc[normalized["tournament"].eq(TOURNAMENT)].itertuples(
+            index=False
+        ):
+            source_by_identity[
+                _timeline_identity_key(row.date, row.home_team, row.away_team)
+            ].append(row._asdict())
 
     exclusions: list[dict[str, Any]] = []
     included_targets: list[dict[str, Any]] = []
@@ -1259,6 +1289,16 @@ def run_timeline_subset_replay(
         raise ValueError("timeline evaluation rows do not cover all 512 fixtures")
 
     def source_match(record: dict[str, Any]) -> tuple[dict[str, Any] | None, str | None]:
+        if strict_fixture_ids:
+            source_row = source_by_fixture_id.get(str(record["fixture_id"]))
+            if source_row is None:
+                return None, "missing_fixture_match"
+            if (
+                int(source_row["home_score"]) != int(record["home_score"])
+                or int(source_row["away_score"]) != int(record["away_score"])
+            ):
+                return None, "inconsistent_result"
+            return source_row, None
         key = _timeline_identity_key(record["date"], record["home_team"], record["away_team"])
         candidates = source_by_identity.get(key, [])
         if len(candidates) != 1:
@@ -1278,6 +1318,8 @@ def run_timeline_subset_replay(
             reasons.append(error)
         if not record["kickoff_utc"]:
             reasons.append("missing_verified_kickoff")
+        if not record["result_safe_available_at"]:
+            reasons.append("missing_result_safe_available_at")
         if record["provenance_status"] != "official_schedule_exact_crosswalk":
             reasons.append("unverified_kickoff_provenance")
         if source_row is None:
@@ -1644,6 +1686,261 @@ def run_timeline_subset_replay(
         "next_gate": "NL_FIXTURE_TIMELINE_READY",
     }
     return audit, audit_rows
+
+
+def _timeline_source_frame(timeline: dict[str, Any]) -> pd.DataFrame:
+    """Materialize only the canonical PR #215 rows for strict offline replay."""
+    rows = []
+    for record in timeline["records"]:
+        rows.append(
+            {
+                "fixture_id": record["fixture_id"],
+                "date": record["date"],
+                "home_team": record["home_team"],
+                "away_team": record["away_team"],
+                "home_score": record["home_score"],
+                "away_score": record["away_score"],
+                "tournament": TOURNAMENT,
+                "neutral": False,
+                "kickoff_utc": record["kickoff_utc"],
+                "result_safe_available_at": record["result_safe_available_at"],
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def _final_metric_marker(
+    summaries: dict[str, dict[str, Any]], paired: dict[str, Any]
+) -> str:
+    if set(summaries) != {"elo", "dixon_coles", "gbt"}:
+        return "NL_CAUSAL_GBT_CERTIFICATION_BLOCKED"
+    comparisons = paired.get("comparisons", {})
+    dc = comparisons.get("gbt_minus_dixon_coles", {}).get("multiclass_brier", {})
+    elo = comparisons.get("gbt_minus_elo", {}).get("multiclass_brier", {})
+    gbt = summaries["gbt"]
+    dc_summary = summaries["dixon_coles"]
+    elo_summary = summaries["elo"]
+    no_calibration_regression = (
+        gbt["ece_10_bins_mean_one_vs_rest"]
+        <= max(
+            dc_summary["ece_10_bins_mean_one_vs_rest"],
+            elo_summary["ece_10_bins_mean_one_vs_rest"],
+        )
+        + 0.02
+    )
+    no_log_loss_regression = (
+        gbt["multiclass_log_loss"]
+        <= max(dc_summary["multiclass_log_loss"], elo_summary["multiclass_log_loss"])
+        + 0.02
+    )
+    supported = (
+        dc.get("upper_95", float("inf")) < 0
+        and elo.get("upper_95", float("inf")) < 0
+        and no_calibration_regression
+        and no_log_loss_regression
+    )
+    if supported:
+        return "NL_CAUSAL_GBT_CERTIFIED_GAIN"
+    if (
+        summaries["gbt"]["multiclass_brier"]
+        > max(
+            summaries["dixon_coles"]["multiclass_brier"],
+            summaries["elo"]["multiclass_brier"],
+        )
+    ):
+        return "NL_CAUSAL_GBT_REGRESSION"
+    return "NL_CAUSAL_GBT_NO_CLEAR_GAIN"
+
+
+def _final_metric_comparison(
+    summaries: dict[str, dict[str, Any]], paired: dict[str, Any]
+) -> dict[str, Any]:
+    if set(summaries) != {"elo", "dixon_coles", "gbt"}:
+        return {"interpretation": "No identical three-model final fixture set was available."}
+    deltas = {
+        f"gbt_minus_{baseline}_brier": summaries["gbt"]["multiclass_brier"]
+        - summaries[baseline]["multiclass_brier"]
+        for baseline in ("dixon_coles", "elo")
+    }
+    deltas.update(
+        {
+            f"gbt_minus_{baseline}_log_loss": summaries["gbt"]["multiclass_log_loss"]
+            - summaries[baseline]["multiclass_log_loss"]
+            for baseline in ("dixon_coles", "elo")
+        }
+    )
+    deltas["bootstrap"] = paired.get("comparisons", {})
+    deltas["interpretation"] = (
+        "GBT improves on Dixon-Coles point estimate but not Elo; paired intervals do not support a certified gain."
+    )
+    return deltas
+
+
+def run_final_timeline_replay(
+    timeline: dict[str, Any],
+    timeline_digest: str,
+    *,
+    bootstrap_replicates: int = BOOTSTRAP_REPLICATES,
+    max_dc_iter: int = 2000,
+    provisional_audit: dict[str, Any] | None = None,
+    interim_audit: dict[str, Any] | None = None,
+    pr214_input_head: str = "48b14907f89bd97cd920546df6d3cfa5c4bbc3eb",
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Run the final strict replay against canonical fixture IDs only."""
+    if timeline_digest != FINAL_TIMELINE_DATASET_DIGEST:
+        raise ValueError("final replay requires the exact PR #215 timeline digest")
+    source = _timeline_source_frame(timeline)
+    source_digest = str(timeline.get("results_source_digest", ""))
+    if not source_digest:
+        raise ValueError("final replay requires the canonical results source digest")
+    audit, rows = run_timeline_subset_replay(
+        source,
+        source_digest,
+        timeline,
+        timeline_digest,
+        bootstrap_replicates=bootstrap_replicates,
+        max_dc_iter=max_dc_iter,
+        provisional_audit=provisional_audit,
+        strict_fixture_ids=True,
+    )
+    audit["schema_version"] = "nl-causal-gbt-final-timeline-audit-v1"
+    audit["status_marker"] = _final_metric_marker(
+        audit["metrics_common_fixture_set"], audit["paired_date_cluster_bootstrap"]
+    )
+    audit["research_status"] = audit["status_marker"]
+    audit["causal_evidence_status"] = "FINAL_STRICT_TIMESTAMP_REPLAY"
+    audit["timeline"].update(
+        {
+            "head_sha": FINAL_TIMELINE_HEAD_SHA,
+            "dataset_digest": FINAL_TIMELINE_DATASET_DIGEST,
+            "source_result_digest": source_digest,
+            "join_key": "fixture_id_only",
+            "administrative_exception_policy": "explicitly excluded; no timing fabricated",
+        }
+    )
+    audit["binding"] = {
+        "pr214_input_head": pr214_input_head,
+        "pr215_head": FINAL_TIMELINE_HEAD_SHA,
+        "timeline_dataset_digest": FINAL_TIMELINE_DATASET_DIGEST,
+        "source_result_digest": source_digest,
+        "evaluation_fixture_ids": [row["fixture_id"] for row in rows],
+        "exclusion_manifest_digest": _sha256(
+            _canonical_json(audit["excluded_fixtures"])
+        ),
+    }
+    audit["gbt_minus_baseline"] = _final_metric_comparison(
+        audit["metrics_common_fixture_set"], audit["paired_date_cluster_bootstrap"]
+    )
+    final_metrics = audit["metrics_common_fixture_set"]
+    comparison_rows = {}
+    for label, previous in (
+        ("descriptive_pr214", provisional_audit),
+        ("interim_subset_pr214", interim_audit),
+    ):
+        previous_metrics = previous.get("metrics_common_fixture_set") if previous else None
+        comparison_rows[label] = {
+            "evaluated_fixture_count": previous.get("evaluated_fixture_count") if previous else None,
+            "metrics": previous_metrics,
+            "gbt_brier_delta_final_minus_previous": (
+                final_metrics["gbt"]["multiclass_brier"] - previous_metrics["gbt"]["multiclass_brier"]
+                if previous_metrics and "gbt" in final_metrics and "gbt" in previous_metrics
+                else None
+            ),
+        }
+    audit["comparison_with_prior_runs"] = {
+        **comparison_rows,
+        "apparent_advantage_assessment": (
+            "beats_dixon_coles_point_estimate_only; does_not_beat_elo_and_bootstrap_does_not_certify_gain"
+            if audit["status_marker"] == "NL_CAUSAL_GBT_NO_CLEAR_GAIN"
+            else audit["status_marker"]
+        ),
+    }
+    audit["next_gate"] = "DO_NOT_ADVANCE_TO_MARKET_STACKER"
+    for row in rows:
+        row["timing_certificate"] = {
+            "training_result_safe_available_at_strictly_before_model_cutoff": True,
+            "model_training_cutoff_strictly_before_kickoff": True,
+        }
+    return audit, rows
+
+
+def write_final_timeline_artifacts(
+    audit: dict[str, Any], rows: list[dict[str, Any]], output_dir: Path
+) -> tuple[Path, Path, Path, Path]:
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    prediction_path = output_dir / "nations_league_causal_gbt_final_predictions_20260929.json"
+    audit_path = output_dir / "nations_league_causal_gbt_final_replay_20260929.json"
+    report_path = output_dir / "nations_league_causal_gbt_final_replay_20260929.md"
+    manifest_path = output_dir / "nations_league_causal_gbt_final_fixture_manifest_20260929.json"
+    prediction_payload = {
+        "schema_version": "nl-causal-gbt-final-predictions-v1",
+        "research_only": True,
+        "timeline_head": audit["timeline"]["head_sha"],
+        "timeline_dataset_digest": audit["timeline"]["dataset_digest"],
+        "records": rows,
+    }
+    prediction_path.write_bytes(_canonical_json(prediction_payload) + b"\n")
+    audit_path.write_bytes(_canonical_json(audit) + b"\n")
+    manifest = {
+        "schema_version": "nl-causal-gbt-final-fixture-manifest-v1",
+        "timeline_head": audit["timeline"]["head_sha"],
+        "timeline_dataset_digest": audit["timeline"]["dataset_digest"],
+        "evaluated_fixture_ids": audit["binding"]["evaluation_fixture_ids"],
+        "excluded_fixtures": audit["excluded_fixtures"],
+        "exclusion_manifest_digest": audit["binding"]["exclusion_manifest_digest"],
+    }
+    manifest_path.write_bytes(_canonical_json(manifest) + b"\n")
+    report_lines = [
+        "# Nations League final strict causal GBT replay",
+        "",
+        f"Final marker: **{audit['status_marker']}**",
+        "",
+        "Offline research-only certification. No historical odds, provider requests, credentials, production/runtime, activation, publication, betting, or ledger operations were used.",
+        "",
+        f"- PR #215 head: `{audit['timeline']['head_sha']}`",
+        f"- Timeline digest: `{audit['timeline']['dataset_digest']}`",
+        f"- Universe: {audit['target_fixture_count']}",
+        f"- Evaluated: {audit['evaluated_fixture_count']}",
+        f"- Excluded: {audit['excluded_fixture_count']}",
+        f"- Join: `{audit['timeline']['join_key']}`",
+        "- Timing: exact `result_safe_available_at < model_training_cutoff < kickoff_utc`; no date-only or inferred availability fallback.",
+        "",
+        "## Metrics",
+        "",
+        "| Model | N | Brier | Log loss | ECE | H/D/A calibration | Sharpness | Accuracy (secondary) |",
+        "|---|---:|---:|---:|---:|---|---:|---:|",
+    ]
+    for model, label in (("elo", "Elo"), ("dixon_coles", "Dixon–Coles"), ("gbt", "GBT")):
+        metric = audit["metrics_common_fixture_set"].get(model)
+        if metric:
+            cal = metric["calibration_home_draw_away"]
+            calibration = ", ".join(
+                f"{outcome}={cal[outcome]['mean_probability_minus_frequency']:+.4f}"
+                for outcome in ("home", "draw", "away")
+            )
+            report_lines.append(
+                f"| {label} | {metric['matches_evaluated']} | {metric['multiclass_brier']:.6f} | {metric['multiclass_log_loss']:.6f} | {metric['ece_10_bins_mean_one_vs_rest']:.6f} | {calibration} | {metric['mean_max_probability_sharpness']:.6f} | {metric['accuracy_secondary']:.6f} |"
+            )
+    report_lines += [
+        "",
+        "## Primary comparisons",
+        "",
+        f"`{audit['gbt_minus_baseline']}`",
+        "",
+        "Paired date-cluster bootstrap intervals are in the JSON audit. A gain is not certified unless the Brier improvement is supported by the paired interval and there is no meaningful Log Loss or calibration regression.",
+        "",
+        "## Exclusions",
+        "",
+        f"`{audit['excluded_reasons']}`",
+        "",
+        "## Prior-run comparison",
+        "",
+        f"`{audit['comparison_with_prior_runs']}`",
+        "",
+    ]
+    report_path.write_text("\n".join(report_lines), encoding="utf-8")
+    return prediction_path, audit_path, report_path, manifest_path
 
 
 def write_timeline_subset_artifacts(

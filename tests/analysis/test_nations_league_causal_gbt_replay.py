@@ -317,3 +317,51 @@ def test_verified_availability_feature_index_excludes_rows_not_available_at_cuto
         replay.ResultFeatureIndex(rows).features(
             bad, pd.Timestamp("2024-01-03T00:00:00Z")
         )
+
+
+def test_strict_timeline_replay_requires_fixture_id_only_join():
+    record = _timeline_fixture_record()
+    timeline = {
+        "schema_version": replay.TIMELINE_SCHEMA,
+        "competition": "UEFA Nations League",
+        "records": [record],
+        "dataset_digest": "",
+    }
+    timeline["dataset_digest"] = replay._timeline_digest(
+        {key: value for key, value in timeline.items() if key != "dataset_digest"}
+    )
+    source = pd.DataFrame(
+        [
+            {
+                "fixture_id": "not-the-canonical-id",
+                "date": record["date"],
+                "home_team": record["home_team"],
+                "away_team": record["away_team"],
+                "home_score": record["home_score"],
+                "away_score": record["away_score"],
+                "tournament": replay.TOURNAMENT,
+                "neutral": False,
+                "kickoff_utc": record["kickoff_utc"],
+                "result_safe_available_at": record["result_safe_available_at"],
+            }
+        ]
+    )
+    with pytest.raises(ValueError, match="no usable source-backed training"):
+        replay.run_timeline_subset_replay(
+            source,
+            "source-digest",
+            timeline,
+            timeline["dataset_digest"],
+            expected_fixture_count=1,
+            bootstrap_replicates=100,
+            strict_fixture_ids=True,
+        )
+
+
+def test_final_replay_rejects_non_pr215_timeline_digest():
+    with pytest.raises(ValueError, match="exact PR #215 timeline digest"):
+        replay.run_final_timeline_replay(
+            {"dataset_digest": "wrong", "records": []},
+            "wrong",
+            bootstrap_replicates=100,
+        )
