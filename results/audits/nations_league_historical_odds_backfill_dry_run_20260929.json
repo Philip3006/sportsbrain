@@ -1,0 +1,36 @@
+{
+  "schema_version": "sportsbrain-nl-historical-odds-dry-run-v1",
+  "status": "DRY_RUN_VALIDATED",
+  "plan_path": "results/audits/nations_league_historical_odds_request_plan_20260929.json",
+  "plan_sha256": "ab9fea3a925c0a9ccbb5a6d8d7d9fb1cd9cbe1c20941c19bf07d3e676ae13882",
+  "timeline_digest": "842c0cc608b4221d63cbda079756dc392524e53349c9c24af5e8116c1d27e1af",
+  "network_requests": 0,
+  "credential_accesses": 0,
+  "provider_credits_consumed": 0,
+  "plans": {
+    "PREDICTION_ONLY": {
+      "phases": [
+        {"phase": "INITIAL", "unique_http_requests": 59, "estimated_credits": 590},
+        {"phase": "REFINEMENT", "unique_http_requests": 59, "estimated_credits": 590}
+      ],
+      "unique_http_requests": 118,
+      "estimated_credits": 1180
+    },
+    "FULL_RESEARCH": {
+      "phases": [
+        {"phase": "INITIAL", "unique_http_requests": 59, "estimated_credits": 590},
+        {"phase": "REFINEMENT", "unique_http_requests": 59, "estimated_credits": 590},
+        {"phase": "CLOSING_BENCHMARK", "unique_http_requests": 59, "estimated_credits": 590}
+      ],
+      "unique_http_requests": 177,
+      "estimated_credits": 1770
+    }
+  },
+  "safety": {
+    "production_mutation": false,
+    "publication": false,
+    "betting": false,
+    "ledger_mutations": 0,
+    "backfill_started": false
+  }
+}
