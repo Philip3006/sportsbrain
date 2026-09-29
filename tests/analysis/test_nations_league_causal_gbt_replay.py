@@ -1,3 +1,6 @@
+import json
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -206,3 +209,111 @@ def test_incomplete_block_or_out_of_order_features_fail_closed():
     )
     with pytest.raises(ValueError, match="not before"):
         index.features(row, pd.Timestamp("2024-09-06T00:00:00Z"))
+
+
+def _timeline_fixture_record():
+    record = {
+        "fixture_id": "uefa-nl:test-fixture",
+        "edition": "2024/25",
+        "validation_period": "2024/25",
+        "date": "2024-09-06",
+        "home_team": "Türkiye",
+        "away_team": "Iceland",
+        "home_score": 3,
+        "away_score": 1,
+        "kickoff_utc": "2024-09-06T18:45:00Z",
+        "result_safe_available_at": "2024-09-07T00:45:00Z",
+        "provenance_status": "official_schedule_exact_crosswalk",
+        "result_safe_status": "bounded_from_verified_kickoff",
+        "record_digest": "",
+    }
+    record["record_digest"] = replay._timeline_digest(
+        {key: value for key, value in record.items() if key != "record_digest"}
+    )
+    return record
+
+
+def test_verified_timeline_loader_requires_canonical_digests_and_timestamps(tmp_path):
+    record = _timeline_fixture_record()
+    timeline = {
+        "schema_version": replay.TIMELINE_SCHEMA,
+        "competition": "UEFA Nations League",
+        "records": [record],
+        "dataset_digest": "",
+    }
+    timeline["dataset_digest"] = replay._timeline_digest(
+        {key: value for key, value in timeline.items() if key != "dataset_digest"}
+    )
+    path = Path(tmp_path) / "timeline.json"
+    path.write_text(json.dumps(timeline), encoding="utf-8")
+    loaded, digest = replay.load_fixture_timeline(path, expected_record_count=1)
+    assert loaded["records"][0]["fixture_id"] == "uefa-nl:test-fixture"
+    assert digest == timeline["dataset_digest"]
+
+    record["kickoff_utc"] = "2024-09-06T18:45:00"
+    record["record_digest"] = replay._timeline_digest(
+        {key: value for key, value in record.items() if key != "record_digest"}
+    )
+    timeline["records"] = [record]
+    timeline["dataset_digest"] = replay._timeline_digest(
+        {key: value for key, value in timeline.items() if key != "dataset_digest"}
+    )
+    path.write_text(json.dumps(timeline), encoding="utf-8")
+    with pytest.raises(ValueError, match="timezone-aware"):
+        replay.load_fixture_timeline(path, expected_record_count=1)
+
+
+def test_verified_availability_feature_index_excludes_rows_not_available_at_cutoff():
+    rows = pd.DataFrame(
+        [
+            {
+                "fixture_id": "a",
+                "date": "2024-01-01",
+                "home_team": "Alpha",
+                "away_team": "Bravo",
+                "home_score": 1,
+                "away_score": 0,
+                "tournament": "UEFA Nations League",
+                "neutral": False,
+                "kickoff_utc": "2024-01-01T18:00:00Z",
+                "result_safe_available_at": "2024-01-02T00:00:00Z",
+            },
+            {
+                "fixture_id": "b",
+                "date": "2024-01-02",
+                "home_team": "Bravo",
+                "away_team": "Charlie",
+                "home_score": 0,
+                "away_score": 0,
+                "tournament": "UEFA Nations League",
+                "neutral": False,
+                "kickoff_utc": "2024-01-02T18:00:00Z",
+                "result_safe_available_at": "2024-01-03T00:00:00Z",
+            },
+            {
+                "fixture_id": "c",
+                "date": "2024-01-03",
+                "home_team": "Charlie",
+                "away_team": "Alpha",
+                "home_score": 0,
+                "away_score": 2,
+                "tournament": "UEFA Nations League",
+                "neutral": False,
+                "kickoff_utc": "2024-01-03T18:00:00Z",
+                "result_safe_available_at": "2024-01-04T00:00:00Z",
+            },
+        ]
+    )
+    index = replay.ResultFeatureIndex(rows)
+    target = rows.iloc[2]
+    target_features = index.features(
+        target, pd.Timestamp("2024-01-03T00:00:01Z")
+    )
+    assert target_features["home_competitive_matches"] == 1.0
+    assert target_features["away_competitive_matches"] == 1.0
+    with pytest.raises(ValueError, match="timezone-aware"):
+        bad = rows.iloc[2].copy()
+        bad["kickoff_utc"] = "2024-01-03T18:00:00"
+        replay.ResultFeatureIndex(rows).features(
+            bad, pd.Timestamp("2024-01-03T00:00:00Z")
+        )

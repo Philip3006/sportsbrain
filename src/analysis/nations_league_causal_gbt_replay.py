@@ -121,6 +121,98 @@ def _canonical_json(value: Any) -> bytes:
     ).encode()
 
 
+TIMELINE_SCHEMA = "uefa-nations-league-fixture-timeline-v1"
+TIMELINE_REQUIRED_FIELDS = {
+    "fixture_id",
+    "record_digest",
+    "edition",
+    "validation_period",
+    "date",
+    "home_team",
+    "away_team",
+    "home_score",
+    "away_score",
+    "kickoff_utc",
+    "result_safe_available_at",
+    "provenance_status",
+    "result_safe_status",
+}
+TIMELINE_TEAM_ALIASES = {
+    "czech republic": "Czechia",
+    "ireland": "Ireland",
+    "republic of ireland": "Ireland",
+    "turkey": "Türkiye",
+    "türkiye": "Türkiye",
+}
+
+
+def _timeline_team(value: Any) -> str:
+    normalized = canonical_name(str(value))
+    return TIMELINE_TEAM_ALIASES.get(normalized.casefold(), normalized)
+
+
+def _timeline_canonical_json(value: Any) -> bytes:
+    return json.dumps(
+        value,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        allow_nan=False,
+    ).encode("utf-8")
+
+
+def _timeline_digest(value: Any) -> str:
+    return _sha256(_timeline_canonical_json(value))
+
+
+def load_fixture_timeline(
+    path: Path, *, expected_record_count: int = 512
+) -> tuple[dict[str, Any], str]:
+    timeline = json.loads(Path(path).read_text(encoding="utf-8"))
+    if not isinstance(timeline, dict) or timeline.get("schema_version") != TIMELINE_SCHEMA:
+        raise ValueError("unsupported Nations League fixture timeline schema")
+    records = timeline.get("records")
+    if not isinstance(records, list) or len(records) != expected_record_count:
+        raise ValueError(
+            f"fixture timeline must contain exactly {expected_record_count} records"
+        )
+    fixture_ids = [record.get("fixture_id") for record in records]
+    if any(not isinstance(fixture_id, str) for fixture_id in fixture_ids):
+        raise ValueError("fixture timeline contains a missing canonical fixture_id")
+    if len(set(fixture_ids)) != len(fixture_ids):
+        raise ValueError("fixture timeline contains duplicate canonical fixture_id")
+    for record in records:
+        missing = TIMELINE_REQUIRED_FIELDS - record.keys()
+        if missing:
+            raise ValueError(f"fixture timeline row missing fields: {sorted(missing)}")
+        expected = _timeline_digest(
+            {key: value for key, value in record.items() if key != "record_digest"}
+        )
+        if record["record_digest"] != expected:
+            raise ValueError(
+                f"fixture timeline record digest mismatch: {record['fixture_id']}"
+            )
+        for field in ("kickoff_utc", "result_safe_available_at"):
+            if record[field] is not None:
+                parsed = pd.Timestamp(record[field])
+                if parsed.tzinfo is None:
+                    raise ValueError(f"timeline {field} must be timezone-aware")
+        if record["kickoff_utc"] and record["result_safe_available_at"]:
+            if not pd.Timestamp(record["kickoff_utc"]) < pd.Timestamp(
+                record["result_safe_available_at"]
+            ):
+                raise ValueError("result-safe availability must follow kickoff")
+    dataset_digest = timeline.get("dataset_digest")
+    if not isinstance(dataset_digest, str):
+        raise ValueError("fixture timeline is missing dataset_digest")
+    expected_dataset_digest = _timeline_digest(
+        {key: value for key, value in timeline.items() if key != "dataset_digest"}
+    )
+    if dataset_digest != expected_dataset_digest:
+        raise ValueError("fixture timeline dataset digest mismatch")
+    return timeline, dataset_digest
+
+
 def _sha256(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
 
@@ -261,6 +353,7 @@ class _TeamMatch:
     ga: int
     points: int
     tournament: str
+    available_at: pd.Timestamp | None = None
 
 
 class ResultFeatureIndex:
@@ -270,26 +363,45 @@ class ResultFeatureIndex:
         self.results = competitive_results.sort_values(
             ["date", "home_team", "away_team"]
         ).reset_index(drop=True)
+        self.uses_verified_availability = "result_safe_available_at" in self.results
+        if self.uses_verified_availability:
+            parsed_availability = pd.to_datetime(
+                self.results["result_safe_available_at"], utc=True, errors="coerce"
+            )
+            if parsed_availability.isna().any():
+                raise ValueError(
+                    "verified-availability feature index contains an unusable timestamp"
+                )
+            self.results["result_safe_available_at"] = parsed_availability
         self.team_history: dict[str, list[_TeamMatch]] = defaultdict(list)
-        self.h2h_history: dict[tuple[str, str], list[tuple[pd.Timestamp, int, int]]] = (
-            defaultdict(list)
-        )
-        self.elo_history: dict[str, list[tuple[pd.Timestamp, float]]] = defaultdict(
-            list
-        )
+        self.h2h_history: dict[
+            tuple[str, str], list[tuple[pd.Timestamp, int, int, pd.Timestamp | None]]
+        ] = defaultdict(list)
+        self.elo_history: dict[
+            str, list[tuple[pd.Timestamp, float, pd.Timestamp | None]]
+        ] = defaultdict(list)
         ratings: dict[str, float] = {}
         for row in self.results.itertuples(index=False):
             day = pd.Timestamp(row.date)
+            available_at = (
+                pd.Timestamp(row.result_safe_available_at)
+                if self.uses_verified_availability
+                else None
+            )
             home, away = str(row.home_team), str(row.away_team)
             hg, ag = int(row.home_score), int(row.away_score)
             self.team_history[home].append(
-                _TeamMatch(day, hg, ag, _points(hg, ag), str(row.tournament))
+                _TeamMatch(
+                    day, hg, ag, _points(hg, ag), str(row.tournament), available_at
+                )
             )
             self.team_history[away].append(
-                _TeamMatch(day, ag, hg, _points(ag, hg), str(row.tournament))
+                _TeamMatch(
+                    day, ag, hg, _points(ag, hg), str(row.tournament), available_at
+                )
             )
-            self.h2h_history[(home, away)].append((day, hg, ag))
-            self.h2h_history[(away, home)].append((day, ag, hg))
+            self.h2h_history[(home, away)].append((day, hg, ag, available_at))
+            self.h2h_history[(away, home)].append((day, ag, hg, available_at))
             tournament = str(row.tournament)
             # Match the repository's Elo convention for tournament K factors.
             k = (
@@ -300,8 +412,14 @@ class ResultFeatureIndex:
             ratings = update_ratings(
                 ratings, home, away, hg, ag, k=k, neutral=bool(row.neutral)
             )
-            self.elo_history[home].append((day, ratings[home]))
-            self.elo_history[away].append((day, ratings[away]))
+            self.elo_history[home].append((day, ratings[home], available_at))
+            self.elo_history[away].append((day, ratings[away], available_at))
+        for history in self.team_history.values():
+            history.sort(key=lambda item: item.available_at or item.day)
+        for history in self.h2h_history.values():
+            history.sort(key=lambda item: item[3] or item[0])
+        for history in self.elo_history.values():
+            history.sort(key=lambda item: item[2] or item[0])
 
     @staticmethod
     def _limit(cutoff: pd.Timestamp) -> pd.Timestamp:
@@ -312,12 +430,21 @@ class ResultFeatureIndex:
 
     def _team_prefix(self, team: str, cutoff: pd.Timestamp) -> list[_TeamMatch]:
         history = self.team_history.get(team, [])
+        if self.uses_verified_availability:
+            return [
+                item
+                for item in history
+                if item.available_at is not None and item.available_at < cutoff
+            ]
         limit = self._limit(cutoff)
         pos = bisect_left([item.day for item in history], limit)
         return history[:pos]
 
     def _elo_asof(self, team: str, cutoff: pd.Timestamp) -> float:
         history = self.elo_history.get(team, [])
+        if self.uses_verified_availability:
+            prefix = [item for item in history if item[2] is not None and item[2] < cutoff]
+            return float(prefix[-1][1]) if prefix else 1500.0
         limit = self._limit(cutoff)
         pos = bisect_left([item[0] for item in history], limit)
         return float(history[pos - 1][1]) if pos else 1500.0
@@ -341,10 +468,20 @@ class ResultFeatureIndex:
         self, row: Any, cutoff: pd.Timestamp | None = None
     ) -> dict[str, float]:
         home, away = str(row.home_team), str(row.away_team)
-        cutoff = cutoff or prediction_cutoff(row.date)
-        earliest_kickoff = pd.Timestamp(
-            kickoff_bounds(row.date)["earliest_possible_utc"]
-        )
+        exact_kickoff = getattr(row, "kickoff_utc", None)
+        if exact_kickoff:
+            kickoff = pd.Timestamp(exact_kickoff)
+            if kickoff.tzinfo is None:
+                raise ValueError("verified kickoff must be timezone-aware")
+            cutoff = cutoff or (kickoff - pd.Timedelta(days=PREDICTION_LEAD_DAYS))
+            earliest_kickoff = kickoff
+        else:
+            cutoff = cutoff or prediction_cutoff(row.date)
+            earliest_kickoff = pd.Timestamp(
+                kickoff_bounds(row.date)["earliest_possible_utc"]
+            )
+        if cutoff.tzinfo is None:
+            raise ValueError("Prediction cutoff must be timezone-aware UTC")
         if cutoff >= earliest_kickoff:
             raise ValueError(
                 "Prediction cutoff is not before the conservative kickoff lower bound"
@@ -362,9 +499,9 @@ class ResultFeatureIndex:
 
         def load(history: list[_TeamMatch], days: int) -> float:
             lower = cutoff_day - pd.Timedelta(days=days)
-            return float(
-                sum(lower <= match.day < self._limit(cutoff) for match in history)
-            )
+            if self.uses_verified_availability:
+                return float(sum(lower <= match.day for match in history))
+            return float(sum(lower <= match.day < self._limit(cutoff) for match in history))
 
         values: dict[str, float] = {
             "home_elo": self._elo_asof(home, cutoff),
@@ -400,16 +537,19 @@ class ResultFeatureIndex:
         )
 
         meetings = self.h2h_history.get((home, away), [])
-        limit = bisect_left([item[0] for item in meetings], self._limit(cutoff))
-        prior_meetings = meetings[:limit]
+        if self.uses_verified_availability:
+            prior_meetings = [item for item in meetings if item[3] is not None and item[3] < cutoff]
+        else:
+            limit = bisect_left([item[0] for item in meetings], self._limit(cutoff))
+            prior_meetings = meetings[:limit]
         values["h2h_matches"] = float(len(prior_meetings))
         values["h2h_home_points_per_match"] = (
-            float(np.mean([_points(hg, ag) for _, hg, ag in prior_meetings]))
+            float(np.mean([_points(hg, ag) for _, hg, ag, _ in prior_meetings]))
             if prior_meetings
             else 0.0
         )
         values["h2h_goal_difference_per_match"] = (
-            float(np.mean([hg - ag for _, hg, ag in prior_meetings]))
+            float(np.mean([hg - ag for _, hg, ag, _ in prior_meetings]))
             if prior_meetings
             else 0.0
         )
@@ -994,6 +1134,573 @@ def run_replay(
         "stacker_next_step_recommendation": "Do not treat this replay as qualifying causal OOS evidence until source kickoff, schedule-availability, and result-publication timestamp provenance is established. Metrics are descriptive under the stated conservative date-bound assumptions only.",
     }
     return audit, audit_rows
+
+
+def _timeline_identity_key(
+    date_value: Any, home_team: Any, away_team: Any
+) -> tuple[str, str, str]:
+    return (
+        pd.Timestamp(date_value).date().isoformat(),
+        _timeline_team(home_team),
+        _timeline_team(away_team),
+    )
+
+
+def _timeline_row_frame(
+    source_row: dict[str, Any], timeline_row: dict[str, Any]
+) -> dict[str, Any]:
+    result = dict(source_row)
+    result.update(
+        {
+            "fixture_id": timeline_row["fixture_id"],
+            "home_team": _timeline_team(timeline_row["home_team"]),
+            "away_team": _timeline_team(timeline_row["away_team"]),
+            "date": pd.Timestamp(timeline_row["date"]).normalize(),
+            "kickoff_utc": timeline_row["kickoff_utc"],
+            "result_safe_available_at": timeline_row["result_safe_available_at"],
+            "validation_period": timeline_row["validation_period"],
+            "timeline_record_digest": timeline_row["record_digest"],
+        }
+    )
+    return result
+
+
+def _subset_metric_comparison(
+    summaries: dict[str, dict[str, Any]],
+    paired: dict[str, Any],
+) -> tuple[str, dict[str, Any]]:
+    if not summaries or any(name not in summaries for name in ("elo", "dixon_coles", "gbt")):
+        return "NL_CAUSAL_GBT_SUBSET_BLOCKED", {
+            "interpretation": "No identical three-model subset was available.",
+        }
+    deltas = {
+        f"gbt_minus_{baseline}_brier": summaries["gbt"]["multiclass_brier"]
+        - summaries[baseline]["multiclass_brier"]
+        for baseline in ("dixon_coles", "elo")
+    }
+    deltas.update(
+        {
+            f"gbt_minus_{baseline}_log_loss": summaries["gbt"]["multiclass_log_loss"]
+            - summaries[baseline]["multiclass_log_loss"]
+            for baseline in ("dixon_coles", "elo")
+        }
+    )
+    if deltas["gbt_minus_dixon_coles_brier"] < 0 and deltas["gbt_minus_elo_brier"] < 0:
+        marker = "NL_CAUSAL_GBT_SUBSET_PROMISING"
+    elif deltas["gbt_minus_dixon_coles_brier"] > 0 and deltas["gbt_minus_elo_brier"] > 0:
+        marker = "NL_CAUSAL_GBT_SUBSET_REGRESSION"
+    else:
+        marker = "NL_CAUSAL_GBT_SUBSET_NO_GAIN"
+    result = {
+        "interpretation": "Point estimates only; this interim subset is not final causal certification.",
+        "paired_intervals_available": paired.get("status") != "unavailable",
+        **deltas,
+    }
+    return marker, result
+
+
+def run_timeline_subset_replay(
+    source_results: pd.DataFrame,
+    source_sha256: str,
+    timeline: dict[str, Any],
+    timeline_digest: str,
+    *,
+    expected_fixture_count: int = 512,
+    bootstrap_replicates: int = BOOTSTRAP_REPLICATES,
+    max_dc_iter: int = 2000,
+    provisional_audit: dict[str, Any] | None = None,
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Replay only the timestamp-safe subset of the canonical NL timeline.
+
+    The training universe is deliberately restricted to timeline rows with a
+    source-backed result-safe bound. This keeps every feature and fit input
+    inside the same verified timeline contract; no date-only fallback is used.
+    """
+
+    validated_timeline, validated_digest = timeline, timeline_digest
+    if timeline.get("dataset_digest") != timeline_digest:
+        raise ValueError("timeline digest argument does not match timeline payload")
+    if len(timeline.get("records", [])) != expected_fixture_count:
+        raise ValueError("timeline does not cover the declared 512-fixture source")
+    if validated_digest != _timeline_digest(
+        {key: value for key, value in timeline.items() if key != "dataset_digest"}
+    ):
+        raise ValueError("timeline payload failed canonical digest validation")
+    records = validated_timeline["records"]
+    by_identity: dict[tuple[str, str, str], list[dict[str, Any]]] = defaultdict(list)
+    for record in records:
+        by_identity[
+            _timeline_identity_key(
+                record["date"], record["home_team"], record["away_team"]
+            )
+        ].append(record)
+    if any(len(items) != 1 for items in by_identity.values()):
+        raise ValueError("timeline contains duplicate or conflicting fixture identities")
+
+    normalized = normalize_results(source_results)
+    source_by_identity: dict[tuple[str, str, str], list[dict[str, Any]]] = defaultdict(list)
+    for row in normalized.loc[normalized["tournament"].eq(TOURNAMENT)].itertuples(
+        index=False
+    ):
+        source_by_identity[
+            _timeline_identity_key(row.date, row.home_team, row.away_team)
+        ].append(row._asdict())
+
+    exclusions: list[dict[str, Any]] = []
+    included_targets: list[dict[str, Any]] = []
+    target_records = [
+        record
+        for record in records
+        if record["validation_period"] in {block["id"] for block in EVALUATION_BLOCKS}
+    ]
+    if len(target_records) != expected_fixture_count:
+        raise ValueError("timeline evaluation rows do not cover all 512 fixtures")
+
+    def source_match(record: dict[str, Any]) -> tuple[dict[str, Any] | None, str | None]:
+        key = _timeline_identity_key(record["date"], record["home_team"], record["away_team"])
+        candidates = source_by_identity.get(key, [])
+        if len(candidates) != 1:
+            return None, "identity_conflict" if len(candidates) > 1 else "missing_fixture_match"
+        source_row = candidates[0]
+        if (
+            int(source_row["home_score"]) != int(record["home_score"])
+            or int(source_row["away_score"]) != int(record["away_score"])
+        ):
+            return None, "inconsistent_result"
+        return source_row, None
+
+    for record in target_records:
+        source_row, error = source_match(record)
+        reasons: list[str] = []
+        if error:
+            reasons.append(error)
+        if not record["kickoff_utc"]:
+            reasons.append("missing_verified_kickoff")
+        if record["provenance_status"] != "official_schedule_exact_crosswalk":
+            reasons.append("unverified_kickoff_provenance")
+        if source_row is None:
+            reasons.append("source_identity_unresolved")
+        if reasons:
+            exclusions.append(
+                {
+                    "fixture_id": record["fixture_id"],
+                    "validation_period": record["validation_period"],
+                    "home_team": record["home_team"],
+                    "away_team": record["away_team"],
+                    "reasons": sorted(set(reasons)),
+                    "timeline_record_digest": record["record_digest"],
+                }
+            )
+            continue
+        included_targets.append(_timeline_row_frame(source_row, record))
+
+    safe_training_rows: list[dict[str, Any]] = []
+    training_exclusion_counts: dict[str, int] = defaultdict(int)
+    for record in records:
+        if not record["kickoff_utc"] or not record["result_safe_available_at"]:
+            training_exclusion_counts["missing_verified_training_timestamp"] += 1
+            continue
+        if record["provenance_status"] != "official_schedule_exact_crosswalk":
+            training_exclusion_counts["unverified_training_provenance"] += 1
+            continue
+        source_row, error = source_match(record)
+        if error or source_row is None:
+            training_exclusion_counts[error or "source_identity_unresolved"] += 1
+            continue
+        safe_training_rows.append(_timeline_row_frame(source_row, record))
+    if not safe_training_rows:
+        raise ValueError("timeline has no usable source-backed training observations")
+    safe_training = pd.DataFrame(safe_training_rows)
+    safe_training["result_safe_available_at"] = pd.to_datetime(
+        safe_training["result_safe_available_at"], utc=True
+    )
+    safe_training = safe_training.sort_values(
+        ["result_safe_available_at", "kickoff_utc", "fixture_id"]
+    ).reset_index(drop=True)
+    history_index = ResultFeatureIndex(safe_training)
+    features_by_id = {
+        str(row.fixture_id): history_index.features(row)
+        for row in safe_training.itertuples(index=False)
+    }
+    schema_digest = _feature_schema_digest()
+    config_digest = _sha256(
+        _canonical_json(
+            {
+                "parameters": MODEL_CONFIG,
+                "sklearn_version": sklearn.__version__,
+                "feature_schema_digest": schema_digest,
+                "outcome_order": ["home", "draw", "away"],
+            }
+        )
+    )
+    output_by_id: dict[str, dict[str, Any]] = {}
+    cadence_records: list[dict[str, Any]] = []
+    targets = pd.DataFrame(included_targets)
+    if not targets.empty:
+        targets["kickoff_utc"] = pd.to_datetime(targets["kickoff_utc"], utc=True)
+        targets = targets.sort_values(["kickoff_utc", "fixture_id"]).reset_index(drop=True)
+
+    for block in EVALUATION_BLOCKS:
+        block_targets = targets.loc[targets["validation_period"].eq(block["id"])].copy()
+        if block_targets.empty:
+            continue
+        first_kickoff = block_targets["kickoff_utc"].min()
+        model_training_cutoff = first_kickoff - pd.Timedelta(
+            days=PREDICTION_LEAD_DAYS, seconds=1
+        )
+        training = safe_training.loc[
+            safe_training["result_safe_available_at"] < model_training_cutoff
+        ].copy()
+        if training.empty:
+            for record in block_targets.to_dict("records"):
+                exclusions.append(
+                    {
+                        "fixture_id": record["fixture_id"],
+                        "validation_period": block["id"],
+                        "home_team": record["home_team"],
+                        "away_team": record["away_team"],
+                        "reasons": ["no_usable_training_prefix"],
+                        "timeline_record_digest": record["timeline_record_digest"],
+                    }
+                )
+            continue
+        training_features = [features_by_id[str(fid)] for fid in training["fixture_id"]]
+        x_train = pd.DataFrame(training_features, columns=FEATURE_COLUMNS)
+        y_train = np.asarray(
+            [outcome_index(int(row.home_score), int(row.away_score)) for row in training.itertuples(index=False)],
+            dtype=int,
+        )
+        if set(np.unique(y_train)) != {0, 1, 2}:
+            for record in block_targets.to_dict("records"):
+                exclusions.append(
+                    {
+                        "fixture_id": record["fixture_id"],
+                        "validation_period": block["id"],
+                        "home_team": record["home_team"],
+                        "away_team": record["away_team"],
+                        "reasons": ["training_lacks_all_outcomes"],
+                        "timeline_record_digest": record["timeline_record_digest"],
+                    }
+                )
+            continue
+        model = HistGradientBoostingClassifier(
+            **{
+                key: value
+                for key, value in MODEL_CONFIG.items()
+                if key
+                in {
+                    "max_iter",
+                    "learning_rate",
+                    "max_leaf_nodes",
+                    "min_samples_leaf",
+                    "l2_regularization",
+                    "early_stopping",
+                    "random_state",
+                }
+            }
+        )
+        model.fit(x_train, y_train)
+        gbt_train_digest = _digest_training(training, training_features)
+        raw_train_digest = _digest_raw_training(training)
+        training_max_available = safe_training.loc[
+            training.index, "result_safe_available_at"
+        ].max()
+        if not training_max_available < model_training_cutoff:
+            raise ValueError("certified training availability is not strictly before model cutoff")
+        fitted_dc = dc.fit(
+            training,
+            today=model_training_cutoff.tz_localize(None),
+            max_iter=max_dc_iter,
+            prior_params=None,
+            wc2026_boost_override=1.0,
+        )
+        block_record = {
+            "period": block["id"],
+            "model_training_cutoff": model_training_cutoff.isoformat(),
+            "training_start": training["date"].min().date().isoformat(),
+            "training_max_available_at": training_max_available.isoformat(),
+            "training_match_count": len(training),
+            "training_raw_data_digest": raw_train_digest,
+            "training_feature_data_digest": gbt_train_digest,
+            "feature_schema_digest": schema_digest,
+            "model_config_digest": config_digest,
+            "model_seed": MODEL_SEED,
+            "time_proof_basis": "PR215 verified kickoff plus source-backed result-safe availability; no date-only fallback",
+        }
+        cadence_records.append(block_record)
+        for row in block_targets.itertuples(index=False):
+            kickoff = pd.Timestamp(row.kickoff_utc)
+            prediction_cutoff = kickoff - pd.Timedelta(days=PREDICTION_LEAD_DAYS)
+            if not model_training_cutoff < prediction_cutoff < kickoff:
+                raise ValueError("certified target cutoff ordering failed")
+            target_feature = history_index.features(row, prediction_cutoff)
+            target_feature_history = safe_training.loc[
+                safe_training["result_safe_available_at"] < prediction_cutoff
+            ]
+            # The fitted GBT/DC training sample is frozen at the block cutoff.
+            # Later safe rows may inform the target's point-in-time feature
+            # history, but they are never admitted to the fitted model.
+            target_training_max = training_max_available.isoformat()
+            gbt_raw = model.predict_proba(
+                pd.DataFrame([target_feature], columns=FEATURE_COLUMNS)
+            )[0]
+            gbt_probs = np.zeros(3, dtype=float)
+            for class_position, class_label in enumerate(model.classes_):
+                gbt_probs[int(class_label)] = gbt_raw[class_position]
+            gbt_record = _make_model_prediction(
+                gbt_probs,
+                prediction_cutoff=prediction_cutoff.isoformat(),
+                model_training_cutoff=model_training_cutoff.isoformat(),
+                training_max_available_at=training_max_available.isoformat(),
+                training_match_count=block_record["training_match_count"],
+                feature_schema_version=FEATURE_SCHEMA_VERSION,
+                feature_schema_digest=schema_digest,
+                training_data_digest=gbt_train_digest,
+                model_config_digest=config_digest,
+                model_seed=MODEL_SEED,
+                feature_vector_digest=_sha256(
+                    _canonical_json([target_feature[column] for column in FEATURE_COLUMNS])
+                ),
+            )
+            dc_probs_map = dc.predict_match(
+                str(row.home_team), str(row.away_team), fitted_dc, neutral=bool(row.neutral)
+            )
+            dc_record = _make_model_prediction(
+                [dc_probs_map["p_home"], dc_probs_map["p_draw"], dc_probs_map["p_away"]],
+                prediction_cutoff=prediction_cutoff.isoformat(),
+                model_training_cutoff=model_training_cutoff.isoformat(),
+                training_max_available_at=training_max_available.isoformat(),
+                training_match_count=block_record["training_match_count"],
+                training_data_digest=raw_train_digest,
+                fit_cadence="once before each declared evaluation block",
+            )
+            elo_probs = elo_win_probability(
+                history_index._elo_asof(str(row.home_team), prediction_cutoff),
+                history_index._elo_asof(str(row.away_team), prediction_cutoff),
+                neutral=bool(row.neutral),
+            )
+            elo_record = _make_model_prediction(
+                elo_probs,
+                prediction_cutoff=prediction_cutoff.isoformat(),
+                model_training_cutoff=model_training_cutoff.isoformat(),
+                training_max_available_at=training_max_available.isoformat(),
+                training_match_count=len(target_feature_history),
+                training_data_digest=_digest_raw_training(target_feature_history),
+                update_policy="sequential Elo over verified result-safe timeline rows",
+            )
+            output_by_id[str(row.fixture_id)] = {
+                "fixture_id": str(row.fixture_id),
+                "home_team": str(row.home_team),
+                "away_team": str(row.away_team),
+                "validation_period": str(row.validation_period),
+                "kickoff": {
+                    "exact_timestamp_utc": kickoff.isoformat().replace("+00:00", "Z"),
+                    "source_date": str(row.date.date()),
+                    "time_quality": "verified_utc_from_PR215_timeline",
+                },
+                "timeline": {
+                    "dataset_digest": timeline_digest,
+                    "record_digest": str(row.timeline_record_digest),
+                    "result_safe_available_at": (
+                        str(row.result_safe_available_at)
+                        if pd.notna(row.result_safe_available_at)
+                        else None
+                    ),
+                    "provenance_status": "official_schedule_exact_crosswalk",
+                },
+                "model_training_cutoff": model_training_cutoff.isoformat(),
+                "prediction_cutoff": prediction_cutoff.isoformat(),
+                "training_max_available_at": training_max_available.isoformat(),
+                "training_match_count": block_record["training_match_count"],
+                "outcome_index_home_draw_away": outcome_index(
+                    int(row.home_score), int(row.away_score)
+                ),
+                "predictions": {
+                    "gbt": gbt_record,
+                    "dixon_coles": dc_record,
+                    "elo": elo_record,
+                },
+            }
+
+    audit_rows = [output_by_id[str(fid)] for fid in targets["fixture_id"] if str(fid) in output_by_id]
+    common = [
+        row
+        for row in audit_rows
+        if {"gbt", "dixon_coles", "elo"}.issubset(row["predictions"])
+    ]
+    summaries: dict[str, dict[str, Any]] = {}
+    if common:
+        outcomes = np.asarray(
+            [row["outcome_index_home_draw_away"] for row in common], dtype=int
+        )
+        summaries = {
+            name: _metric_summary(
+                np.asarray([row["predictions"][name]["probabilities"] for row in common]),
+                outcomes,
+            )
+            for name in ("elo", "dixon_coles", "gbt")
+        }
+    blocks_summary: dict[str, Any] = {}
+    for block in EVALUATION_BLOCKS:
+        period_rows = [row for row in common if row["validation_period"] == block["id"]]
+        period_y = np.asarray(
+            [row["outcome_index_home_draw_away"] for row in period_rows], dtype=int
+        )
+        blocks_summary[block["id"]] = {
+            "fixture_count": len(period_rows),
+            "models": {
+                name: _metric_summary(
+                    np.asarray([row["predictions"][name]["probabilities"] for row in period_rows]),
+                    period_y,
+                )
+                if period_rows
+                else None
+                for name in ("elo", "dixon_coles", "gbt")
+            },
+        }
+    paired = _paired_date_cluster_bootstrap(common, bootstrap_replicates, BOOTSTRAP_SEED)
+    marker, comparison = _subset_metric_comparison(summaries, paired)
+    previous = None
+    if provisional_audit:
+        previous = {
+            "target_fixture_count": provisional_audit.get("target_fixture_count"),
+            "common_fixture_count": provisional_audit.get("common_fixture_count"),
+            "metrics": provisional_audit.get("metrics_common_fixture_set"),
+            "brier_delta_gbt_minus_dixon_coles": (
+                provisional_audit.get("metrics_common_fixture_set", {}).get("gbt", {}).get("multiclass_brier", float("nan"))
+                - provisional_audit.get("metrics_common_fixture_set", {}).get("dixon_coles", {}).get("multiclass_brier", float("nan"))
+            ),
+        }
+    coverage_by_edition = {}
+    for block in EVALUATION_BLOCKS:
+        period = block["id"]
+        period_records = [
+            record for record in records if record["validation_period"] == period
+        ]
+        period_rows = [row for row in common if row["validation_period"] == period]
+        coverage_by_edition[period] = {
+            "timeline_rows": len(period_records),
+            "verified_kickoffs": sum(
+                bool(record["kickoff_utc"]) for record in period_records
+            ),
+            "result_safe_training_rows": sum(
+                bool(record["result_safe_available_at"]) for record in period_records
+            ),
+            "evaluated": len(period_rows),
+            "excluded": len(period_records) - len(period_rows),
+        }
+    audit = {
+        "schema_version": "nl-causal-gbt-timeline-subset-audit-v1",
+        "research_only": True,
+        "status_marker": marker,
+        "source": {
+            "sha256": source_sha256,
+            "network_fetch_performed": False,
+            "credential_accessed": False,
+            "production_side_effects": False,
+        },
+        "timeline": {
+            "pr": 215,
+            "head_sha": "71511e4fd9faec2e9aefbd97b644b7789f80171d",
+            "dataset_digest": timeline_digest,
+            "schema_version": TIMELINE_SCHEMA,
+            "record_count": len(records),
+            "safe_training_record_count": len(safe_training),
+            "training_exclusion_counts": dict(sorted(training_exclusion_counts.items())),
+        },
+        "target_fixture_count": expected_fixture_count,
+        "evaluated_fixture_count": len(common),
+        "excluded_fixture_count": expected_fixture_count - len(common),
+        "excluded_reasons": dict(
+            sorted(
+                (
+                    reason,
+                    sum(reason in exclusion["reasons"] for exclusion in exclusions),
+                )
+                for reason in sorted(
+                    {reason for exclusion in exclusions for reason in exclusion["reasons"]}
+                )
+            )
+        ),
+        "excluded_fixtures": exclusions,
+        "coverage_by_edition": coverage_by_edition,
+        "model_configuration": {
+            "parameters": MODEL_CONFIG,
+            "sklearn_version": sklearn.__version__,
+            "outcome_order": ["home", "draw", "away"],
+            "training_policy": "verified timeline rows only; result_safe_available_at < model_training_cutoff",
+            "prediction_lead_days": PREDICTION_LEAD_DAYS,
+        },
+        "training_blocks": cadence_records,
+        "metrics_common_fixture_set": summaries,
+        "block_results": blocks_summary,
+        "paired_date_cluster_bootstrap": paired,
+        "gbt_minus_baseline": comparison,
+        "comparison_with_provisional_pr214": previous,
+        "apparent_advantage_assessment": "remains_inconclusive",
+        "causal_evidence_status": "INTERIM_SUBSET_ONLY_NOT_FINAL_512_CERTIFICATION",
+        "research_status": marker,
+        "next_gate": "NL_FIXTURE_TIMELINE_READY",
+    }
+    return audit, audit_rows
+
+
+def write_timeline_subset_artifacts(
+    audit: dict[str, Any], rows: list[dict[str, Any]], output_dir: Path
+) -> tuple[Path, Path, Path]:
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    prediction_path = output_dir / "nations_league_causal_gbt_subset_predictions_20260929.json"
+    audit_path = output_dir / "nations_league_causal_gbt_subset_replay_20260929.json"
+    report_path = output_dir / "nations_league_causal_gbt_subset_replay_20260929.md"
+    prediction_payload = {
+        "schema_version": "nl-causal-gbt-timeline-subset-predictions-v1",
+        "research_only": True,
+        "timeline_dataset_digest": audit["timeline"]["dataset_digest"],
+        "records": rows,
+        "row_count": len(rows),
+    }
+    prediction_path.write_bytes(_canonical_json(prediction_payload) + b"\n")
+    audit_path.write_bytes(_canonical_json(audit) + b"\n")
+    report_lines = [
+        "# Nations League causal GBT verified-timeline subset replay",
+        "",
+        f"Status marker: **{audit['status_marker']}**",
+        "",
+        "Interim research-only artifact. This is not final 512-fixture causal certification and must not advance to a stacker.",
+        "",
+        f"- PR #215 head: `{audit['timeline']['head_sha']}`",
+        f"- Timeline dataset digest: `{audit['timeline']['dataset_digest']}`",
+        f"- Evaluated: {audit['evaluated_fixture_count']} / {audit['target_fixture_count']}",
+        f"- Excluded: {audit['excluded_fixture_count']}",
+        f"- Coverage by edition: {audit['coverage_by_edition']}",
+        "- Training policy: verified `result_safe_available_at < model_training_cutoff`; no date-only timing fallback.",
+        "",
+        "## Metrics",
+        "",
+        "| Model | N | Brier | Log loss | ECE | Accuracy | Sharpness |",
+        "|---|---:|---:|---:|---:|---:|---:|",
+    ]
+    for model, label in (("elo", "Elo"), ("dixon_coles", "Dixon–Coles"), ("gbt", "GBT")):
+        metric = audit["metrics_common_fixture_set"].get(model)
+        if metric:
+            report_lines.append(
+                f"| {label} | {metric['matches_evaluated']} | {metric['multiclass_brier']:.6f} | {metric['multiclass_log_loss']:.6f} | {metric['ece_10_bins_mean_one_vs_rest']:.6f} | {metric['accuracy_secondary']:.6f} | {metric['mean_max_probability_sharpness']:.6f} |"
+            )
+    report_lines += [
+        "",
+        "H/D/A calibration and paired date-cluster bootstrap intervals are in the JSON audit artifact.",
+        "",
+        f"GBT-minus-baseline: `{audit['gbt_minus_baseline']}`",
+        f"Previous PR #214 comparison: `{audit['comparison_with_provisional_pr214']}`",
+        "",
+        "No provider requests, credentials, production/runtime changes, activation, publication, betting, or ledger activity occurred.",
+        "",
+        "Wait for `NL_FIXTURE_TIMELINE_READY` before final certification.",
+        "",
+    ]
+    report_path.write_text("\n".join(report_lines), encoding="utf-8")
+    return prediction_path, audit_path, report_path
 
 
 def write_artifacts(
