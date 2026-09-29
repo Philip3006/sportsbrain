@@ -2,15 +2,15 @@
 
 - Status: `NL_SAFE_CONTEXT_REGRESSION`
 - Classification: `material_log_loss_or_calibration_regression`
-- B4 source state: `NL_COMPETITION_STATE_PARTIAL`
-- B4 safe-subset integrity passed: true
-- Competition-state SHA-256: `354d5c542f0646bf0914b17a1361f4d5723db2b1f117f6d6375a8579c44b7edf`
-- B4 source commit: `037eb99148a39d57bd4aa09624ddc4841403d2b1`
+- B4 source state: `NL_COMPETITION_STATE_READY`
+- B4 READY integrity passed: true
+- Competition-state SHA-256: `26c80331d248bb4918bab1624e044c5d3476dabeead5f1825ac7e3e3dccaafb0`
+- B4 source commit: `eb6b2d85a3c119afeeabc0e0b3fe88ffc3295394`
 - B4 source PR: `215`
-- B4 coverage digest: `11f415e9f1964c3d034055bb62f49e0e78b46ebdc3bb9e09745a545ede441333`
+- B4 coverage digest: `04f86e1b8c5a1ec2f43dcb59c9d692060cba189683502ee896eaef41a5ecf298`
 - B4 timeline digest: `2c60c6b823b0cae948947fffe2a0e3456495c1fc5d510379ae95690e1c3fa6ef`
 - Baseline source SHA-256: `6b47d79b84891306d8bb2ce4c0abec810b11818c6e4c3fad9fa2415c228b7f2d`
-- Source main SHA: `42b475d86c29aa99be7105f63fb380167c1cb1dc`
+- Source main SHA: `eb09e8c0b5fb6087c69820129212665bfec57d71`
 - Canonical B4 fixture identities: 512
 - Verified kickoffs / exact causal cutoffs: 512 / 512
 - Local result identity / baseline forecast coverage: 512 / 510
@@ -27,7 +27,9 @@
 - `article_15_tiebreak_outputs`: unresolved or missing source inputs
 - `disciplinary_and_access_list_tiebreaks`: no source data in the B4 artifact
 - `c_league_relegation_allocation`: edition-specific allocation unresolved
-- `exact_must_win_and_qualification_labels`: not proven by the partial points-bound artifact
+- `exact_must_win_and_qualification_labels`: UNRESOLVED under the final B4 field-status contract
+- `NOT_APPLICABLE_fields`: not encoded as predictive categories or outcomes; treated as unavailable
+- `UNRESOLVED_fields`: not encoded as predictive categories or outcomes; treated as unavailable
 - `subjective_motivation`: not defined or used
 - `causal_gbt`: no certified row-level causal GBT forecast artifact supplied on current main or #216
 
@@ -56,6 +58,7 @@ These are the unmodified event-level Dixon–Coles probabilities on the same pai
 | Multiclass log loss | 1.020344 | 1.361138 | +0.340794 |
 | ECE (10-bin macro OVR) | 0.055010 | 0.164047 | +0.109037 |
 | Sharpness (mean max p) | 0.513146 | 0.668603 | +0.155457 |
+| Accuracy (secondary) | 0.483264 | 0.441423 | -0.041841 |
 
 ## Outcome calibration
 
@@ -69,6 +72,13 @@ These are the unmodified event-level Dixon–Coles probabilities on the same pai
 
 - Brier difference: [0.077058, 0.164126]
 - Log-loss difference: [0.217103, 0.477750]
+
+## Reconciliation with the previous #216 result
+
+- Previous PR head: `aec24ae0237a7838722819a0c6d187ef5bb7c82f`; previous B4 dataset/coverage digests: `354d5c542f0646bf0914b17a1361f4d5723db2b1f117f6d6375a8579c44b7edf` / `11f415e9f1964c3d034055bb62f49e0e78b46ebdc3bb9e09745a545ede441333`.
+- Final READY B4 head/dataset/coverage digests are bound above. The prior and final safe projections were compared on all 512 fixture identities and all 27 predictive features: **0 changed fixture rows and 0 changed feature values**.
+- Paired OOS coverage is unchanged at 478. Baseline and context Brier, log loss, ECE, H/D/A calibration, sharpness, accuracy, and both paired bootstrap intervals reproduce exactly; the exact B4 field-status gate did not alter the selected safe values.
+- Therefore the earlier result materially reproduces on the final READY artifact. The final classification remains `NL_SAFE_CONTEXT_REGRESSION`; context is not recommended for the later stacker test.
 
 ## Strata
 

@@ -456,7 +456,7 @@ def test_end_to_end_runner_requires_exact_pre_kickoff_cohort_and_emits_report():
         )
 
 
-def _safe_partial_b4_bundle():
+def _safe_ready_b4_bundle():
     fixture_id = "uefa-nl:synthetic-unit-fixture"
     kickoff = "2024-09-05T18:00:00Z"
     timeline_record = {
@@ -557,16 +557,40 @@ def _safe_partial_b4_bundle():
             }
         },
     }
+    record["field_status"] = {key: "SAFE_EXACT" for key in record}
+    record["field_status"].update(
+        {
+            "group": "SAFE_EXACT",
+            "rank": "SAFE_BOUND",
+            "promotion_state": "SAFE_BOUND",
+            "qualification_state": "SAFE_BOUND",
+            "relegation_state": "SAFE_BOUND",
+            "matchday": "UNRESOLVED",
+            "official_fixture_id": "UNRESOLVED",
+            "must_win_primitives": "UNRESOLVED",
+        }
+    )
     dataset = {
         "schema_version": "uefa-nations-league-causal-competition-state-v1",
         "source_snapshot_digest": "f" * 64,
         "records": [record],
     }
     record["source_digest"] = dataset["source_snapshot_digest"]
+    record["field_status"]["source_digest"] = "SAFE_EXACT"
     record["record_digest"] = canonical_digest(record)
     dataset_digest = canonical_digest(dataset)
     coverage = {
-        "status": "NL_COMPETITION_STATE_PARTIAL",
+        "status": "NL_COMPETITION_STATE_READY",
+        "ready_gate": {
+            "safe_consumability_complete": True,
+            "causal_timing_complete": True,
+            "all_record_fields_statused": True,
+            "unresolved_optional_fields_explicit": True,
+        },
+        "field_status_contract": {
+            "values": ["NOT_APPLICABLE", "SAFE_BOUND", "SAFE_EXACT", "UNRESOLVED"],
+            "consumer_rule": "B5 may select only SAFE_EXACT or SAFE_BOUND fields; UNRESOLVED and NOT_APPLICABLE are never interpreted as sporting outcomes.",
+        },
         "expected_evaluation_fixture_count": 1,
         "output_record_count": 1,
         "fixture_coverage_complete": True,
@@ -598,22 +622,67 @@ def _safe_partial_b4_bundle():
     return dataset, coverage, timeline
 
 
-def test_partial_b4_artifact_is_accepted_when_safe_subset_is_complete_and_hashed():
-    dataset, coverage, timeline = _safe_partial_b4_bundle()
-    assert validate_b4_artifact(dataset, coverage, timeline, expected_fixtures=1) == []
+def test_ready_b4_artifact_is_accepted_when_safe_subset_is_complete_and_hashed():
+    dataset, coverage, timeline = _safe_ready_b4_bundle()
+    assert (
+        validate_b4_artifact(
+            dataset,
+            coverage,
+            timeline,
+            expected_fixtures=1,
+            expected_dataset_digest=coverage["dataset_digest"],
+            expected_coverage_digest=coverage["coverage_digest"],
+        )
+        == []
+    )
     assert "B4_fixture_timeline_missing" in validate_b4_artifact(dataset, coverage)
 
 
-def test_partial_b4_artifact_digest_tampering_fails_closed():
-    dataset, coverage, timeline = _safe_partial_b4_bundle()
+def test_ready_b4_artifact_digest_tampering_fails_closed():
+    dataset, coverage, timeline = _safe_ready_b4_bundle()
     dataset["records"][0]["home_score"] = 2
-    blockers = validate_b4_artifact(dataset, coverage, timeline, expected_fixtures=1)
+    blockers = validate_b4_artifact(
+        dataset,
+        coverage,
+        timeline,
+        expected_fixtures=1,
+        expected_dataset_digest=coverage["dataset_digest"],
+        expected_coverage_digest=coverage["coverage_digest"],
+    )
     assert "B4_dataset_digest_mismatch" in blockers
     assert "B4_record_digest_mismatch" in blockers
 
 
+def test_ready_b4_requires_pinned_exact_dataset_and_coverage_digests():
+    dataset, coverage, timeline = _safe_ready_b4_bundle()
+    blockers = validate_b4_artifact(
+        dataset,
+        coverage,
+        timeline,
+        expected_fixtures=1,
+        expected_dataset_digest="0" * 64,
+        expected_coverage_digest="1" * 64,
+    )
+    assert "B4_dataset_digest_not_expected_authoritative_value" in blockers
+    assert "B4_coverage_digest_not_expected_authoritative_value" in blockers
+
+
+def test_b4_ready_contract_rejects_missing_or_invalid_field_statuses():
+    dataset, coverage, timeline = _safe_ready_b4_bundle()
+    dataset["records"][0]["field_status"]["standings_before"] = "FUTURE_VALUE"
+    blockers = validate_b4_artifact(
+        dataset,
+        coverage,
+        timeline,
+        expected_fixtures=1,
+        expected_dataset_digest=coverage["dataset_digest"],
+        expected_coverage_digest=coverage["coverage_digest"],
+    )
+    assert "B4_record_field_status_value_invalid" in blockers
+
+
 def test_safe_feature_projection_ignores_unsupported_matchday_and_motivation_fields():
-    dataset, _, _ = _safe_partial_b4_bundle()
+    dataset, _, _ = _safe_ready_b4_bundle()
     record = dataset["records"][0]
     record["matchday"] = 4
     record["official_fixture_id"] = "must-not-be-a-feature"
@@ -635,6 +704,38 @@ def test_safe_feature_projection_ignores_unsupported_matchday_and_motivation_fie
     assert "official_fixture_id" not in projected.index
     assert "home_mathematically_qualified" not in projected.index
     assert "home_win_required_for_mathematical_goal" not in projected.index
+
+
+def test_safe_feature_projection_omits_unresolved_and_not_applicable_values():
+    dataset, _, _ = _safe_ready_b4_bundle()
+    record = dataset["records"][0]
+    record["field_status"].update(
+        {
+            "group": "NOT_APPLICABLE",
+            "standings_before": "UNRESOLVED",
+            "rank": "UNRESOLVED",
+            "promotion_state": "NOT_APPLICABLE",
+            "relegation_state": "UNRESOLVED",
+        }
+    )
+    projected = (
+        derive_context_rows([record]).set_index("fixture_id").loc[record["fixture_id"]]
+    )
+    assert pd.isna(projected["group"])
+    assert pd.isna(projected["home_points_before"])
+    assert pd.isna(projected["home_table_position_min"])
+    assert pd.isna(projected["home_points_bound_promotion_possible"])
+    assert pd.isna(projected["home_points_bound_relegation_possible"])
+
+
+def test_knockout_context_is_not_mislabeled_as_late_group_phase():
+    dataset, _, _ = _safe_ready_b4_bundle()
+    record = dataset["records"][0]
+    record["stage"] = "league_a_finals"
+    projected = (
+        derive_context_rows([record]).set_index("fixture_id").loc[record["fixture_id"]]
+    )
+    assert projected["group_phase_progress"] == "not_group_stage_or_unavailable"
 
 
 def test_ablation_models_missing_context_as_unavailable_and_rejects_invalid_probabilities():
@@ -683,6 +784,10 @@ def test_runner_binds_the_exact_b4_source_commit_and_optional_pr():
             "B" * 40,
             "--competition-state-source-pr",
             "215",
+            "--expected-dataset-digest",
+            "d" * 64,
+            "--expected-coverage-digest",
+            "e" * 64,
         ]
     )
     assert parsed.competition_state_source_sha == "B" * 40

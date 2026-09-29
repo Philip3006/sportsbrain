@@ -1,17 +1,22 @@
 # UEFA Nations League Safe Competition-Context Ablation
 
-Status: research-only. The runner accepts Builder 4's `NL_COMPETITION_STATE_PARTIAL`
-artifact when the safe 512-fixture timeline, kickoff, point-in-time standings,
-and artifact-integrity checks pass. Missing advanced rules do not block this
-strictly limited context subset. No synthetic fixture or prediction is admissible
-as empirical evidence.
+Status: research-only. The runner requires Builder 4's exact
+`NL_COMPETITION_STATE_READY` artifact and pinned dataset/coverage digests. It
+admits only values whose per-record field status is `SAFE_EXACT` or `SAFE_BOUND`;
+`UNRESOLVED` and `NOT_APPLICABLE` values remain unavailable and never become
+sporting outcomes. Missing advanced rules do not block this limited safe subset.
+No synthetic fixture or prediction is admissible as empirical evidence.
 
 ## Frozen source and causality contract
 
 - Bind the canonical B4 competition-state dataset, coverage audit, fixture
-  timeline, and exact source commit/PR. Validate canonical dataset, coverage,
-  timeline, and per-record digests; require 512 unique `uefa-nl:` identities,
-  512 verified kickoff times, and 512 exact kickoff cutoffs.
+  timeline, exact dataset/coverage digests, and exact source commit/PR. Validate
+  canonical dataset, coverage, timeline, and per-record digests; require 512
+  unique `uefa-nl:` identities, 512 verified kickoff times, and 512 exact
+  kickoff cutoffs.
+- Validate the READY safe-consumability gate and complete status map on every
+  record before projection. A status outside the four-value contract blocks the
+  run; only `SAFE_EXACT` and `SAFE_BOUND` permit a value into the feature frame.
 - The B4 `state_cutoff` is the target kickoff instant. It is an exclusive
   information boundary: every prior result used in a table must independently
   join to the exact B4 timeline, have `result_safe_available_at < kickoff`, and
@@ -51,8 +56,9 @@ the context model:
 - Points-only unique rank where proven; unresolved points ties remain missing
   for rank bounds and are represented only by an explicit points-tie indicator.
 - Promotion/relegation *possibility bounds* only when that participant field is
-  explicitly marked `points_bounds_only_tiebreaks_preserved_as_unresolved`.
-  These are not exact outcome labels. Unsupported or inapplicable bounds remain
+  per-record field status is `SAFE_BOUND` or `SAFE_EXACT` and the nested state
+  explicitly says `points_bounds_only_tiebreaks_preserved_as_unresolved`.
+  These are not exact outcome labels. Unresolved or not-applicable fields remain
   missing and receive fold-fitted missingness indicators.
 
 The runner explicitly excludes inferred matchday, official UEFA fixture IDs as
@@ -60,7 +66,9 @@ predictors, Article-15 and other unresolved tie-breaks, disciplinary/access-list
 rules without source data, unresolved C-League allocation, exact
 qualification/promotion/relegation labels not proven by the artifact, exact
 must-win/draw-sufficient/loss-eliminates labels, and subjective motivation.
-These exclusions do not prevent the safe-subset ablation.
+`UNRESOLVED` and `NOT_APPLICABLE` values are explicitly omitted rather than
+encoded as categories or false outcomes. These exclusions do not prevent the
+safe-subset ablation.
 
 ## Predeclared descriptive strata
 
@@ -97,3 +105,6 @@ IDs, excluded administrative IDs, feature contract, and paired predictions'
 provenance. The only possible recommendation is research-only inclusion in a
 later stacker test. No production, signal detector, activation, publication,
 betting, scheduler, or ledger path is changed.
+
+Reproduction requires the runner's `--expected-dataset-digest` and
+`--expected-coverage-digest` arguments to match the reviewed B4 READY inputs.

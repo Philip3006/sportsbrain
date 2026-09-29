@@ -29,6 +29,12 @@ from src.analysis.nations_league_validation import (
 )
 
 EXPECTED_FIXTURES = 512
+VALID_FIELD_STATUSES = {
+    "SAFE_EXACT",
+    "SAFE_BOUND",
+    "UNRESOLVED",
+    "NOT_APPLICABLE",
+}
 # The local football-results cache retains the conventional English alias,
 # while Builder 4's UEFA fixture timeline uses the official endonym. This is
 # an identity-only reconciliation; score, date, venue, and edition must still
@@ -71,12 +77,10 @@ def validate_b4_artifact(
     timeline: dict[str, Any] | None = None,
     *,
     expected_fixtures: int = EXPECTED_FIXTURES,
+    expected_dataset_digest: str | None = None,
+    expected_coverage_digest: str | None = None,
 ) -> list[str]:
-    """Validate the complete B4 artifact and its safe, strictly prior inputs.
-
-    ``NL_COMPETITION_STATE_PARTIAL`` is accepted: the gate is complete timeline
-    and point-in-time standings integrity, not readiness of unsupported rules.
-    """
+    """Validate the exact B4 READY artifact and its safe, strictly prior inputs."""
     blockers = []
     if (
         dataset.get("schema_version")
@@ -89,6 +93,25 @@ def validate_b4_artifact(
         records = records if isinstance(records, list) else []
     if coverage.get("output_record_count") != len(records):
         blockers.append("B4_coverage_record_count_mismatch")
+    if coverage.get("status") != "NL_COMPETITION_STATE_READY":
+        blockers.append("B4_competition_state_not_READY")
+    ready_gate = coverage.get("ready_gate", {})
+    for key in (
+        "safe_consumability_complete",
+        "causal_timing_complete",
+        "all_record_fields_statused",
+        "unresolved_optional_fields_explicit",
+    ):
+        if ready_gate.get(key) is not True:
+            blockers.append(f"B4_READY_gate_not_clear:{key}")
+    status_contract = coverage.get("field_status_contract", {})
+    if set(status_contract.get("values", [])) != VALID_FIELD_STATUSES:
+        blockers.append("B4_field_status_contract_invalid")
+    if status_contract.get("consumer_rule") != (
+        "B5 may select only SAFE_EXACT or SAFE_BOUND fields; "
+        "UNRESOLVED and NOT_APPLICABLE are never interpreted as sporting outcomes."
+    ):
+        blockers.append("B4_field_status_consumer_rule_missing")
     if coverage.get("expected_evaluation_fixture_count") != expected_fixtures:
         blockers.append("B4_coverage_target_is_not_512")
     if coverage.get("fixture_coverage_complete") is not True:
@@ -97,11 +120,19 @@ def validate_b4_artifact(
         blockers.append("B4_official_schedule_coverage_not_verified")
     if coverage.get("dataset_digest") != canonical_digest(dataset):
         blockers.append("B4_dataset_digest_mismatch")
-    expected_coverage_digest = canonical_digest(
+    if not expected_dataset_digest:
+        blockers.append("B4_expected_dataset_digest_not_pinned")
+    elif coverage.get("dataset_digest") != expected_dataset_digest:
+        blockers.append("B4_dataset_digest_not_expected_authoritative_value")
+    calculated_coverage_digest = canonical_digest(
         {key: value for key, value in coverage.items() if key != "coverage_digest"}
     )
-    if coverage.get("coverage_digest") != expected_coverage_digest:
+    if coverage.get("coverage_digest") != calculated_coverage_digest:
         blockers.append("B4_coverage_digest_mismatch")
+    if not expected_coverage_digest:
+        blockers.append("B4_expected_coverage_digest_not_pinned")
+    elif coverage.get("coverage_digest") != expected_coverage_digest:
+        blockers.append("B4_coverage_digest_not_expected_authoritative_value")
     fields = coverage.get("fields", {})
     kickoff_coverage = fields.get("kickoff_timestamp", {})
     if (
@@ -192,6 +223,18 @@ def validate_b4_artifact(
             blockers.append("B4_record_digest_mismatch")
         if record.get("source_digest") != dataset.get("source_snapshot_digest"):
             blockers.append("B4_record_source_digest_mismatch")
+        field_status = record.get("field_status")
+        if not isinstance(field_status, dict):
+            blockers.append("B4_record_field_status_missing")
+        else:
+            if not (set(record) - {"record_digest", "field_status"}) <= set(
+                field_status
+            ):
+                blockers.append("B4_record_field_status_coverage_incomplete")
+            if any(
+                value not in VALID_FIELD_STATUSES for value in field_status.values()
+            ):
+                blockers.append("B4_record_field_status_value_invalid")
         if not str(fixture_id).startswith("uefa-nl:"):
             blockers.append("B4_fixture_identity_not_canonical")
         try:
@@ -465,29 +508,47 @@ def derive_context_rows(records: list[dict[str, Any]]) -> pd.DataFrame:
     """Project only supported pre-kickoff table state; unresolved fields stay out."""
     output = []
     for record in records:
+        field_status = record.get("field_status", {})
+
+        def field_is_safe(name: str, statuses=field_status) -> bool:
+            return statuses.get(name) in {"SAFE_EXACT", "SAFE_BOUND"}
+
         kickoff = pd.Timestamp(record["kickoff"])
         if kickoff.tzinfo is None:
             kickoff = kickoff.tz_localize("UTC")
         else:
             kickoff = kickoff.tz_convert("UTC")
         side_standings = {
-            side: _standing_for(record, side) or {} for side in ("home", "away")
+            side: (
+                _standing_for(record, side) or {}
+                if field_is_safe("standings_before")
+                else {}
+            )
+            for side in ("home", "away")
         }
         supported_bound_values: list[bool] = []
+        league_tier = (
+            record.get("league_tier") if field_is_safe("league_tier") else None
+        )
+        if (
+            league_tier is None
+            and field_is_safe("home_league_tier")
+            and field_is_safe("away_league_tier")
+        ):
+            league_tier = (
+                record.get("home_league_tier")
+                if record.get("home_league_tier") == record.get("away_league_tier")
+                else "cross_tier"
+            )
         feature: dict[str, Any] = {
             "fixture_id": record["fixture_id"],
             "record_digest": record["record_digest"],
             "edition": record["edition"],
             "kickoff": kickoff,
             "state_cutoff": pd.Timestamp(record["state_cutoff"]),
-            "stage": record.get("stage"),
-            "league_tier": record.get("league_tier")
-            or (
-                record.get("home_league_tier")
-                if record.get("home_league_tier") == record.get("away_league_tier")
-                else "cross_tier"
-            ),
-            "group": record.get("group"),
+            "stage": record.get("stage") if field_is_safe("stage") else None,
+            "league_tier": league_tier,
+            "group": record.get("group") if field_is_safe("group") else None,
             "outcome": 0
             if record["home_score"] > record["away_score"]
             else 1
@@ -501,24 +562,28 @@ def derive_context_rows(records: list[dict[str, Any]]) -> pd.DataFrame:
             relegation = participant.get("relegation", {})
             matches_played = standing.get("matches_played_before")
             points = standing.get("points_before")
-            point_rank_supported = standing.get("rank_status") in {
+            point_rank_supported = field_is_safe("rank") and standing.get(
+                "rank_status"
+            ) in {
                 "points_order_unique",
                 "unresolved_points_tie",
             }
-            promotion_possible = (
-                promotion.get("can_be_promoted")
-                if promotion.get("status")
+            promotion_possible = None
+            if (
+                field_is_safe("promotion_state")
+                and promotion.get("status")
                 == "points_bounds_only_tiebreaks_preserved_as_unresolved"
                 and isinstance(promotion.get("can_be_promoted"), bool)
-                else None
-            )
-            relegation_possible = (
-                relegation.get("can_be_relegated")
-                if relegation.get("status")
+            ):
+                promotion_possible = promotion["can_be_promoted"]
+            relegation_possible = None
+            if (
+                field_is_safe("relegation_state")
+                and relegation.get("status")
                 == "points_bounds_only_tiebreaks_preserved_as_unresolved"
                 and isinstance(relegation.get("can_be_relegated"), bool)
-                else None
-            )
+            ):
+                relegation_possible = relegation["can_be_relegated"]
             supported_bound_values.extend(
                 value
                 for value in (promotion_possible, relegation_possible)
@@ -544,8 +609,10 @@ def derive_context_rows(records: list[dict[str, Any]]) -> pd.DataFrame:
                         and matches_played > 0
                         else None
                     ),
-                    f"{side}_remaining_games_before": standing.get(
-                        "remaining_group_matches"
+                    f"{side}_remaining_games_before": (
+                        standing.get("remaining_group_matches")
+                        if field_is_safe("remaining_schedule")
+                        else None
                     ),
                     f"{side}_table_position_min": (
                         standing.get("rank_min") if point_rank_supported else None
@@ -572,8 +639,11 @@ def derive_context_rows(records: list[dict[str, Any]]) -> pd.DataFrame:
             standing.get("matches_played_before")
             for standing in side_standings.values()
         ]
-        if record.get("stage") != "league_phase" or any(
-            not isinstance(value, int) for value in played
+        if (
+            not field_is_safe("stage")
+            or record.get("stage") != "league_phase"
+            or not field_is_safe("remaining_schedule")
+            or any(not isinstance(value, int) for value in played)
         ):
             feature["group_phase_progress"] = "not_group_stage_or_unavailable"
         elif max(played) <= 2:
@@ -623,6 +693,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--source-main-sha", required=True)
     parser.add_argument("--competition-state-source-sha", required=True)
     parser.add_argument("--competition-state-source-pr", type=int)
+    parser.add_argument("--expected-dataset-digest", required=True)
+    parser.add_argument("--expected-coverage-digest", required=True)
     parser.add_argument(
         "--output-json",
         type=Path,
@@ -663,7 +735,13 @@ def main() -> int:
     dataset = read_json(args.competition_state)
     coverage = read_json(args.coverage)
     timeline = read_json(args.timeline)
-    blockers = validate_b4_artifact(dataset, coverage, timeline)
+    blockers = validate_b4_artifact(
+        dataset,
+        coverage,
+        timeline,
+        expected_dataset_digest=args.expected_dataset_digest,
+        expected_coverage_digest=args.expected_coverage_digest,
+    )
     dataset_digest = canonical_digest(dataset)
     audit: dict[str, Any]
     if blockers:
@@ -684,8 +762,8 @@ def main() -> int:
             "competition_state_source_sha": args.competition_state_source_sha.lower(),
             "competition_state_source_pr": args.competition_state_source_pr,
             "source_main_sha": args.source_main_sha,
-            "artifact_source_status": "builder4_partial_or_invalid_safe_subset",
-            "b4_partial_integrity_validation_passed": False,
+            "artifact_source_status": "builder4_ready_or_invalid_safe_subset",
+            "b4_ready_integrity_validation_passed": False,
             "eligible_fixtures": len(dataset.get("records", [])),
             "fixtures_evaluated": 0,
             "coverage": 0.0,
@@ -894,7 +972,8 @@ def main() -> int:
             "b4_artifact_status": coverage.get("status"),
         },
     )
-    audit["b4_partial_integrity_validation_passed"] = True
+    audit["b4_ready_integrity_validation_passed"] = True
+    audit["b4_field_status_allowlist"] = ["SAFE_EXACT", "SAFE_BOUND"]
     audit["fixture_coverage"] = {
         "canonical_b4_identities": len(records),
         "verified_kickoffs": sum(
@@ -933,13 +1012,19 @@ def main() -> int:
         "numeric": list(CONTEXT_NUMERIC_FEATURES),
         "categorical": list(CONTEXT_CATEGORICAL_FEATURES),
     }
+    audit["context_feature_non_null_counts"] = {
+        feature: int(examples[feature].notna().sum())
+        for feature in (*CONTEXT_NUMERIC_FEATURES, *CONTEXT_CATEGORICAL_FEATURES)
+    }
     audit["excluded_features"] = {
         "inferred_matchday": "not present in #215 timeline evidence; never inferred",
         "official_uefa_fixture_ids": "unavailable and not a predictive feature",
         "article_15_tiebreak_outputs": "unresolved or missing source inputs",
         "disciplinary_and_access_list_tiebreaks": "no source data in the B4 artifact",
         "c_league_relegation_allocation": "edition-specific allocation unresolved",
-        "exact_must_win_and_qualification_labels": "not proven by the partial points-bound artifact",
+        "exact_must_win_and_qualification_labels": "UNRESOLVED under the final B4 field-status contract",
+        "NOT_APPLICABLE_fields": "not encoded as predictive categories or outcomes; treated as unavailable",
+        "UNRESOLVED_fields": "not encoded as predictive categories or outcomes; treated as unavailable",
         "subjective_motivation": "not defined or used",
         "causal_gbt": "no certified row-level causal GBT forecast artifact supplied on current main or #216",
     }

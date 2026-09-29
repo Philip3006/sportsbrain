@@ -1669,7 +1669,7 @@ def render_context_ablation_markdown(audit: Mapping[str, Any]) -> str:
         f"- Status: `{status}`",
         f"- Classification: `{audit.get('classification_reason', 'unavailable')}`",
         f"- B4 source state: `{provenance.get('b4_artifact_status', audit.get('competition_state_status', 'unavailable'))}`",
-        f"- B4 safe-subset integrity passed: {str(bool(audit.get('b4_partial_integrity_validation_passed', False))).lower()}",
+        f"- B4 READY integrity passed: {str(bool(audit.get('b4_ready_integrity_validation_passed', False))).lower()}",
         f"- Competition-state SHA-256: `{provenance.get('competition_state_dataset_sha256', audit.get('competition_state_dataset_sha256', 'unavailable'))}`",
         f"- B4 source commit: `{provenance.get('competition_state_source_sha', audit.get('competition_state_source_sha', 'unavailable'))}`",
         f"- B4 source PR: `{provenance.get('competition_state_source_pr', audit.get('competition_state_source_pr', 'not supplied'))}`",
