@@ -1,0 +1,2050 @@
+{
+  "ambiguous_identity_conflicts": 0,
+  "by_edition": {
+    "2020/21": {
+      "fixtures": 166,
+      "result_safe_bounds": 4,
+      "unresolved_kickoffs": 162,
+      "verified_kickoffs": 4
+    },
+    "2022/23": {
+      "fixtures": 162,
+      "result_safe_bounds": 138,
+      "unresolved_kickoffs": 24,
+      "verified_kickoffs": 138
+    },
+    "2024/25": {
+      "fixtures": 184,
+      "result_safe_bounds": 155,
+      "unresolved_kickoffs": 28,
+      "verified_kickoffs": 156
+    }
+  },
+  "coverage_digest": "b6dd469264b81397804bc6d718946f3cb4c45fb5e1b3e0e6db4f66c441570808",
+  "dataset_digest": "842c0cc608b4221d63cbda079756dc392524e53349c9c24af5e8116c1d27e1af",
+  "duplicate_fixture_ids": [],
+  "identity_crosswalk_complete": true,
+  "reference_cutoff": {
+    "at": "2022-06-11T00:25:00Z",
+    "fixtures": [
+      {
+        "away_team": "Italy",
+        "fixture_id": "uefa-nl:414287f2c388b02543fd1496",
+        "home_team": "England",
+        "kickoff_utc": "2022-06-11T18:45:00Z",
+        "relative_to_2022_06_11T00_25Z": "future"
+      },
+      {
+        "away_team": "Lithuania",
+        "fixture_id": "uefa-nl:5e6fe1bd3c8aa0570c0d02e7",
+        "home_team": "Faroe Islands",
+        "kickoff_utc": "2022-06-11T16:00:00Z",
+        "relative_to_2022_06_11T00_25Z": "future"
+      },
+      {
+        "away_team": "Germany",
+        "fixture_id": "uefa-nl:39fff7a7549b51adef4c97d5",
+        "home_team": "Hungary",
+        "kickoff_utc": "2022-06-11T18:45:00Z",
+        "relative_to_2022_06_11T00_25Z": "future"
+      },
+      {
+        "away_team": "Scotland",
+        "fixture_id": "uefa-nl:62dfd2fd8bc441f3704addcc",
+        "home_team": "Ireland",
+        "kickoff_utc": "2022-06-11T16:00:00Z",
+        "relative_to_2022_06_11T00_25Z": "future"
+      },
+      {
+        "away_team": "Türkiye",
+        "fixture_id": "uefa-nl:894aaf30d3b57793345df3cd",
+        "home_team": "Luxembourg",
+        "kickoff_utc": "2022-06-11T18:45:00Z",
+        "relative_to_2022_06_11T00_25Z": "future"
+      },
+      {
+        "away_team": "Bosnia and Herzegovina",
+        "fixture_id": "uefa-nl:1f3c64c337a909eeec98c7f7",
+        "home_team": "Montenegro",
+        "kickoff_utc": "2022-06-11T13:00:00Z",
+        "relative_to_2022_06_11T00_25Z": "future"
+      },
+      {
+        "away_team": "Poland",
+        "fixture_id": "uefa-nl:e4db9fd6f18234746122e17c",
+        "home_team": "Netherlands",
+        "kickoff_utc": "2022-06-11T18:45:00Z",
+        "relative_to_2022_06_11T00_25Z": "future"
+      },
+      {
+        "away_team": "Finland",
+        "fixture_id": "uefa-nl:9761cb25bfd6f6819cba75b7",
+        "home_team": "Romania",
+        "kickoff_utc": "2022-06-11T18:45:00Z",
+        "relative_to_2022_06_11T00_25Z": "future"
+      },
+      {
+        "away_team": "Armenia",
+        "fixture_id": "uefa-nl:4ee152dedc59604ca77ddfd9",
+        "home_team": "Ukraine",
+        "kickoff_utc": "2022-06-11T18:45:00Z",
+        "relative_to_2022_06_11T00_25Z": "future"
+      },
+      {
+        "away_team": "Belgium",
+        "fixture_id": "uefa-nl:df19f887f6424cc2f8447fed",
+        "home_team": "Wales",
+        "kickoff_utc": "2022-06-11T18:45:00Z",
+        "relative_to_2022_06_11T00_25Z": "future"
+      }
+    ],
+    "fixtures_on_date": 10
+  },
+  "result_safe_bounds": 297,
+  "schema_version": "uefa-nations-league-fixture-timeline-coverage-v1",
+  "source_fixture_ids_missing": 512,
+  "source_identity_duplicates": [],
+  "source_results_count": 512,
+  "status": "NL_FIXTURE_TIMELINE_PARTIAL",
+  "timeline_record_count": 512,
+  "unique_fixture_ids": 512,
+  "unresolved_count": 215,
+  "unresolved_fixtures": [
+    {
+      "away_team": "Ireland",
+      "candidate_count": 1,
+      "date": "2020-09-03",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:6e4af01ae28db94d38f6950a",
+      "home_team": "Bulgaria",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Malta",
+      "candidate_count": 1,
+      "date": "2020-09-03",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:1360df7e33713a2018721516",
+      "home_team": "Faroe Islands",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Wales",
+      "candidate_count": 1,
+      "date": "2020-09-03",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:bf506349539b808dcfa89976",
+      "home_team": "Finland",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Spain",
+      "candidate_count": 1,
+      "date": "2020-09-03",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:23c11fac4934643b83db4397",
+      "home_team": "Germany",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Andorra",
+      "candidate_count": 1,
+      "date": "2020-09-03",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:e4802248423beb41284411c6",
+      "home_team": "Latvia",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Kosovo",
+      "candidate_count": 1,
+      "date": "2020-09-03",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:ce5fad9e3a26994879fb91cb",
+      "home_team": "Moldova",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Serbia",
+      "candidate_count": 1,
+      "date": "2020-09-03",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:40d47f871f3074e62b6c4913",
+      "home_team": "Russia",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Greece",
+      "candidate_count": 1,
+      "date": "2020-09-03",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:af19cfd54091daae7e9a57fb",
+      "home_team": "Slovenia",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Hungary",
+      "candidate_count": 1,
+      "date": "2020-09-03",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:ddc9519eec7e2f3a12fc8f51",
+      "home_team": "Türkiye",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Switzerland",
+      "candidate_count": 1,
+      "date": "2020-09-03",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:1b8da9fe1b8e6e4d2dd028a7",
+      "home_team": "Ukraine",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Albania",
+      "candidate_count": 1,
+      "date": "2020-09-04",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:fdf154d7056c82f73e8548e3",
+      "home_team": "Belarus",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Bosnia and Herzegovina",
+      "candidate_count": 1,
+      "date": "2020-09-04",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:6621ced63dd1ec78a30b9d6f",
+      "home_team": "Italy",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Kazakhstan",
+      "candidate_count": 1,
+      "date": "2020-09-04",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:53ff80c07bc7cfc314e76d7f",
+      "home_team": "Lithuania",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Poland",
+      "candidate_count": 1,
+      "date": "2020-09-04",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:74fd150cfcd15daeda23bdec",
+      "home_team": "Netherlands",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Austria",
+      "candidate_count": 1,
+      "date": "2020-09-04",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:267387663f0a939be6ede08a",
+      "home_team": "Norway",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Northern Ireland",
+      "candidate_count": 1,
+      "date": "2020-09-04",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:b81363c820fbb5f4fa89f9d1",
+      "home_team": "Romania",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Israel",
+      "candidate_count": 1,
+      "date": "2020-09-04",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:ffc55c1dada30daa31d72eb8",
+      "home_team": "Scotland",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Czechia",
+      "candidate_count": 1,
+      "date": "2020-09-04",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:cae6a991c53dc852f5b34a48",
+      "home_team": "Slovakia",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Luxembourg",
+      "candidate_count": 1,
+      "date": "2020-09-05",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:84cc46e6ee92727ea7ad0da8",
+      "home_team": "Azerbaijan",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Montenegro",
+      "candidate_count": 1,
+      "date": "2020-09-05",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:a276da738a2cb99aa9ac9749",
+      "home_team": "Cyprus",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Belgium",
+      "candidate_count": 1,
+      "date": "2020-09-05",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:e1d23d869eeaa3a547a01dd8",
+      "home_team": "Denmark",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Georgia",
+      "candidate_count": 1,
+      "date": "2020-09-05",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:9f8b207e82a7dc310d7b5721",
+      "home_team": "Estonia",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "San Marino",
+      "candidate_count": 1,
+      "date": "2020-09-05",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:3d8e2dec6aa7a7645d292809",
+      "home_team": "Gibraltar",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "England",
+      "candidate_count": 1,
+      "date": "2020-09-05",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:cbedf003ec7441bc9d974634",
+      "home_team": "Iceland",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Armenia",
+      "candidate_count": 1,
+      "date": "2020-09-05",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:02d723acb8e0daaaf79814c1",
+      "home_team": "North Macedonia",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Croatia",
+      "candidate_count": 1,
+      "date": "2020-09-05",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:a79870b4b3812b23fddbd06d",
+      "home_team": "Portugal",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "France",
+      "candidate_count": 1,
+      "date": "2020-09-05",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:a0b97f8c56484fcef7300dee",
+      "home_team": "Sweden",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Faroe Islands",
+      "candidate_count": 1,
+      "date": "2020-09-06",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:f3219afad7656e2b8e9d0f5c",
+      "home_team": "Andorra",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Russia",
+      "candidate_count": 1,
+      "date": "2020-09-06",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:2f09f90fe5678427a08b9f9c",
+      "home_team": "Hungary",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Finland",
+      "candidate_count": 1,
+      "date": "2020-09-06",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:5d8514d8a59b8c2cddeec560",
+      "home_team": "Ireland",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Greece",
+      "candidate_count": 1,
+      "date": "2020-09-06",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:62296853d5f712c16fea35c4",
+      "home_team": "Kosovo",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Latvia",
+      "candidate_count": 1,
+      "date": "2020-09-06",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:9bc25ba1751c8dd3e5ac3298",
+      "home_team": "Malta",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Türkiye",
+      "candidate_count": 1,
+      "date": "2020-09-06",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:b81833521c1caf2440861b53",
+      "home_team": "Serbia",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Moldova",
+      "candidate_count": 1,
+      "date": "2020-09-06",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:ac79ab026571d4cf2e4631d9",
+      "home_team": "Slovenia",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Ukraine",
+      "candidate_count": 1,
+      "date": "2020-09-06",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:d0b0b200dc971748f69faaa3",
+      "home_team": "Spain",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Germany",
+      "candidate_count": 1,
+      "date": "2020-09-06",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:c22aa832cc7cd8078b423692",
+      "home_team": "Switzerland",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Bulgaria",
+      "candidate_count": 1,
+      "date": "2020-09-06",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:66d3599845e5660bba0b9892",
+      "home_team": "Wales",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Lithuania",
+      "candidate_count": 1,
+      "date": "2020-09-07",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:aaff68a2b58b3993f0dd76eb",
+      "home_team": "Albania",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Romania",
+      "candidate_count": 1,
+      "date": "2020-09-07",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:a8062ebc12deed98d2414255",
+      "home_team": "Austria",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Poland",
+      "candidate_count": 1,
+      "date": "2020-09-07",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:918cf534e67a29295269cc36",
+      "home_team": "Bosnia and Herzegovina",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Scotland",
+      "candidate_count": 1,
+      "date": "2020-09-07",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:26383ca713a24883cbf041d3",
+      "home_team": "Czechia",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Slovakia",
+      "candidate_count": 1,
+      "date": "2020-09-07",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:9ce22296a53e40f6a2f628de",
+      "home_team": "Israel",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Belarus",
+      "candidate_count": 1,
+      "date": "2020-09-07",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:838750baa7404416fdca1000",
+      "home_team": "Kazakhstan",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Italy",
+      "candidate_count": 1,
+      "date": "2020-09-07",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:fc2ded60c89ad9cbdbda02d1",
+      "home_team": "Netherlands",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Norway",
+      "candidate_count": 1,
+      "date": "2020-09-07",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:7fffc584c13d541474deb554",
+      "home_team": "Northern Ireland",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Estonia",
+      "candidate_count": 1,
+      "date": "2020-09-08",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:c6b20713f1d0afd5712fecf1",
+      "home_team": "Armenia",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Iceland",
+      "candidate_count": 1,
+      "date": "2020-09-08",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:35a43d20ec6ecd1bd6b36ca2",
+      "home_team": "Belgium",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Azerbaijan",
+      "candidate_count": 1,
+      "date": "2020-09-08",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:f9ea2217b0343f5a021b6bca",
+      "home_team": "Cyprus",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "England",
+      "candidate_count": 1,
+      "date": "2020-09-08",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:7105ad0199cb367880b5d39e",
+      "home_team": "Denmark",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Croatia",
+      "candidate_count": 1,
+      "date": "2020-09-08",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:507a9c48ba36971b83e1d869",
+      "home_team": "France",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "North Macedonia",
+      "candidate_count": 1,
+      "date": "2020-09-08",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:529e6ab8e047ad06add08be4",
+      "home_team": "Georgia",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Montenegro",
+      "candidate_count": 1,
+      "date": "2020-09-08",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:c61cfbc2cc14def44a8907a3",
+      "home_team": "Luxembourg",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Liechtenstein",
+      "candidate_count": 1,
+      "date": "2020-09-08",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:8b6ad9793284b4d67a532898",
+      "home_team": "San Marino",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Portugal",
+      "candidate_count": 1,
+      "date": "2020-09-08",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:16055e5c2422854f86f2c491",
+      "home_team": "Sweden",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Malta",
+      "candidate_count": 1,
+      "date": "2020-10-10",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:e98ef4fededb786c94d063f7",
+      "home_team": "Andorra",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Latvia",
+      "candidate_count": 1,
+      "date": "2020-10-10",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:6ce53cfb9471ee897181b9a7",
+      "home_team": "Faroe Islands",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Gibraltar",
+      "candidate_count": 1,
+      "date": "2020-10-10",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:d5526e829895b0e7fb05a0f0",
+      "home_team": "Liechtenstein",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Cyprus",
+      "candidate_count": 1,
+      "date": "2020-10-10",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:f3c46f771450e11b36b6d8a1",
+      "home_team": "Luxembourg",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Azerbaijan",
+      "candidate_count": 1,
+      "date": "2020-10-10",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:f27eb13460096383fcf2214d",
+      "home_team": "Montenegro",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Switzerland",
+      "candidate_count": 1,
+      "date": "2020-10-10",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:4c0be79e27e1b6b4c300a482",
+      "home_team": "Spain",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Germany",
+      "candidate_count": 1,
+      "date": "2020-10-10",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:ba6feaf89a18d3cc08e00235",
+      "home_team": "Ukraine",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Georgia",
+      "candidate_count": 1,
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:e75fbee1c7dce935d735c1bb",
+      "home_team": "Armenia",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Netherlands",
+      "candidate_count": 1,
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:ca0d13b6d371df2b3367a9b9",
+      "home_team": "Bosnia and Herzegovina",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Sweden",
+      "candidate_count": 1,
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:515bee96f475d4d212994a0b",
+      "home_team": "Croatia",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Belgium",
+      "candidate_count": 1,
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:dfbbe81b836c8038465d191c",
+      "home_team": "England",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "North Macedonia",
+      "candidate_count": 1,
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:8d63f8e26450e3bc40f9457a",
+      "home_team": "Estonia",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Bulgaria",
+      "candidate_count": 1,
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:2d6ec0ecccf79baf4072cec1",
+      "home_team": "Finland",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Portugal",
+      "candidate_count": 1,
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:556a36328a9d1cc0fc5d2f40",
+      "home_team": "France",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Moldova",
+      "candidate_count": 1,
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:8b8a5dce27588449940e0268",
+      "home_team": "Greece",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Denmark",
+      "candidate_count": 1,
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:2f592575a9a335e9c674cb31",
+      "home_team": "Iceland",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Wales",
+      "candidate_count": 1,
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:dac1dc439b04661979f07047",
+      "home_team": "Ireland",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Czechia",
+      "candidate_count": 1,
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:73e3aafa836453c70fb16a5e",
+      "home_team": "Israel",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Albania",
+      "candidate_count": 1,
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:a099539a30c75ee06786a9ee",
+      "home_team": "Kazakhstan",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Slovenia",
+      "candidate_count": 1,
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:a05198e6b05d399f0379f77e",
+      "home_team": "Kosovo",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Belarus",
+      "candidate_count": 1,
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:b2158418a4972c07cb755adf",
+      "home_team": "Lithuania",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Austria",
+      "candidate_count": 1,
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:16f8bf01d93a4203a24e90e9",
+      "home_team": "Northern Ireland",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Romania",
+      "candidate_count": 1,
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:32a0db7e0d8aaa809abeec6f",
+      "home_team": "Norway",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Italy",
+      "candidate_count": 1,
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:f6cac2277fc8d0b1c5cd6e04",
+      "home_team": "Poland",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Türkiye",
+      "candidate_count": 1,
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:839d5720c8fffcf3607c7a85",
+      "home_team": "Russia",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Slovakia",
+      "candidate_count": 1,
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:8f4899f2cb62b1c3a205e29c",
+      "home_team": "Scotland",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Hungary",
+      "candidate_count": 1,
+      "date": "2020-10-11",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:5a143ba2962ffe2abee3aaa9",
+      "home_team": "Serbia",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Cyprus",
+      "candidate_count": 1,
+      "date": "2020-10-13",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:4b17ac52d2b01439ac9e8707",
+      "home_team": "Azerbaijan",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Andorra",
+      "candidate_count": 1,
+      "date": "2020-10-13",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:0f662b04a39be6c910cd4989",
+      "home_team": "Faroe Islands",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Switzerland",
+      "candidate_count": 1,
+      "date": "2020-10-13",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:eb093f676a29e4531a6a2102",
+      "home_team": "Germany",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Malta",
+      "candidate_count": 1,
+      "date": "2020-10-13",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:939587a9958a49148b5b31b7",
+      "home_team": "Latvia",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "San Marino",
+      "candidate_count": 1,
+      "date": "2020-10-13",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:48b9c9147693b93697876b74",
+      "home_team": "Liechtenstein",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Luxembourg",
+      "candidate_count": 1,
+      "date": "2020-10-13",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:c639e8e9584c4c602d130dc6",
+      "home_team": "Montenegro",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Spain",
+      "candidate_count": 1,
+      "date": "2020-10-13",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:901d4a3e8605f536b7366d76",
+      "home_team": "Ukraine",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Kazakhstan",
+      "candidate_count": 1,
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:ff395411ce87f3548e9372b2",
+      "home_team": "Belarus",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Wales",
+      "candidate_count": 1,
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:d46035941f83784a2206c125",
+      "home_team": "Bulgaria",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "France",
+      "candidate_count": 1,
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:053b525ec12942fa4da77b62",
+      "home_team": "Croatia",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Denmark",
+      "candidate_count": 1,
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:f54b356a1bc6eb9905d963dc",
+      "home_team": "England",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Armenia",
+      "candidate_count": 1,
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:24206718082db19cae6f7c8e",
+      "home_team": "Estonia",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Ireland",
+      "candidate_count": 1,
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:92ed9576a7cd7a6bbe0fbf59",
+      "home_team": "Finland",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Kosovo",
+      "candidate_count": 1,
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:142565c09b7982ec5047f344",
+      "home_team": "Greece",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Belgium",
+      "candidate_count": 1,
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:17543be684dbf9bb399a5118",
+      "home_team": "Iceland",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Netherlands",
+      "candidate_count": 1,
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:db513031218d21e50145fa9b",
+      "home_team": "Italy",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Albania",
+      "candidate_count": 1,
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:27c1c16bd70b4ab2b3341a2d",
+      "home_team": "Lithuania",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Slovenia",
+      "candidate_count": 1,
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:19d134911b74cba55b73fc87",
+      "home_team": "Moldova",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Georgia",
+      "candidate_count": 1,
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:7d88a0caf0c3d80ddda1a445",
+      "home_team": "North Macedonia",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Northern Ireland",
+      "candidate_count": 1,
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:d0c48e624a6785153bfbeb89",
+      "home_team": "Norway",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Bosnia and Herzegovina",
+      "candidate_count": 1,
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:b3bbf74b46a2c17144da65bc",
+      "home_team": "Poland",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Sweden",
+      "candidate_count": 1,
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:5fa47c6276fde26a831cf8b2",
+      "home_team": "Portugal",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Austria",
+      "candidate_count": 1,
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:6db0e9c4e098fe9f552f274d",
+      "home_team": "Romania",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Hungary",
+      "candidate_count": 1,
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:99c6b88f8514496b5d2f70ee",
+      "home_team": "Russia",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Czechia",
+      "candidate_count": 1,
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:5d7de06677c40abd3c98bbcf",
+      "home_team": "Scotland",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Israel",
+      "candidate_count": 1,
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:5c0ab1d4963db0e64b8ecf3d",
+      "home_team": "Slovakia",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Serbia",
+      "candidate_count": 1,
+      "date": "2020-10-14",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:d10e659eb584f0444984bfa5",
+      "home_team": "Türkiye",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Montenegro",
+      "candidate_count": 1,
+      "date": "2020-11-14",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:e202c6c204341537859077e8",
+      "home_team": "Azerbaijan",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Luxembourg",
+      "candidate_count": 1,
+      "date": "2020-11-14",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:b86841665819e0c0a86160d9",
+      "home_team": "Cyprus",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Ukraine",
+      "candidate_count": 1,
+      "date": "2020-11-14",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:938a34b7d5b01407c76e07dc",
+      "home_team": "Germany",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Faroe Islands",
+      "candidate_count": 1,
+      "date": "2020-11-14",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:89a0359439da4bac1514f3fc",
+      "home_team": "Latvia",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Andorra",
+      "candidate_count": 1,
+      "date": "2020-11-14",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:85af0b4ea9f81213123ea4f2",
+      "home_team": "Malta",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "France",
+      "candidate_count": 1,
+      "date": "2020-11-14",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:ca6b5440663a24d4a7f69541",
+      "home_team": "Portugal",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Gibraltar",
+      "candidate_count": 1,
+      "date": "2020-11-14",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:413e5744dab5c5102cb5774b",
+      "home_team": "San Marino",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Croatia",
+      "candidate_count": 1,
+      "date": "2020-11-14",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:1711de4579eb030020ccd9e5",
+      "home_team": "Sweden",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Spain",
+      "candidate_count": 1,
+      "date": "2020-11-14",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:bc24af5389b892f94b4d526a",
+      "home_team": "Switzerland",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Kazakhstan",
+      "candidate_count": 1,
+      "date": "2020-11-15",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:0d79badefb52f751d6065736",
+      "home_team": "Albania",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Northern Ireland",
+      "candidate_count": 1,
+      "date": "2020-11-15",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:a2670e7e646eaf1fe472578b",
+      "home_team": "Austria",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Lithuania",
+      "candidate_count": 1,
+      "date": "2020-11-15",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:d21bf2f8c2c2c7a7aa0da345",
+      "home_team": "Belarus",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "England",
+      "candidate_count": 1,
+      "date": "2020-11-15",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:285c5d8a0efda8bf746af37a",
+      "home_team": "Belgium",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Finland",
+      "candidate_count": 1,
+      "date": "2020-11-15",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:eceea930e1d3f071db1977fb",
+      "home_team": "Bulgaria",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Israel",
+      "candidate_count": 1,
+      "date": "2020-11-15",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:295706f3e976a9d10131af1a",
+      "home_team": "Czechia",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Iceland",
+      "candidate_count": 1,
+      "date": "2020-11-15",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:172966506b5d605c5b670acc",
+      "home_team": "Denmark",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Armenia",
+      "candidate_count": 1,
+      "date": "2020-11-15",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:63c1aafb887510e064983a54",
+      "home_team": "Georgia",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Serbia",
+      "candidate_count": 1,
+      "date": "2020-11-15",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:ca50bd66bf7536fdb6bbb62b",
+      "home_team": "Hungary",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Poland",
+      "candidate_count": 1,
+      "date": "2020-11-15",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:0c66caf9725556e046fa1bd9",
+      "home_team": "Italy",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Greece",
+      "candidate_count": 1,
+      "date": "2020-11-15",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:96cf0fdf61fc694387974263",
+      "home_team": "Moldova",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Bosnia and Herzegovina",
+      "candidate_count": 1,
+      "date": "2020-11-15",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:2f51adeec5ad1d46e1dcc181",
+      "home_team": "Netherlands",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Estonia",
+      "candidate_count": 1,
+      "date": "2020-11-15",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:b53100fdd47285e988fbaec4",
+      "home_team": "North Macedonia",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Norway",
+      "candidate_count": 1,
+      "date": "2020-11-15",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:a0b65a58651e1a2dbdba6a8f",
+      "home_team": "Romania",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Scotland",
+      "candidate_count": 1,
+      "date": "2020-11-15",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:e83d1cbaa33838182c2a6300",
+      "home_team": "Slovakia",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Kosovo",
+      "candidate_count": 1,
+      "date": "2020-11-15",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:fc325adf043072b18a8fef63",
+      "home_team": "Slovenia",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Russia",
+      "candidate_count": 1,
+      "date": "2020-11-15",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:dc3838ab912995d1da9f75fe",
+      "home_team": "Türkiye",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Ireland",
+      "candidate_count": 1,
+      "date": "2020-11-15",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:ed74b7a6eaf6c048d43ae1f1",
+      "home_team": "Wales",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Latvia",
+      "candidate_count": 1,
+      "date": "2020-11-17",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:a67e3493d72447f20b467375",
+      "home_team": "Andorra",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Portugal",
+      "candidate_count": 1,
+      "date": "2020-11-17",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:ea2e34964124afc7b009c30f",
+      "home_team": "Croatia",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Sweden",
+      "candidate_count": 1,
+      "date": "2020-11-17",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:0ddeec6f43f3f42f5df13d2e",
+      "home_team": "France",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Liechtenstein",
+      "candidate_count": 1,
+      "date": "2020-11-17",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:61e1cbee39e7ad79c41396cb",
+      "home_team": "Gibraltar",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Azerbaijan",
+      "candidate_count": 1,
+      "date": "2020-11-17",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:58e956d64d038beb5001eafb",
+      "home_team": "Luxembourg",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Faroe Islands",
+      "candidate_count": 1,
+      "date": "2020-11-17",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:c66c925b97daef87276c692b",
+      "home_team": "Malta",
+      "reason": "only_superseded_or_unverified_exact_schedule_rows"
+    },
+    {
+      "away_team": "Cyprus",
+      "candidate_count": 1,
+      "date": "2020-11-17",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:5e362b9add23a1c64366d0d5",
+      "home_team": "Montenegro",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Germany",
+      "candidate_count": 1,
+      "date": "2020-11-17",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:1e3731d5e22d6fbe2a11f49a",
+      "home_team": "Spain",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Ukraine",
+      "candidate_count": 1,
+      "date": "2020-11-17",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:c07e17c2e1a35c4b056be0aa",
+      "home_team": "Switzerland",
+      "reason": "administrative_award_has_no_played_match_completion_time"
+    },
+    {
+      "away_team": "Belarus",
+      "candidate_count": 1,
+      "date": "2020-11-18",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:b3037f9337456a99351951ff",
+      "home_team": "Albania",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "North Macedonia",
+      "candidate_count": 1,
+      "date": "2020-11-18",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:dd80242241f3cdb4e0d0600a",
+      "home_team": "Armenia",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Norway",
+      "candidate_count": 1,
+      "date": "2020-11-18",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:3fc2fae81ab5107114413279",
+      "home_team": "Austria",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Denmark",
+      "candidate_count": 1,
+      "date": "2020-11-18",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:6f82dce5beddfa32fba5b967",
+      "home_team": "Belgium",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Italy",
+      "candidate_count": 1,
+      "date": "2020-11-18",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:825e9d63657924ec35e0424b",
+      "home_team": "Bosnia and Herzegovina",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Slovakia",
+      "candidate_count": 1,
+      "date": "2020-11-18",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:de5539e0e1175a4dd9f2fe26",
+      "home_team": "Czechia",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Iceland",
+      "candidate_count": 1,
+      "date": "2020-11-18",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:eba2be8f1da90437352e0bdf",
+      "home_team": "England",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Estonia",
+      "candidate_count": 1,
+      "date": "2020-11-18",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:5c2f55585f636412cef002ba",
+      "home_team": "Georgia",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Slovenia",
+      "candidate_count": 1,
+      "date": "2020-11-18",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:4d32e0cd11ead4a55c981bbf",
+      "home_team": "Greece",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Türkiye",
+      "candidate_count": 1,
+      "date": "2020-11-18",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:53c3b0ca680738a0c476e95e",
+      "home_team": "Hungary",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Bulgaria",
+      "candidate_count": 1,
+      "date": "2020-11-18",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:9b3bdcc14cb18b1f638d69b9",
+      "home_team": "Ireland",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Scotland",
+      "candidate_count": 1,
+      "date": "2020-11-18",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:536974ac56011a43eb970ff1",
+      "home_team": "Israel",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Lithuania",
+      "candidate_count": 1,
+      "date": "2020-11-18",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:d5f2a2d705acd329d7a0600b",
+      "home_team": "Kazakhstan",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Moldova",
+      "candidate_count": 1,
+      "date": "2020-11-18",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:449bcf960c63fcf015900ad7",
+      "home_team": "Kosovo",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Romania",
+      "candidate_count": 1,
+      "date": "2020-11-18",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:e6da32aedb997bcb04a954a5",
+      "home_team": "Northern Ireland",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Netherlands",
+      "candidate_count": 1,
+      "date": "2020-11-18",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:c34e3589e9b56b71124999f7",
+      "home_team": "Poland",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Russia",
+      "candidate_count": 1,
+      "date": "2020-11-18",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:bfb7872e7575a4a25d825bb8",
+      "home_team": "Serbia",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Finland",
+      "candidate_count": 1,
+      "date": "2020-11-18",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:6aaadd705987466bfa7b9812",
+      "home_team": "Wales",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Wales",
+      "candidate_count": 1,
+      "date": "2022-06-01",
+      "edition": "2022/23",
+      "fixture_id": "uefa-nl:bd37b7f2d3fd6b2c45e4e9ba",
+      "home_team": "Poland",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Slovakia",
+      "candidate_count": 1,
+      "date": "2022-06-03",
+      "edition": "2022/23",
+      "fixture_id": "uefa-nl:4d589431350245171dd9c04c",
+      "home_team": "Belarus",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Azerbaijan",
+      "candidate_count": 0,
+      "date": "2022-06-03",
+      "edition": "2022/23",
+      "fixture_id": "uefa-nl:9c3cfdc4bb2bcbce00ed1f94",
+      "home_team": "Kazakhstan",
+      "reason": "no_schedule_candidate_for_edition_and_participants"
+    },
+    {
+      "away_team": "Ireland",
+      "candidate_count": 1,
+      "date": "2022-06-04",
+      "edition": "2022/23",
+      "fixture_id": "uefa-nl:0ce84f1775dead2fec7a041e",
+      "home_team": "Armenia",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Northern Ireland",
+      "candidate_count": 0,
+      "date": "2022-06-05",
+      "edition": "2022/23",
+      "fixture_id": "uefa-nl:0bfd9e193cdd9de223f7bde4",
+      "home_team": "Cyprus",
+      "reason": "no_schedule_candidate_for_edition_and_participants"
+    },
+    {
+      "away_team": "Malta",
+      "candidate_count": 0,
+      "date": "2022-06-05",
+      "edition": "2022/23",
+      "fixture_id": "uefa-nl:051d26d144295c1907196ed5",
+      "home_team": "San Marino",
+      "reason": "no_schedule_candidate_for_edition_and_participants"
+    },
+    {
+      "away_team": "Poland",
+      "candidate_count": 1,
+      "date": "2022-06-08",
+      "edition": "2022/23",
+      "fixture_id": "uefa-nl:4076f65cd688022ed22a10b8",
+      "home_team": "Belgium",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Ukraine",
+      "candidate_count": 1,
+      "date": "2022-06-08",
+      "edition": "2022/23",
+      "fixture_id": "uefa-nl:0d669e7a2dc40e7e6435133b",
+      "home_team": "Ireland",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Armenia",
+      "candidate_count": 1,
+      "date": "2022-06-08",
+      "edition": "2022/23",
+      "fixture_id": "uefa-nl:3e5f610ef3484acf82797b75",
+      "home_team": "Scotland",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Netherlands",
+      "candidate_count": 1,
+      "date": "2022-06-08",
+      "edition": "2022/23",
+      "fixture_id": "uefa-nl:b98de806f6c6c6a9f270e0a6",
+      "home_team": "Wales",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Latvia",
+      "candidate_count": 0,
+      "date": "2022-06-10",
+      "edition": "2022/23",
+      "fixture_id": "uefa-nl:6d890cfa01f8d5405bc312ee",
+      "home_team": "Moldova",
+      "reason": "no_schedule_candidate_for_edition_and_participants"
+    },
+    {
+      "away_team": "Slovakia",
+      "candidate_count": 0,
+      "date": "2022-06-13",
+      "edition": "2022/23",
+      "fixture_id": "uefa-nl:f673884ffc26cd849e27f28b",
+      "home_team": "Kazakhstan",
+      "reason": "no_schedule_candidate_for_edition_and_participants"
+    },
+    {
+      "away_team": "Andorra",
+      "candidate_count": 0,
+      "date": "2022-06-14",
+      "edition": "2022/23",
+      "fixture_id": "uefa-nl:028f15a1133e2e4b1a41889e",
+      "home_team": "Moldova",
+      "reason": "no_schedule_candidate_for_edition_and_participants"
+    },
+    {
+      "away_team": "Wales",
+      "candidate_count": 1,
+      "date": "2022-06-14",
+      "edition": "2022/23",
+      "fixture_id": "uefa-nl:5170d23dd84067aa35ada0b1",
+      "home_team": "Netherlands",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Belgium",
+      "candidate_count": 1,
+      "date": "2022-06-14",
+      "edition": "2022/23",
+      "fixture_id": "uefa-nl:944e6b7cfa9a5af886a5ddae",
+      "home_team": "Poland",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Ukraine",
+      "candidate_count": 1,
+      "date": "2022-09-21",
+      "edition": "2022/23",
+      "fixture_id": "uefa-nl:2044d1e9a309ac7908bffd7f",
+      "home_team": "Scotland",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Belarus",
+      "candidate_count": 0,
+      "date": "2022-09-22",
+      "edition": "2022/23",
+      "fixture_id": "uefa-nl:ebe3597a7f879e4dc9d239ff",
+      "home_team": "Kazakhstan",
+      "reason": "no_schedule_candidate_for_edition_and_participants"
+    },
+    {
+      "away_team": "Ukraine",
+      "candidate_count": 1,
+      "date": "2022-09-24",
+      "edition": "2022/23",
+      "fixture_id": "uefa-nl:0915b1be02fb094866029c28",
+      "home_team": "Armenia",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Ireland",
+      "candidate_count": 1,
+      "date": "2022-09-24",
+      "edition": "2022/23",
+      "fixture_id": "uefa-nl:3ebc3cd2a101204fbb39da7a",
+      "home_team": "Scotland",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Belarus",
+      "candidate_count": 1,
+      "date": "2022-09-25",
+      "edition": "2022/23",
+      "fixture_id": "uefa-nl:3365e4aa938c51524f47ef5b",
+      "home_team": "Slovakia",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Armenia",
+      "candidate_count": 1,
+      "date": "2022-09-27",
+      "edition": "2022/23",
+      "fixture_id": "uefa-nl:185ff04eab24571c3ad873b7",
+      "home_team": "Ireland",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Scotland",
+      "candidate_count": 1,
+      "date": "2022-09-27",
+      "edition": "2022/23",
+      "fixture_id": "uefa-nl:820ddc306e3497af7fd0bbf8",
+      "home_team": "Ukraine",
+      "reason": "participant_pair_schedule_date_differs_from_result_source"
+    },
+    {
+      "away_team": "Lithuania",
+      "candidate_count": 0,
+      "date": "2024-03-21",
+      "edition": "2022/23",
+      "fixture_id": "uefa-nl:db89f3d52adf7b11c2959bd1",
+      "home_team": "Gibraltar",
+      "reason": "no_schedule_candidate_for_edition_and_participants"
+    },
+    {
+      "away_team": "Gibraltar",
+      "candidate_count": 0,
+      "date": "2024-03-26",
+      "edition": "2022/23",
+      "fixture_id": "uefa-nl:9e66e6d92943a427fb4e21bc",
+      "home_team": "Lithuania",
+      "reason": "no_schedule_candidate_for_edition_and_participants"
+    },
+    {
+      "away_team": "Kosovo",
+      "candidate_count": 0,
+      "date": "2024-11-15",
+      "edition": "2024/25",
+      "fixture_id": "uefa-nl:63f926e0ced3f284c077ee10",
+      "home_team": "Romania",
+      "reason": "administrative_award_has_no_played_match_completion_time"
+    },
+    {
+      "away_team": "Georgia",
+      "candidate_count": 0,
+      "date": "2025-03-20",
+      "edition": "2024/25",
+      "fixture_id": "uefa-nl:ad7d29491391fbcda72d2396",
+      "home_team": "Armenia",
+      "reason": "no_schedule_candidate_for_edition_and_participants"
+    },
+    {
+      "away_team": "Serbia",
+      "candidate_count": 0,
+      "date": "2025-03-20",
+      "edition": "2024/25",
+      "fixture_id": "uefa-nl:b0b514d08791da25cb29f9c5",
+      "home_team": "Austria",
+      "reason": "no_schedule_candidate_for_edition_and_participants"
+    },
+    {
+      "away_team": "Ireland",
+      "candidate_count": 0,
+      "date": "2025-03-20",
+      "edition": "2024/25",
+      "fixture_id": "uefa-nl:6749dea5f6ca79e5059b3a54",
+      "home_team": "Bulgaria",
+      "reason": "no_schedule_candidate_for_edition_and_participants"
+    },
+    {
+      "away_team": "France",
+      "candidate_count": 0,
+      "date": "2025-03-20",
+      "edition": "2024/25",
+      "fixture_id": "uefa-nl:1c5bf7f09b4d3e583d588705",
+      "home_team": "Croatia",
+      "reason": "no_schedule_candidate_for_edition_and_participants"
+    },
+    {
+      "away_team": "Portugal",
+      "candidate_count": 0,
+      "date": "2025-03-20",
+      "edition": "2024/25",
+      "fixture_id": "uefa-nl:04b266ca4f8951351205c4b4",
+      "home_team": "Denmark",
+      "reason": "no_schedule_candidate_for_edition_and_participants"
+    },
+    {
+      "away_team": "Scotland",
+      "candidate_count": 0,
+      "date": "2025-03-20",
+      "edition": "2024/25",
+      "fixture_id": "uefa-nl:5c42181e49fe34bf2933d748",
+      "home_team": "Greece",
+      "reason": "no_schedule_candidate_for_edition_and_participants"
+    },
+    {
+      "away_team": "Germany",
+      "candidate_count": 0,
+      "date": "2025-03-20",
+      "edition": "2024/25",
+      "fixture_id": "uefa-nl:87446503ed49ad41b3e3951e",
+      "home_team": "Italy",
+      "reason": "no_schedule_candidate_for_edition_and_participants"
+    },
+    {
+      "away_team": "Iceland",
+      "candidate_count": 0,
+      "date": "2025-03-20",
+      "edition": "2024/25",
+      "fixture_id": "uefa-nl:ed6fa1a21256d766b5d01a6f",
+      "home_team": "Kosovo",
+      "reason": "no_schedule_candidate_for_edition_and_participants"
+    },
+    {
+      "away_team": "Spain",
+      "candidate_count": 0,
+      "date": "2025-03-20",
+      "edition": "2024/25",
+      "fixture_id": "uefa-nl:5ae853387a7630373af640d4",
+      "home_team": "Netherlands",
+      "reason": "no_schedule_candidate_for_edition_and_participants"
+    },
+    {
+      "away_team": "Slovenia",
+      "candidate_count": 0,
+      "date": "2025-03-20",
+      "edition": "2024/25",
+      "fixture_id": "uefa-nl:ad5800d0ac8679c6cc3b07b6",
+      "home_team": "Slovakia",
+      "reason": "no_schedule_candidate_for_edition_and_participants"
+    },
+    {
+      "away_team": "Hungary",
+      "candidate_count": 0,
+      "date": "2025-03-20",
+      "edition": "2024/25",
+      "fixture_id": "uefa-nl:30d30d0dcc938af8d15b12d9",
+      "home_team": "Türkiye",
+      "reason": "no_schedule_candidate_for_edition_and_participants"
+    },
+    {
+      "away_team": "Belgium",
+      "candidate_count": 0,
+      "date": "2025-03-20",
+      "edition": "2024/25",
+      "fixture_id": "uefa-nl:f702fddd089b587817f151c8",
+      "home_team": "Ukraine",
+      "reason": "no_schedule_candidate_for_edition_and_participants"
+    },
+    {
+      "away_team": "Ukraine",
+      "candidate_count": 0,
+      "date": "2025-03-23",
+      "edition": "2024/25",
+      "fixture_id": "uefa-nl:037b4db70722a726ac7493f3",
+      "home_team": "Belgium",
+      "reason": "no_schedule_candidate_for_edition_and_participants"
+    },
+    {
+      "away_team": "Croatia",
+      "candidate_count": 0,
+      "date": "2025-03-23",
+      "edition": "2024/25",
+      "fixture_id": "uefa-nl:c03437535af48ef569f63d37",
+      "home_team": "France",
+      "reason": "no_schedule_candidate_for_edition_and_participants"
+    },
+    {
+      "away_team": "Armenia",
+      "candidate_count": 0,
+      "date": "2025-03-23",
+      "edition": "2024/25",
+      "fixture_id": "uefa-nl:13a2238fd49f9eed4f7e4c7f",
+      "home_team": "Georgia",
+      "reason": "no_schedule_candidate_for_edition_and_participants"
+    },
+    {
+      "away_team": "Italy",
+      "candidate_count": 0,
+      "date": "2025-03-23",
+      "edition": "2024/25",
+      "fixture_id": "uefa-nl:8822139f27cab3bb279df264",
+      "home_team": "Germany",
+      "reason": "no_schedule_candidate_for_edition_and_participants"
+    },
+    {
+      "away_team": "Türkiye",
+      "candidate_count": 0,
+      "date": "2025-03-23",
+      "edition": "2024/25",
+      "fixture_id": "uefa-nl:2e1ac15d9133a0827d51a253",
+      "home_team": "Hungary",
+      "reason": "no_schedule_candidate_for_edition_and_participants"
+    },
+    {
+      "away_team": "Kosovo",
+      "candidate_count": 0,
+      "date": "2025-03-23",
+      "edition": "2024/25",
+      "fixture_id": "uefa-nl:ed7f04997b23bd92e703742f",
+      "home_team": "Iceland",
+      "reason": "no_schedule_candidate_for_edition_and_participants"
+    },
+    {
+      "away_team": "Bulgaria",
+      "candidate_count": 0,
+      "date": "2025-03-23",
+      "edition": "2024/25",
+      "fixture_id": "uefa-nl:6462a3a99b50d814291eabec",
+      "home_team": "Ireland",
+      "reason": "no_schedule_candidate_for_edition_and_participants"
+    },
+    {
+      "away_team": "Denmark",
+      "candidate_count": 0,
+      "date": "2025-03-23",
+      "edition": "2024/25",
+      "fixture_id": "uefa-nl:86b3ad00b56cb1b023ddea31",
+      "home_team": "Portugal",
+      "reason": "no_schedule_candidate_for_edition_and_participants"
+    },
+    {
+      "away_team": "Greece",
+      "candidate_count": 0,
+      "date": "2025-03-23",
+      "edition": "2024/25",
+      "fixture_id": "uefa-nl:8939e8a22237f3a5c7b41449",
+      "home_team": "Scotland",
+      "reason": "no_schedule_candidate_for_edition_and_participants"
+    },
+    {
+      "away_team": "Austria",
+      "candidate_count": 0,
+      "date": "2025-03-23",
+      "edition": "2024/25",
+      "fixture_id": "uefa-nl:7d1f1aceaf5b618f460920fb",
+      "home_team": "Serbia",
+      "reason": "no_schedule_candidate_for_edition_and_participants"
+    },
+    {
+      "away_team": "Slovakia",
+      "candidate_count": 0,
+      "date": "2025-03-23",
+      "edition": "2024/25",
+      "fixture_id": "uefa-nl:6ef28c93ad791fee40399cfe",
+      "home_team": "Slovenia",
+      "reason": "no_schedule_candidate_for_edition_and_participants"
+    },
+    {
+      "away_team": "Netherlands",
+      "candidate_count": 0,
+      "date": "2025-03-23",
+      "edition": "2024/25",
+      "fixture_id": "uefa-nl:9c870aeea5c398116260e5f5",
+      "home_team": "Spain",
+      "reason": "no_schedule_candidate_for_edition_and_participants"
+    },
+    {
+      "away_team": "Portugal",
+      "candidate_count": 0,
+      "date": "2025-06-04",
+      "edition": "2024/25",
+      "fixture_id": "uefa-nl:4a51b064c0835ed02d964d71",
+      "home_team": "Germany",
+      "reason": "no_schedule_candidate_for_edition_and_participants"
+    },
+    {
+      "away_team": "France",
+      "candidate_count": 0,
+      "date": "2025-06-05",
+      "edition": "2024/25",
+      "fixture_id": "uefa-nl:fad8bef45d450167a0113426",
+      "home_team": "Spain",
+      "reason": "no_schedule_candidate_for_edition_and_participants"
+    },
+    {
+      "away_team": "France",
+      "candidate_count": 0,
+      "date": "2025-06-08",
+      "edition": "2024/25",
+      "fixture_id": "uefa-nl:94841374361dabdcaa80e805",
+      "home_team": "Germany",
+      "reason": "no_schedule_candidate_for_edition_and_participants"
+    },
+    {
+      "away_team": "Spain",
+      "candidate_count": 0,
+      "date": "2025-06-08",
+      "edition": "2024/25",
+      "fixture_id": "uefa-nl:20912d75c7787b7c0139dee0",
+      "home_team": "Portugal",
+      "reason": "no_schedule_candidate_for_edition_and_participants"
+    }
+  ],
+  "verified_utc_kickoffs": 298
+}
