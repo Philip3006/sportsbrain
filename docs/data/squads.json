@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-27",
+  "updated": "2026-09-29",
   "teams": {
     "Algeria": {
       "source": "wikipedia",
@@ -5855,8 +5855,7 @@
         "Emil Holm",
         "Eric Smith",
         "Anthony Elanga",
-        "Viktor Johansson",
-        "Alexander Isak"
+        "Viktor Johansson"
       ],
       "players": [
         {
@@ -5902,7 +5901,7 @@
         {
           "name": "Alexander Isak",
           "pos": "FWD",
-          "status": "injured"
+          "status": "fit"
         },
         {
           "name": "Benjamin Nygren",
