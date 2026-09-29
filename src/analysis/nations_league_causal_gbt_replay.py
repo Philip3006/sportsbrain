@@ -197,14 +197,16 @@ def load_fixture_timeline(
                 parsed = pd.Timestamp(record[field])
                 if parsed.tzinfo is None:
                     raise ValueError(f"timeline {field} must be timezone-aware")
-        if record["kickoff_utc"] and record["result_safe_available_at"]:
-            if not pd.Timestamp(record["kickoff_utc"]) < pd.Timestamp(
-                record["result_safe_available_at"]
-            ):
-                raise ValueError("result-safe availability must follow kickoff")
+        if (
+            record["kickoff_utc"]
+            and record["result_safe_available_at"]
+            and not pd.Timestamp(record["kickoff_utc"])
+            < pd.Timestamp(record["result_safe_available_at"])
+        ):
+            raise ValueError("result-safe availability must follow kickoff")
     dataset_digest = timeline.get("dataset_digest")
     if not isinstance(dataset_digest, str):
-        raise ValueError("fixture timeline is missing dataset_digest")
+        raise TypeError("fixture timeline is missing dataset_digest")
     expected_dataset_digest = _timeline_digest(
         {key: value for key, value in timeline.items() if key != "dataset_digest"}
     )
@@ -1440,7 +1442,6 @@ def run_timeline_subset_replay(
             # The fitted GBT/DC training sample is frozen at the block cutoff.
             # Later safe rows may inform the target's point-in-time feature
             # history, but they are never admitted to the fitted model.
-            target_training_max = training_max_available.isoformat()
             gbt_raw = model.predict_proba(
                 pd.DataFrame([target_feature], columns=FEATURE_COLUMNS)
             )[0]
