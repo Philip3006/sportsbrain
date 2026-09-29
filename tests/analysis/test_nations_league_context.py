@@ -11,6 +11,7 @@ from scripts.run_nations_league_context_ablation import (
     build_parser,
     canonical_digest,
     derive_context_rows,
+    result_identity_team,
     validate_b4_artifact,
     validate_git_sha,
 )
@@ -21,6 +22,12 @@ from src.analysis.nations_league_context import (
     run_causal_context_ablation,
     run_paired_ablation,
 )
+
+
+def test_result_identity_uses_only_the_explicit_turkey_endonym_alias():
+    assert result_identity_team("Turkey") == "Türkiye"
+    assert result_identity_team("Türkiye") == "Türkiye"
+    assert result_identity_team("Hungary") == "Hungary"
 
 
 def _schedule() -> pd.DataFrame:
@@ -291,9 +298,16 @@ def test_paired_metrics_include_bootstrap_calibration_coverage_and_strata():
                 "edition": "2024/25",
                 "league_tier": tier,
                 "group": "G1",
-                "matchday": index % 6 + 1,
+                "group_phase_progress": (
+                    "early_by_matches_played" if index % 2 else "late_by_matches_played"
+                ),
+                "points_gap_band": "tight_1_to_3" if index % 4 else "level",
+                "points_bound_constraint": (
+                    "constrained_by_supported_points_bound"
+                    if index % 5 == 0
+                    else "no_closed_supported_points_bound"
+                ),
                 "outcome": outcome,
-                "mathematically_consequential": index % 5 == 0,
                 "baseline_probabilities": base,
                 "context_probabilities": context,
             }
@@ -305,7 +319,7 @@ def test_paired_metrics_include_bootstrap_calibration_coverage_and_strata():
         minimum_evaluation_count=100,
         seed=7,
     )
-    assert report["schema"] == "nations-league-context-ablation-audit-v1"
+    assert report["schema"] == "nations-league-safe-context-ablation-audit-v1"
     assert report["fixtures_evaluated"] == report["eligible_fixtures"] == 120
     assert report["coverage"] == 1.0
     assert report["baseline"]["home_calibration"]
@@ -319,9 +333,11 @@ def test_paired_metrics_include_bootstrap_calibration_coverage_and_strata():
         == 100
     )
     assert set(report["strata"]) >= {
-        "group_stage",
-        "mathematical_constraint",
+        "group_phase_progress",
+        "points_gap_band",
+        "points_bound_constraint",
         "league_tier",
+        "edition",
         "observed_outcome",
     }
     assert (
@@ -371,15 +387,16 @@ def test_end_to_end_runner_requires_exact_pre_kickoff_cohort_and_emits_report():
             "fixture_id": [f"synthetic-unit-{index}" for index in range(count)],
             "kickoff": pd.date_range("2020-01-01", periods=count, freq="7D", tz="UTC"),
             "state_cutoff": pd.date_range(
-                "2019-12-31", periods=count, freq="7D", tz="UTC"
+                "2020-01-01", periods=count, freq="7D", tz="UTC"
             ),
             "record_digest": ["a" * 64] * count,
+            "causal_information_verified": [True] * count,
             "edition": ["2020/21"] * count,
             "league_tier": ["ABCD"[(index // 30) % 4] for index in range(count)],
             "group": ["G1"] * count,
-            "matchday": [index % 6 + 1 for index in range(count)],
-            "group_stage_max_matchday": [6] * count,
-            "mathematically_consequential": [index % 4 == 0 for index in range(count)],
+            "group_phase_progress": ["early_by_matches_played"] * count,
+            "points_gap_band": ["tight_1_to_3"] * count,
+            "points_bound_constraint": ["no_closed_supported_points_bound"] * count,
             "outcome": outcomes,
             "base_p_home": np.where(outcomes == 0, 0.5, 0.25),
             "base_p_draw": np.where(outcomes == 1, 0.5, 0.25),
@@ -387,14 +404,10 @@ def test_end_to_end_runner_requires_exact_pre_kickoff_cohort_and_emits_report():
             "home_points_before": np.arange(count) % 12,
         }
     )
-    examples[
-        ["matchday", "group_stage_max_matchday", "mathematically_consequential"]
-    ] = examples[
-        ["matchday", "group_stage_max_matchday", "mathematically_consequential"]
-    ].astype(object)
-    examples.loc[
-        149, ["matchday", "group_stage_max_matchday", "mathematically_consequential"]
-    ] = [None, None, None]
+    examples["points_bound_constraint"] = examples["points_bound_constraint"].astype(
+        object
+    )
+    examples.loc[149, "points_bound_constraint"] = None
     provenance = {
         "competition_state_dataset_sha256": "b" * 64,
         "baseline_source_sha256": "c" * 64,
@@ -414,9 +427,8 @@ def test_end_to_end_runner_requires_exact_pre_kickoff_cohort_and_emits_report():
     assert report["fixtures_evaluated"] == 120
     assert len(report["walk_forward"]["warmup_exclusions"]) == 30
     assert report["walk_forward"]["no_lookahead"] is True
-    assert report["strata"]["group_stage"]["not_group_stage"]["sample_count"] == 1
     assert (
-        report["strata"]["mathematical_constraint"]["unavailable"]["sample_count"] == 1
+        report["strata"]["points_bound_constraint"]["unavailable"]["sample_count"] == 1
     )
     assert report["synthetic_evidence_used"] is False
     assert "Primary paired metrics" in render_context_ablation_markdown(report)
@@ -431,8 +443,8 @@ def test_end_to_end_runner_requires_exact_pre_kickoff_cohort_and_emits_report():
             n_bootstrap=100,
         )
     late_cutoff = examples.copy()
-    late_cutoff.loc[0, "state_cutoff"] = late_cutoff.loc[0, "kickoff"]
-    with pytest.raises(ValueError, match="strictly before kickoff"):
+    late_cutoff.loc[0, "causal_information_verified"] = False
+    with pytest.raises(ValueError, match="verified strictly pre-kickoff"):
         run_causal_context_ablation(
             late_cutoff,
             late_cutoff["fixture_id"].tolist(),
@@ -444,13 +456,56 @@ def test_end_to_end_runner_requires_exact_pre_kickoff_cohort_and_emits_report():
         )
 
 
-def test_b4_intermediate_artifact_fails_readiness_gate_and_side_states_stay_separate():
+def _safe_partial_b4_bundle():
+    fixture_id = "uefa-nl:synthetic-unit-fixture"
+    kickoff = "2024-09-05T18:00:00Z"
+    timeline_record = {
+        "fixture_id": fixture_id,
+        "edition": "2024/25",
+        "date": "2024-09-05",
+        "kickoff_utc": kickoff,
+        "group": "A1",
+        "home_team": "Alpha",
+        "away_team": "Bravo",
+        "home_score": 0,
+        "away_score": 0,
+        "status": "completed_result_recorded",
+        "result_safe_available_at": "2024-09-06T00:00:00Z",
+    }
+    timeline_record["record_digest"] = canonical_digest(timeline_record)
+    timeline = {
+        "schema_version": "uefa-nations-league-fixture-timeline-v1",
+        "records": [timeline_record],
+    }
+    timeline["dataset_digest"] = canonical_digest(timeline)
+    standing_rows = [
+        {
+            "team": team,
+            "competition_status": "active",
+            "matches_played_before": 0,
+            "points_before": 0,
+            "goals_for_before": 0,
+            "goals_against_before": 0,
+            "goal_difference_before": 0,
+            "wins_before": 0,
+            "draws_before": 0,
+            "losses_before": 0,
+            "remaining_group_matches": 0,
+            "rank_min": None,
+            "rank_max": None,
+            "rank_status": "unresolved_points_tie",
+        }
+        for team in ("Alpha", "Bravo")
+    ]
     record = {
-        "fixture_id": "synthetic-unit-fixture",
+        "fixture_id": fixture_id,
         "fixture_date": "2024-09-05",
-        "state_cutoff": "2024-09-04T00:00:00Z",
-        "kickoff": None,
-        "matchday": None,
+        "kickoff": kickoff,
+        "kickoff_status": "verified_from_fixture_timeline",
+        "state_cutoff": kickoff,
+        "state_cutoff_basis": "strict target kickoff instant; only result_safe_available_at strictly before kickoff is included",
+        "result_safe_available_at": timeline_record["result_safe_available_at"],
+        "timeline_record_digest": timeline_record["record_digest"],
         "stage": "league_phase",
         "edition": "2024/25",
         "validation_period": "2024/25",
@@ -462,88 +517,124 @@ def test_b4_intermediate_artifact_fails_readiness_gate_and_side_states_stay_sepa
         "away_group": "A1",
         "home_team": "Alpha",
         "away_team": "Bravo",
-        "home_score": 1,
+        "home_score": 0,
         "away_score": 0,
         "neutral": False,
-        "remaining_schedule": {"status": "not_frozen_in_source", "fixtures": []},
+        "remaining_schedule": {
+            "status": "timeline_bound_without_future_results",
+            "fixtures": [],
+        },
         "standings_before": [
             {
                 "group": "A1",
-                "standing_rows": [
-                    {
-                        "team": "Alpha",
-                        "points_before": 3,
-                        "matches_played_before": 1,
-                        "goal_difference_before": 2,
-                        "remaining_group_matches": 5,
-                        "rank_min": None,
-                        "rank_max": 2,
-                        "rank_status": "unresolved_points_tie",
-                    },
-                    {
-                        "team": "Bravo",
-                        "points_before": 1,
-                        "matches_played_before": 1,
-                        "goal_difference_before": 0,
-                        "remaining_group_matches": 5,
-                        "rank_min": 3,
-                        "rank_max": 3,
-                        "rank_status": "points_order_unique",
-                    },
-                ],
+                "league_tier": "A",
+                "prior_result_fixture_ids": [],
+                "standing_rows": standing_rows,
             }
         ],
-        "qualification_state": {"status": "unresolved"},
-        "relegation_state": {"status": "unresolved"},
-        "must_win_primitives": {"status": "unresolved"},
+        "qualification_state": {
+            "participants": {
+                "Alpha": {
+                    "promotion": {
+                        "can_be_promoted": True,
+                        "status": "points_bounds_only_tiebreaks_preserved_as_unresolved",
+                    },
+                    "relegation": {
+                        "can_be_relegated": False,
+                        "status": "points_bounds_only_tiebreaks_preserved_as_unresolved",
+                    },
+                },
+                "Bravo": {
+                    "promotion": {
+                        "can_be_promoted": True,
+                        "status": "points_bounds_only_tiebreaks_preserved_as_unresolved",
+                    },
+                    "relegation": {
+                        "can_be_relegated": True,
+                        "status": "points_bounds_only_tiebreaks_preserved_as_unresolved",
+                    },
+                },
+            }
+        },
     }
-    record["record_digest"] = canonical_digest(record)
     dataset = {
         "schema_version": "uefa-nations-league-causal-competition-state-v1",
+        "source_snapshot_digest": "f" * 64,
         "records": [record],
     }
+    record["source_digest"] = dataset["source_snapshot_digest"]
+    record["record_digest"] = canonical_digest(record)
+    dataset_digest = canonical_digest(dataset)
     coverage = {
-        "expected_evaluation_fixture_count": 512,
+        "status": "NL_COMPETITION_STATE_PARTIAL",
+        "expected_evaluation_fixture_count": 1,
         "output_record_count": 1,
-        "fixture_coverage_complete": False,
-        "official_schedule_match_coverage_verified": False,
-        "dataset_digest": canonical_digest(dataset),
+        "fixture_coverage_complete": True,
+        "official_schedule_match_coverage_verified": True,
+        "dataset_digest": dataset_digest,
+        "fields": {
+            "kickoff_timestamp": {
+                "present": 1,
+                "missing": 0,
+                "status": "verified_from_fixture_timeline",
+            },
+            "causal_date_cutoff": {"strict_kickoff_timestamp_comparison": 1},
+        },
+        "leakage_checks": {
+            "final_standings_backfilled": False,
+            "final_tables_read": False,
+            "future_match_scores_in_state": False,
+            "same_day_results_excluded": True,
+            "uses_only_result_dates_strictly_before_fixture_date": True,
+        },
+        "timeline_join": {
+            "joined_complete": True,
+            "joined_records": 1,
+            "missing_fixture_ids": [],
+            "timeline_dataset_digest": timeline["dataset_digest"],
+        },
     }
     coverage["coverage_digest"] = canonical_digest(coverage)
-    blockers = validate_b4_artifact(dataset, coverage)
-    assert "B4_record_count_is_not_exactly_512" in blockers
-    assert "B4_kickoff_timestamp_missing" in blockers
-    assert "B4_complete_remaining_group_schedule_missing" in blockers
-    assert "B4_qualification_state_unresolved" in blockers
+    return dataset, coverage, timeline
 
-    ready_record = {
-        **record,
-        "kickoff": "2024-09-05T18:00:00Z",
-        "matchday": 1,
-        "remaining_schedule": {"status": "complete", "fixtures": []},
-        "qualification_state": {
-            "home": {"mathematically_qualified": True, "can_still_qualify": True},
-            "away": {"mathematically_qualified": False, "can_still_qualify": True},
-        },
-        "relegation_state": {
-            "home": {"mathematically_relegated": False},
-            "away": {"mathematically_relegated": False},
-        },
-        "must_win_primitives": {
-            "home": {"win_required_for_mathematical_goal": True},
-            "away": {"win_required_for_mathematical_goal": False},
-        },
-    }
-    ready_record["record_digest"] = "e" * 64
+
+def test_partial_b4_artifact_is_accepted_when_safe_subset_is_complete_and_hashed():
+    dataset, coverage, timeline = _safe_partial_b4_bundle()
+    assert validate_b4_artifact(dataset, coverage, timeline, expected_fixtures=1) == []
+    assert "B4_fixture_timeline_missing" in validate_b4_artifact(dataset, coverage)
+
+
+def test_partial_b4_artifact_digest_tampering_fails_closed():
+    dataset, coverage, timeline = _safe_partial_b4_bundle()
+    dataset["records"][0]["home_score"] = 2
+    blockers = validate_b4_artifact(dataset, coverage, timeline, expected_fixtures=1)
+    assert "B4_dataset_digest_mismatch" in blockers
+    assert "B4_record_digest_mismatch" in blockers
+
+
+def test_safe_feature_projection_ignores_unsupported_matchday_and_motivation_fields():
+    dataset, _, _ = _safe_partial_b4_bundle()
+    record = dataset["records"][0]
+    record["matchday"] = 4
+    record["official_fixture_id"] = "must-not-be-a-feature"
+    record["qualification_state"]["mathematically_qualified"] = True
+    record["must_win_primitives"] = {"win_required_for_mathematical_goal": True}
     projected = (
-        derive_context_rows([ready_record])
-        .set_index("fixture_id")
-        .loc["synthetic-unit-fixture"]
+        derive_context_rows([record]).set_index("fixture_id").loc[record["fixture_id"]]
     )
-    assert bool(projected["home_mathematically_qualified"]) is True
-    assert bool(projected["away_mathematically_qualified"]) is False
-    assert bool(projected["home_win_required_for_mathematical_goal"]) is True
-    assert bool(projected["away_win_required_for_mathematical_goal"]) is False
+    assert projected["home_points_before"] == 0
+    assert pd.isna(projected["home_points_per_game_before"])
+    assert bool(projected["home_table_position_tied"]) is True
+    assert pd.isna(projected["home_table_position_min"])
+    assert bool(projected["home_points_bound_relegation_possible"]) is False
+    assert (
+        projected["points_bound_constraint"] == "constrained_by_supported_points_bound"
+    )
+    assert projected["group_phase_progress"] == "early_by_matches_played"
+    assert "matchday" not in projected.index
+    assert "official_fixture_id" not in projected.index
+    assert "home_mathematically_qualified" not in projected.index
+    assert "home_win_required_for_mathematical_goal" not in projected.index
 
 
 def test_ablation_models_missing_context_as_unavailable_and_rejects_invalid_probabilities():
@@ -576,6 +667,8 @@ def test_runner_binds_the_exact_b4_source_commit_and_optional_pr():
         "state.json",
         "--coverage",
         "coverage.json",
+        "--timeline",
+        "timeline.json",
         "--results-cache",
         "results.csv",
         "--source-main-sha",

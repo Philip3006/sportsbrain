@@ -65,14 +65,19 @@ MATHEMATICAL_GOALS = {
 MAX_SCENARIO_COMBINATIONS = 1_000_000
 OUTCOMES = (0, 1, 2)  # scheduled home win, draw, scheduled away win
 CONTEXT_NUMERIC_FEATURES = (
-    "matchday",
     "home_matches_played_before",
     "away_matches_played_before",
     "home_points_before",
     "away_points_before",
     "points_diff_home_minus_away",
+    "home_goals_for_before",
+    "away_goals_for_before",
+    "home_goals_against_before",
+    "away_goals_against_before",
     "home_goal_difference_before",
     "away_goal_difference_before",
+    "home_points_per_game_before",
+    "away_points_per_game_before",
     "home_remaining_games_before",
     "away_remaining_games_before",
     "home_table_position_min",
@@ -81,39 +86,12 @@ CONTEXT_NUMERIC_FEATURES = (
     "away_table_position_max",
     "home_table_position_tied",
     "away_table_position_tied",
-    "home_points_to_qualification_boundary",
-    "away_points_to_qualification_boundary",
-    "home_points_gap_to_promotion",
-    "away_points_gap_to_promotion",
-    "home_points_to_relegation_boundary",
-    "away_points_to_relegation_boundary",
-    "home_points_gap_to_relegation_playoff",
-    "away_points_gap_to_relegation_playoff",
-    "home_qualification_still_possible",
-    "away_qualification_still_possible",
-    "home_mathematically_qualified",
-    "away_mathematically_qualified",
-    "home_mathematically_eliminated",
-    "away_mathematically_eliminated",
-    "home_mathematically_promoted",
-    "away_mathematically_promoted",
-    "home_mathematically_relegated",
-    "away_mathematically_relegated",
-    "home_mathematically_safe_from_relegation",
-    "away_mathematically_safe_from_relegation",
-    "home_promotion_still_possible",
-    "away_promotion_still_possible",
-    "home_relegation_still_possible",
-    "away_relegation_still_possible",
-    "home_win_required_for_mathematical_goal",
-    "away_win_required_for_mathematical_goal",
-    "home_draw_sufficient_for_mathematical_goal",
-    "away_draw_sufficient_for_mathematical_goal",
-    "home_loss_eliminates",
-    "away_loss_eliminates",
-    "mathematically_consequential",
+    "home_points_bound_promotion_possible",
+    "away_points_bound_promotion_possible",
+    "home_points_bound_relegation_possible",
+    "away_points_bound_relegation_possible",
 )
-CONTEXT_CATEGORICAL_FEATURES = ("league_tier", "group", "mathematical_goal")
+CONTEXT_CATEGORICAL_FEATURES = ("league_tier", "group")
 
 
 def _required_columns(frame: pd.DataFrame, required: set[str], label: str) -> None:
@@ -1193,71 +1171,30 @@ def _strata_for_rows(
 ) -> dict[str, Any]:
     if not rows:
         return {}
-
-    def optional_int(value: Any) -> int | None:
-        if value is None or pd.isna(value):
-            return None
-        return int(value)
-
-    max_matchday_by_group: dict[tuple[str, str, str], int] = {}
-    for row in rows:
-        matchday = optional_int(
-            row.get("group_stage_max_matchday", row.get("matchday"))
-        )
-        if matchday is None:
-            continue
-        group_key = (
-            str(row.get("edition", "unknown")),
-            str(row.get("league_tier", "unknown")),
-            str(row.get("group", "unknown")),
-        )
-        max_matchday_by_group[group_key] = max(
-            max_matchday_by_group.get(group_key, 0),
-            matchday,
-        )
-
     partitions: dict[str, dict[str, list[Mapping[str, Any]]]] = {
-        "group_stage": {"early": [], "late": [], "not_group_stage": []},
-        "mathematical_constraint": {
-            "consequential": [],
-            "non_consequential_low_constraint": [],
-            "unavailable": [],
-        },
+        "group_phase_progress": {},
+        "points_gap_band": {},
+        "points_bound_constraint": {},
         "league_tier": {},
+        "edition": {},
         "observed_outcome": {"home": [], "draw": [], "away": []},
     }
     for row in rows:
         outcome_name = ("home", "draw", "away")[int(row["outcome"])]
         partitions["observed_outcome"][outcome_name].append(row)
-        tier = str(row.get("league_tier", "unknown"))
+        tier = str(row.get("league_tier") or "unavailable")
         partitions["league_tier"].setdefault(tier, []).append(row)
-        group_key = (
-            str(row.get("edition", "unknown")),
-            tier,
-            str(row.get("group", "unknown")),
-        )
-        matchday = optional_int(row.get("matchday"))
-        maximum_matchday = optional_int(row.get("group_stage_max_matchday"))
-        if matchday is None or maximum_matchday is None:
-            partitions["group_stage"]["not_group_stage"].append(row)
-        else:
-            max_matchday_by_group[group_key] = max(
-                max_matchday_by_group.get(group_key, 0), maximum_matchday
-            )
-            midpoint = (max_matchday_by_group[group_key] + 1) // 2
-            partitions["group_stage"][
-                "early" if matchday <= midpoint else "late"
-            ].append(row)
-        consequence = row.get("mathematically_consequential")
-        if consequence is None or pd.isna(consequence):
-            label = "unavailable"
-        else:
-            label = (
-                "consequential"
-                if bool(consequence)
-                else "non_consequential_low_constraint"
-            )
-        partitions["mathematical_constraint"][label].append(row)
+        edition = str(row.get("edition") or "unavailable")
+        partitions["edition"].setdefault(edition, []).append(row)
+        for partition in (
+            "group_phase_progress",
+            "points_gap_band",
+            "points_bound_constraint",
+        ):
+            label = row.get(partition)
+            if label is None or pd.isna(label):
+                label = "unavailable"
+            partitions[partition].setdefault(str(label), []).append(row)
 
     result: dict[str, Any] = {}
     for partition, groups in partitions.items():
@@ -1316,51 +1253,16 @@ def _small_stratum_sensitivity(
     minimum_sample: int,
 ) -> dict[str, Any]:
     """Check whether dropping small categories reverses the global Brier gain."""
-
-    def optional_int(value: Any) -> int | None:
-        if value is None or pd.isna(value):
-            return None
-        return int(value)
-
-    max_matchday_by_group: dict[tuple[str, str, str], int] = {}
-    for row in rows:
-        matchday = optional_int(
-            row.get("group_stage_max_matchday", row.get("matchday"))
-        )
-        if matchday is None:
-            continue
-        group_key = (
-            str(row.get("edition", "unknown")),
-            str(row.get("league_tier", "unknown")),
-            str(row.get("group", "unknown")),
-        )
-        max_matchday_by_group[group_key] = max(
-            max_matchday_by_group.get(group_key, 0),
-            matchday,
-        )
-
-    def group_stage(row: Mapping[str, Any]) -> str:
-        matchday = optional_int(row.get("matchday"))
-        if matchday is None:
-            return "not_group_stage"
-        group_key = (
-            str(row.get("edition", "unknown")),
-            str(row.get("league_tier", "unknown")),
-            str(row.get("group", "unknown")),
-        )
-        halfway = (max_matchday_by_group.get(group_key, 0) + 1) // 2
-        return "early" if matchday <= halfway else "late"
-
-    def constraint(row: Mapping[str, Any]) -> str:
-        value = row.get("mathematically_consequential")
-        if value is None or pd.isna(value):
-            return "unavailable"
-        return "consequential" if bool(value) else "low_constraint"
-
     categories = {
-        "league_tier": lambda row: str(row.get("league_tier", "unknown")),
-        "group_stage": group_stage,
-        "mathematical_constraint": constraint,
+        "league_tier": lambda row: str(row.get("league_tier") or "unavailable"),
+        "edition": lambda row: str(row.get("edition") or "unavailable"),
+        "group_phase_progress": lambda row: str(
+            row.get("group_phase_progress") or "unavailable"
+        ),
+        "points_gap_band": lambda row: str(row.get("points_gap_band") or "unavailable"),
+        "points_bound_constraint": lambda row: str(
+            row.get("points_bound_constraint") or "unavailable"
+        ),
         "observed_outcome": lambda row: ("home", "draw", "away")[int(row["outcome"])],
     }
     sensitivity = []
@@ -1430,7 +1332,7 @@ def evaluate_paired_probabilities(
         )
     if not rows:
         return {
-            "status": "NL_CONTEXT_BLOCKED",
+            "status": "NL_SAFE_CONTEXT_BLOCKED",
             "reason": "No paired out-of-sample predictions",
             "fixtures_evaluated": 0,
             "eligible_fixtures": eligible_count,
@@ -1442,7 +1344,9 @@ def evaluate_paired_probabilities(
         "edition",
         "league_tier",
         "group",
-        "matchday",
+        "group_phase_progress",
+        "points_gap_band",
+        "points_bound_constraint",
         "outcome",
         "baseline_probabilities",
         "context_probabilities",
@@ -1523,20 +1427,20 @@ def evaluate_paired_probabilities(
     }
     brier_ci = bootstrap.get("brier_context_minus_baseline", {})
     if not gates["minimum_evaluation_coverage"]:
-        status = "NL_CONTEXT_BLOCKED"
+        status = "NL_SAFE_CONTEXT_BLOCKED"
         classification_reason = "minimum_out_of_sample_count_or_coverage_not_met"
     elif (
         not gates["log_loss_not_relevantly_worse"]
         or not gates["ece_not_relevantly_worse"]
         or not gates["class_calibration_not_relevantly_worse"]
     ):
-        status = "NL_CONTEXT_REGRESSION"
+        status = "NL_SAFE_CONTEXT_REGRESSION"
         classification_reason = "material_log_loss_or_calibration_regression"
     elif (
         differences["multiclass_brier"] >= 0
         or concentration["small_stratum_only_uplift"]
     ):
-        status = "NL_CONTEXT_NO_GAIN"
+        status = "NL_SAFE_CONTEXT_NO_CLEAR_GAIN"
         classification_reason = (
             "no_full_cohort_brier_improvement"
             if differences["multiclass_brier"] >= 0
@@ -1546,16 +1450,16 @@ def evaluate_paired_probabilities(
         brier_ci.get("upper_95", 0.0) < 0
         and gates["gain_not_confined_to_small_stratum"]
     ):
-        status = "NL_CONTEXT_UPLIFT_SUPPORTED"
+        status = "NL_SAFE_CONTEXT_GAIN"
         classification_reason = (
             "paired_95_percent_brier_interval_below_zero_and_gates_pass"
         )
     else:
-        status = "NL_CONTEXT_PROMISING_NOT_CONFIRMED"
+        status = "NL_SAFE_CONTEXT_NO_CLEAR_GAIN"
         classification_reason = "full_cohort_brier_point_estimate_improves_but_bootstrap_support_is_inconclusive"
 
     return {
-        "schema": "nations-league-context-ablation-audit-v1",
+        "schema": "nations-league-safe-context-ablation-audit-v1",
         "status": status,
         "classification_reason": classification_reason,
         "fixtures_evaluated": len(rows),
@@ -1596,7 +1500,10 @@ def run_causal_context_ablation(
 
     ``examples`` must be the exact join of canonical competition-state records,
     observed outcomes, and point-in-time baseline predictions. The function
-    rejects incomplete joins and any state cut at/after kickoff. The first
+    rejects incomplete joins, post-kickoff cutoffs, and any input lacking an
+    explicit audit that underlying state inputs were strictly available before
+    kickoff. The cutoff timestamp itself may equal kickoff when it is exclusive.
+    The first
     expanding-window warm-up rows are listed as excluded rather than silently
     removed from the eligible cohort.
     """
@@ -1604,11 +1511,14 @@ def run_causal_context_ablation(
         "fixture_id",
         "kickoff",
         "state_cutoff",
+        "causal_information_verified",
         "record_digest",
         "edition",
         "league_tier",
         "group",
-        "matchday",
+        "group_phase_progress",
+        "points_gap_band",
+        "points_bound_constraint",
         "outcome",
         "base_p_home",
         "base_p_draw",
@@ -1632,8 +1542,16 @@ def run_causal_context_ablation(
     frame["state_cutoff"] = pd.to_datetime(
         frame["state_cutoff"], errors="raise", utc=True
     )
-    if not (frame["state_cutoff"] < frame["kickoff"]).all():
-        raise ValueError("Competition state cutoff must be strictly before kickoff")
+    if (frame["state_cutoff"] > frame["kickoff"]).any():
+        raise ValueError("Competition state cutoff cannot be after kickoff")
+    if (
+        not frame["causal_information_verified"]
+        .map(lambda value: isinstance(value, (bool, np.bool_)) and bool(value))
+        .all()
+    ):
+        raise ValueError(
+            "Every context row requires verified strictly pre-kickoff information"
+        )
     record_digests = frame["record_digest"].astype(str).str.lower()
     if (
         frame["record_digest"].isna().any()
@@ -1672,6 +1590,12 @@ def run_causal_context_ablation(
     source_rows = frame.to_dict(orient="records")
     paired_rows = []
     predicted_source_indexes: set[int] = set()
+
+    def category_value(value: Any, fallback: str) -> str:
+        if value is None or pd.isna(value):
+            return fallback
+        return str(value)
+
     for prediction in walk_forward["predictions"]:
         index = int(prediction["source_index"])
         source = source_rows[index]
@@ -1681,21 +1605,16 @@ def run_causal_context_ablation(
                 "fixture_id": str(source["fixture_id"]),
                 "kickoff": source["kickoff"],
                 "edition": str(source["edition"]),
-                "league_tier": str(source["league_tier"]),
-                "group": str(source["group"]),
-                "matchday": (
-                    None if pd.isna(source["matchday"]) else int(source["matchday"])
+                "league_tier": category_value(source["league_tier"], "unavailable"),
+                "group": category_value(source["group"], "not_applicable"),
+                "group_phase_progress": category_value(
+                    source["group_phase_progress"], "unavailable"
                 ),
-                "group_stage_max_matchday": (
-                    None
-                    if pd.isna(source.get("group_stage_max_matchday"))
-                    else int(source["group_stage_max_matchday"])
+                "points_gap_band": category_value(
+                    source["points_gap_band"], "unavailable"
                 ),
-                "mathematically_consequential": (
-                    None
-                    if source.get("mathematically_consequential") is None
-                    or pd.isna(source.get("mathematically_consequential"))
-                    else bool(source["mathematically_consequential"])
+                "points_bound_constraint": category_value(
+                    source["points_bound_constraint"], "unavailable"
                 ),
                 "outcome": int(prediction["outcome"]),
                 "baseline_probabilities": prediction["baseline_probabilities"],
@@ -1719,6 +1638,9 @@ def run_causal_context_ablation(
         "method": "expanding window; same-kickoff fixtures share a fold",
         "minimum_training_rows": minimum_training_rows,
         "no_lookahead": bool(walk_forward["no_lookahead"]),
+        "competition_state_information_strictly_pre_kickoff": bool(
+            frame["causal_information_verified"].all()
+        ),
         "predicted_fixture_ids": [row["fixture_id"] for row in paired_rows],
         "warmup_exclusions": [
             str(frame.iloc[index]["fixture_id"])
@@ -1738,20 +1660,28 @@ def run_causal_context_ablation(
 
 def render_context_ablation_markdown(audit: Mapping[str, Any]) -> str:
     """Render a concise auditable report without inventing unavailable metrics."""
-    status = str(audit.get("status", "NL_CONTEXT_BLOCKED"))
+    status = str(audit.get("status", "NL_SAFE_CONTEXT_BLOCKED"))
     provenance = audit.get("provenance", {})
+    fixture_coverage = audit.get("fixture_coverage", {})
     lines = [
         "# UEFA Nations League Competition-Context Ablation",
         "",
         f"- Status: `{status}`",
+        f"- Classification: `{audit.get('classification_reason', 'unavailable')}`",
+        f"- B4 source state: `{provenance.get('b4_artifact_status', audit.get('competition_state_status', 'unavailable'))}`",
+        f"- B4 safe-subset integrity passed: {str(bool(audit.get('b4_partial_integrity_validation_passed', False))).lower()}",
         f"- Competition-state SHA-256: `{provenance.get('competition_state_dataset_sha256', audit.get('competition_state_dataset_sha256', 'unavailable'))}`",
         f"- B4 source commit: `{provenance.get('competition_state_source_sha', audit.get('competition_state_source_sha', 'unavailable'))}`",
         f"- B4 source PR: `{provenance.get('competition_state_source_pr', audit.get('competition_state_source_pr', 'not supplied'))}`",
+        f"- B4 coverage digest: `{provenance.get('b4_coverage_digest', 'unavailable')}`",
+        f"- B4 timeline digest: `{provenance.get('b4_timeline_dataset_sha256', 'unavailable')}`",
         f"- Baseline source SHA-256: `{provenance.get('baseline_source_sha256', audit.get('baseline_source_sha256', 'unavailable'))}`",
         f"- Source main SHA: `{provenance.get('source_main_sha', audit.get('source_main_sha', 'unavailable'))}`",
-        f"- Eligible fixtures: {audit.get('eligible_fixtures', 'unavailable')}",
-        f"- Paired OOS fixtures: {audit.get('fixtures_evaluated', 0)}",
-        f"- OOS coverage: {audit.get('coverage', 0.0):.3f}",
+        f"- Canonical B4 fixture identities: {fixture_coverage.get('canonical_b4_identities', audit.get('eligible_fixtures', 'unavailable'))}",
+        f"- Verified kickoffs / exact causal cutoffs: {fixture_coverage.get('verified_kickoffs', 'unavailable')} / {fixture_coverage.get('exact_causal_kickoff_cutoffs', 'unavailable')}",
+        f"- Local result identity / baseline forecast coverage: {fixture_coverage.get('local_result_identity_matches', 'unavailable')} / {fixture_coverage.get('raw_causal_baseline_forecasts', 'unavailable')}",
+        f"- Played fixtures / administratively decided outcomes excluded: {fixture_coverage.get('played_fixtures_in_primary_evaluation', audit.get('eligible_fixtures', 'unavailable'))} / {fixture_coverage.get('administratively_decided_outcomes_excluded', 0)}",
+        f"- Paired OOS fixtures after expanding-window warm-up: {audit.get('fixtures_evaluated', 0)} / {audit.get('eligible_fixtures', 'unavailable')} ({audit.get('coverage', 0.0):.3f})",
         f"- Synthetic evidence used: {str(bool(audit.get('synthetic_evidence_used', False))).lower()}",
         "",
     ]
@@ -1767,23 +1697,71 @@ def render_context_ablation_markdown(audit: Mapping[str, Any]) -> str:
                 "",
             ]
         )
+    if fixture_coverage.get("administratively_decided_fixture_ids_excluded"):
+        lines.extend(
+            [
+                "- Administrative outcome fixture IDs excluded from scoring and DC training: "
+                + ", ".join(
+                    f"`{fixture_id}`"
+                    for fixture_id in fixture_coverage[
+                        "administratively_decided_fixture_ids_excluded"
+                    ]
+                ),
+                "",
+            ]
+        )
     if audit.get("blockers"):
         lines.extend(["## Blockers", ""])
         lines.extend(f"- `{blocker}`" for blocker in audit["blockers"])
         lines.append("")
     if audit.get("excluded_features"):
         lines.extend(["## Excluded / unavailable", ""])
-        lines.extend(f"- {item}" for item in audit["excluded_features"])
+        excluded = audit["excluded_features"]
+        if isinstance(excluded, Mapping):
+            lines.extend(f"- `{name}`: {reason}" for name, reason in excluded.items())
+        else:
+            lines.extend(f"- {item}" for item in excluded)
+        lines.append("")
+    included = audit.get("included_features", audit.get("context_features", {}))
+    if included:
+        lines.extend(["## Included safe context", ""])
+        for kind in ("numeric", "categorical"):
+            values = included.get(kind, [])
+            lines.append(
+                f"- {kind.title()}: "
+                + (", ".join(f"`{name}`" for name in values) or "none")
+            )
         lines.append("")
     if (
         audit.get("baseline") is not None
         and audit.get("baseline_plus_context") is not None
     ):
+        raw_baseline = audit.get("raw_causal_baseline_forecast_metrics_oos")
+        if raw_baseline:
+            lines.extend(
+                [
+                    "## Current causal DC baseline on paired OOS rows",
+                    "",
+                    "These are the unmodified event-level Dixon–Coles probabilities on the same paired OOS rows; the paired A/B table below compares the fold-local baseline-only head with that same head plus safe context.",
+                    "",
+                    "| Metric | Raw causal DC |",
+                    "|---|---:|",
+                ]
+            )
+            for key, label in (
+                ("multiclass_brier", "Multiclass Brier"),
+                ("multiclass_log_loss", "Multiclass log loss"),
+                ("ece_10_bin_macro_ovr", "ECE (10-bin macro OVR)"),
+                ("sharpness_mean_max_probability", "Sharpness (mean max p)"),
+                ("accuracy_argmax", "Accuracy (secondary)"),
+            ):
+                lines.append(f"| {label} | {raw_baseline[key]:.6f} |")
+            lines.append("")
         lines.extend(
             [
                 "## Primary paired metrics",
                 "",
-                "| Metric | Baseline | Baseline + context | Context − baseline |",
+                "| Metric | Baseline-only head | Baseline + context head | Context − baseline |",
                 "|---|---:|---:|---:|",
             ]
         )
@@ -1804,8 +1782,8 @@ def render_context_ablation_markdown(audit: Mapping[str, Any]) -> str:
                 "",
                 "## Outcome calibration",
                 "",
-                "| Outcome | Baseline mean p / observed / abs gap | Context mean p / observed / abs gap |",
-                "|---|---:|---:|",
+                "| Outcome | Baseline-only mean p / observed / abs gap | Context mean p / observed / abs gap | Δ absolute gap |",
+                "|---|---:|---:|---:|",
             ]
         )
         for name in ("home", "draw", "away"):
@@ -1817,7 +1795,8 @@ def render_context_ablation_markdown(audit: Mapping[str, Any]) -> str:
                 f"{baseline_cal['absolute_calibration_gap']:.4f} | "
                 f"{context_cal['mean_probability']:.4f} / "
                 f"{context_cal['observed_frequency']:.4f} / "
-                f"{context_cal['absolute_calibration_gap']:.4f} |"
+                f"{context_cal['absolute_calibration_gap']:.4f} | "
+                f"{audit['paired_difference_context_minus_baseline'][f'{name}_absolute_calibration_gap']:+.4f} |"
             )
         lines.extend(["", "## Paired date-cluster bootstrap (95% CI)", ""])
         bootstrap = audit.get("paired_date_cluster_bootstrap", {})
@@ -1862,9 +1841,9 @@ def render_context_ablation_markdown(audit: Mapping[str, Any]) -> str:
             ]
         )
     stacker_recommendation = audit.get("stacker_recommendation") or (
-        "Include only as an experimental candidate; not a production signal."
-        if status == "NL_CONTEXT_UPLIFT_SUPPORTED"
-        else "Do not include until stronger independent evidence is available."
+        "Consider as a later research-only stacker candidate; not a production signal."
+        if status == "NL_SAFE_CONTEXT_GAIN"
+        else "Do not include as a later stacker candidate based on this evidence."
     )
     lines.extend(
         [

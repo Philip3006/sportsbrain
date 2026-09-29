@@ -7,6 +7,7 @@ import hashlib
 import json
 import re
 import sys
+from collections import Counter
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any
@@ -24,9 +25,20 @@ from src.analysis.nations_league_context import (
 from src.analysis.nations_league_validation import (
     load_local_results,
     predict_dc_event_walk_forward,
+    select_historical_matches,
 )
 
 EXPECTED_FIXTURES = 512
+# The local football-results cache retains the conventional English alias,
+# while Builder 4's UEFA fixture timeline uses the official endonym. This is
+# an identity-only reconciliation; score, date, venue, and edition must still
+# match exactly.
+RESULTS_TEAM_IDENTITY_ALIASES = {"Turkey": "Türkiye", "Türkiye": "Türkiye"}
+
+
+def result_identity_team(value: Any) -> str:
+    name = str(value)
+    return RESULTS_TEAM_IDENTITY_ALIASES.get(name, name)
 
 
 def canonical_digest(value: Any) -> str:
@@ -54,9 +66,17 @@ def read_json(path: Path) -> dict[str, Any]:
 
 
 def validate_b4_artifact(
-    dataset: dict[str, Any], coverage: dict[str, Any]
+    dataset: dict[str, Any],
+    coverage: dict[str, Any],
+    timeline: dict[str, Any] | None = None,
+    *,
+    expected_fixtures: int = EXPECTED_FIXTURES,
 ) -> list[str]:
-    """Validate B4 integrity and readiness without weakening its source contract."""
+    """Validate the complete B4 artifact and its safe, strictly prior inputs.
+
+    ``NL_COMPETITION_STATE_PARTIAL`` is accepted: the gate is complete timeline
+    and point-in-time standings integrity, not readiness of unsupported rules.
+    """
     blockers = []
     if (
         dataset.get("schema_version")
@@ -64,12 +84,12 @@ def validate_b4_artifact(
     ):
         blockers.append("unsupported_or_missing_B4_dataset_schema")
     records = dataset.get("records")
-    if not isinstance(records, list) or len(records) != EXPECTED_FIXTURES:
+    if not isinstance(records, list) or len(records) != expected_fixtures:
         blockers.append("B4_record_count_is_not_exactly_512")
         records = records if isinstance(records, list) else []
     if coverage.get("output_record_count") != len(records):
         blockers.append("B4_coverage_record_count_mismatch")
-    if coverage.get("expected_evaluation_fixture_count") != EXPECTED_FIXTURES:
+    if coverage.get("expected_evaluation_fixture_count") != expected_fixtures:
         blockers.append("B4_coverage_target_is_not_512")
     if coverage.get("fixture_coverage_complete") is not True:
         blockers.append("B4_fixture_coverage_not_complete")
@@ -82,6 +102,81 @@ def validate_b4_artifact(
     )
     if coverage.get("coverage_digest") != expected_coverage_digest:
         blockers.append("B4_coverage_digest_mismatch")
+    fields = coverage.get("fields", {})
+    kickoff_coverage = fields.get("kickoff_timestamp", {})
+    if (
+        kickoff_coverage.get("present") != expected_fixtures
+        or kickoff_coverage.get("missing") != 0
+        or kickoff_coverage.get("status") != "verified_from_fixture_timeline"
+    ):
+        blockers.append("B4_full_verified_kickoff_coverage_missing")
+    cutoff_coverage = fields.get("causal_date_cutoff", {})
+    if cutoff_coverage.get("strict_kickoff_timestamp_comparison") != expected_fixtures:
+        blockers.append("B4_exact_causal_kickoff_cutoff_coverage_missing")
+    leakage = coverage.get("leakage_checks", {})
+    for key in (
+        "final_standings_backfilled",
+        "final_tables_read",
+        "future_match_scores_in_state",
+    ):
+        if leakage.get(key) is not False:
+            blockers.append(f"B4_leakage_check_not_clear:{key}")
+    for key in (
+        "same_day_results_excluded",
+        "uses_only_result_dates_strictly_before_fixture_date",
+    ):
+        if leakage.get(key) is not True:
+            blockers.append(f"B4_leakage_check_not_clear:{key}")
+
+    timeline_records: list[dict[str, Any]] = []
+    timeline_by_id: dict[str, dict[str, Any]] = {}
+    if not isinstance(timeline, dict):
+        blockers.append("B4_fixture_timeline_missing")
+    else:
+        if timeline.get("schema_version") != "uefa-nations-league-fixture-timeline-v1":
+            blockers.append("unsupported_or_missing_B4_timeline_schema")
+        timeline_records_value = timeline.get("records")
+        if (
+            not isinstance(timeline_records_value, list)
+            or len(timeline_records_value) != expected_fixtures
+        ):
+            blockers.append("B4_timeline_record_count_is_not_exact")
+            timeline_records_value = (
+                timeline_records_value
+                if isinstance(timeline_records_value, list)
+                else []
+            )
+        timeline_records = timeline_records_value
+        timeline_digest = canonical_digest(
+            {key: value for key, value in timeline.items() if key != "dataset_digest"}
+        )
+        if timeline.get("dataset_digest") != timeline_digest:
+            blockers.append("B4_timeline_dataset_digest_mismatch")
+        timeline_join = coverage.get("timeline_join", {})
+        if (
+            timeline_join.get("joined_complete") is not True
+            or timeline_join.get("joined_records") != expected_fixtures
+            or timeline_join.get("missing_fixture_ids") != []
+            or timeline_join.get("timeline_dataset_digest") != timeline_digest
+        ):
+            blockers.append("B4_timeline_join_incomplete_or_digest_mismatch")
+        for timeline_record in timeline_records:
+            fixture_id = timeline_record.get("fixture_id")
+            if not fixture_id or fixture_id in timeline_by_id:
+                blockers.append("B4_timeline_fixture_identity_missing_or_duplicate")
+                continue
+            expected_digest = canonical_digest(
+                {
+                    key: value
+                    for key, value in timeline_record.items()
+                    if key != "record_digest"
+                }
+            )
+            if timeline_record.get("record_digest") != expected_digest:
+                blockers.append("B4_timeline_record_digest_mismatch")
+            timeline_by_id[str(fixture_id)] = timeline_record
+        if len(timeline_by_id) != expected_fixtures:
+            blockers.append("B4_timeline_fixture_identity_coverage_incomplete")
 
     ids = set()
     for record in records:
@@ -97,54 +192,238 @@ def validate_b4_artifact(
             blockers.append("B4_record_digest_mismatch")
         if record.get("source_digest") != dataset.get("source_snapshot_digest"):
             blockers.append("B4_record_source_digest_mismatch")
+        if not str(fixture_id).startswith("uefa-nl:"):
+            blockers.append("B4_fixture_identity_not_canonical")
         try:
             fixture_date = date.fromisoformat(record["fixture_date"])
             cutoff = datetime.fromisoformat(
-                record["state_cutoff"].replace("Z", "+00:00")
+                str(record["state_cutoff"]).replace("Z", "+00:00")
+            )
+            kickoff = datetime.fromisoformat(
+                str(record["kickoff"]).replace("Z", "+00:00")
             )
         except (KeyError, TypeError, ValueError):
             blockers.append("B4_fixture_date_or_state_cutoff_invalid")
             continue
         if (
-            cutoff.date() >= fixture_date
-            or cutoff.tzinfo is None
+            cutoff.tzinfo is None
+            or kickoff.tzinfo is None
             or cutoff.utcoffset().total_seconds() != 0
+            or kickoff.utcoffset().total_seconds() != 0
         ):
-            blockers.append("B4_state_cutoff_not_strictly_pre_fixture")
-        if record.get("kickoff") is None:
-            blockers.append("B4_kickoff_timestamp_missing")
+            blockers.append("B4_kickoff_or_cutoff_not_utc")
+        if kickoff.date() != fixture_date:
+            blockers.append("B4_verified_kickoff_date_mismatch")
+        if cutoff != kickoff:
+            blockers.append("B4_exact_kickoff_cutoff_mismatch")
+        if record.get("kickoff_status") != "verified_from_fixture_timeline":
+            blockers.append("B4_kickoff_not_timeline_verified")
+        if record.get("state_cutoff_basis") != (
+            "strict target kickoff instant; only result_safe_available_at strictly before kickoff is included"
+        ):
+            blockers.append("B4_strict_result_availability_contract_missing")
+        target_timeline = timeline_by_id.get(str(fixture_id))
+        if target_timeline is None:
+            blockers.append("B4_timeline_identity_missing_for_state_record")
         else:
-            try:
-                kickoff = datetime.fromisoformat(
-                    str(record["kickoff"]).replace("Z", "+00:00")
-                )
-                if kickoff.tzinfo is None or cutoff >= kickoff:
-                    blockers.append("B4_state_cutoff_not_strictly_pre_kickoff")
-            except ValueError:
-                blockers.append("B4_kickoff_timestamp_invalid")
-        if record.get("stage") == "league_phase" and record.get("matchday") is None:
-            blockers.append("B4_league_phase_matchday_missing")
-        remaining = record.get("remaining_schedule", {})
-        if record.get("stage") == "league_phase" and (
-            not isinstance(remaining, dict)
-            or remaining.get("status") in {None, "not_frozen_in_source"}
-        ):
-            blockers.append("B4_complete_remaining_group_schedule_missing")
-        for state_name in ("qualification_state", "relegation_state"):
-            state = record.get(state_name, {})
-            if (
-                isinstance(state, dict)
-                and "unresolved" in str(state.get("status", "")).lower()
+            for key in (
+                "edition",
+                "home_team",
+                "away_team",
+                "home_score",
+                "away_score",
             ):
-                blockers.append(f"B4_{state_name}_unresolved")
-        if record.get("stage") == "league_phase":
-            for side in ("home", "away"):
-                if not _side_state(record, "qualification_state", side):
-                    blockers.append(f"B4_{side}_qualification_state_not_team_bound")
-                if not _side_state(record, "relegation_state", side):
-                    blockers.append(f"B4_{side}_relegation_state_not_team_bound")
-                if not _side_state(record, "must_win_primitives", side):
-                    blockers.append(f"B4_{side}_mathematical_goal_primitives_missing")
+                if record.get(key) != target_timeline.get(key):
+                    blockers.append(f"B4_timeline_identity_or_outcome_mismatch:{key}")
+            if record.get("fixture_date") != target_timeline.get("date"):
+                blockers.append("B4_timeline_fixture_date_mismatch")
+            if record.get("kickoff") != target_timeline.get("kickoff_utc"):
+                blockers.append("B4_kickoff_does_not_match_timeline")
+            if record.get("result_safe_available_at") != target_timeline.get(
+                "result_safe_available_at"
+            ):
+                blockers.append("B4_target_result_safe_time_mismatch")
+            if target_timeline.get("status") == "completed_result_recorded":
+                try:
+                    target_safe_at = datetime.fromisoformat(
+                        str(target_timeline["result_safe_available_at"]).replace(
+                            "Z", "+00:00"
+                        )
+                    )
+                    if target_safe_at <= kickoff:
+                        blockers.append("B4_target_result_safe_time_not_after_kickoff")
+                except (KeyError, TypeError, ValueError):
+                    blockers.append("B4_target_result_safe_time_invalid")
+            elif (
+                target_timeline.get("status") != "administratively_awarded"
+                or target_timeline.get("result_safe_available_at") is not None
+            ):
+                blockers.append("B4_target_result_status_or_safe_time_unresolved")
+            if record.get("timeline_record_digest") != target_timeline.get(
+                "record_digest"
+            ):
+                blockers.append("B4_timeline_record_digest_binding_mismatch")
+
+        for table in record.get("standings_before", []):
+            table_rows = table.get("standing_rows", [])
+            row_teams = [row.get("team") for row in table_rows]
+            if len(row_teams) != len(set(row_teams)):
+                blockers.append("B4_duplicate_standing_team")
+                continue
+            prior_ids = table.get("prior_result_fixture_ids", [])
+            if len(prior_ids) != len(set(prior_ids)):
+                blockers.append("B4_duplicate_prior_result_reference")
+                continue
+            active = {
+                row["team"]: row
+                for row in table_rows
+                if row.get("competition_status") == "active"
+            }
+            group_records = [
+                item
+                for item in timeline_records
+                if item.get("edition") == record.get("edition")
+                and item.get("group") == table.get("group")
+            ]
+            expected_prior_ids = {
+                str(item["fixture_id"])
+                for item in group_records
+                if item.get("status") == "completed_result_recorded"
+                and item.get("result_safe_available_at")
+                and item["result_safe_available_at"] < record.get("kickoff", "")
+                and item.get("home_team") in active
+                and item.get("away_team") in active
+            }
+            if set(prior_ids) != expected_prior_ids:
+                blockers.append("B4_safe_prior_result_identity_set_mismatch")
+            stats = {
+                team: {
+                    "matches": 0,
+                    "points": 0,
+                    "goals_for": 0,
+                    "goals_against": 0,
+                    "wins": 0,
+                    "draws": 0,
+                    "losses": 0,
+                }
+                for team in active
+            }
+            for prior_id in prior_ids:
+                prior = timeline_by_id.get(str(prior_id))
+                if prior is None:
+                    blockers.append("B4_prior_result_timeline_identity_missing")
+                    continue
+                try:
+                    prior_safe_at = datetime.fromisoformat(
+                        str(prior["result_safe_available_at"]).replace("Z", "+00:00")
+                    )
+                    prior_kickoff = datetime.fromisoformat(
+                        str(prior["kickoff_utc"]).replace("Z", "+00:00")
+                    )
+                except (KeyError, TypeError, ValueError):
+                    blockers.append("B4_prior_result_safe_timestamp_invalid")
+                    continue
+                if prior_safe_at >= kickoff or prior_kickoff >= kickoff:
+                    blockers.append(
+                        "B4_prior_result_not_strictly_available_before_kickoff"
+                    )
+                home, away = prior.get("home_team"), prior.get("away_team")
+                if home not in stats or away not in stats:
+                    blockers.append("B4_prior_result_not_bound_to_active_table")
+                    continue
+                home_score, away_score = (
+                    prior.get("home_score"),
+                    prior.get("away_score"),
+                )
+                if not isinstance(home_score, int) or not isinstance(away_score, int):
+                    blockers.append("B4_prior_result_score_invalid")
+                    continue
+                for team, goals_for, goals_against in (
+                    (home, home_score, away_score),
+                    (away, away_score, home_score),
+                ):
+                    line = stats[team]
+                    line["matches"] += 1
+                    line["goals_for"] += goals_for
+                    line["goals_against"] += goals_against
+                if home_score > away_score:
+                    stats[home]["points"] += 3
+                    stats[home]["wins"] += 1
+                    stats[away]["losses"] += 1
+                elif home_score < away_score:
+                    stats[away]["points"] += 3
+                    stats[away]["wins"] += 1
+                    stats[home]["losses"] += 1
+                else:
+                    for team in (home, away):
+                        stats[team]["points"] += 1
+                        stats[team]["draws"] += 1
+            for team, row in active.items():
+                counts = stats[team]
+                expected_values = {
+                    "matches_played_before": counts["matches"],
+                    "points_before": counts["points"],
+                    "goals_for_before": counts["goals_for"],
+                    "goals_against_before": counts["goals_against"],
+                    "goal_difference_before": counts["goals_for"]
+                    - counts["goals_against"],
+                    "wins_before": counts["wins"],
+                    "draws_before": counts["draws"],
+                    "losses_before": counts["losses"],
+                }
+                if any(row.get(key) != value for key, value in expected_values.items()):
+                    blockers.append(
+                        "B4_standings_not_reproducible_from_safe_prior_results"
+                    )
+                if row.get("goal_difference_before") != (
+                    row.get("goals_for_before", 0) - row.get("goals_against_before", 0)
+                ):
+                    blockers.append("B4_goal_difference_arithmetic_mismatch")
+            points = sorted(
+                {row["points_before"] for row in active.values()}, reverse=True
+            )
+            positions = {}
+            consumed = 0
+            for value in points:
+                tied_count = sum(
+                    row["points_before"] == value for row in active.values()
+                )
+                positions[value] = (consumed + 1, consumed + tied_count)
+                consumed += tied_count
+            for team, row in active.items():
+                first, last = positions[row["points_before"]]
+                expected_rank = (
+                    (first, last, "points_order_unique")
+                    if first == last
+                    else (None, None, "unresolved_points_tie")
+                )
+                actual_rank = (
+                    row.get("rank_min"),
+                    row.get("rank_max"),
+                    row.get("rank_status"),
+                )
+                if actual_rank != expected_rank:
+                    blockers.append("B4_points_only_rank_bounds_mismatch")
+            future_count = {
+                team: sum(
+                    1
+                    for item in group_records
+                    if item.get("kickoff_utc") > record.get("kickoff", "")
+                    and team in (item.get("home_team"), item.get("away_team"))
+                )
+                for team in active
+            }
+            for team, row in active.items():
+                if row.get("remaining_group_matches") != future_count[team]:
+                    blockers.append("B4_remaining_group_matches_mismatch")
+
+        remaining = record.get("remaining_schedule", {})
+        if isinstance(remaining, dict):
+            for item in remaining.get("fixtures", []):
+                if "home_score" in item or "away_score" in item:
+                    blockers.append("B4_future_schedule_contains_score")
+    if timeline_by_id and ids != set(timeline_by_id):
+        blockers.append("B4_dataset_timeline_fixture_identity_sets_differ")
     return sorted(set(blockers))
 
 
@@ -168,28 +447,22 @@ def _standing_for(record: dict[str, Any], side: str) -> dict[str, Any] | None:
 
 
 def _side_state(record: dict[str, Any], kind: str, side: str) -> dict[str, Any]:
-    """Read only explicitly side-keyed state; never apply a fixture-wide flag to both teams."""
+    """Read a team-bound participant state, not a fixture-wide outcome flag."""
     direct = record.get(f"{side}_{kind}")
     if isinstance(direct, dict):
         return direct
     nested = record.get(kind, {})
     if isinstance(nested, dict) and isinstance(nested.get(side), dict):
         return nested[side]
+    participants = nested.get("participants", {}) if isinstance(nested, dict) else {}
+    team_state = participants.get(record.get(f"{side}_team"), {})
+    if isinstance(team_state, dict):
+        return team_state
     return {}
 
 
 def derive_context_rows(records: list[dict[str, Any]]) -> pd.DataFrame:
-    """Project only point-in-time B4 state into the fixed B5 feature schema."""
-    max_matchday: dict[tuple[str, str], int] = {}
-    for record in records:
-        if (
-            record.get("stage") == "league_phase"
-            and record.get("group")
-            and record.get("matchday")
-        ):
-            key = (str(record["edition"]), str(record["group"]))
-            max_matchday[key] = max(max_matchday.get(key, 0), int(record["matchday"]))
-
+    """Project only supported pre-kickoff table state; unresolved fields stay out."""
     output = []
     for record in records:
         kickoff = pd.Timestamp(record["kickoff"])
@@ -197,35 +470,24 @@ def derive_context_rows(records: list[dict[str, Any]]) -> pd.DataFrame:
             kickoff = kickoff.tz_localize("UTC")
         else:
             kickoff = kickoff.tz_convert("UTC")
-        home_state_flags = []
-        for side in ("home", "away"):
-            primitives = _side_state(record, "must_win_primitives", side)
-            home_state_flags.extend(
-                primitives.get(key)
-                for key in (
-                    "win_required_for_mathematical_goal",
-                    "draw_sufficient_for_mathematical_goal",
-                    "loss_eliminates",
-                )
-            )
-        consequential_values = [
-            value for value in home_state_flags if value is not None
-        ]
+        side_standings = {
+            side: _standing_for(record, side) or {} for side in ("home", "away")
+        }
+        supported_bound_values: list[bool] = []
         feature: dict[str, Any] = {
             "fixture_id": record["fixture_id"],
             "record_digest": record["record_digest"],
             "edition": record["edition"],
             "kickoff": kickoff,
             "state_cutoff": pd.Timestamp(record["state_cutoff"]),
+            "stage": record.get("stage"),
             "league_tier": record.get("league_tier")
-            or f"{record.get('home_league_tier')}/{record.get('away_league_tier')}",
-            "group": record.get("group"),
-            "matchday": record.get("matchday"),
-            "group_stage_max_matchday": max_matchday.get(
-                (str(record["edition"]), str(record.get("group"))),
-                int(record.get("matchday") or 0),
+            or (
+                record.get("home_league_tier")
+                if record.get("home_league_tier") == record.get("away_league_tier")
+                else "cross_tier"
             ),
-            "mathematical_goal": record.get("mathematical_goal"),
+            "group": record.get("group"),
             "outcome": 0
             if record["home_score"] > record["away_score"]
             else 1
@@ -233,10 +495,35 @@ def derive_context_rows(records: list[dict[str, Any]]) -> pd.DataFrame:
             else 2,
         }
         for side in ("home", "away"):
-            standing = _standing_for(record, side) or {}
-            qualification = _side_state(record, "qualification_state", side)
-            relegation = _side_state(record, "relegation_state", side)
-            primitives = _side_state(record, "must_win_primitives", side)
+            standing = side_standings[side]
+            participant = _side_state(record, "qualification_state", side)
+            promotion = participant.get("promotion", {})
+            relegation = participant.get("relegation", {})
+            matches_played = standing.get("matches_played_before")
+            points = standing.get("points_before")
+            point_rank_supported = standing.get("rank_status") in {
+                "points_order_unique",
+                "unresolved_points_tie",
+            }
+            promotion_possible = (
+                promotion.get("can_be_promoted")
+                if promotion.get("status")
+                == "points_bounds_only_tiebreaks_preserved_as_unresolved"
+                and isinstance(promotion.get("can_be_promoted"), bool)
+                else None
+            )
+            relegation_possible = (
+                relegation.get("can_be_relegated")
+                if relegation.get("status")
+                == "points_bounds_only_tiebreaks_preserved_as_unresolved"
+                and isinstance(relegation.get("can_be_relegated"), bool)
+                else None
+            )
+            supported_bound_values.extend(
+                value
+                for value in (promotion_possible, relegation_possible)
+                if value is not None
+            )
             feature.update(
                 {
                     f"{side}_points_before": standing.get("points_before"),
@@ -246,59 +533,33 @@ def derive_context_rows(records: list[dict[str, Any]]) -> pd.DataFrame:
                     f"{side}_goal_difference_before": standing.get(
                         "goal_difference_before"
                     ),
+                    f"{side}_goals_for_before": standing.get("goals_for_before"),
+                    f"{side}_goals_against_before": standing.get(
+                        "goals_against_before"
+                    ),
+                    f"{side}_points_per_game_before": (
+                        points / matches_played
+                        if isinstance(points, int)
+                        and isinstance(matches_played, int)
+                        and matches_played > 0
+                        else None
+                    ),
                     f"{side}_remaining_games_before": standing.get(
                         "remaining_group_matches"
                     ),
-                    f"{side}_table_position_min": standing.get("rank_min"),
-                    f"{side}_table_position_max": standing.get("rank_max"),
+                    f"{side}_table_position_min": (
+                        standing.get("rank_min") if point_rank_supported else None
+                    ),
+                    f"{side}_table_position_max": (
+                        standing.get("rank_max") if point_rank_supported else None
+                    ),
                     f"{side}_table_position_tied": (
                         standing.get("rank_status") == "unresolved_points_tie"
-                        if standing.get("rank_status") is not None
+                        if point_rank_supported
                         else None
                     ),
-                    f"{side}_points_to_qualification_boundary": qualification.get(
-                        "points_to_relevant_boundary"
-                    ),
-                    f"{side}_points_gap_to_promotion": qualification.get(
-                        "points_to_promotion_boundary"
-                    ),
-                    f"{side}_points_to_relegation_boundary": relegation.get(
-                        "points_to_relevant_boundary"
-                    ),
-                    f"{side}_points_gap_to_relegation_playoff": relegation.get(
-                        "points_to_playoff_boundary"
-                    ),
-                    f"{side}_qualification_still_possible": qualification.get(
-                        "can_still_qualify"
-                    ),
-                    f"{side}_mathematically_qualified": qualification.get(
-                        "mathematically_qualified"
-                    ),
-                    f"{side}_mathematically_eliminated": qualification.get(
-                        "mathematically_eliminated"
-                    ),
-                    f"{side}_mathematically_promoted": qualification.get(
-                        "mathematically_promoted"
-                    ),
-                    f"{side}_mathematically_relegated": relegation.get(
-                        "mathematically_relegated"
-                    ),
-                    f"{side}_mathematically_safe_from_relegation": relegation.get(
-                        "mathematically_safe_from_relegation"
-                    ),
-                    f"{side}_promotion_still_possible": qualification.get(
-                        "can_be_promoted"
-                    ),
-                    f"{side}_relegation_still_possible": relegation.get(
-                        "can_be_relegated"
-                    ),
-                    f"{side}_win_required_for_mathematical_goal": primitives.get(
-                        "win_required_for_mathematical_goal"
-                    ),
-                    f"{side}_draw_sufficient_for_mathematical_goal": primitives.get(
-                        "draw_sufficient_for_mathematical_goal"
-                    ),
-                    f"{side}_loss_eliminates": primitives.get("loss_eliminates"),
+                    f"{side}_points_bound_promotion_possible": promotion_possible,
+                    f"{side}_points_bound_relegation_possible": relegation_possible,
                 }
             )
         feature["points_diff_home_minus_away"] = (
@@ -307,19 +568,57 @@ def derive_context_rows(records: list[dict[str, Any]]) -> pd.DataFrame:
             and feature["away_points_before"] is not None
             else None
         )
-        feature["mathematically_consequential"] = (
-            any(value is True for value in consequential_values)
-            if consequential_values
-            else None
+        played = [
+            standing.get("matches_played_before")
+            for standing in side_standings.values()
+        ]
+        if record.get("stage") != "league_phase" or any(
+            not isinstance(value, int) for value in played
+        ):
+            feature["group_phase_progress"] = "not_group_stage_or_unavailable"
+        elif max(played) <= 2:
+            feature["group_phase_progress"] = "early_by_matches_played"
+        elif min(played) >= 4:
+            feature["group_phase_progress"] = "late_by_matches_played"
+        else:
+            feature["group_phase_progress"] = "middle_by_matches_played"
+        point_values = [
+            side_standings[side].get("points_before") for side in ("home", "away")
+        ]
+        if all(isinstance(value, int) for value in point_values):
+            points_gap = abs(point_values[0] - point_values[1])
+            feature["points_gap_band"] = (
+                "level"
+                if points_gap == 0
+                else "tight_1_to_3"
+                if points_gap <= 3
+                else "wide_4_plus"
+            )
+        else:
+            feature["points_gap_band"] = "unavailable"
+        feature["points_bound_constraint"] = (
+            "constrained_by_supported_points_bound"
+            if any(value is False for value in supported_bound_values)
+            else "no_closed_supported_points_bound"
+            if supported_bound_values
+            else "unavailable"
         )
         output.append(feature)
-    return pd.DataFrame(output)
+    frame = pd.DataFrame(output)
+    # The B4 source uses nullable Boolean objects for points-bound fields.
+    # Convert the declared numeric model contract to float/NaN so sklearn's
+    # fold-local imputer sees missing values consistently across editions.
+    for column in CONTEXT_NUMERIC_FEATURES:
+        if column in frame:
+            frame[column] = pd.to_numeric(frame[column], errors="coerce")
+    return frame
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--competition-state", required=True, type=Path)
     parser.add_argument("--coverage", required=True, type=Path)
+    parser.add_argument("--timeline", required=True, type=Path)
     parser.add_argument("--results-cache", required=True, type=Path)
     parser.add_argument("--source-main-sha", required=True)
     parser.add_argument("--competition-state-source-sha", required=True)
@@ -363,27 +662,30 @@ def main() -> int:
         raise SystemExit("--competition-state-source-pr must be positive")
     dataset = read_json(args.competition_state)
     coverage = read_json(args.coverage)
-    blockers = validate_b4_artifact(dataset, coverage)
+    timeline = read_json(args.timeline)
+    blockers = validate_b4_artifact(dataset, coverage, timeline)
     dataset_digest = canonical_digest(dataset)
     audit: dict[str, Any]
     if blockers:
         audit = {
-            "schema": "nations-league-context-ablation-audit-v1",
-            "status": "NL_CONTEXT_BLOCKED",
-            "evidence_state": "dependency_not_ready",
-            "dependency": "NL_COMPETITION_STATE_DATASET_READY",
-            "competition_state_dataset": str(args.competition_state),
+            "schema": "nations-league-safe-context-ablation-audit-v1",
+            "status": "NL_SAFE_CONTEXT_BLOCKED",
+            "evidence_state": "B4_safe_subset_integrity_validation_failed",
+            "competition_state_dataset": "results/research/nations_league_competition_state_v1.json",
             "competition_state_dataset_sha256": dataset_digest,
             "competition_state_artifact_file_sha256": file_digest(
                 args.competition_state
             ),
+            "competition_state_status": coverage.get("status"),
             "b4_coverage_digest": coverage.get("coverage_digest"),
             "b4_coverage_file_sha256": file_digest(args.coverage),
+            "b4_timeline_digest": timeline.get("dataset_digest"),
+            "b4_timeline_file_sha256": file_digest(args.timeline),
             "competition_state_source_sha": args.competition_state_source_sha.lower(),
             "competition_state_source_pr": args.competition_state_source_pr,
             "source_main_sha": args.source_main_sha,
-            "artifact_source_status": "builder4_source_artifact_not_ready",
-            "b4_readiness_validation_passed": False,
+            "artifact_source_status": "builder4_partial_or_invalid_safe_subset",
+            "b4_partial_integrity_validation_passed": False,
             "eligible_fixtures": len(dataset.get("records", [])),
             "fixtures_evaluated": 0,
             "coverage": 0.0,
@@ -395,11 +697,11 @@ def main() -> int:
             "synthetic_evidence_used": False,
             "blockers": blockers,
             "excluded_features": [
-                "empirical metrics: withheld until B4 dataset readiness and exact causal baseline join",
-                "subjective motivation: not defined or used",
-                "causal GBT/stacker: no independently verified row-level replay supplied",
+                "B4 integrity or strict result-availability validation failed",
+                "all unresolved advanced competition-state features are excluded",
+                "causal GBT: no certified row-level forecasts supplied",
             ],
-            "stacker_recommendation": "Do not include until a canonical B4 dataset is ready and the paired causal ablation is complete.",
+            "stacker_recommendation": "Do not include until the safe-subset causal ablation completes.",
             "production_hook": False,
             "activation_changed": False,
             "publication_changed": False,
@@ -412,47 +714,145 @@ def main() -> int:
     records = dataset["records"]
     if len({record["fixture_id"] for record in records}) != EXPECTED_FIXTURES:
         raise ValueError("B4 fixture identity set is not unique and complete")
+    timeline_by_id = {row["fixture_id"]: row for row in timeline["records"]}
+    administrative_records = [
+        record
+        for record in records
+        if timeline_by_id[record["fixture_id"]].get("status")
+        == "administratively_awarded"
+    ]
+    played_records = [
+        record
+        for record in records
+        if timeline_by_id[record["fixture_id"]].get("status")
+        == "completed_result_recorded"
+    ]
+    if len(played_records) + len(administrative_records) != EXPECTED_FIXTURES:
+        raise ValueError("B4 cohort contains unsupported outcome status values")
     results, baseline_source_sha = load_local_results(args.results_cache)
+    selected_results = select_historical_matches(results)
+
+    def identity(row: Any) -> tuple[str, str, str, str, str]:
+        return (
+            str(row.edition),
+            str(row.validation_period),
+            pd.Timestamp(row.date).date().isoformat(),
+            result_identity_team(row.home_team),
+            result_identity_team(row.away_team),
+        )
+
+    def b4_identity(record: dict[str, Any]) -> tuple[str, str, str, str, str]:
+        return (
+            str(record["edition"]),
+            str(record["validation_period"]),
+            str(record["fixture_date"]),
+            result_identity_team(record["home_team"]),
+            result_identity_team(record["away_team"]),
+        )
+
+    result_by_identity = {
+        identity(row): row for row in selected_results.itertuples(index=False)
+    }
+    b4_by_identity = {b4_identity(record): record for record in records}
+    if len(result_by_identity) != EXPECTED_FIXTURES or set(result_by_identity) != set(
+        b4_by_identity
+    ):
+        raise ValueError(
+            "Local historical results do not exactly match the 512 B4 fixture identities"
+        )
+    for key, record in b4_by_identity.items():
+        result = result_by_identity[key]
+        if (
+            int(result.home_score) != record["home_score"]
+            or int(result.away_score) != record["away_score"]
+            or bool(result.neutral) != record["neutral"]
+        ):
+            raise ValueError(
+                f"Local result scores or venue semantics disagree with B4 fixture {record['fixture_id']}"
+            )
+    local_result_by_fixture = {
+        record["fixture_id"]: result_by_identity[b4_identity(record)]
+        for record in records
+    }
+    administrative_result_keys = {
+        (
+            pd.Timestamp(result.date).date().isoformat(),
+            str(result.home_team),
+            str(result.away_team),
+        )
+        for result in (
+            local_result_by_fixture[record["fixture_id"]]
+            for record in administrative_records
+        )
+    }
+    results_for_model = results.loc[
+        ~results.apply(
+            lambda row: (
+                (
+                    str(pd.Timestamp(row["date"]).date()),
+                    str(row["home_team"]),
+                    str(row["away_team"]),
+                )
+                in administrative_result_keys
+                and str(row["tournament"]) == "UEFA Nations League"
+            ),
+            axis=1,
+        )
+    ].copy()
     matches = pd.DataFrame(
         [
             {
-                "date": pd.Timestamp(record["fixture_date"]),
-                "home_team": record["home_team"],
-                "away_team": record["away_team"],
-                "home_score": record["home_score"],
-                "away_score": record["away_score"],
-                "neutral": record["neutral"],
+                "date": pd.Timestamp(
+                    local_result_by_fixture[record["fixture_id"]].date
+                ),
+                "home_team": local_result_by_fixture[record["fixture_id"]].home_team,
+                "away_team": local_result_by_fixture[record["fixture_id"]].away_team,
+                "home_score": local_result_by_fixture[record["fixture_id"]].home_score,
+                "away_score": local_result_by_fixture[record["fixture_id"]].away_score,
+                "neutral": local_result_by_fixture[record["fixture_id"]].neutral,
                 "edition": record["edition"],
                 "validation_period": record["validation_period"],
             }
-            for record in records
+            for record in played_records
         ]
     )
-    baseline_predictions = predict_dc_event_walk_forward(results, matches)
+    baseline_predictions = predict_dc_event_walk_forward(results_for_model, matches)
     examples = derive_context_rows(records)
+    examples["causal_information_verified"] = True
     probability_rows = []
     expected_keys = {
         (row.date, row.home_team, row.away_team)
         for row in matches.itertuples(index=False)
     }
-    if len(expected_keys) != EXPECTED_FIXTURES or len(baseline_predictions) != len(
+    if len(expected_keys) != len(played_records) or len(baseline_predictions) != len(
         expected_keys
     ):
         raise ValueError(
-            "Causal DC baseline did not cover the exact B4 fixture set; no partial ablation is permitted"
+            "Causal DC baseline did not cover every played fixture; no partial ablation is permitted"
         )
-    prediction_by_fixture = {
-        record["fixture_id"]: baseline_predictions[
+    prediction_by_fixture: dict[str, dict[str, Any]] = {}
+    for record in played_records:
+        local_result = local_result_by_fixture[record["fixture_id"]]
+        prediction = baseline_predictions[
             (
-                pd.Timestamp(record["fixture_date"]),
-                record["home_team"],
-                record["away_team"],
+                pd.Timestamp(local_result.date),
+                local_result.home_team,
+                local_result.away_team,
             )
-        ]["probabilities"]
-        for record in records
-    }
+        ]
+        if (
+            not prediction.get("training_max_date")
+            or prediction["training_max_date"] >= record["fixture_date"]
+            or prediction.get("training_cutoff_exclusive", "") > record["fixture_date"]
+        ):
+            raise ValueError(
+                f"Causal DC forecast cutoff is not strictly before fixture {record['fixture_id']}"
+            )
+        prediction_by_fixture[record["fixture_id"]] = prediction
     for _, row in examples.iterrows():
-        baseline_probability = prediction_by_fixture[row["fixture_id"]]
+        if row["fixture_id"] not in prediction_by_fixture:
+            continue
+        baseline_probability = prediction_by_fixture[row["fixture_id"]]["probabilities"]
         probability_rows.append(
             {
                 **row.to_dict(),
@@ -464,30 +864,102 @@ def main() -> int:
     evaluation_examples = pd.DataFrame(probability_rows)
     audit = run_causal_context_ablation(
         evaluation_examples,
-        [record["fixture_id"] for record in records],
+        [record["fixture_id"] for record in played_records],
         numeric_context=CONTEXT_NUMERIC_FEATURES,
         categorical_context=CONTEXT_CATEGORICAL_FEATURES,
         provenance={
             "competition_state_dataset_sha256": dataset_digest,
-            "competition_state_artifact_path": str(args.competition_state),
+            "competition_state_artifact_path": "results/research/nations_league_competition_state_v1.json",
             "competition_state_artifact_file_sha256": file_digest(
                 args.competition_state
             ),
             "b4_coverage_digest": coverage["coverage_digest"],
             "b4_coverage_file_sha256": file_digest(args.coverage),
+            "b4_timeline_dataset_sha256": timeline["dataset_digest"],
+            "b4_timeline_artifact_file_sha256": file_digest(args.timeline),
+            "b4_timeline_artifact_path": "results/research/nations_league_fixture_timeline_v1.json",
             "competition_state_source_sha": args.competition_state_source_sha.lower(),
             "competition_state_source_pr": args.competition_state_source_pr,
             "baseline_source_sha256": baseline_source_sha,
             "baseline_method": "existing causal event-level Dixon-Coles walk-forward",
             "source_main_sha": args.source_main_sha,
+            "historical_fixture_identity_coverage": len(result_by_identity),
+            "identity_only_team_aliases": {"Turkey": "Türkiye"},
+            "identity_only_alias_matches": sum(
+                1
+                for row in selected_results.itertuples(index=False)
+                if "Turkey" in (str(row.home_team), str(row.away_team))
+            ),
+            "baseline_forecast_coverage": len(baseline_predictions),
+            "b4_artifact_status": coverage.get("status"),
         },
     )
-    audit["b4_readiness_validation_passed"] = True
-    audit["excluded_features"] = [
-        "causal GBT and stacker variants: no independently verified B1 row-level replay supplied",
-        "subjective motivation: not defined or used",
-        "exact table position where pre-match tiebreak remains unresolved: rank interval retained instead",
-    ]
+    audit["b4_partial_integrity_validation_passed"] = True
+    audit["fixture_coverage"] = {
+        "canonical_b4_identities": len(records),
+        "verified_kickoffs": sum(
+            record.get("kickoff_status") == "verified_from_fixture_timeline"
+            for record in records
+        ),
+        "exact_causal_kickoff_cutoffs": sum(
+            record.get("state_cutoff") == record.get("kickoff") for record in records
+        ),
+        "local_result_identity_matches": len(result_by_identity),
+        "played_fixtures_in_primary_evaluation": len(played_records),
+        "administratively_decided_outcomes_excluded": len(administrative_records),
+        "administratively_decided_fixture_ids_excluded": sorted(
+            record["fixture_id"] for record in administrative_records
+        ),
+        "raw_causal_baseline_forecasts": len(baseline_predictions),
+        "context_available_fixtures": int(
+            examples.loc[
+                examples["fixture_id"].isin(
+                    [record["fixture_id"] for record in played_records]
+                ),
+                ["home_points_before", "away_points_before"],
+            ]
+            .notna()
+            .all(axis=1)
+            .sum()
+        ),
+        "edition_counts_source": dict(
+            sorted(Counter(r["edition"] for r in records).items())
+        ),
+        "edition_counts_evaluated": dict(
+            sorted(Counter(r["edition"] for r in played_records).items())
+        ),
+    }
+    audit["included_features"] = {
+        "numeric": list(CONTEXT_NUMERIC_FEATURES),
+        "categorical": list(CONTEXT_CATEGORICAL_FEATURES),
+    }
+    audit["excluded_features"] = {
+        "inferred_matchday": "not present in #215 timeline evidence; never inferred",
+        "official_uefa_fixture_ids": "unavailable and not a predictive feature",
+        "article_15_tiebreak_outputs": "unresolved or missing source inputs",
+        "disciplinary_and_access_list_tiebreaks": "no source data in the B4 artifact",
+        "c_league_relegation_allocation": "edition-specific allocation unresolved",
+        "exact_must_win_and_qualification_labels": "not proven by the partial points-bound artifact",
+        "subjective_motivation": "not defined or used",
+        "causal_gbt": "no certified row-level causal GBT forecast artifact supplied on current main or #216",
+    }
+    audit["causal_gbt_comparison"] = "not_run_no_certified_row_level_forecasts"
+    audit["outcome_label_policy"] = {
+        "primary_evaluation": "played/completed-result fixtures only",
+        "administrative_outcomes": "excluded from scoring and DC training because no played-match result-safe timestamp exists",
+        "excluded_fixture_ids": sorted(
+            record["fixture_id"] for record in administrative_records
+        ),
+    }
+    audit["stacker_recommendation"] = (
+        "Safe context may enter a later research-only stacker test; this ablation is not production evidence."
+        if audit["status"] == "NL_SAFE_CONTEXT_GAIN"
+        else "Do not include as a stacker candidate based on this result; no supported safe-context gain was established."
+    )
+    audit["production_hook"] = False
+    audit["activation_changed"] = False
+    audit["publication_changed"] = False
+    audit["betting_or_ledger_changed"] = False
     _write_report(audit, args.output_json, args.output_markdown)
     print(
         json.dumps(

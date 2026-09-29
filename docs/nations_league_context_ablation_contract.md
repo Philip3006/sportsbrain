@@ -1,95 +1,99 @@
-# Nations League Competition-Context Ablation Contract
+# UEFA Nations League Safe Competition-Context Ablation
 
-Status: prepared; empirical evaluation is blocked until the canonical Builder 4
-`NL_COMPETITION_STATE_DATASET_READY` artifact and row-level causal baseline
-predictions are available. No synthetic fixture or score is admissible as
-evaluation evidence.
+Status: research-only. The runner accepts Builder 4's `NL_COMPETITION_STATE_PARTIAL`
+artifact when the safe 512-fixture timeline, kickoff, point-in-time standings,
+and artifact-integrity checks pass. Missing advanced rules do not block this
+strictly limited context subset. No synthetic fixture or prediction is admissible
+as empirical evidence.
 
-## Frozen cohort and provenance
+## Frozen source and causality contract
 
-- Consume the versioned Builder 4 dataset as the sole source for historical
-  league/group/rule/competition-state fields.
-- Verify its schema, complete 512-fixture identity set, unique fixture IDs,
-  source and record digests, and each `state_cutoff < kickoff` before joining.
-- Join predictions and outcomes by exact canonical fixture identity. Reject
-  missing, extra, or duplicate fixtures; do not silently shrink the shared
-  historical cohort.
-- Retain each B4 `record_digest`; reject absent digests, duplicate fixture
-  identities, and any `state_cutoff >= kickoff`.
-- Bind every audit to the exact B4 source commit (and PR number when the
-  artifact is branch-scoped), alongside the canonical dataset and coverage
-  digests. A user-reported READY marker is not a substitute for passing the
-  file-level readiness and identity checks.
-- Generate the primary causal baseline from the existing offline Nations
-  League walk-forward implementation and an explicitly supplied local results
-  cache. No network fetch is permitted. Preserve its source digest and strict
-  cutoff audit. Builder 1 causal GBT predictions are an optional, separate
-  second comparison and are read-only.
+- Bind the canonical B4 competition-state dataset, coverage audit, fixture
+  timeline, and exact source commit/PR. Validate canonical dataset, coverage,
+  timeline, and per-record digests; require 512 unique `uefa-nl:` identities,
+  512 verified kickoff times, and 512 exact kickoff cutoffs.
+- The B4 `state_cutoff` is the target kickoff instant. It is an exclusive
+  information boundary: every prior result used in a table must independently
+  join to the exact B4 timeline, have `result_safe_available_at < kickoff`, and
+  reproduce the stored points, matches, and goal totals. Equal-time, same-day
+  unsafe, later, and unresolved administrative results are not used in standings.
+- Verify all B4 canonical IDs against the exact fixture timeline. Join the
+  local results cache to the B4 cohort by edition, validation period, date,
+  home team, and away team; verify scores and the actual neutral flag. Never
+  refresh or fetch this cache during evaluation.
+- Two B4 records in the current #215 artifact are administratively decided and
+  have no played-match result-safe timestamp. Keep both in source-identity and
+  provenance accounting, but exclude them from primary scoring and from the DC
+  training cache. Report their exact IDs; do not present an award score as a
+  played-match prediction target.
+- The primary baseline is the existing offline event-level Dixon-Coles
+  walk-forward forecast. Each edition/block fit uses competitive results dated
+  strictly before that block's first target date. Verify every forecast's
+  training maximum date and cutoff against its target fixture.
+- The context head uses expanding-window OOS rows; both variants share the same
+  historical rows and kickoff folds. Same-kickoff fixtures cannot train one
+  another. Scaling, missing-value handling, categories, and model fitting occur
+  inside each training fold. Warm-up exclusions remain explicit.
+- A certified causal GBT comparison is optional only when current main or an
+  independently supplied artifact contains complete, identity-bound causal
+  row-level forecasts. Do not substitute a frozen/leaky diagnostic replay.
 
-## Feature contract
+## Included safe context
 
-Each pre-match row contains `league_tier`, `group`, `matchday`, home/away
-matches played, points, goal difference, home-minus-away points difference,
-remaining group matches, and points to qualification/relegation boundaries.
-The default model input is explicitly enumerated in
-`CONTEXT_NUMERIC_FEATURES` and `CONTEXT_CATEGORICAL_FEATURES`; it includes the
-rank interval rather than an invented exact rank, math-consequence flags, and
-`league_tier`/`group`. Unavailable values are imputed inside each training fold
-with a separate missingness indicator; no validation-fold statistics are used.
-Derived flags cover mathematically qualified/eliminated, promoted, and
-relegated; whether a win is required, a draw is sufficient, or a loss
-eliminates the explicitly declared competition-defined goal; and whether a
-fixture is mathematically consequential because possible qualification,
-promotion, or relegation-safety status changes by target result. They are
-computed from the complete edition-specific group schedule, explicit rules,
-and strictly pre-kickoff results. Points-only scenario enumeration treats ties
-optimistically for possibility and conservatively for clinched states; it does
-not simulate unmodeled future goal differences. Unresolved table ties keep a
-rank range/unknown; an exact position is never invented. Subjective motivation
-and unsupported near-must-win labels are excluded. No B5 production or
-signal-detector hook is allowed.
+Only the following B4-derived or directly computed pre-kickoff fields may enter
+the context model:
 
-## Paired causal evaluation
+- League tier and group from the canonical fixture mapping.
+- Home/away points and matches played; points difference.
+- Goals for, goals against, and goal difference before kickoff.
+- Points per game when at least one prior match exists.
+- Remaining group matches from the score-free official timeline.
+- Points-only unique rank where proven; unresolved points ties remain missing
+  for rank bounds and are represented only by an explicit points-tie indicator.
+- Promotion/relegation *possibility bounds* only when that participant field is
+  explicitly marked `points_bounds_only_tiebreaks_preserved_as_unresolved`.
+  These are not exact outcome labels. Unsupported or inapplicable bounds remain
+  missing and receive fold-fitted missingness indicators.
 
-- For each baseline (primary existing causal DC; optional causal GBT), compare
-  a baseline-only expanding-window multinomial head with an otherwise identical
-  head that additionally sees the point-in-time competition context.
-- Report raw causal baseline forecast metrics separately from the paired
-  baseline-only head used for the primary ablation comparison.
-- For prediction timestamp `t`, training data is strictly earlier than `t`;
-  all fixtures at the same kickoff timestamp share one fold and cannot train
-  one another. Context fitting, encoding, and scaling are fit inside that fold.
-- Only exact shared out-of-sample rows enter either side. Report warm-up and
-  prediction coverage against all 512 target fixtures.
-- Primary scores: multiclass Brier, multiclass log loss, 10-bin macro
-  one-vs-rest ECE, home/draw/away calibration, coverage, and mean maximum
-  probability (sharpness).
-- Paired differences are context minus baseline. Confidence intervals use a
-  seeded paired bootstrap that resamples match dates within historical edition.
-- Strata: early/late group stage; mathematically consequential vs low
-  constraint; League A/B/C/D (reported as insufficient below 20 fixtures); and
-  observed home/draw/away outcome. Strata are descriptive, never substitutes
-  for the full-cohort primary result.
+The runner explicitly excludes inferred matchday, official UEFA fixture IDs as
+predictors, Article-15 and other unresolved tie-breaks, disciplinary/access-list
+rules without source data, unresolved C-League allocation, exact
+qualification/promotion/relegation labels not proven by the artifact, exact
+must-win/draw-sufficient/loss-eliminates labels, and subjective motivation.
+These exclusions do not prevent the safe-subset ablation.
 
-## Predeclared interpretation thresholds
+## Predeclared descriptive strata
 
-- Minimum 100 paired out-of-sample fixtures and at least 80% coverage, otherwise
-  `NL_CONTEXT_BLOCKED`.
-- A material regression guard is +0.01 multiclass log loss, +0.02 ECE, or +0.03
-  absolute calibration gap in any outcome class.
-- `NL_CONTEXT_UPLIFT_SUPPORTED` requires lower Brier, a date-cluster 95% CI
-  entirely below zero, no calibration/log-loss regression, and the full-cohort
-  direction to survive removal of below-20-count categories.
-- A lower Brier point estimate that passes the regression guards but lacks
-  confidence-interval support and survives small-stratum sensitivity is
-  `NL_CONTEXT_PROMISING_NOT_CONFIRMED`. A gain that disappears when a
-  below-20-count category is removed is not a global uplift candidate and is
-  classified `NL_CONTEXT_NO_GAIN`.
-- Non-improvement is `NL_CONTEXT_NO_GAIN`; material scoring/calibration
-  regression is `NL_CONTEXT_REGRESSION`.
+- Group phase: `early_by_matches_played` when both sides have at most two prior
+  matches; `late_by_matches_played` when both have at least four; otherwise
+  `middle_by_matches_played`. This is not an inferred UEFA matchday.
+- Points gap: `level` (0), `tight_1_to_3` (1–3), or `wide_4_plus` (4+).
+- Points-bound constraint: a supported points-bound path is closed for at least
+  one fixture participant, no supported bound path is closed, or unavailable.
+- League tier, edition, and observed home/draw/away outcome.
 
-The thresholds are research decision rules, not production or activation
-criteria. Every generated audit and Markdown report will state the exact B4
-artifact SHA-256, B4 source commit/PR, baseline source digest, cohort match
-count, and exclusions. The CLI requires `--competition-state-source-sha` and
-accepts `--competition-state-source-pr` for this provenance binding.
+Strata with fewer than 20 OOS rows are marked insufficient. They are descriptive
+and cannot substitute for the full paired cohort or support a global uplift.
+
+## Metrics and interpretation
+
+Report on identical paired OOS rows: multiclass Brier, multiclass log loss,
+10-bin macro one-vs-rest ECE, home/draw/away calibration, coverage, mean maximum
+probability (sharpness), and secondary argmax accuracy. Context-minus-baseline
+paired date-cluster bootstrap intervals are stratified within edition (95% CI).
+
+`NL_SAFE_CONTEXT_GAIN` requires a lower Brier point estimate, a paired Brier
+95% interval entirely below zero, no material log-loss/ECE/class-calibration
+regression, sufficient full-cohort coverage, and no gain confined to small
+strata. Inconclusive or non-improving Brier is
+`NL_SAFE_CONTEXT_NO_CLEAR_GAIN`; material scoring/calibration regression is
+`NL_SAFE_CONTEXT_REGRESSION`; failed data, causal, or coverage gates are
+`NL_SAFE_CONTEXT_BLOCKED`.
+
+Artifacts are written to `results/audits/nations_league_context_ablation_v1.json`
+and `.md`. The JSON binds B4 dataset/coverage/timeline digests, exact B4 source
+commit/PR, local result-cache SHA-256, current main SHA, evaluated IDs, warm-up
+IDs, excluded administrative IDs, feature contract, and paired predictions'
+provenance. The only possible recommendation is research-only inclusion in a
+later stacker test. No production, signal detector, activation, publication,
+betting, scheduler, or ledger path is changed.
