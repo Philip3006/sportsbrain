@@ -22,6 +22,14 @@ tie-break-dependent states, C-league allocation states, and must-win outcome
 primitives remain explicitly unresolved. Final tables are never copied back
 into historical states.
 
+Every record carries a digest-bound `field_status` map with only
+`SAFE_EXACT`, `SAFE_BOUND`, `UNRESOLVED`, or `NOT_APPLICABLE`. Downstream
+consumers may select only `SAFE_EXACT` and `SAFE_BOUND`; an unresolved value is
+never interpreted as a negative, positive, or default sporting state. For
+example, points-bound participant states are `SAFE_BOUND`, while a tied rank
+that cannot be resolved under the frozen evidence is not promoted to
+`SAFE_EXACT`. The coverage audit publishes counts for each field/status pair.
+
 The edition contract includes group membership and distinct edition formats.
 The 2022/23 B2 Russia exception is represented as an ineligible participant
 automatically ranked fourth/relegated. The two March 2024 Lithuania–Gibraltar
@@ -67,6 +75,13 @@ the pinned source or contracts only with a corresponding documented provenance
 update. The loader recomputes both dataset and coverage digests and rejects
 attempts to fill unsupported official IDs, kickoff times, or matchdays without
 changing the pinned evidence.
+
+The readiness marker remains `NL_COMPETITION_STATE_PARTIAL`: timeline joins and
+causal kickoffs are complete, but official matchday labels, the 2022/23 Article
+15 source freeze, missing disciplinary/access-list inputs, and edition-specific
+C allocation evidence still prevent a full exact-state claim. These are
+explicit blockers in the coverage audit rather than inferred values. The
+timeline marker remains independently `NL_FIXTURE_TIMELINE_READY`.
 
 ## Edition rule summary
 

@@ -1,13 +1,264 @@
 {
   "built_at": "2026-09-29T16:00:59Z",
-  "coverage_digest": "11f415e9f1964c3d034055bb62f49e0e78b46ebdc3bb9e09745a545ede441333",
-  "dataset_digest": "354d5c542f0646bf0914b17a1361f4d5723db2b1f117f6d6375a8579c44b7edf",
+  "coverage_digest": "eb7204851218dd47d0d836eb08d6afd88d8134b13a371f895c7ecd11393ef2d9",
+  "dataset_digest": "8af104e37c82a09ffbfaf30a4e34390960fa2241a6df9c7d3648233aee3d5292",
   "edition_rule_coverage": {
     "2020/21": "partially_source_verified",
     "2022/23": "partially_source_verified",
     "2024/25": "partially_source_verified"
   },
   "expected_evaluation_fixture_count": 512,
+  "field_status_contract": {
+    "consumer_rule": "B5 may select only SAFE_EXACT or SAFE_BOUND fields; UNRESOLVED and NOT_APPLICABLE are never interpreted as sporting outcomes.",
+    "values": [
+      "NOT_APPLICABLE",
+      "SAFE_BOUND",
+      "SAFE_EXACT",
+      "UNRESOLVED"
+    ]
+  },
+  "field_status_counts": {
+    "away_group": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "away_league_tier": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "away_score": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "away_team": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "competition": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "edition": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "edition_rule_digest": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "fixture_date": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "fixture_id": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "group": {
+      "NOT_APPLICABLE": 38,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 474,
+      "UNRESOLVED": 0
+    },
+    "home_group": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "home_league_tier": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "home_score": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "home_team": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "kickoff": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "kickoff_status": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "league_tier": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "matchday": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 0,
+      "UNRESOLVED": 512
+    },
+    "matchday_status": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 0,
+      "UNRESOLVED": 512
+    },
+    "must_win_primitives": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 0,
+      "UNRESOLVED": 512
+    },
+    "neutral": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "official_fixture_id": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 0,
+      "UNRESOLVED": 512
+    },
+    "promotion_state": {
+      "NOT_APPLICABLE": 182,
+      "SAFE_BOUND": 330,
+      "SAFE_EXACT": 0,
+      "UNRESOLVED": 0
+    },
+    "qualification_state": {
+      "NOT_APPLICABLE": 38,
+      "SAFE_BOUND": 474,
+      "SAFE_EXACT": 0,
+      "UNRESOLVED": 0
+    },
+    "rank": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 319,
+      "SAFE_EXACT": 193,
+      "UNRESOLVED": 0
+    },
+    "relegation_state": {
+      "NOT_APPLICABLE": 86,
+      "SAFE_BOUND": 282,
+      "SAFE_EXACT": 0,
+      "UNRESOLVED": 144
+    },
+    "remaining_schedule": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "result_safe_available_at": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 510,
+      "UNRESOLVED": 2
+    },
+    "rule_provenance": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 512,
+      "SAFE_EXACT": 0,
+      "UNRESOLVED": 0
+    },
+    "rule_version": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "source_digest": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "source_fixture_identity_status": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 512,
+      "SAFE_EXACT": 0,
+      "UNRESOLVED": 0
+    },
+    "stage": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "standings_before": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "state_cutoff": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "state_cutoff_basis": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "timeline_dataset_digest": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "timeline_provenance": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "timeline_record_digest": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "validation_period": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    }
+  },
   "fields": {
     "canonical_participants": {
       "missing": 0,

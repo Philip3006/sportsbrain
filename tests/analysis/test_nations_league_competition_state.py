@@ -138,6 +138,66 @@ def test_published_json_reload_and_record_digests_validate():
     )
 
 
+def test_field_status_contract_is_explicit_and_b5_safe():
+    dataset, coverage = load_and_validate(DEFAULT_DATASET, DEFAULT_COVERAGE)
+    assert coverage["field_status_contract"]["values"] == [
+        "NOT_APPLICABLE",
+        "SAFE_BOUND",
+        "SAFE_EXACT",
+        "UNRESOLVED",
+    ]
+    safe = {"SAFE_EXACT", "SAFE_BOUND"}
+    for record in dataset["records"]:
+        statuses = record["field_status"]
+        assert statuses["fixture_id"] == "SAFE_EXACT"
+        assert statuses["official_fixture_id"] == "UNRESOLVED"
+        assert statuses["kickoff"] == "SAFE_EXACT"
+        assert statuses["state_cutoff"] == "SAFE_EXACT"
+        assert statuses["standings_before"] in safe
+        assert statuses["must_win_primitives"] == "UNRESOLVED"
+        if statuses["rank"] == "SAFE_EXACT":
+            assert all(
+                row["rank_status"] != "unresolved_points_tie"
+                for table in record["standings_before"]
+                for row in table["standing_rows"]
+            )
+
+
+def test_admin_result_safe_exceptions_are_unresolved_not_negative_states():
+    dataset, _ = load_and_validate(DEFAULT_DATASET, DEFAULT_COVERAGE)
+    admin = [
+        record
+        for record in dataset["records"]
+        if record["result_safe_available_at"] is None
+    ]
+    assert len(admin) == 2
+    assert all(
+        record["field_status"]["result_safe_available_at"] == "UNRESOLVED"
+        for record in admin
+    )
+    assert all(
+        record["qualification_state"]["status"].startswith("points_bounds")
+        for record in admin
+        if record["qualification_state"]["participants"]
+    )
+
+
+def test_points_bound_state_never_exposes_unresolved_rank_as_exact():
+    dataset, _ = load_and_validate(DEFAULT_DATASET, DEFAULT_COVERAGE)
+    unresolved = [
+        record
+        for record in dataset["records"]
+        if record["field_status"]["rank"] == "SAFE_BOUND"
+    ]
+    assert unresolved
+    assert any(
+        row["rank_status"] == "unresolved_points_tie"
+        for record in unresolved
+        for table in record["standings_before"]
+        for row in table["standing_rows"]
+    )
+
+
 def test_timeline_join_rejects_a_different_historical_source():
     source, contracts = _json(DEFAULT_SOURCE), _json(DEFAULT_CONTRACTS)
     timeline = _json(Path("results/research/nations_league_fixture_timeline_v1.json"))

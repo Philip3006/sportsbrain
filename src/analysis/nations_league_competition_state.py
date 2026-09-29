@@ -28,6 +28,12 @@ DEFAULT_TIMELINE_COVERAGE = (
 )
 DATASET_SCHEMA = "uefa-nations-league-causal-competition-state-v1"
 NORMALIZATION_VERSION = "sportsbrain-nl-team-aliases-v1"
+FIELD_STATUS_VALUES = {
+    "SAFE_EXACT",
+    "SAFE_BOUND",
+    "UNRESOLVED",
+    "NOT_APPLICABLE",
+}
 
 ALIASES = {
     "bosnia-herzegovina": "Bosnia and Herzegovina",
@@ -525,6 +531,110 @@ def _points_bound_state(
     }
 
 
+def _field_statuses(
+    *,
+    stage: str,
+    group: str | None,
+    kickoff: str | None,
+    result_safe_available_at: str | None,
+    timeline_record: dict[str, Any] | None,
+    standings: list[dict[str, Any]],
+    participant_states: dict[str, Any],
+    home_tier: str,
+    away_tier: str,
+) -> dict[str, str]:
+    """Classify every published state field for downstream safe selection.
+
+    ``SAFE_BOUND`` means the value is a mathematically safe bound or interval,
+    never an exact rank or qualification decision.  Consumers must not treat
+    ``UNRESOLVED`` as a negative or positive sporting state.
+    """
+    rank_statuses = [
+        row.get("rank_status")
+        for table in standings
+        for row in table.get("standing_rows", [])
+    ]
+    rank_status = (
+        "SAFE_EXACT"
+        if rank_statuses
+        and all(
+            value in {"points_order_unique", "fixed_by_uefa_nonparticipation_decision"}
+            for value in rank_statuses
+        )
+        else "SAFE_BOUND"
+        if rank_statuses
+        else "UNRESOLVED"
+    )
+    if group is None:
+        qualification_status = "NOT_APPLICABLE"
+        promotion_status = "NOT_APPLICABLE"
+        relegation_status = "NOT_APPLICABLE"
+    else:
+        qualification_status = "SAFE_BOUND" if participant_states else "UNRESOLVED"
+        if home_tier in {"B", "C", "D"} or away_tier in {"B", "C", "D"}:
+            promotion_status = "SAFE_BOUND" if participant_states else "UNRESOLVED"
+        else:
+            promotion_status = "NOT_APPLICABLE"
+        if home_tier == "C" or away_tier == "C":
+            relegation_status = "UNRESOLVED"
+        elif home_tier in {"A", "B"} or away_tier in {"A", "B"}:
+            relegation_status = "SAFE_BOUND" if participant_states else "UNRESOLVED"
+        else:
+            relegation_status = "NOT_APPLICABLE"
+    return {
+        "fixture_id": "SAFE_EXACT",
+        "competition": "SAFE_EXACT",
+        "edition": "SAFE_EXACT",
+        "validation_period": "SAFE_EXACT",
+        "stage": "SAFE_EXACT",
+        "league_tier": "SAFE_EXACT"
+        if stage != "unclassified_non_group_fixture"
+        else "UNRESOLVED",
+        "group": "SAFE_EXACT" if group is not None else "NOT_APPLICABLE",
+        "home_team": "SAFE_EXACT",
+        "away_team": "SAFE_EXACT",
+        "home_league_tier": "SAFE_EXACT",
+        "away_league_tier": "SAFE_EXACT",
+        "home_group": "SAFE_EXACT",
+        "away_group": "SAFE_EXACT",
+        "official_fixture_id": "UNRESOLVED",
+        "fixture_date": "SAFE_EXACT",
+        "kickoff": "SAFE_EXACT" if kickoff else "UNRESOLVED",
+        "matchday": "SAFE_EXACT"
+        if timeline_record and timeline_record.get("matchday") is not None
+        else "UNRESOLVED",
+        "result_safe_available_at": (
+            "SAFE_EXACT" if result_safe_available_at else "UNRESOLVED"
+        ),
+        "home_score": "SAFE_EXACT",
+        "away_score": "SAFE_EXACT",
+        "neutral": "SAFE_EXACT",
+        "state_cutoff": "SAFE_EXACT" if kickoff else "UNRESOLVED",
+        "state_cutoff_basis": "SAFE_EXACT" if kickoff else "UNRESOLVED",
+        "standings_before": "SAFE_EXACT" if standings else "UNRESOLVED",
+        "rank": rank_status,
+        "remaining_schedule": "SAFE_EXACT" if timeline_record else "UNRESOLVED",
+        "qualification_state": qualification_status,
+        "promotion_state": promotion_status,
+        "relegation_state": relegation_status,
+        "must_win_primitives": "UNRESOLVED",
+        "timeline_provenance": "SAFE_EXACT" if timeline_record else "UNRESOLVED",
+        "rule_provenance": "SAFE_BOUND",
+        "rule_version": "SAFE_EXACT",
+        "edition_rule_digest": "SAFE_EXACT",
+        "source_digest": "SAFE_EXACT",
+        "source_fixture_identity_status": "SAFE_BOUND",
+        "kickoff_status": "SAFE_EXACT" if kickoff else "UNRESOLVED",
+        "matchday_status": (
+            "SAFE_EXACT"
+            if timeline_record and timeline_record.get("matchday") is not None
+            else "UNRESOLVED"
+        ),
+        "timeline_record_digest": "SAFE_EXACT" if timeline_record else "UNRESOLVED",
+        "timeline_dataset_digest": "SAFE_EXACT" if timeline_record else "UNRESOLVED",
+    }
+
+
 def build_dataset(
     source: dict[str, Any],
     contracts: dict[str, Any],
@@ -751,6 +861,21 @@ def build_dataset(
             if timeline_record
             else None,
             "timeline_dataset_digest": timeline.get("dataset_digest"),
+            "field_status": _field_statuses(
+                stage=stage,
+                group=group,
+                kickoff=kickoff,
+                result_safe_available_at=(
+                    timeline_record.get("result_safe_available_at")
+                    if timeline_record
+                    else None
+                ),
+                timeline_record=timeline_record,
+                standings=standings,
+                participant_states=participant_states,
+                home_tier=home_tier,
+                away_tier=away_tier,
+            ),
             "record_digest": None,
         }
         payload = {
@@ -777,6 +902,10 @@ def build_dataset(
             "matchday_complete": all(r["matchday"] is not None for r in records),
             "exact_rule_and_tiebreak_state_complete": False,
             "status": "PARTIAL",
+        },
+        "field_status_contract": {
+            "values": sorted(FIELD_STATUS_VALUES),
+            "consumer_rule": "B5 may select only SAFE_EXACT or SAFE_BOUND fields; UNRESOLVED and NOT_APPLICABLE are never interpreted as sporting outcomes.",
         },
         "built_at": built_at,
         "expected_evaluation_fixture_count": 512,
@@ -841,6 +970,17 @@ def build_dataset(
                 "unresolved": len(records),
                 "status": "points_bounds_available; exact edition tie-break and allocation states remain unresolved",
             },
+        },
+        "field_status_counts": {
+            field: {
+                status: sum(
+                    record["field_status"].get(field) == status for record in records
+                )
+                for status in sorted(FIELD_STATUS_VALUES)
+            }
+            for field in sorted(
+                {field for record in records for field in record["field_status"]}
+            )
         },
         "unresolved_points_tie_rows": unresolved_points_ties,
         "leakage_checks": {
@@ -908,6 +1048,30 @@ def validate_dataset(
         if not fixture_id or fixture_id in fixture_ids:
             raise ValueError("Missing or duplicate canonical fixture ID")
         fixture_ids.add(fixture_id)
+        field_status = record.get("field_status")
+        if not isinstance(field_status, dict) or not field_status:
+            raise ValueError("Record is missing field status contract")
+        if any(status not in FIELD_STATUS_VALUES for status in field_status.values()):
+            raise ValueError("Record contains an unsupported field status")
+        missing_statuses = (
+            set(record) - {"record_digest", "field_status"} - set(field_status)
+        )
+        if missing_statuses:
+            raise ValueError(
+                f"Record fields missing evidence status: {sorted(missing_statuses)}"
+            )
+        if field_status.get("fixture_id") != "SAFE_EXACT":
+            raise ValueError("Canonical fixture identity must be exact")
+        if field_status.get("official_fixture_id") != "UNRESOLVED":
+            raise ValueError("Unsupported official fixture IDs must remain unresolved")
+        if field_status.get("rank") == "SAFE_EXACT":
+            rows = [
+                row
+                for table in record["standings_before"]
+                for row in table["standing_rows"]
+            ]
+            if any(row["rank_status"] == "unresolved_points_tie" for row in rows):
+                raise ValueError("Unresolved rank cannot be marked exact")
         if record.get("kickoff") is not None:
             kickoff = _parse_utc(record["kickoff"])
             if record.get("state_cutoff") != record["kickoff"]:
