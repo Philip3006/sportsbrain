@@ -416,9 +416,7 @@ class Top5OneShotProductionRuntime:
         self.clock = clock
         self.credential_loader = credential_loader
         self.budget_available = budget_available or (
-            lambda now: provider_budget.is_provider_available(
-                "the_odds_api", allow_quota_revalidation=False, now=now
-            )
+            lambda now: provider_budget.is_top5_provider_available(now=now)
         )
         self.budget_success = budget_success or self._record_budget_success
         self.budget_failure = budget_failure or self._record_budget_failure

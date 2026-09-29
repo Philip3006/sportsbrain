@@ -52,6 +52,7 @@ from src.football.top5_signal_lifecycle_public_adapter import (
     Top5SignalLifecyclePublicAdapterError,
     project_top5_signal_lifecycles,
 )
+from src.signals import provider_budget
 from tests.football.test_top5_activation_authorization import (
     NOW,
     SIGNER_ID,
@@ -1129,6 +1130,25 @@ def test_provider_budget_block_refuses_before_credential_and_transport(tmp_path)
         )
     assert transport.calls == []
     assert credential_calls == []
+
+
+def test_one_shot_default_budget_gate_uses_fresh_quota_contract(tmp_path, monkeypatch):
+    observed = []
+
+    def strict_budget_gate(*, now):
+        observed.append(now)
+        return False
+
+    monkeypatch.setattr(
+        provider_budget, "is_top5_provider_available", strict_budget_gate
+    )
+    runtime = Top5OneShotProductionRuntime(
+        route_store=DurableTop5ProductionRouteStateStore(tmp_path / "route.json"),
+        lifecycle_set_store=MemoryLifecycleSetStore(),
+    )
+
+    assert runtime.budget_available(NOW) is False
+    assert observed == [NOW]
 
 
 @pytest.mark.parametrize(

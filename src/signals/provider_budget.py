@@ -9,6 +9,7 @@ held until an explicit, provider-appropriate next-month boundary. A legacy usage
 file without freshness/reset evidence remains fail-closed and never receives a
 speculative automatic probe.
 """
+
 from __future__ import annotations
 
 import json
@@ -27,6 +28,15 @@ _API_USAGE_PATH: Path | None = None
 AUTH_REVALIDATION_SCHEMA_VERSION = "the-odds-api-auth-revalidation-v1"
 AUTH_REVALIDATION_PROVIDER = "the_odds_api"
 AUTH_FAILURE_CODES = frozenset({401, 403})
+TOP5_QUOTA_EVIDENCE_MAX_AGE_SECONDS = 900
+ODDS_API_QUOTA_EVIDENCE_SCHEMA_VERSION = "the-odds-api-quota-evidence-v1"
+ODDS_API_QUOTA_EVIDENCE_PROVIDER = "the_odds_api"
+ODDS_API_QUOTA_EVIDENCE_SOURCES = frozenset(
+    {
+        "the_odds_api_response_headers",
+        "the_odds_api_auth_revalidation_response_headers",
+    }
+)
 
 
 def _api_usage_path() -> Path:
@@ -71,6 +81,13 @@ def _parse_timestamp(value: object) -> datetime | None:
     return parsed.astimezone(timezone.utc)
 
 
+def _monthly_reset_boundary(observed_at: datetime) -> datetime:
+    reset_at = observed_at.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    if reset_at.month == 12:
+        return reset_at.replace(year=reset_at.year + 1, month=1)
+    return reset_at.replace(month=reset_at.month + 1)
+
+
 def _load_api_usage() -> dict[str, object] | None:
     path = _api_usage_path()
     if not path.exists():
@@ -104,16 +121,14 @@ def persist_odds_api_quota_usage(
         or requests_remaining < 0
     ):
         raise ValueError("requests_remaining must be a non-negative integer")
-    if not isinstance(source, str) or not source.strip():
-        raise ValueError("quota evidence source is required")
+    if not isinstance(source, str) or source not in ODDS_API_QUOTA_EVIDENCE_SOURCES:
+        raise ValueError("quota evidence source is not canonical for The Odds API")
 
     observed = (observed_at or datetime.now(timezone.utc)).astimezone(timezone.utc)
-    reset_at = observed.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    if reset_at.month == 12:
-        reset_at = reset_at.replace(year=reset_at.year + 1, month=1)
-    else:
-        reset_at = reset_at.replace(month=reset_at.month + 1)
+    reset_at = _monthly_reset_boundary(observed)
     usage: dict[str, object] = {
+        "schema_version": ODDS_API_QUOTA_EVIDENCE_SCHEMA_VERSION,
+        "provider": ODDS_API_QUOTA_EVIDENCE_PROVIDER,
         "requests_used": requests_used,
         "requests_remaining": requests_remaining,
         "observed_at": observed.isoformat(),
@@ -143,7 +158,14 @@ def odds_api_quota_state() -> dict[str, object] | None:
         return None
     result: dict[str, object] = {}
     for key in (
-        "requests_used", "requests_remaining", "observed_at", "reset_at", "state", "source"
+        "schema_version",
+        "provider",
+        "requests_used",
+        "requests_remaining",
+        "observed_at",
+        "reset_at",
+        "state",
+        "source",
     ):
         if key in usage:
             result[key] = usage[key]
@@ -196,8 +218,7 @@ def is_provider_available(
     """Return False if the provider circuit is open or not authorized to revalidate."""
     current = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
     reset_eligible = (
-        name == "the_odds_api"
-        and the_odds_api_quota_revalidation_eligible(now=current)
+        name == "the_odds_api" and the_odds_api_quota_revalidation_eligible(now=current)
     )
     if reset_eligible and not allow_quota_revalidation:
         usage = _load_api_usage() or {}
@@ -246,6 +267,53 @@ def is_provider_available(
     return False
 
 
+def is_top5_provider_available(*, now: datetime | None = None) -> bool:
+    """Require current canonical quota evidence before a Top-5 one-shot.
+
+    The general provider gate retains its existing callers' behavior. The
+    launch-specific one-shot additionally requires a positive, well-formed
+    quota observation no older than the odds freshness ceiling. This prevents
+    an elapsed circuit reset from making a legacy positive counter look fresh.
+    It never performs an authentication or quota probe.
+    """
+
+    current = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
+    usage = _load_api_usage()
+    if usage is None:
+        return False
+
+    used = usage.get("requests_used")
+    remaining = usage.get("requests_remaining")
+    observed_at = _parse_timestamp(usage.get("observed_at"))
+    reset_at = _parse_timestamp(usage.get("reset_at"))
+    source = usage.get("source")
+    if (
+        usage.get("schema_version") != ODDS_API_QUOTA_EVIDENCE_SCHEMA_VERSION
+        or usage.get("provider") != ODDS_API_QUOTA_EVIDENCE_PROVIDER
+        or isinstance(used, bool)
+        or not isinstance(used, int)
+        or used < 0
+        or isinstance(remaining, bool)
+        or not isinstance(remaining, int)
+        or remaining <= 0
+        or observed_at is None
+        or reset_at is None
+        or not isinstance(source, str)
+        or source not in ODDS_API_QUOTA_EVIDENCE_SOURCES
+        or usage.get("state") != "AVAILABLE"
+        or observed_at > current
+        or (current - observed_at).total_seconds() > TOP5_QUOTA_EVIDENCE_MAX_AGE_SECONDS
+        or reset_at <= observed_at
+        or reset_at <= current
+        or reset_at != _monthly_reset_boundary(observed_at)
+    ):
+        return False
+
+    return is_provider_available(
+        "the_odds_api", allow_quota_revalidation=False, now=current
+    )
+
+
 def _open_circuit(
     name: str,
     *,
@@ -263,15 +331,17 @@ def _open_circuit(
         reset_at = datetime.now(timezone.utc).replace(
             hour=0, minute=0, second=0, microsecond=0
         ) + timedelta(days=1)
-    entry.update({
-        "circuit_open": True,
-        "last_error_ts": now_str,
-        "last_error_code": error_code,
-        "fallback_reason": reason,
-        "circuit_reset_at": reset_at.strftime("%Y-%m-%dT%H:%M:%SZ")
-        if reset_at is not None
-        else "",
-    })
+    entry.update(
+        {
+            "circuit_open": True,
+            "last_error_ts": now_str,
+            "last_error_code": error_code,
+            "fallback_reason": reason,
+            "circuit_reset_at": reset_at.strftime("%Y-%m-%dT%H:%M:%SZ")
+            if reset_at is not None
+            else "",
+        }
+    )
     state[name] = entry
     _save(state)
     _log.warning("[provider_budget] circuit OPEN for %s: %s", name, reason)
