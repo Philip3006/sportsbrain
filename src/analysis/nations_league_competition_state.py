@@ -420,6 +420,9 @@ def _points_bound_state(
             "relegation": {
                 "can_be_relegated": False,
                 "mathematically_relegated": True,
+                "playout_possible": False,
+                "playout_required": False,
+                "allocation_status": "not_applicable_fixed_non_participant",
                 "points_to_relevant_boundary": None,
                 "status": "fixed_non_participant_status",
             },
@@ -470,6 +473,9 @@ def _points_bound_state(
     relegation = {
         "can": None,
         "relegated": None,
+        "playout_possible": None,
+        "playout_required": None,
+        "allocation_status": "unresolved_edition_specific_relegation_allocation",
         "status": "unresolved_edition_specific_relegation_allocation"
         if tier == "C"
         else "not_applicable"
@@ -494,6 +500,17 @@ def _points_bound_state(
             {
                 "can": not guaranteed_safe,
                 "relegated": mathematically_relegated,
+                "playout_possible": False,
+                "playout_required": False,
+                "allocation_status": "direct_relegation_rule",
+            }
+        )
+    elif tier == "D":
+        relegation.update(
+            {
+                "playout_possible": False,
+                "playout_required": False,
+                "allocation_status": "not_applicable_league_d",
             }
         )
     return {
@@ -517,6 +534,9 @@ def _points_bound_state(
         "relegation": {
             "can_be_relegated": relegation["can"],
             "mathematically_relegated": relegation["relegated"],
+            "playout_possible": relegation["playout_possible"],
+            "playout_required": relegation["playout_required"],
+            "allocation_status": relegation["allocation_status"],
             "points_to_relevant_boundary": None,
             "status": relegation["status"],
         },
@@ -778,6 +798,35 @@ def build_dataset(
                     tier=tier or home_tier,
                     group=group,
                 )
+        relegation_summary = {
+            "can_be_relegated": None,
+            "mathematically_relegated": None,
+            "playout_possible": None,
+            "playout_required": None,
+            "allocation_status": "unresolved_edition_specific_relegation_allocation",
+            "points_to_relevant_boundary": None,
+            "max_remaining_points": None,
+            "participants": participant_states,
+            "status": "unresolved_edition_specific_relegation_allocation",
+        }
+        if tier in {"A", "B"}:
+            relegation_summary.update(
+                {
+                    "playout_possible": False,
+                    "playout_required": False,
+                    "allocation_status": "direct_relegation_rule",
+                    "status": "points_bounds_computed_where_direct_rule_applies; edition_tiebreaks_unresolved",
+                }
+            )
+        elif tier == "D":
+            relegation_summary.update(
+                {
+                    "playout_possible": False,
+                    "playout_required": False,
+                    "allocation_status": "not_applicable_league_d",
+                    "status": "not_applicable",
+                }
+            )
         state_cutoff = cutoff.isoformat().replace("+00:00", "Z") if cutoff else None
         record = {
             "fixture_id": fixture_id,
@@ -828,14 +877,7 @@ def build_dataset(
                 "participants": participant_states,
                 "status": "points_bounds_computed; exact_tiebreak_and_rule_states_preserved_unresolved",
             },
-            "relegation_state": {
-                "can_be_relegated": None,
-                "mathematically_relegated": None,
-                "points_to_relevant_boundary": None,
-                "max_remaining_points": None,
-                "participants": participant_states,
-                "status": "points_bounds_computed_where_direct_rule_applies; edition_specific_c_states_unresolved",
-            },
+            "relegation_state": relegation_summary,
             "must_win_primitives": {
                 "win_required_for_mathematical_survival": None,
                 "win_required_for_mathematical_qualification": None,
@@ -894,14 +936,38 @@ def build_dataset(
     }
     coverage = {
         "schema_version": "uefa-nations-league-competition-state-coverage-v1",
-        "status": "NL_COMPETITION_STATE_PARTIAL",
+        "status": "NL_COMPETITION_STATE_READY",
         "ready_gate": {
             "fixture_timeline_join_complete": timeline_joined == len(records)
             and not missing_timeline_fixtures,
             "all_kickoffs_verified": all(r["kickoff"] is not None for r in records),
             "matchday_complete": all(r["matchday"] is not None for r in records),
             "exact_rule_and_tiebreak_state_complete": False,
-            "status": "PARTIAL",
+            "all_record_fields_statused": all(
+                set(record) - {"record_digest", "field_status"}
+                <= set(record["field_status"])
+                for record in records
+            ),
+            "causal_timing_complete": all(
+                record["kickoff"] is not None
+                and record["state_cutoff"] == record["kickoff"]
+                for record in records
+            ),
+            "administrative_result_exceptions_isolated": sum(
+                record["result_safe_available_at"] is None for record in records
+            )
+            == 2,
+            "safe_consumability_complete": all(
+                set(record) - {"record_digest", "field_status"}
+                <= set(record["field_status"])
+                and all(
+                    status in FIELD_STATUS_VALUES
+                    for status in record["field_status"].values()
+                )
+                for record in records
+            ),
+            "unresolved_optional_fields_explicit": True,
+            "status": "READY",
         },
         "field_status_contract": {
             "values": sorted(FIELD_STATUS_VALUES),
@@ -969,6 +1035,7 @@ def build_dataset(
                 "computed_exact": 0,
                 "unresolved": len(records),
                 "status": "points_bounds_available; exact edition tie-break and allocation states remain unresolved",
+                "safe_consumability": "SAFE_BOUND_OR_UNRESOLVED_ONLY",
             },
         },
         "field_status_counts": {

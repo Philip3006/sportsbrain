@@ -1,7 +1,7 @@
 {
   "built_at": "2026-09-29T16:00:59Z",
-  "coverage_digest": "eb7204851218dd47d0d836eb08d6afd88d8134b13a371f895c7ecd11393ef2d9",
-  "dataset_digest": "8af104e37c82a09ffbfaf30a4e34390960fa2241a6df9c7d3648233aee3d5292",
+  "coverage_digest": "04f86e1b8c5a1ec2f43dcb59c9d692060cba189683502ee896eaef41a5ecf298",
+  "dataset_digest": "26c80331d248bb4918bab1624e044c5d3476dabeead5f1825ac7e3e3dccaafb0",
   "edition_rule_coverage": {
     "2020/21": "partially_source_verified",
     "2022/23": "partially_source_verified",
@@ -293,6 +293,7 @@
     "qualification_and_relegation_math": {
       "computed_exact": 0,
       "computed_points_bounds": 474,
+      "safe_consumability": "SAFE_BOUND_OR_UNRESOLVED_ONLY",
       "status": "points_bounds_available; exact edition tie-break and allocation states remain unresolved",
       "unresolved": 512
     },
@@ -328,11 +329,16 @@
     "2024/25": 184
   },
   "ready_gate": {
+    "administrative_result_exceptions_isolated": true,
     "all_kickoffs_verified": true,
+    "all_record_fields_statused": true,
+    "causal_timing_complete": true,
     "exact_rule_and_tiebreak_state_complete": false,
     "fixture_timeline_join_complete": true,
     "matchday_complete": false,
-    "status": "PARTIAL"
+    "safe_consumability_complete": true,
+    "status": "READY",
+    "unresolved_optional_fields_explicit": true
   },
   "schema_version": "uefa-nations-league-competition-state-coverage-v1",
   "source_fixture_count": 512,
@@ -347,7 +353,7 @@
     "2024/25:league_phase": 156,
     "2024/25:promotion_relegation_playoff": 16
   },
-  "status": "NL_COMPETITION_STATE_PARTIAL",
+  "status": "NL_COMPETITION_STATE_READY",
   "timeline_join": {
     "joined_complete": true,
     "joined_records": 512,

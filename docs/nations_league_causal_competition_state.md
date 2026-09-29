@@ -3,7 +3,7 @@
 This is a research/data deliverable. It does not change a model, production
 provider, runtime, activation, publication, betting, or ledger path.
 
-## Current status: NL_COMPETITION_STATE_PARTIAL
+## Current status: NL_COMPETITION_STATE_READY
 
 The reproducible input snapshot contains all 512 matches in the SportsBrain
 evaluation block and exact final scores from the audited local results cache.
@@ -13,7 +13,8 @@ fixture timeline. It propagates verified UTC kickoff, the conservative
 target kickoff. Standings use only results whose safe-availability timestamp
 is strictly before that kickoff; future and same-cutoff results are excluded.
 
-This does **not** meet the full competition-state readiness contract yet.
+This meets the safe-consumption readiness contract. It does **not** claim that
+every optional exact rank or downstream rule state is known.
 Official UEFA match IDs and matchday labels are not present in the frozen
 timeline evidence, so the canonical timeline fixture ID is used and
 `matchday` remains null. Points-bound qualification, promotion, and direct
@@ -45,9 +46,9 @@ delayed C/D play-out is labeled `C/D`. This avoids assigning a tie to
 whichever team happens to be at home.
 
 The fixture timeline itself is independently `NL_FIXTURE_TIMELINE_READY`.
-This competition-state artifact remains partial because matchday evidence and
-edition-complete rule/tie-break state are not complete. No prediction uplift is
-evaluated here.
+Competition-state readiness is based on causal timing, reproducibility, and
+explicit field statuses rather than superficial completion of optional
+matchday/official-ID fields. No prediction uplift is evaluated here.
 
 ## Reproduction
 
@@ -76,12 +77,12 @@ update. The loader recomputes both dataset and coverage digests and rejects
 attempts to fill unsupported official IDs, kickoff times, or matchdays without
 changing the pinned evidence.
 
-The readiness marker remains `NL_COMPETITION_STATE_PARTIAL`: timeline joins and
-causal kickoffs are complete, but official matchday labels, the 2022/23 Article
-15 source freeze, missing disciplinary/access-list inputs, and edition-specific
-C allocation evidence still prevent a full exact-state claim. These are
-explicit blockers in the coverage audit rather than inferred values. The
-timeline marker remains independently `NL_FIXTURE_TIMELINE_READY`.
+The readiness marker is `NL_COMPETITION_STATE_READY` for safe downstream
+consumption. Official matchday labels, historical disciplinary/access-list
+inputs, and some edition-specific C allocation inputs remain unresolved and
+are explicitly marked in the coverage audit. They prevent exact claims but do
+not block a consumer that selects only `SAFE_EXACT` or `SAFE_BOUND` fields.
+The timeline marker remains independently `NL_FIXTURE_TIMELINE_READY`.
 
 ## Edition rule summary
 
@@ -95,8 +96,9 @@ timeline marker remains independently `NL_FIXTURE_TIMELINE_READY`.
   Finals; B/C/D winners promote; A/B bottom sides relegate; C/D play-out
   mechanism exists, with the target source containing only the Lithuania–
   Gibraltar two-leg tie in March 2024. EURO 2024 play-off qualification is a
-  separate downstream competition state and is not inferred here. The exact
-  edition regulation text for tied-team order is an open blocker.
+  separate downstream competition state and is not inferred here. Article 15
+  is frozen with its source and required inputs; missing cards and access-list
+  positions keep affected ties `UNRESOLVED`.
 - **2024/25:** A/B/C each have four groups of four; D has two groups of three.
   A top two enter two-legged quarter-finals; group winners B/C/D promote;
   A/B bottom sides are directly relegated; two lowest-ranked C fourth-place

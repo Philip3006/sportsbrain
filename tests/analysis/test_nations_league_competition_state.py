@@ -95,7 +95,9 @@ def test_committed_dataset_is_deterministic_and_timeline_bound():
     assert first_coverage == second_coverage
     assert len(first["records"]) == 512
     assert first_coverage["fixture_coverage_complete"] is True
-    assert first_coverage["status"] == "NL_COMPETITION_STATE_PARTIAL"
+    assert first_coverage["status"] == "NL_COMPETITION_STATE_READY"
+    assert first_coverage["ready_gate"]["safe_consumability_complete"] is True
+    assert first_coverage["ready_gate"]["causal_timing_complete"] is True
     assert first_coverage["fields"]["kickoff_timestamp"]["present"] == 512
     assert (
         first_coverage["fields"]["causal_date_cutoff"][
@@ -112,6 +114,15 @@ def test_committed_dataset_is_deterministic_and_timeline_bound():
         first_coverage["edition_rule_coverage"]["2022/23"]
         == "partially_source_verified"
     )
+    assert (
+        contracts["editions"]["2022/23"]["tiebreak"]["status"]
+        == "official_rule_text_frozen_but_historical_inputs_incomplete"
+    )
+    assert contracts["editions"]["2022/23"]["tiebreak"]["inputs_available"] == {
+        "all_group_results": True,
+        "disciplinary_card_totals": False,
+        "2022_23_access_list_position": False,
+    }
     for record in first["records"]:
         assert record["edition_rule_digest"] == canonical_digest(
             contracts["editions"][record["edition"]]
@@ -196,6 +207,29 @@ def test_points_bound_state_never_exposes_unresolved_rank_as_exact():
         for table in record["standings_before"]
         for row in table["standing_rows"]
     )
+
+
+def test_relegation_contract_exposes_playout_allocation_without_inference():
+    dataset, _ = load_and_validate(DEFAULT_DATASET, DEFAULT_COVERAGE)
+    c_group = next(
+        record
+        for record in dataset["records"]
+        if record["edition"] == "2022/23" and record["group"] == "C1"
+    )
+    assert c_group["relegation_state"]["playout_possible"] is None
+    assert c_group["relegation_state"]["playout_required"] is None
+    assert (
+        c_group["relegation_state"]["allocation_status"]
+        == "unresolved_edition_specific_relegation_allocation"
+    )
+    a_group = next(
+        record
+        for record in dataset["records"]
+        if record["edition"] == "2022/23" and record["group"] == "A1"
+    )
+    assert a_group["relegation_state"]["playout_possible"] is False
+    assert a_group["relegation_state"]["playout_required"] is False
+    assert a_group["relegation_state"]["allocation_status"] == "direct_relegation_rule"
 
 
 def test_timeline_join_rejects_a_different_historical_source():

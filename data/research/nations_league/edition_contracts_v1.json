@@ -29,6 +29,11 @@
         "direct_relegation": "Bottom teams in Leagues A and B are relegated.",
         "league_c_relegation": "Four fourth-placed League C teams enter two-legged play-outs; two lose and are relegated. The original 2020/21 play-outs were rescheduled to March 2022 and had a later away-goals amendment; those four matches are not in this 512-match target window."
       },
+      "league_c_playout_allocation": {
+        "status": "rule_supported; outside_target_window",
+        "supported_components": ["fourth_placed_league_c_teams_enter_playouts", "two_losers_move_to_league_d"],
+        "unresolved_components": ["historical_playout_result_not_in_target_window"]
+      },
       "tiebreak": {
         "status": "official_rule_text_verified_but_not_fully_operationalized",
         "rule_reference": "2020/21 Regulations, Article 15",
@@ -68,13 +73,25 @@
         "league_a_qualification": "Each group winner qualifies for the Nations League Finals.",
         "promotion": "Group winners in Leagues B, C and D are promoted.",
         "direct_relegation": "Bottom teams in Leagues A and B are relegated.",
-        "league_c_relegation": "The target evaluation includes the single two-legged Lithuania-Gibraltar play-out in March 2024; the 2024/25 participation count differs from earlier editions because Russia was excluded. Do not infer a second tie from the general four-fourth-place format."
+        "league_c_relegation": "All four League C group fourth-placed teams enter the March 2024 play-outs; two defeated teams move to League D. The frozen target includes the Lithuania-Gibraltar two-legged tie. The exact cross-group pairing/allocation for any additional tie is not inferred without a complete authoritative ranking input."
+      },
+      "league_c_playout_allocation": {
+        "status": "partially_supported; cross_group_pairing_unresolved",
+        "source": "UEFA 2022/23 Nations League format and 2022/23 play-out schedule",
+        "source_urls": ["https://www.uefa.com/news/026e-13698f20e8cb-8372848125f5-1000--2022-23-uefa-nations-league/", "https://editorial.uefa.com/resources/028a-1a1e18631263-95c63cec8617-1000/202425_unl_qualifying.pdf"],
+        "supported_components": ["fourth_placed_league_c_teams_enter_playouts", "two_playout_losers_move_to_league_d", "lithuania_gibraltar_tie_is_in_target_source", "playout_winner_remains_in_league_c"],
+        "inputs_required": ["exact_final_group_rank_of_all_four_league_c_fourth_placed_teams", "playout_match_results"],
+        "inputs_available": {"exact_final_group_rank_of_all_four_league_c_fourth_placed_teams": false, "playout_match_results": true},
+        "unresolved_components": ["cross_group_pairing", "pre_playout_relegation_allocation"]
       },
       "tiebreak": {
-        "status": "not_verified_from_frozen_edition_regulations",
-        "rule_reference": "2022/23 Regulations, Article 15 (official regulation attachment was not available as a stable local source during this build)",
-        "criteria": null,
-        "operationalization_gap": "No exact tied-team rank or boundary state is emitted for this edition until the edition-specific regulation text and all required tie-break inputs are frozen."
+        "status": "official_rule_text_frozen_but_historical_inputs_incomplete",
+        "rule_reference": "2022/23 Regulations, Article 15",
+        "source": {"source": "UEFA Regulations of the Nations League 2022/23, Article 15", "url": "https://web.archive.org/web/20210927201456/https://documents.uefa.com/api/khub/maps/5qGTXCxubTzMfOeAyWGmuQ/attachments/5avrJwcMhtmUTz_I1lWP9g/content?filename=UNL_Regulations_1_October_2021_EN_strPDF.pdf", "retrieved_at": "2026-09-30T00:00:00Z", "source_digest": null, "digest_note": "Archived copy of the official UEFA regulation attachment; raw PDF bytes are not vendored."},
+        "criteria": ["head_to_head_points", "head_to_head_goal_difference", "head_to_head_goals", "reapply_head_to_head_for_remaining_tied_teams", "overall_goal_difference", "overall_goals", "overall_away_goals", "overall_wins", "overall_away_wins", "disciplinary_points", "2022_23_access_list_position"],
+        "inputs_required": ["all_group_results", "disciplinary_card_totals", "2022_23_access_list_position"],
+        "inputs_available": {"all_group_results": true, "disciplinary_card_totals": false, "2022_23_access_list_position": false},
+        "operationalization_gap": "The rule order is frozen, but the historical match snapshot has no disciplinary-card totals or frozen access-list positions. Exact tied-team rank and any boundary state depending on those criteria remain UNRESOLVED."
       },
       "euro_2024_qualification": {
         "status": "not_computed",
@@ -115,6 +132,13 @@
         "league_c_relegation": "The two lowest-ranked fourth-placed League C teams are directly relegated; the other two fourth-placed teams play the two League D runners-up in two-legged C/D ties scheduled after this target block.",
         "promotion_relegation_playoffs": "League A third-placed teams play League B runners-up; League B third-placed teams play League C runners-up; two-legged ties.",
         "league_d_schedule_note": "Each D team plays four group matches; the calendar also contains two friendlies per League D team. Friendlies are not counted in Nations League group standings."
+      },
+      "league_c_playout_allocation": {
+        "status": "rule_supported; target_post_phase_allocation_not_causal_for_league_phase_rows",
+        "supported_components": ["two_lowest_league_c_fourth_placed_teams_directly_relegated", "other_two_league_c_fourth_placed_teams_play_league_d_runners_up", "playout_winner_remains_in_league_c", "playout_loser_moves_to_league_d"],
+        "unresolved_components": ["exact_final_tie_break_inputs_when_required"],
+        "source": "UEFA 2024/25 Nations League Draw Press Kit, pp. 5-8",
+        "source_url": "https://editorial.uefa.com/resources/028a-1a1e18631263-95c63cec8617-1000/202425_unl_qualifying.pdf"
       },
       "tiebreak": {
         "status": "official_rule_text_verified_but_not_fully_operationalized",
