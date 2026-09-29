@@ -584,7 +584,9 @@ function renderNationsLeagueShadow(payload) {
     const detail = ['raw_dixon_coles', 'raw_gbt', 'canonical_stacker'].map((key) =>
       `${esc(key.replaceAll('_', ' '))}: ${pct(components[key].home)} / ${pct(components[key].draw)} / ${pct(components[key].away)}`
     ).join(' · ');
-    return `<article class="nl-shadow-fixture"><div class="nl-shadow-fixture-title"><b>${esc(fixture.home)} vs ${esc(fixture.away)}</b><span>${time}</span></div>${rows}<details><summary>Modellkomponenten &amp; Herkunft</summary><p>${detail}</p><p>Quelle: ${esc(payload.provider)} · Erfasst: ${esc(payload.captured_at)} · Source: <code title="${esc(payload.source_sha)}">${esc(payload.source_sha.slice(0, 12))}</code></p></details></article>`;
+    const fixtureKey = `${fixture.home} vs ${fixture.away}`;
+    const modelVersion = fixture.model?.model_version || fixture.model?.model_identity || '';
+    return `<article class="nl-shadow-fixture"><div class="nl-shadow-fixture-title"><b>${esc(fixture.home)} vs ${esc(fixture.away)}</b><span>${time}</span></div>${rows}<details data-analytics-diagnostics="true" data-sport="football" data-competition="UEFA Nations League" data-fixture-key="${esc(fixtureKey)}" data-lifecycle-stage="SHADOW_ONLY" data-model-version="${esc(modelVersion)}"><summary>Modellkomponenten &amp; Herkunft</summary><p>${detail}</p><p>Quelle: ${esc(payload.provider)} · Erfasst: ${esc(payload.captured_at)} · Source: <code title="${esc(payload.source_sha)}">${esc(payload.source_sha.slice(0, 12))}</code></p></details></article>`;
   });
   if (fixtures.some((fixture) => fixture === null)) {
     container.replaceChildren();
@@ -714,7 +716,9 @@ function sigCard(s, showMatch) {
       plain = `Modell ${mpct}% vs Markt ${fpct}% — kein klarer Edge. Trotzdem im Scanner, weil andere Indikatoren (Form/Modell-Konsens) das ausgleichen.`;
     }
     const openAttr = s.confidence === 'HIGH' ? ' open' : '';
-    whyInline = `<details class="why-inline"${openAttr}>
+    const _diagnosticFixtureKey = s.fixture_key || s.match || '';
+    const _diagnosticModelVersion = s.model_version || s.model_identity || '';
+    whyInline = `<details class="why-inline" data-analytics-diagnostics="true" data-sport="${esc(s.sport || '')}" data-competition="${esc(s.competition || s.league || s.tour || '')}" data-fixture-key="${esc(_diagnosticFixtureKey)}" data-lifecycle-stage="${esc(s.lifecycle?.lifecycle_stage || '')}" data-model-version="${esc(_diagnosticModelVersion)}"${openAttr}>
       <summary>💡 Warum diese Wette?</summary>
       <div class="why-inline-body">
         <div class="why-inline-row"><span class="wir-label">KI sagt</span><span class="wir-val">${mpct}%</span></div>
@@ -2708,6 +2712,17 @@ document.getElementById('glossary-modal-bd').addEventListener('click', (e) => {
 
 // ── Match-Detail-Modal (I7) ──
 function _openMatchDetail(match) {
+  const _detailSport = match.sport || 'football';
+  const _detailFixtureKey = match.fixture_key || _analyticsFixtureKey(match.home, match.away, match.kickoff);
+  const _detailSourceView = document.body?.dataset?.activeView || 'forecast';
+  _captureAnalytics('match_opened', {
+    sport: _detailSport,
+    competition: match.competition || match.tour || match.league,
+    fixture_id: match.fixture_id,
+    fixture_key: _detailFixtureKey,
+    lifecycle_stage: match.lifecycle?.lifecycle_stage,
+    source_view: _detailSourceView,
+  });
   const title = `${teamFlag(match.home)} ${esc(match.home)} vs ${teamFlag(match.away)} ${esc(match.away)}`;
   document.getElementById('match-detail-modal-title').innerHTML = title;
 
@@ -2813,6 +2828,18 @@ function _openMatchDetail(match) {
   document.getElementById('match-detail-modal-body').innerHTML = body;
   document.getElementById('match-detail-modal-bd').classList.add('show');
   document.body.style.overflow = 'hidden';
+  if (!match.played && match.p_home !== undefined) {
+    _captureAnalytics('prediction_viewed', {
+      sport: _detailSport,
+      competition: match.competition || match.tour || match.league,
+      fixture_id: match.fixture_id,
+      fixture_key: _detailFixtureKey,
+      lifecycle_stage: match.lifecycle?.lifecycle_stage,
+      model_version: match.model_version || match.model_identity,
+      confidence: match.confidence,
+      source_view: _detailSourceView,
+    });
+  }
 }
 function _closeMatchDetail() {
   document.getElementById('match-detail-modal-bd').classList.remove('show');
@@ -2820,6 +2847,21 @@ function _closeMatchDetail() {
 }
 
 async function _openMatchDetailFromSignal(home, away) {
+  const signalMatches = _signals.filter(s => {
+    const [sh, sa] = s.match.split(' vs ').map(x => x.trim());
+    return matchKey(sh, sa) === matchKey(home, away);
+  });
+  const primarySignal = signalMatches[0];
+  _captureAnalytics('signal_opened', {
+    sport: primarySignal?.sport,
+    competition: primarySignal?.competition || primarySignal?.league || primarySignal?.tour,
+    fixture_id: primarySignal?.fixture_id,
+    fixture_key: primarySignal?.fixture_key || _analyticsFixtureKey(home, away, primarySignal?.kickoff),
+    lifecycle_stage: primarySignal?.lifecycle?.lifecycle_stage,
+    signal_status: primarySignal?.signal_status,
+    confidence: primarySignal?.confidence,
+    source_view: document.body?.dataset?.activeView || 'signal',
+  });
   const fd = _forecastData || await loadForecast();
   let match = null;
   const nk = matchKey(home, away);
@@ -2836,10 +2878,7 @@ async function _openMatchDetailFromSignal(home, away) {
     }
   }
   if (!match) {
-    const sigs = _signals.filter(s => {
-      const [sh, sa] = s.match.split(' vs ').map(x => x.trim());
-      return matchKey(sh, sa) === nk;
-    });
+    const sigs = signalMatches;
     const get = mkt => sigs.find(s => s.market === mkt);
     const hS = get('home'), aS = get('away'), dS = get('draw');
     match = {
