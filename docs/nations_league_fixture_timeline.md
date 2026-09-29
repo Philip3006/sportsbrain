@@ -28,10 +28,15 @@ unresolved.
 The schedule extract records SHA-256 hashes of the downloaded public schedule
 PDFs, source URLs, extraction version, and normalized row provenance. The
 2020/21 group fixture PDF is superseded for the actual group dates and is kept
-only as audit evidence; its kickoff times are not used. The 2020/21 and 2022/23
-final-tournament match times are separately sourced from UEFA schedule
-announcements. Schedule times are interpreted in `Europe/Paris`, using IANA
-daylight-saving rules; no fixed CET offset is assumed.
+only as audit evidence; its kickoff times are not used. The 2020/21, 2022/23,
+and 2024/25 exact kickoffs were resolved from match-specific UEFA reports or
+announcements wherever available, with federation and reputable historical
+fixture sources used only for the remaining exact gaps. Each row records the
+source provider, URL, retrieval/published metadata, extraction version, and
+explicit IANA timezone semantics. Local times are not forced into a single
+European timezone: for example, Kazakhstan and Armenia rows retain their local
+`Asia/Almaty`/`Asia/Yerevan` semantics, while UEFA CET/CEST rows use
+`Europe/Paris`.
 
 For a normal played fixture with verified kickoff, the timeline's
 `result_safe_available_at` is kickoff plus a conservative six-hour completion
@@ -56,11 +61,18 @@ to `2022-06-11T00:25:00Z`; unresolved kickoff remains `unknown`.
 
 ## Current coverage
 
-The committed coverage audit is deliberately partial: all 512 input result
-rows have unique canonical fixture identities, while only uniquely
-crosswalked official schedule rows have verified UTC kickoff. Each unresolved
-fixture carries its own reason and any dated participant-pair schedule
-candidates. It must not be consumed as complete 512/512 timeline evidence.
+The committed coverage audit is `NL_FIXTURE_TIMELINE_READY`: all 512 input
+result rows have unique canonical fixture identities and all 512 have a
+verified UTC kickoff. The edition counts are 166/166 for 2020/21, 162/162 for
+2022/23, and 184/184 for 2024/25. Normal played fixtures have deterministic
+`result_safe_available_at` bounds (510/512 records); the two remaining records
+are explicitly isolated administrative exceptions rather than fabricated
+completion timestamps.
+
+The readiness gate still fails closed if any ordinary kickoff is unresolved,
+if a crosswalk is ambiguous, or if an administrative exception is not isolated
+with an explicit reason. The committed audit currently reports zero unresolved
+kickoffs and two isolated administrative exceptions.
 
 Administrative award references:
 
@@ -68,6 +80,10 @@ Administrative award references:
   therefore the result-safe availability timestamp is unresolved.
 - Romania–Kosovo, 2024-11-15: UEFA lists Romania's 3-0 forfeit award; therefore
   the result-safe availability timestamp is unresolved.
+
+These exceptions retain their verified scheduled kickoff for fixture identity,
+but their `result_safe_available_at` remains null and they cannot supply a
+historical result state.
 
 No provider, credential, quota, production, activation, publication, betting,
 or ledger interfaces are used by this data builder.

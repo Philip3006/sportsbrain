@@ -38,14 +38,21 @@ SCHEMA = "uefa-nations-league-fixture-timeline-v1"
 REFERENCE_AT = "2022-06-11T00:25:00Z"
 LOCAL_ZONE = ZoneInfo("Europe/Paris")
 
-# These scores are administrative awards, not matches with a result becoming
-# observable at a normal post-kickoff time. Their official outcome evidence is
-# retained, but result_safe_available_at is deliberately null.
-AWARDED_FIXTURES = {
-    ("2020/21", "2020-11-17", "Switzerland", "Ukraine"),
-    ("2024/25", "2024-11-15", "Romania", "Kosovo"),
+# These two final scores are administrative outcomes, not safely observable
+# match results at a deterministic post-kickoff time. Switzerland–Ukraine was
+# never played; Romania–Kosovo was abandoned after kickoff. Both scheduled
+# kickoff references are retained, but neither gets a result-safe timestamp.
+ADMINISTRATIVE_EXCEPTIONS = {
+    ("2020/21", "2020-11-17", "Switzerland", "Ukraine"): {
+        "kind": "unplayed_fixture_award",
+        "reason": "administrative_award_has_no_played_match_completion_time",
+    },
+    ("2024/25", "2024-11-15", "Romania", "Kosovo"): {
+        "kind": "abandoned_match_administrative_award",
+        "reason": "abandoned_match_has_no_deterministic_result_safe_time",
+    },
 }
-AWARDED_SOURCE_URLS = {
+ADMINISTRATIVE_AWARD_SOURCE_URLS = {
     (
         "2020/21",
         "2020-11-17",
@@ -223,27 +230,58 @@ def build_timeline(
         eligible = [
             candidate
             for candidate in exact
-            if candidate["schedule_status"] == "official_fixture_candidate"
-            or candidate["schedule_status"] == "official_exact_fixture"
+            if candidate["schedule_status"]
+            in {
+                "official_fixture_candidate",
+                "official_exact_fixture",
+                "secondary_exact_fixture",
+            }
         ]
         if len(eligible) == 1:
             match = eligible[0]
             kickoff = _kickoff_utc(match)
             provenance_status = "official_schedule_exact_crosswalk"
             unresolved_reason = None
+            raw_source_digest = match.get("source_pdf_sha256")
+            normalized_source_digest = canonical_digest(
+                {
+                    "url": match["source_url"],
+                    "source_text": match.get("source_text"),
+                    "scheduled_date": match["scheduled_date"],
+                    "scheduled_local_time": match["scheduled_local_time"],
+                    "timezone": match["timezone"],
+                    "home_team": match["home_team"],
+                    "away_team": match["away_team"],
+                }
+            )
             schedule_ref = {
                 "url": match["source_url"],
-                "source_digest": match["source_pdf_sha256"] or canonical_digest(match),
+                "source_provider": match.get("source_provider", "UEFA"),
+                "source_retrieved_at": match.get(
+                    "source_retrieved_at", schedule.get("retrieved_at")
+                ),
+                "source_published_at": match.get("source_published_at"),
+                "source_digest": raw_source_digest or normalized_source_digest,
                 "source_digest_kind": "raw_pdf_sha256"
-                if match["source_pdf_sha256"]
-                else "normalized_schedule_row_sha256",
+                if raw_source_digest
+                else "normalized_source_evidence_sha256",
+                "normalized_source_digest": normalized_source_digest,
+                "source_pdf_sha256": raw_source_digest,
+                "source_text": match.get("source_text"),
+                "extraction_version": match.get("extraction_version"),
                 "schedule_status": match["schedule_status"],
             }
             local = {
                 "date": match["scheduled_date"],
                 "time": match["scheduled_local_time"],
                 "timezone": match["timezone"],
-                "timezone_semantics": "IANA civil time with DST rules; not a fixed UTC offset",
+                "timezone_semantics": match.get(
+                    "timezone_semantics",
+                    "IANA civil time with DST rules; not a fixed UTC offset",
+                ),
+                "venue": match.get("venue"),
+                "venue_local_time": match.get("venue_local_time"),
+                "venue_local_time_semantics": match.get("venue_local_time_semantics"),
             }
         else:
             kickoff = None
@@ -271,13 +309,13 @@ def build_timeline(
                 )
 
         identity_digest = canonical_digest(row)
-        abnormal = key in AWARDED_FIXTURES
+        administrative_exception = ADMINISTRATIVE_EXCEPTIONS.get(key)
         kickoff_dt = (
             datetime.fromisoformat(kickoff.replace("Z", "+00:00")) if kickoff else None
         )
         safe_at = (
             _utc(kickoff_dt + timedelta(hours=6))
-            if kickoff_dt is not None and not abnormal
+            if kickoff_dt is not None and administrative_exception is None
             else None
         )
         state = {
@@ -298,33 +336,34 @@ def build_timeline(
             "local_kickoff": local,
             "kickoff_utc": kickoff,
             "status": "administratively_awarded"
-            if abnormal
+            if administrative_exception is not None
             else "completed_result_recorded",
+            "administrative_exception": administrative_exception,
             "home_score": row["home_score"],
             "away_score": row["away_score"],
             "result_safe_available_at": safe_at,
             "result_safe_methodology": (
-                "null_for_administrative_award_without_played_match"
-                if abnormal
+                "null_for_administrative_exception"
+                if administrative_exception is not None
                 else "verified_scheduled_kickoff_plus_6h_conservative_completion_buffer"
                 if kickoff is not None
                 else "not_computed_without_verified_kickoff"
             ),
-            "result_safe_status": "unresolved_award_availability"
-            if abnormal
+            "result_safe_status": "unresolved_administrative_exception"
+            if administrative_exception is not None
             else "bounded_from_verified_kickoff"
             if kickoff is not None
             else "unresolved_kickoff",
             "source_refs": {
                 "result_source": results.get("upstream_url"),
                 "result_source_digest": result_source_digest,
-                "result_status_source": AWARDED_SOURCE_URLS.get(key),
+                "result_status_source": ADMINISTRATIVE_AWARD_SOURCE_URLS.get(key),
                 "schedule_source": schedule_ref,
                 "schedule_extract_digest": schedule_source_digest,
             },
             "provenance_status": provenance_status,
-            "unresolved_reason": "administrative_award_has_no_played_match_completion_time"
-            if abnormal
+            "unresolved_reason": administrative_exception["reason"]
+            if administrative_exception is not None
             else unresolved_reason,
             "unresolved_schedule_candidates": [
                 {
@@ -384,6 +423,9 @@ def build_timeline(
             "result_safe_bounds": sum(
                 r["result_safe_available_at"] is not None for r in edition_rows
             ),
+            "administrative_exceptions": sum(
+                r["administrative_exception"] is not None for r in edition_rows
+            ),
         }
     target_cutoff_rows = [r for r in records if r["scheduled_date"] == "2022-06-11"]
     cutoff_report = [
@@ -399,6 +441,41 @@ def build_timeline(
         for r in target_cutoff_rows
     ]
 
+    expected_admin_keys = set(ADMINISTRATIVE_EXCEPTIONS)
+    observed_admin_keys = {
+        _result_key(r) for r in records if r["administrative_exception"] is not None
+    }
+    normal_rows = [r for r in records if r["administrative_exception"] is None]
+    ordinary_safe_complete = all(
+        r["kickoff_utc"] is not None
+        and r["result_safe_available_at"]
+        == _utc(
+            datetime.fromisoformat(r["kickoff_utc"].replace("Z", "+00:00"))
+            + timedelta(hours=6)
+        )
+        for r in normal_rows
+    )
+    admin_exceptions_valid = observed_admin_keys == expected_admin_keys and all(
+        r["kickoff_utc"] is not None
+        and r["result_safe_available_at"] is None
+        and r["status"] == "administratively_awarded"
+        and r["unresolved_reason"]
+        == ADMINISTRATIVE_EXCEPTIONS[_result_key(r)]["reason"]
+        and r["administrative_exception"] == ADMINISTRATIVE_EXCEPTIONS[_result_key(r)]
+        for r in records
+        if r["administrative_exception"] is not None
+    )
+    identity_complete = (
+        len(records) == 512 and not duplicate_keys and not duplicate_fixture_ids
+    )
+    kickoff_complete = all(r["kickoff_utc"] is not None for r in records)
+    ready = (
+        identity_complete
+        and kickoff_complete
+        and ordinary_safe_complete
+        and admin_exceptions_valid
+    )
+
     timeline: dict[str, Any] = {
         "schema_version": SCHEMA,
         "competition": "UEFA Nations League",
@@ -412,10 +489,7 @@ def build_timeline(
     coverage: dict[str, Any] = {
         "schema_version": "uefa-nations-league-fixture-timeline-coverage-v1",
         "status": "NL_FIXTURE_TIMELINE_READY"
-        if len(records) == 512
-        and all(r["kickoff_utc"] and r["result_safe_available_at"] for r in records)
-        and not duplicate_keys
-        and not duplicate_fixture_ids
+        if ready
         else "NL_FIXTURE_TIMELINE_PARTIAL",
         "source_results_count": len(rows),
         "timeline_record_count": len(records),
@@ -424,9 +498,43 @@ def build_timeline(
         and not duplicate_fixture_ids,
         "unique_fixture_ids": len({r["fixture_id"] for r in records}),
         "verified_utc_kickoffs": sum(r["kickoff_utc"] is not None for r in records),
+        "unresolved_kickoff_count": sum(r["kickoff_utc"] is None for r in records),
+        "unresolved_kickoff_fixtures": [
+            row
+            for row in unresolved
+            if row["reason"]
+            != "administrative_award_has_no_played_match_completion_time"
+            and row["reason"] != "abandoned_match_has_no_deterministic_result_safe_time"
+        ],
         "result_safe_bounds": sum(
             r["result_safe_available_at"] is not None for r in records
         ),
+        "administrative_exception_count": sum(
+            r["administrative_exception"] is not None for r in records
+        ),
+        "administrative_exceptions": [
+            {
+                "fixture_id": r["fixture_id"],
+                "edition": r["edition"],
+                "date": r["scheduled_date"],
+                "home_team": r["home_team"],
+                "away_team": r["away_team"],
+                "kind": r["administrative_exception"]["kind"],
+                "reason": r["unresolved_reason"],
+                "kickoff_utc": r["kickoff_utc"],
+                "result_safe_available_at": None,
+                "source": r["source_refs"]["result_status_source"],
+            }
+            for r in records
+            if r["administrative_exception"] is not None
+        ],
+        "ready_gate": {
+            "identity_complete": identity_complete,
+            "all_512_kickoffs_verified": kickoff_complete,
+            "zero_identity_conflicts": not duplicate_keys and not duplicate_fixture_ids,
+            "all_normal_completed_results_have_safe_bounds": ordinary_safe_complete,
+            "administrative_exceptions_exactly_isolated": admin_exceptions_valid,
+        },
         "source_fixture_ids_missing": sum(
             r["source_fixture_id"] is None for r in records
         ),
@@ -458,6 +566,7 @@ def validate_timeline(timeline: dict[str, Any], coverage: dict[str, Any]) -> Non
     if len(records) != coverage.get("timeline_record_count"):
         raise ValueError("coverage record count does not match timeline")
     ids: set[str] = set()
+    observed_admin_keys: set[tuple[str, str, str, str]] = set()
     for record in records:
         if record["fixture_id"] in ids:
             raise ValueError("duplicate canonical fixture_id")
@@ -479,6 +588,34 @@ def validate_timeline(timeline: dict[str, Any], coverage: dict[str, Any]) -> Non
             )
             if not safe_at > kickoff:
                 raise ValueError("result-safe bound must be after kickoff")
+            if safe_at != kickoff + timedelta(hours=6):
+                raise ValueError(
+                    "result-safe bound differs from conservative six-hour rule"
+                )
+            if record.get("administrative_exception") is not None:
+                raise ValueError(
+                    "administrative exceptions cannot have a result-safe bound"
+                )
+        exception = record.get("administrative_exception")
+        key = _result_key(record)
+        if exception is not None:
+            if (
+                key not in ADMINISTRATIVE_EXCEPTIONS
+                or exception != ADMINISTRATIVE_EXCEPTIONS[key]
+            ):
+                raise ValueError("unexpected or altered administrative exception")
+            if (
+                record["kickoff_utc"] is None
+                or record["result_safe_available_at"] is not None
+            ):
+                raise ValueError(
+                    "administrative exception must retain kickoff but no safe bound"
+                )
+            if record["unresolved_reason"] != exception["reason"]:
+                raise ValueError("administrative exception reason mismatch")
+            observed_admin_keys.add(key)
+        elif key in ADMINISTRATIVE_EXCEPTIONS:
+            raise ValueError("known administrative exception is not isolated")
         if (
             record["provenance_status"] == "official_schedule_exact_crosswalk"
             and record["kickoff_utc"] is None
@@ -495,11 +632,30 @@ def validate_timeline(timeline: dict[str, Any], coverage: dict[str, Any]) -> Non
         {k: v for k, v in coverage.items() if k != "coverage_digest"}
     ):
         raise ValueError("fixture timeline coverage digest mismatch")
-    if (
-        coverage["verified_utc_kickoffs"] >= 512
-        and coverage["status"] != "NL_FIXTURE_TIMELINE_READY"
+    if coverage["verified_utc_kickoffs"] != sum(
+        record["kickoff_utc"] is not None for record in records
     ):
-        raise ValueError("complete verified timeline must be marked ready")
+        raise ValueError("coverage kickoff count does not match records")
+    if coverage.get("unresolved_kickoff_count") != sum(
+        record["kickoff_utc"] is None for record in records
+    ):
+        raise ValueError("coverage unresolved kickoff count does not match records")
+    if coverage.get("administrative_exception_count") != len(observed_admin_keys):
+        raise ValueError(
+            "coverage administrative exception count does not match records"
+        )
+    if coverage["status"] == "NL_FIXTURE_TIMELINE_READY" and (
+        len(records) != 512
+        or coverage["verified_utc_kickoffs"] != 512
+        or coverage.get("ambiguous_identity_conflicts") != 0
+        or observed_admin_keys != set(ADMINISTRATIVE_EXCEPTIONS)
+        or any(
+            record["administrative_exception"] is None
+            and record["result_safe_available_at"] is None
+            for record in records
+        )
+    ):
+        raise ValueError("READY status violates the strict timeline gate")
 
 
 def load_and_validate(

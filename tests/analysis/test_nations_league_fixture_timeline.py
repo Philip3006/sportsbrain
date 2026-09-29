@@ -5,10 +5,7 @@ from pathlib import Path
 import pytest
 
 from src.analysis.nations_league_fixture_timeline import (
-    DEFAULT_CONTRACTS,
     DEFAULT_COVERAGE,
-    DEFAULT_RESULTS,
-    DEFAULT_SCHEDULE,
     DEFAULT_TIMELINE,
     build_timeline,
     canonical_digest,
@@ -68,15 +65,17 @@ def _minimal_inputs():
     return results, contracts, schedule
 
 
-def test_committed_timeline_has_512_unique_rows_and_explicit_partial_kickoff_coverage():
+def test_committed_timeline_has_512_unique_rows_and_ready_kickoff_coverage():
     timeline, coverage = load_and_validate(DEFAULT_TIMELINE, DEFAULT_COVERAGE)
     assert len(timeline["records"]) == 512
     assert coverage["identity_crosswalk_complete"] is True
     assert coverage["unique_fixture_ids"] == 512
     assert coverage["ambiguous_identity_conflicts"] == 0
-    assert coverage["status"] == "NL_FIXTURE_TIMELINE_PARTIAL"
-    assert coverage["verified_utc_kickoffs"] < 512
-    assert coverage["unresolved_count"] > 0
+    assert coverage["status"] == "NL_FIXTURE_TIMELINE_READY"
+    assert coverage["verified_utc_kickoffs"] == 512
+    assert coverage["unresolved_count"] == 2
+    assert coverage["administrative_exception_count"] == 2
+    assert coverage["result_safe_bounds"] == 510
 
 
 def test_exact_edition_participant_and_date_match_produces_dst_aware_utc_and_safe_bound():
@@ -122,7 +121,7 @@ def test_ambiguous_exact_schedule_crosswalk_fails_closed():
                 "away_team": "Ukraine",
                 "edition": "2020/21",
             },
-            "unresolved_award_availability",
+            "unresolved_administrative_exception",
         ),
         (
             {
@@ -131,7 +130,7 @@ def test_ambiguous_exact_schedule_crosswalk_fails_closed():
                 "away_team": "Kosovo",
                 "edition": "2024/25",
             },
-            "unresolved_award_availability",
+            "unresolved_administrative_exception",
         ),
     ],
 )
@@ -147,9 +146,24 @@ def test_awarded_fixtures_have_no_fabricated_result_safe_time(match, expected_st
     )
     results["matches"] = [row]
     results["snapshot_digest"] = canonical_digest({"matches": results["matches"]})
+    schedule["schedule_rows"].append(
+        {
+            "edition": match["edition"],
+            "scheduled_date": match["date"],
+            "scheduled_local_time": "20:45",
+            "timezone": "Europe/Paris",
+            "group": "A4" if match["edition"] == "2020/21" else "C2",
+            "home_team": match["home_team"],
+            "away_team": match["away_team"],
+            "source_url": "https://example.invalid/admin-schedule",
+            "source_pdf_sha256": "b" * 64,
+            "schedule_status": "official_exact_fixture",
+        }
+    )
     timeline, _ = build_timeline(results, contracts, schedule)
     record = timeline["records"][0]
     assert record["status"] == "administratively_awarded"
+    assert record["kickoff_utc"] == f"{match['date']}T19:45:00Z"
     assert record["result_safe_available_at"] is None
     assert record["result_safe_status"] == expected_status
 
