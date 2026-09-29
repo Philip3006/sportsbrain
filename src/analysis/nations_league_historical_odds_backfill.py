@@ -69,6 +69,19 @@ class ExecutionMode(StrEnum):
 class HistoricalRequest:
     phase: str
     requested_timestamp: str
+    purposes: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        phase = _phase_key(self.phase)
+        purposes = tuple(dict.fromkeys(self.purposes or (phase,)))
+        if phase not in purposes:
+            purposes = (phase, *purposes)
+        object.__setattr__(self, "phase", phase)
+        object.__setattr__(self, "purposes", purposes)
+
+    @property
+    def phases(self) -> tuple[str, ...]:
+        return self.purposes
 
     @property
     def identity_payload(self) -> dict[str, str]:
@@ -77,7 +90,6 @@ class HistoricalRequest:
             "sport_key": SPORT_KEY,
             "region": REGION,
             "market": MARKET,
-            "phase": self.phase,
             "requested_timestamp": self.requested_timestamp,
         }
 
@@ -88,11 +100,15 @@ class HistoricalRequest:
         ).encode("utf-8")
         return hashlib.sha256(payload).hexdigest()
 
-    def as_dict(self) -> dict[str, str]:
+    def as_dict(self) -> dict[str, Any]:
         return {
             **self.identity_payload,
+            "phases": list(self.phases),
             "request_identifier": self.request_identifier,
         }
+
+    def for_phase(self, phase: str) -> HistoricalRequest:
+        return HistoricalRequest(phase, self.requested_timestamp)
 
 
 @dataclass(frozen=True)
@@ -198,13 +214,23 @@ class LoadedPlan:
     def requests_for(self, mode: ExecutionMode) -> tuple[HistoricalRequest, ...]:
         if mode is ExecutionMode.DRY_RUN:
             raise PlanIntegrityError("DRY_RUN requests both named execution plans")
-        requests: list[HistoricalRequest] = []
+        requests_by_id: dict[str, HistoricalRequest] = {}
         plans = self.raw["plans"][mode.value]["phases"]
         for phase in plans:
             phase_name = _phase_key(phase["phase"])
             timestamps = phase["requested_historical_snapshot_timestamps"]
-            requests.extend(HistoricalRequest(phase_name, str(ts)) for ts in timestamps)
-        return tuple(requests)
+            for timestamp in timestamps:
+                request = HistoricalRequest(phase_name, str(timestamp))
+                current = requests_by_id.get(request.request_identifier)
+                if current is None:
+                    requests_by_id[request.request_identifier] = request
+                elif phase_name not in current.phases:
+                    requests_by_id[request.request_identifier] = HistoricalRequest(
+                        current.phase,
+                        current.requested_timestamp,
+                        (*current.phases, phase_name),
+                    )
+        return tuple(requests_by_id.values())
 
     def estimated_credits(self, mode: ExecutionMode) -> int:
         if mode is ExecutionMode.DRY_RUN:
@@ -240,6 +266,10 @@ def load_plan(path: Path = DEFAULT_PLAN_PATH) -> LoadedPlan:
         raise PlanIntegrityError("unexpected canonical timeline digest in plan")
     if int(provider.get("estimated_credits_per_unique_request", 0)) <= 0:
         raise PlanIntegrityError("plan must declare a positive request credit cost")
+    coverage_boundary = _parse_utc(
+        provider.get("historical_coverage_start_utc"),
+        "historical coverage start",
+    )
 
     fixture_targets = tuple(raw.get("fixture_targets", ()))
     fixture_ids = [str(item.get("fixture_id", "")) for item in fixture_targets]
@@ -254,15 +284,27 @@ def load_plan(path: Path = DEFAULT_PLAN_PATH) -> LoadedPlan:
             if len(timestamps) != len(set(timestamps)):
                 raise PlanIntegrityError(f"duplicate timestamps in {mode.value}")
             for timestamp in timestamps:
-                _parse_utc(timestamp, "planned request timestamp")
+                if (
+                    _parse_utc(timestamp, "planned request timestamp")
+                    < coverage_boundary
+                ):
+                    raise PlanIntegrityError(
+                        f"{mode.value} request precedes historical coverage boundary"
+                    )
         if tuple(phase_names) != (
             ("INITIAL", "REFINEMENT")
             if mode is ExecutionMode.PREDICTION_ONLY
             else ("INITIAL", "REFINEMENT", "CLOSING_BENCHMARK")
         ):
             raise PlanIntegrityError(f"wrong phase contract for {mode.value}")
+        canonical_requests = load_requests_from_raw(raw, mode)
+        declared_unique = int(raw["plans"][mode.value]["unique_http_requests"])
+        if declared_unique != len(canonical_requests):
+            raise PlanIntegrityError(
+                f"canonical request count mismatch for {mode.value}"
+            )
         expected = int(raw["plans"][mode.value]["estimated_credits"])
-        actual = len(load_requests_from_raw(raw, mode)) * int(
+        actual = len(canonical_requests) * int(
             provider["estimated_credits_per_unique_request"]
         )
         if expected != actual:
@@ -274,14 +316,21 @@ def load_plan(path: Path = DEFAULT_PLAN_PATH) -> LoadedPlan:
 def load_requests_from_raw(
     raw: Mapping[str, Any], mode: ExecutionMode
 ) -> tuple[HistoricalRequest, ...]:
-    requests: list[HistoricalRequest] = []
+    requests_by_id: dict[str, HistoricalRequest] = {}
     for phase in raw["plans"][mode.value]["phases"]:
         phase_name = _phase_key(phase["phase"])
-        requests.extend(
-            HistoricalRequest(phase_name, str(timestamp))
-            for timestamp in phase["requested_historical_snapshot_timestamps"]
-        )
-    return tuple(requests)
+        for timestamp in phase["requested_historical_snapshot_timestamps"]:
+            request = HistoricalRequest(phase_name, str(timestamp))
+            current = requests_by_id.get(request.request_identifier)
+            if current is None:
+                requests_by_id[request.request_identifier] = request
+            elif phase_name not in current.phases:
+                requests_by_id[request.request_identifier] = HistoricalRequest(
+                    current.phase,
+                    current.requested_timestamp,
+                    (*current.phases, phase_name),
+                )
+    return tuple(requests_by_id.values())
 
 
 @dataclass(frozen=True)
@@ -388,7 +437,7 @@ class RawResponseStore:
         envelope = {
             "schema_version": "sportsbrain-nl-historical-odds-raw-v1",
             "request_identifier": request.request_identifier,
-            "phase": request.phase,
+            "phases": list(request.phases),
             "requested_historical_timestamp": request.requested_timestamp,
             "received_at": response.received_at,
             "provider_snapshot_timestamp": response.provider_snapshot_timestamp,
@@ -421,7 +470,7 @@ class JoinedObservationStore:
 
     def write_once(self, request: HistoricalRequest, joined: Mapping[str, Any]) -> Path:
         self.root.mkdir(parents=True, exist_ok=True)
-        path = self.root / f"{request.request_identifier}.json"
+        path = self.root / f"{request.request_identifier}.{request.phase}.json"
         serialized = (
             json.dumps(joined, ensure_ascii=False, sort_keys=True, indent=2) + "\n"
         )
@@ -679,7 +728,7 @@ def _request_manifest_record(
 ) -> dict[str, Any]:
     return {
         "request_identifier": request.request_identifier,
-        "phase": request.phase,
+        "phases": list(request.phases),
         "requested_historical_timestamp": request.requested_timestamp,
         "provider": PROVIDER,
         "sport_key": SPORT_KEY,
@@ -773,17 +822,23 @@ class BackfillExecutor:
             response_digest = _sha256_json(response.payload)
             raw_store.write_once(request, response, response_digest)
             outcome = "accepted"
-            joined: dict[str, Any] | None = None
-            try:
-                joined = join_snapshot(request, response, self.plan.fixture_targets)
-                accepted += int(joined["accepted_fixture_count"])
-                if any(
-                    item["market_state"] != "matched" for item in joined["fixtures"]
-                ):
-                    outcome = "accepted_with_missing_or_ambiguous_fixtures"
-                joined_store.write_once(request, joined)
-            except BackfillError as exc:
-                outcome = f"failed_closed:{type(exc).__name__}"
+            phase_failures: list[str] = []
+            for phase in request.phases:
+                phase_request = request.for_phase(phase)
+                try:
+                    joined = join_snapshot(
+                        phase_request, response, self.plan.fixture_targets
+                    )
+                    accepted += int(joined["accepted_fixture_count"])
+                    if any(
+                        item["market_state"] != "matched" for item in joined["fixtures"]
+                    ):
+                        outcome = "accepted_with_missing_or_ambiguous_fixtures"
+                    joined_store.write_once(phase_request, joined)
+                except BackfillError as exc:
+                    phase_failures.append(f"{phase}:{type(exc).__name__}")
+            if phase_failures:
+                outcome = f"failed_closed:{','.join(phase_failures)}"
                 failed_closed += 1
             manifest.append(
                 _request_manifest_record(

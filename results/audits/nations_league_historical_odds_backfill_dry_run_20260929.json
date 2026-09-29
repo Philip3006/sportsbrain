@@ -2,7 +2,7 @@
   "schema_version": "sportsbrain-nl-historical-odds-dry-run-v1",
   "status": "DRY_RUN_VALIDATED",
   "plan_path": "results/audits/nations_league_historical_odds_request_plan_20260929.json",
-  "plan_sha256": "f5611025da9d606ea056e720ab2e45a4a622dd7c6b397c7822b5c3df9d978c33",
+  "plan_sha256": "1f8f7dd9ee56a68983f0631d400c93bbe04b9199e9a37471a285cdfb8966006d",
   "timeline_digest": "2c60c6b823b0cae948947fffe2a0e3456495c1fc5d510379ae95690e1c3fa6ef",
   "network_requests": 0,
   "credential_accesses": 0,
@@ -10,20 +10,20 @@
   "plans": {
     "PREDICTION_ONLY": {
       "phases": [
-        {"phase": "INITIAL", "unique_http_requests": 75, "estimated_credits": 750},
+        {"phase": "INITIAL", "unique_http_requests": 72, "estimated_credits": 720},
         {"phase": "REFINEMENT", "unique_http_requests": 75, "estimated_credits": 750}
       ],
-      "unique_http_requests": 150,
-      "estimated_credits": 1500
+      "unique_http_requests": 147,
+      "estimated_credits": 1470
     },
     "FULL_RESEARCH": {
       "phases": [
-        {"phase": "INITIAL", "unique_http_requests": 75, "estimated_credits": 750},
+        {"phase": "INITIAL", "unique_http_requests": 72, "estimated_credits": 720},
         {"phase": "REFINEMENT", "unique_http_requests": 75, "estimated_credits": 750},
         {"phase": "CLOSING_BENCHMARK", "unique_http_requests": 75, "estimated_credits": 750}
       ],
-      "unique_http_requests": 225,
-      "estimated_credits": 2250
+      "unique_http_requests": 182,
+      "estimated_credits": 1820
     }
   },
   "safety": {

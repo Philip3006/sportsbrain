@@ -5,10 +5,20 @@ artifact without recomputing target timestamps or fixture identities.
 
 Current input commitments:
 
-- plan SHA-256: f5611025da9d606ea056e720ab2e45a4a622dd7c6b397c7822b5c3df9d978c33
+- plan SHA-256: 1f8f7dd9ee56a68983f0631d400c93bbe04b9199e9a37471a285cdfb8966006d
 - timeline digest: 2c60c6b823b0cae948947fffe2a0e3456495c1fc5d510379ae95690e1c3fa6ef
 - final timeline head: 065c6b40eb9911df3703d2e3079730a556136ee3
-- final plan: 279 provider-coverable fixtures; 0 pending kickoff mappings; two administrative exceptions are explicitly classified, with the after-coverage exception included in the provider plan.
+- final plan: 279 kickoff-eligible fixtures; 0 pending kickoff mappings; ten INITIAL fixtures are excluded because their exact T-24h timestamp precedes provider coverage.
+- canonical paid identity: provider, sport key, region, market, and requested historical timestamp; phase/purpose is metadata only.
+
+## Reconciliation
+
+- Superseded #218 plan: PREDICTION_ONLY 150 / FULL_RESEARCH 225.
+- Independently reproduced final plan: PREDICTION_ONLY 147 / FULL_RESEARCH 182.
+- INITIAL changes from 75 to 72 unique timestamps because the ten 2022-06-11 fixtures have T-24h timestamps before the coverage boundary.
+- FULL_RESEARCH changes from 225 phase-local requests to 182 paid identities because 40 exact timestamps are shared across phases.
+- The two administrative exceptions remain nested in the before/after eligibility counts; the after-coverage exception remains in the provider plan.
+- Machine-readable reconciliation: results/audits/nations_league_historical_odds_executor_reconciliation_20260929.json.
 
 ## Dry run
 

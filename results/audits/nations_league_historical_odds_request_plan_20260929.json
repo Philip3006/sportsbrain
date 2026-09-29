@@ -28,18 +28,18 @@
   "classification": {
     "total_fixtures": 512,
     "category_counts": {
-      "before historical provider coverage": 232,
-      "after provider coverage with verified kickoff_utc": 278,
+      "before historical provider coverage": 233,
+      "after provider coverage with verified kickoff_utc": 279,
       "after provider coverage but unresolved kickoff": 0,
-      "administrative / otherwise unusable exception": 2
+      "administrative / otherwise unusable exception": 0
     },
     "by_edition": {
       "2020/21": {
         "fixtures": 166,
-        "before historical provider coverage": 165,
+      "before historical provider coverage": 166,
         "after provider coverage with verified kickoff_utc": 0,
         "after provider coverage but unresolved kickoff": 0,
-        "administrative / otherwise unusable exception": 1,
+      "administrative / otherwise unusable exception": 0,
         "verified_kickoffs": 166,
         "unresolved_kickoffs": 0,
         "provider_coverable_fixtures": 0,
@@ -59,9 +59,9 @@
       "2024/25": {
         "fixtures": 184,
         "before historical provider coverage": 0,
-        "after provider coverage with verified kickoff_utc": 183,
+      "after provider coverage with verified kickoff_utc": 184,
         "after provider coverage but unresolved kickoff": 0,
-        "administrative / otherwise unusable exception": 1,
+      "administrative / otherwise unusable exception": 0,
         "verified_kickoffs": 184,
         "unresolved_kickoffs": 0,
         "provider_coverable_fixtures": 184,
@@ -172,7 +172,14 @@
           "after_coverage": true
         }
       ]
-    }
+    },
+    "kickoff_eligibility_counts": {
+      "before historical provider coverage": 233,
+      "after provider coverage with verified kickoff_utc": 279,
+      "after provider coverage but unresolved kickoff": 0
+    },
+    "unusable_exception_count": 0,
+    "administrative_exceptions_nested": 2
   },
   "target_rules": {
     "initial": {
@@ -181,7 +188,9 @@
         22,
         26
       ],
-      "prediction_input": true
+      "prediction_input": true,
+      "coverage_boundary": "requested snapshot timestamp must be >= provider.historical_coverage_start_utc",
+      "excluded_before_coverage": "explicitly listed in each plan's INITIAL phase"
     },
     "refinement": {
       "nominal": "kickoff_utc - 90 minutes",
@@ -195,21 +204,26 @@
       "nominal": "kickoff_utc boundary; select latest provider snapshot strictly before boundary",
       "prediction_input": false,
       "clv_research_only": true
-    }
+    },
+    "paid_request_identity": [
+      "provider",
+      "sport_key",
+      "region",
+      "market",
+      "requested_historical_timestamp"
+    ],
+    "phase_metadata": "phase/purpose mappings remain metadata and do not alter paid request identity"
   },
   "plans": {
     "PREDICTION_ONLY": {
       "phases": [
         {
           "phase": "INITIAL",
-          "fixtures_covered": 279,
+          "fixtures_covered": 269,
           "pending_fixtures": 0,
-          "unique_http_requests": 75,
-          "estimated_credits": 750,
+          "unique_http_requests": 72,
+          "estimated_credits": 720,
           "requested_historical_snapshot_timestamps": [
-            "2022-06-10T13:00:00Z",
-            "2022-06-10T16:00:00Z",
-            "2022-06-10T18:45:00Z",
             "2022-06-11T13:00:00Z",
             "2022-06-11T16:00:00Z",
             "2022-06-11T18:45:00Z",
@@ -283,7 +297,21 @@
             "2025-06-07T13:00:00Z",
             "2025-06-07T19:00:00Z"
           ],
-          "selection_rule": "exact nominal T-24h; deduplicate exact timestamps"
+          "selection_rule": "exact nominal T-24h; exclude fixtures whose requested timestamp precedes provider coverage; deduplicate exact timestamps",
+          "excluded_fixture_count": 10,
+          "excluded_fixture_ids": [
+            "uefa-nl:414287f2c388b02543fd1496",
+            "uefa-nl:5e6fe1bd3c8aa0570c0d02e7",
+            "uefa-nl:39fff7a7549b51adef4c97d5",
+            "uefa-nl:62dfd2fd8bc441f3704addcc",
+            "uefa-nl:894aaf30d3b57793345df3cd",
+            "uefa-nl:1f3c64c337a909eeec98c7f7",
+            "uefa-nl:e4db9fd6f18234746122e17c",
+            "uefa-nl:9761cb25bfd6f6819cba75b7",
+            "uefa-nl:4ee152dedc59604ca77ddfd9",
+            "uefa-nl:df19f887f6424cc2f8447fed"
+          ],
+          "eligibility_rule": "requested historical snapshot timestamp must be >= historical_coverage_start_utc"
         },
         {
           "phase": "REFINEMENT",
@@ -373,24 +401,22 @@
       ],
       "fixtures_covered": 279,
       "pending_fixtures": 0,
-      "unique_http_requests": 150,
-      "estimated_credits": 1500,
-      "naive_fixture_requests": 558,
-      "requests_saved_by_deduplication": 408,
-      "credits_saved_through_deduplication": 4080
+      "unique_http_requests": 147,
+      "estimated_credits": 1470,
+      "naive_fixture_requests": 548,
+      "requests_saved_by_deduplication": 401,
+      "credits_saved_through_deduplication": 4010,
+      "phase_local_http_requests": 147
     },
     "FULL_RESEARCH": {
       "phases": [
         {
           "phase": "INITIAL",
-          "fixtures_covered": 279,
+          "fixtures_covered": 269,
           "pending_fixtures": 0,
-          "unique_http_requests": 75,
-          "estimated_credits": 750,
+          "unique_http_requests": 72,
+          "estimated_credits": 720,
           "requested_historical_snapshot_timestamps": [
-            "2022-06-10T13:00:00Z",
-            "2022-06-10T16:00:00Z",
-            "2022-06-10T18:45:00Z",
             "2022-06-11T13:00:00Z",
             "2022-06-11T16:00:00Z",
             "2022-06-11T18:45:00Z",
@@ -464,7 +490,21 @@
             "2025-06-07T13:00:00Z",
             "2025-06-07T19:00:00Z"
           ],
-          "selection_rule": "exact nominal T-24h; deduplicate exact timestamps"
+          "selection_rule": "exact nominal T-24h; exclude fixtures whose requested timestamp precedes provider coverage; deduplicate exact timestamps",
+          "excluded_fixture_count": 10,
+          "excluded_fixture_ids": [
+            "uefa-nl:414287f2c388b02543fd1496",
+            "uefa-nl:5e6fe1bd3c8aa0570c0d02e7",
+            "uefa-nl:39fff7a7549b51adef4c97d5",
+            "uefa-nl:62dfd2fd8bc441f3704addcc",
+            "uefa-nl:894aaf30d3b57793345df3cd",
+            "uefa-nl:1f3c64c337a909eeec98c7f7",
+            "uefa-nl:e4db9fd6f18234746122e17c",
+            "uefa-nl:9761cb25bfd6f6819cba75b7",
+            "uefa-nl:4ee152dedc59604ca77ddfd9",
+            "uefa-nl:df19f887f6424cc2f8447fed"
+          ],
+          "eligibility_rule": "requested historical snapshot timestamp must be >= historical_coverage_start_utc"
         },
         {
           "phase": "REFINEMENT",
@@ -639,11 +679,13 @@
       ],
       "fixtures_covered": 279,
       "pending_fixtures": 0,
-      "unique_http_requests": 225,
-      "estimated_credits": 2250,
-      "naive_fixture_requests": 837,
-      "requests_saved_by_deduplication": 612,
-      "credits_saved_through_deduplication": 6120
+      "unique_http_requests": 182,
+      "estimated_credits": 1820,
+      "naive_fixture_requests": 827,
+      "requests_saved_by_deduplication": 645,
+      "credits_saved_through_deduplication": 6450,
+      "phase_local_http_requests": 222,
+      "cross_phase_duplicate_timestamps": 40
     }
   },
   "fixture_targets": [
@@ -4007,13 +4049,15 @@
       "initial_all_exactly_24h": true,
       "refinement_all_exactly_90m": true,
       "initial_all_in_window": true,
-      "refinement_all_in_window": true
+      "refinement_all_in_window": true,
+      "initial_all_at_or_after_coverage_boundary": true
     },
     "existing_cache_credits_applied": 0,
     "existing_cache_basis": "No validated local historical The Odds API snapshot matching the new timeline fixture identities and target timestamps is credited; local odds history contains no Nations League historical snapshots.",
     "unresolved_risks": [
       "No fixtures remain pending for missing kickoff_utc; all 512 timeline kickoffs are verified.",
-      "The two administrative exceptions remain explicitly classified and included in the provider request plan because both have verified kickoffs; their missing result_safe_available_at affects result/settlement evaluation only, not pre-match odds retrieval.",
+      "Ten provider-coverable fixtures are intentionally excluded from INITIAL because their exact T-24h requested timestamps precede the historical coverage boundary.",
+      "The two administrative exceptions are nested in the before/after eligibility counts; the after-coverage exception remains provider-coverable because its kickoff and pre-match snapshot times are valid.",
       "Closing requests require provider-returned snapshot timestamp validation strictly before kickoff; no provider request has been made.",
       "Historical endpoint entitlement, plan, quota balance, and reset time are intentionally unverified.",
       "The 10-credit estimate assumes one region (eu) and one market (h2h) per bulk historical request."
@@ -5468,7 +5512,8 @@
       "home_team": "Switzerland",
       "away_team": "Ukraine",
       "kickoff_utc": "2020-11-17T19:45:00Z",
-      "category": "administrative / otherwise unusable exception",
+      "category": "before historical provider coverage",
+      "administrative_exception_nested": true,
       "administrative_exception": {
         "kind": "unplayed_fixture_award",
         "reason": "administrative_award_has_no_played_match_completion_time"
@@ -8496,7 +8541,8 @@
       "home_team": "Romania",
       "away_team": "Kosovo",
       "kickoff_utc": "2024-11-15T19:45:00Z",
-      "category": "administrative / otherwise unusable exception",
+      "category": "after provider coverage with verified kickoff_utc",
+      "administrative_exception_nested": true,
       "administrative_exception": {
         "kind": "abandoned_match_administrative_award",
         "reason": "abandoned_match_has_no_deterministic_result_safe_time"
@@ -9166,5 +9212,85 @@
       "kickoff_utc": "2025-06-08T19:00:00Z",
       "category": "after provider coverage with verified kickoff_utc"
     }
-  ]
+  ],
+  "reconciliation": {
+    "old_218": {
+      "plan_status": "superseded",
+      "prediction_only": {
+        "unique_http_requests": 150,
+        "estimated_credits": 1500
+      },
+      "full_research": {
+        "unique_http_requests": 225,
+        "estimated_credits": 2250
+      },
+      "reason": "INITIAL included ten requested T-24h snapshots before the provider coverage boundary, and paid identity incorrectly included research phase."
+    },
+    "reference_214": {
+      "plan_status": "independently reproduced_semantics",
+      "reference_head": "48b14907f89bd97cd920546df6d3cfa5c4bbc3eb",
+      "reference_plan_digest": "b231bda6e22566529c0747cc8c110cb7049ba574b63a6892f883ac7015ddfb02",
+      "prediction_only": {
+        "unique_http_requests": 147,
+        "estimated_credits": 1470
+      },
+      "full_research": {
+        "unique_http_requests": 182,
+        "estimated_credits": 1820
+      }
+    },
+    "final_218": {
+      "prediction_only": {
+        "unique_http_requests": 147,
+        "estimated_credits": 1470
+      },
+      "full_research": {
+        "unique_http_requests": 182,
+        "estimated_credits": 1820
+      },
+      "independently_reproduced": true
+    },
+    "differences": [
+      {
+        "dimension": "INITIAL eligibility",
+        "old_218": 75,
+        "final_218": 72,
+        "explanation": "The ten 2022-06-11 fixtures have T-24h timestamps before 2022-06-11T00:25:00Z; the three shared timestamps are excluded."
+      },
+      {
+        "dimension": "PREDICTION_ONLY paid identity",
+        "old_218": 150,
+        "final_218": 147,
+        "explanation": "The three excluded INITIAL timestamps reduce the canonical request union by three."
+      },
+      {
+        "dimension": "FULL_RESEARCH paid identity",
+        "old_218": 225,
+        "final_218": 182,
+        "explanation": "Phase-local 222 requests are reduced by 40 exact cross-phase timestamp duplicates when phase is removed from paid identity."
+      },
+      {
+        "dimension": "credit estimate",
+        "old_218": 2250,
+        "final_218": 1820,
+        "explanation": "Credits equal unique canonical provider request identities multiplied by the declared 10-credit request cost."
+      }
+    ]
+  },
+  "paid_request_identity": {
+    "fields": [
+      "provider",
+      "sport_key",
+      "region",
+      "market",
+      "requested_historical_timestamp"
+    ],
+    "excludes": [
+      "INITIAL",
+      "REFINEMENT",
+      "CLOSING_BENCHMARK",
+      "research purpose"
+    ],
+    "cross_phase_deduplication": true
+  }
 }

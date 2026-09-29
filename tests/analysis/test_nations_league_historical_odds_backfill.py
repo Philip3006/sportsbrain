@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -38,13 +39,15 @@ def test_final_timeline_plan_includes_administrative_exception_and_zero_pending(
         "065c6b40eb9911df3703d2e3079730a556136ee3"
     )
     assert plan.raw["classification"]["category_counts"] == {
-        "before historical provider coverage": 232,
-        "after provider coverage with verified kickoff_utc": 278,
+        "before historical provider coverage": 233,
+        "after provider coverage with verified kickoff_utc": 279,
         "after provider coverage but unresolved kickoff": 0,
-        "administrative / otherwise unusable exception": 2,
+        "administrative / otherwise unusable exception": 0,
     }
     assert len(plan.fixture_targets) == 279
     assert plan.raw["pending_manifest"] == []
+    assert plan.raw["plans"]["PREDICTION_ONLY"]["unique_http_requests"] == 147
+    assert plan.raw["plans"]["FULL_RESEARCH"]["unique_http_requests"] == 182
     assert {
         item["fixture_id"]
         for item in plan.raw["classification"]["administrative_exceptions"]
@@ -56,6 +59,30 @@ def test_final_timeline_plan_includes_administrative_exception_and_zero_pending(
         item["fixture_id"] == "uefa-nl:63f926e0ced3f284c077ee10"
         for item in plan.fixture_targets
     )
+
+
+def test_initial_excludes_exactly_ten_pre_coverage_requested_snapshots():
+    plan = _plan()
+    initial = plan.raw["plans"]["FULL_RESEARCH"]["phases"][0]
+    boundary = datetime.fromisoformat("2022-06-11T00:25:00+00:00")
+    assert initial["fixtures_covered"] == 269
+    assert initial["excluded_fixture_count"] == 10
+    assert len(initial["excluded_fixture_ids"]) == 10
+    assert all(
+        datetime.fromisoformat(timestamp.replace("Z", "+00:00")) >= boundary
+        for timestamp in initial["requested_historical_snapshot_timestamps"]
+    )
+
+
+def test_every_canonical_request_timestamp_is_inside_provider_coverage():
+    plan = _plan()
+    boundary = datetime.fromisoformat("2022-06-11T00:25:00+00:00")
+    for mode in (ExecutionMode.PREDICTION_ONLY, ExecutionMode.FULL_RESEARCH):
+        assert all(
+            datetime.fromisoformat(request.requested_timestamp.replace("Z", "+00:00"))
+            >= boundary
+            for request in plan.requests_for(mode)
+        )
 
 
 def _context(plan, mode=ExecutionMode.DRY_RUN, *, credits=2_500, **overrides):
@@ -190,7 +217,7 @@ def _response_for(target, request, *, snapshot=None, payload_overrides=None):
     )
 
 
-def test_dry_run_reproduces_both_plan_costs_and_has_zero_side_effects():
+def test_dry_run_reproduces_canonical_paid_identity_costs_and_has_zero_side_effects():
     plan = _plan()
     first = BackfillExecutor(plan).dry_run(_context(plan))
     second = BackfillExecutor(plan).dry_run(_context(plan))
@@ -198,10 +225,10 @@ def test_dry_run_reproduces_both_plan_costs_and_has_zero_side_effects():
     assert first == second
     assert first["network_requests"] == 0
     assert first["credential_accesses"] == 0
-    assert first["plans"]["PREDICTION_ONLY"]["unique_http_requests"] == 150
-    assert first["plans"]["PREDICTION_ONLY"]["estimated_credits"] == 1_500
-    assert first["plans"]["FULL_RESEARCH"]["unique_http_requests"] == 225
-    assert first["plans"]["FULL_RESEARCH"]["estimated_credits"] == 2_250
+    assert first["plans"]["PREDICTION_ONLY"]["unique_http_requests"] == 147
+    assert first["plans"]["PREDICTION_ONLY"]["estimated_credits"] == 1_470
+    assert first["plans"]["FULL_RESEARCH"]["unique_http_requests"] == 182
+    assert first["plans"]["FULL_RESEARCH"]["estimated_credits"] == 1_820
 
 
 @pytest.mark.parametrize(
@@ -241,13 +268,64 @@ def test_preflight_guards_fail_before_any_credential_or_transport_access(
     assert calls == {"credential": 0, "transport": 0}
 
 
-def test_canonical_request_identity_is_phase_and_timestamp_bound():
+def test_canonical_request_identity_is_provider_shape_and_timestamp_bound():
     initial = HistoricalRequest("INITIAL", "2022-06-10T18:45:00Z")
     refinement = HistoricalRequest("REFINEMENT", "2022-06-10T18:45:00Z")
-    assert initial.request_identifier != refinement.request_identifier
+    assert initial.request_identifier == refinement.request_identifier
+    assert "phase" not in initial.identity_payload
+    assert initial.as_dict()["phases"] == ["INITIAL"]
+    assert refinement.as_dict()["phases"] == ["REFINEMENT"]
     assert (
         initial.request_identifier
         == HistoricalRequest("INITIAL", "2022-06-10T18:45:00Z").request_identifier
+    )
+
+
+def test_full_research_deduplicates_same_provider_timestamp_across_phases():
+    plan = _plan()
+    requests = plan.requests_for(ExecutionMode.FULL_RESEARCH)
+    assert len(requests) == 182
+    assert any(len(request.phases) > 1 for request in requests)
+    assert len({request.request_identifier for request in requests}) == 182
+
+
+def test_cross_phase_manifest_completion_suppresses_paid_duplicate(tmp_path):
+    initial = HistoricalRequest("INITIAL", "2022-06-11T13:00:00Z")
+    refinement = HistoricalRequest("REFINEMENT", "2022-06-11T13:00:00Z")
+    assert initial.request_identifier == refinement.request_identifier
+    manifest = ExecutionManifest(tmp_path / "execution.jsonl")
+    manifest.append(
+        {
+            "request_identifier": initial.request_identifier,
+            "phases": ["INITIAL"],
+            "execution_status": "completed",
+        }
+    )
+    assert (
+        manifest.state(refinement.request_identifier)["execution_status"] == "completed"
+    )
+
+
+def test_shared_raw_identity_keeps_phase_join_outputs_isolated(tmp_path):
+    initial = HistoricalRequest("INITIAL", "2022-06-11T13:00:00Z")
+    closing = HistoricalRequest("CLOSING_BENCHMARK", "2022-06-11T13:00:00Z")
+    assert initial.request_identifier == closing.request_identifier
+    store = JoinedObservationStore(tmp_path / "joined")
+    initial_path = store.write_once(
+        initial, {"prediction_input": True, "research_classification": "PREDICTION"}
+    )
+    closing_path = store.write_once(
+        closing,
+        {
+            "prediction_input": False,
+            "research_classification": "RESEARCH_BENCHMARK_ONLY",
+        },
+    )
+    assert initial_path != closing_path
+    assert json.loads(initial_path.read_text())["prediction_input"] is True
+    assert (
+        json.loads(closing_path.read_text())["research_classification"]
+        == "RESEARCH_BENCHMARK_ONLY"
     )
 
 
