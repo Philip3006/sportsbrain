@@ -1,0 +1,567 @@
+from __future__ import annotations
+
+import ast
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import pytest
+
+from scripts.run_nations_league_context_ablation import (
+    canonical_digest,
+    derive_context_rows,
+    validate_b4_artifact,
+)
+from src.analysis.nations_league_context import (
+    build_context_features,
+    evaluate_paired_probabilities,
+    render_context_ablation_markdown,
+    run_causal_context_ablation,
+    run_paired_ablation,
+)
+
+
+def _schedule() -> pd.DataFrame:
+    return pd.DataFrame(
+        [
+            ("f1", "2024/25", "A", "A1", 1, "2024-09-01T18:00:00Z", "Alpha", "Bravo"),
+            ("f2", "2024/25", "A", "A1", 1, "2024-09-01T18:00:00Z", "Charlie", "Delta"),
+            ("f3", "2024/25", "A", "A1", 2, "2024-09-05T18:00:00Z", "Alpha", "Charlie"),
+            ("f4", "2024/25", "A", "A1", 2, "2024-09-05T18:00:00Z", "Bravo", "Delta"),
+            ("f5", "2024/25", "A", "A1", 3, "2024-09-09T18:00:00Z", "Alpha", "Delta"),
+            ("f6", "2024/25", "A", "A1", 3, "2024-09-09T18:00:00Z", "Bravo", "Charlie"),
+        ],
+        columns=[
+            "fixture_id",
+            "edition",
+            "league",
+            "group",
+            "matchday",
+            "kickoff",
+            "home_team",
+            "away_team",
+        ],
+    )
+
+
+def _rules() -> dict:
+    return {
+        ("2024/25", "A", "A1"): {
+            "qualification_slots": 1,
+            "promotion_slots": 0,
+            "relegation_slots": 1,
+            "relegation_playoff_slots": 0,
+            "expected_fixtures_per_team": 3,
+            "table_tiebreakers": ("points", "goal_difference", "goals_for"),
+            "mathematical_goal": "qualification",
+        }
+    }
+
+
+def _results() -> pd.DataFrame:
+    return pd.DataFrame(
+        [
+            ("f1", 2, 0),
+            ("f2", 1, 0),
+            # Deliberately include target and later scores: the target's features must ignore them.
+            ("f3", 99, 0),
+            ("f4", 0, 99),
+            ("f5", 0, 0),
+            ("f6", 0, 0),
+        ],
+        columns=["fixture_id", "home_score", "away_score"],
+    )
+
+
+def test_features_use_explicit_context_and_only_prior_kickoff_results():
+    features = build_context_features(_schedule(), _results(), _rules())
+    target = features.set_index("fixture_id").loc["f3"]
+    assert target["league"] == "A"
+    assert target["group"] == "A1"
+    assert target["matchday"] == 2
+    assert target["home_points_before"] == 3
+    assert target["home_matches_played_before"] == 1
+    assert target["points_diff_home_minus_away"] == 0
+    assert target["home_goal_difference_before"] == 2
+    assert target["home_table_position_before"] == 1
+    assert target["home_remaining_games_before"] == 2
+    assert target["home_points_gap_to_qualification"] == 0
+    assert (
+        target["home_draw_sufficient_for_mathematical_goal"]
+        == target["home_draw_sufficient_for_qualification"]
+    )
+    assert bool(target["home_mathematically_qualified"]) is False
+    assert pd.isna(target["home_mathematically_promoted"])
+
+    changed_future = _results().copy()
+    changed_future.loc[
+        changed_future["fixture_id"].ne("f1") & changed_future["fixture_id"].ne("f2"),
+        ["home_score", "away_score"],
+    ] = [0, 75]
+    after = (
+        build_context_features(_schedule(), changed_future, _rules())
+        .set_index("fixture_id")
+        .loc["f3"]
+    )
+    invariant = [
+        "home_points_before",
+        "home_goal_difference_before",
+        "home_table_position_before",
+        "away_points_before",
+        "away_goal_difference_before",
+        "away_table_position_before",
+        "home_qualification_still_possible",
+        "home_draw_sufficient_for_qualification",
+    ]
+    assert target[invariant].to_dict() == after[invariant].to_dict()
+
+
+def test_same_kickoff_matches_never_enter_each_others_standings():
+    altered = _results().copy()
+    altered.loc[altered["fixture_id"].eq("f4"), ["home_score", "away_score"]] = [0, 50]
+    baseline = build_context_features(_schedule(), _results(), _rules()).set_index(
+        "fixture_id"
+    )
+    changed = build_context_features(_schedule(), altered, _rules()).set_index(
+        "fixture_id"
+    )
+    assert (
+        baseline.loc["f3", "home_points_before"]
+        == changed.loc["f3", "home_points_before"]
+    )
+    assert (
+        baseline.loc["f3", "away_points_before"]
+        == changed.loc["f3", "away_points_before"]
+    )
+
+
+def test_missing_prior_result_and_missing_group_rules_fail_closed():
+    missing_score = _results().loc[lambda frame: frame["fixture_id"].ne("f1")]
+    with pytest.raises(ValueError, match="lack final results"):
+        build_context_features(_schedule(), missing_score, _rules())
+    with pytest.raises(ValueError, match="Missing explicit group rules"):
+        build_context_features(_schedule(), _results(), {})
+    with pytest.raises(ValueError, match="Schedule is incomplete"):
+        build_context_features(_schedule().iloc[:-1], _results().iloc[:-1], _rules())
+
+
+def test_duplicate_fixtures_and_unknown_tiebreakers_fail_closed():
+    duplicate = pd.concat([_schedule(), _schedule().iloc[[0]]], ignore_index=True)
+    with pytest.raises(ValueError, match="fixture_id values must be unique"):
+        build_context_features(duplicate, _results(), _rules())
+    invalid_rules = _rules()
+    invalid_rules[("2024/25", "A", "A1")]["table_tiebreakers"] = (
+        "latest_news_sentiment",
+    )
+    with pytest.raises(ValueError, match="Unsupported table tiebreaker"):
+        build_context_features(_schedule(), _results(), invalid_rules)
+    excess_slots = _rules()
+    excess_slots[("2024/25", "A", "A1")]["relegation_slots"] = 3
+    excess_slots[("2024/25", "A", "A1")]["relegation_playoff_slots"] = 2
+    with pytest.raises(ValueError, match="slots exceed group size"):
+        build_context_features(_schedule(), _results(), excess_slots)
+
+
+def test_unresolved_table_tie_is_not_reported_as_a_false_exact_rank():
+    schedule = _schedule()
+    result = _results()
+    result.loc[result["fixture_id"].eq("f1"), ["home_score", "away_score"]] = [1, 0]
+    result.loc[result["fixture_id"].eq("f2"), ["home_score", "away_score"]] = [1, 0]
+    # Both winners have the same points and goal difference only after adjusting the first score.
+    result.loc[result["fixture_id"].eq("f1"), ["home_score", "away_score"]] = [1, 0]
+    tied = (
+        build_context_features(schedule, result, _rules())
+        .set_index("fixture_id")
+        .loc["f3"]
+    )
+    assert bool(tied["home_table_position_tied"]) is True
+    assert pd.isna(tied["home_table_position_before"])
+    assert tied["home_table_position_min"] == 1
+    assert tied["home_table_position_max"] == 2
+
+
+def test_near_must_win_is_not_invented_without_a_declared_threshold():
+    row = (
+        build_context_features(_schedule(), _results(), _rules())
+        .set_index("fixture_id")
+        .loc["f3"]
+    )
+    assert pd.isna(row["home_near_must_win"])
+    assert "threshold" in row["home_near_must_win_reason"]
+
+
+def test_mathematically_required_win_is_based_on_complete_future_schedule():
+    schedule = pd.DataFrame(
+        [
+            (
+                "leg-1",
+                "2024/25",
+                "A",
+                "A1",
+                1,
+                "2024-09-01T18:00:00Z",
+                "Bravo",
+                "Alpha",
+            ),
+            (
+                "leg-2",
+                "2024/25",
+                "A",
+                "A1",
+                2,
+                "2024-09-05T18:00:00Z",
+                "Alpha",
+                "Bravo",
+            ),
+        ],
+        columns=[
+            "fixture_id",
+            "edition",
+            "league",
+            "group",
+            "matchday",
+            "kickoff",
+            "home_team",
+            "away_team",
+        ],
+    )
+    rules = {
+        ("2024/25", "A", "A1"): {
+            "qualification_slots": 1,
+            "promotion_slots": 0,
+            "relegation_slots": 0,
+            "relegation_playoff_slots": 0,
+            "expected_fixtures_per_team": 2,
+            "table_tiebreakers": ("points",),
+            "mathematical_goal": "qualification",
+        }
+    }
+    results = pd.DataFrame(
+        [("leg-1", 1, 0)], columns=["fixture_id", "home_score", "away_score"]
+    )
+    target = (
+        build_context_features(schedule, results, rules)
+        .set_index("fixture_id")
+        .loc["leg-2"]
+    )
+    assert bool(target["home_qualification_still_possible"]) is True
+    assert bool(target["home_must_win_for_qualification"]) is True
+    assert bool(target["home_draw_sufficient_for_qualification"]) is False
+    assert bool(target["home_win_required_for_mathematical_goal"]) is True
+    assert bool(target["home_loss_eliminates"]) is True
+    assert bool(target["home_mathematically_qualified"]) is False
+    assert target["home_mathematically_promoted"] is None
+
+
+def test_feature_module_has_no_production_or_network_imports():
+    module_path = (
+        Path(__file__).parents[2] / "src" / "analysis" / "nations_league_context.py"
+    )
+    module = ast.parse(module_path.read_text(encoding="utf-8"))
+    imported = set()
+    for node in ast.walk(module):
+        if isinstance(node, ast.Import):
+            imported.update(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            imported.add(node.module)
+    forbidden = {"requests", "src.scanner", "src.runtime", "src.betting", "src.ledger"}
+    assert not any(
+        name == blocked or name.startswith(f"{blocked}.")
+        for name in imported
+        for blocked in forbidden
+    )
+
+
+def test_paired_metrics_include_bootstrap_calibration_coverage_and_strata():
+    rows = []
+    for index in range(120):
+        outcome = index % 3
+        base = [0.275, 0.275, 0.275]
+        base[outcome] = 0.45
+        context = [0.265, 0.265, 0.265]
+        context[outcome] = 0.47
+        tier = "ABCD"[(index // 30) % 4]
+        rows.append(
+            {
+                "fixture_id": f"synthetic-unit-{index}",
+                "kickoff": pd.Timestamp("2024-01-01", tz="UTC")
+                + pd.Timedelta(days=index),
+                "edition": "2024/25",
+                "league_tier": tier,
+                "group": "G1",
+                "matchday": index % 6 + 1,
+                "outcome": outcome,
+                "mathematically_consequential": index % 5 == 0,
+                "baseline_probabilities": base,
+                "context_probabilities": context,
+            }
+        )
+    report = evaluate_paired_probabilities(
+        rows,
+        eligible_count=120,
+        n_bootstrap=100,
+        minimum_evaluation_count=100,
+        seed=7,
+    )
+    assert report["schema"] == "nations-league-context-ablation-audit-v1"
+    assert report["fixtures_evaluated"] == report["eligible_fixtures"] == 120
+    assert report["coverage"] == 1.0
+    assert report["baseline"]["home_calibration"]
+    assert report["baseline"]["draw_calibration"]
+    assert report["baseline"]["away_calibration"]
+    assert report["paired_date_cluster_bootstrap"]["confidence_level"] == 0.95
+    assert (
+        report["paired_date_cluster_bootstrap"]["brier_context_minus_baseline"][
+            "bootstrap_replicates"
+        ]
+        == 100
+    )
+    assert set(report["strata"]) >= {
+        "group_stage",
+        "mathematical_constraint",
+        "league_tier",
+        "observed_outcome",
+    }
+    assert (
+        report["global_claim_basis"] == "full_paired_out_of_sample_fixture_cohort_only"
+    )
+
+
+def test_paired_ablation_is_expanding_window_and_uses_identical_prediction_rows():
+    count = 72
+    outcomes = np.asarray([index % 3 for index in range(count)])
+    examples = pd.DataFrame(
+        {
+            "fixture_id": [f"fixture-{index}" for index in range(count)],
+            "kickoff": pd.date_range("2020-01-01", periods=count, freq="7D", tz="UTC"),
+            "outcome": outcomes,
+            "base_p_home": np.where(outcomes == 0, 0.5, 0.25),
+            "base_p_draw": np.where(outcomes == 1, 0.5, 0.25),
+            "base_p_away": np.where(outcomes == 2, 0.5, 0.25),
+            "home_points_before": np.arange(count) % 10,
+            "league": ["A", "B", "C", "D"] * 18,
+        }
+    )
+    report = run_paired_ablation(
+        examples,
+        numeric_context=["home_points_before"],
+        categorical_context=["league"],
+        minimum_training_rows=18,
+    )
+    assert report["schema"] == "nations-league-context-ablation-v1"
+    assert report["evaluation"] == "paired_expanding_window_causal"
+    assert report["no_lookahead"] is True
+    assert report["predicted_rows"] == 54
+    assert report["baseline"]["multiclass_brier"] >= 0
+    assert report["baseline_plus_context"]["log_loss"] >= 0
+    assert len(report["predictions"]) == 54
+    assert all(
+        pd.Timestamp(row["training_max_kickoff"]) < pd.Timestamp(row["kickoff"])
+        for row in report["predictions"]
+    )
+
+
+def test_end_to_end_runner_requires_exact_pre_kickoff_cohort_and_emits_report():
+    count = 150
+    outcomes = np.asarray([index % 3 for index in range(count)])
+    examples = pd.DataFrame(
+        {
+            "fixture_id": [f"synthetic-unit-{index}" for index in range(count)],
+            "kickoff": pd.date_range("2020-01-01", periods=count, freq="7D", tz="UTC"),
+            "state_cutoff": pd.date_range(
+                "2019-12-31", periods=count, freq="7D", tz="UTC"
+            ),
+            "record_digest": ["a" * 64] * count,
+            "edition": ["2020/21"] * count,
+            "league_tier": ["ABCD"[(index // 30) % 4] for index in range(count)],
+            "group": ["G1"] * count,
+            "matchday": [index % 6 + 1 for index in range(count)],
+            "group_stage_max_matchday": [6] * count,
+            "mathematically_consequential": [index % 4 == 0 for index in range(count)],
+            "outcome": outcomes,
+            "base_p_home": np.where(outcomes == 0, 0.5, 0.25),
+            "base_p_draw": np.where(outcomes == 1, 0.5, 0.25),
+            "base_p_away": np.where(outcomes == 2, 0.5, 0.25),
+            "home_points_before": np.arange(count) % 12,
+        }
+    )
+    examples[
+        ["matchday", "group_stage_max_matchday", "mathematically_consequential"]
+    ] = examples[
+        ["matchday", "group_stage_max_matchday", "mathematically_consequential"]
+    ].astype(object)
+    examples.loc[
+        149, ["matchday", "group_stage_max_matchday", "mathematically_consequential"]
+    ] = [None, None, None]
+    provenance = {
+        "competition_state_dataset_sha256": "b" * 64,
+        "baseline_source_sha256": "c" * 64,
+        "source_main_sha": "d" * 40,
+    }
+    report = run_causal_context_ablation(
+        examples,
+        examples["fixture_id"].tolist(),
+        numeric_context=["home_points_before"],
+        categorical_context=["league_tier", "group"],
+        provenance=provenance,
+        minimum_training_rows=30,
+        n_bootstrap=100,
+        seed=9,
+    )
+    assert report["eligible_fixtures"] == 150
+    assert report["fixtures_evaluated"] == 120
+    assert len(report["walk_forward"]["warmup_exclusions"]) == 30
+    assert report["walk_forward"]["no_lookahead"] is True
+    assert report["strata"]["group_stage"]["not_group_stage"]["sample_count"] == 1
+    assert (
+        report["strata"]["mathematical_constraint"]["unavailable"]["sample_count"] == 1
+    )
+    assert report["synthetic_evidence_used"] is False
+    assert "Primary paired metrics" in render_context_ablation_markdown(report)
+    with pytest.raises(ValueError, match="exactly match"):
+        run_causal_context_ablation(
+            examples.iloc[:-1],
+            examples["fixture_id"].tolist(),
+            numeric_context=["home_points_before"],
+            categorical_context=["league_tier", "group"],
+            provenance=provenance,
+            minimum_training_rows=30,
+            n_bootstrap=100,
+        )
+    late_cutoff = examples.copy()
+    late_cutoff.loc[0, "state_cutoff"] = late_cutoff.loc[0, "kickoff"]
+    with pytest.raises(ValueError, match="strictly before kickoff"):
+        run_causal_context_ablation(
+            late_cutoff,
+            late_cutoff["fixture_id"].tolist(),
+            numeric_context=["home_points_before"],
+            categorical_context=["league_tier", "group"],
+            provenance=provenance,
+            minimum_training_rows=30,
+            n_bootstrap=100,
+        )
+
+
+def test_b4_intermediate_artifact_fails_readiness_gate_and_side_states_stay_separate():
+    record = {
+        "fixture_id": "synthetic-unit-fixture",
+        "fixture_date": "2024-09-05",
+        "state_cutoff": "2024-09-04T00:00:00Z",
+        "kickoff": None,
+        "matchday": None,
+        "stage": "league_phase",
+        "edition": "2024/25",
+        "validation_period": "2024/25",
+        "league_tier": "A",
+        "group": "A1",
+        "home_league_tier": "A",
+        "away_league_tier": "A",
+        "home_group": "A1",
+        "away_group": "A1",
+        "home_team": "Alpha",
+        "away_team": "Bravo",
+        "home_score": 1,
+        "away_score": 0,
+        "neutral": False,
+        "remaining_schedule": {"status": "not_frozen_in_source", "fixtures": []},
+        "standings_before": [
+            {
+                "group": "A1",
+                "standing_rows": [
+                    {
+                        "team": "Alpha",
+                        "points_before": 3,
+                        "matches_played_before": 1,
+                        "goal_difference_before": 2,
+                        "remaining_group_matches": 5,
+                        "rank_min": None,
+                        "rank_max": 2,
+                        "rank_status": "unresolved_points_tie",
+                    },
+                    {
+                        "team": "Bravo",
+                        "points_before": 1,
+                        "matches_played_before": 1,
+                        "goal_difference_before": 0,
+                        "remaining_group_matches": 5,
+                        "rank_min": 3,
+                        "rank_max": 3,
+                        "rank_status": "points_order_unique",
+                    },
+                ],
+            }
+        ],
+        "qualification_state": {"status": "unresolved"},
+        "relegation_state": {"status": "unresolved"},
+        "must_win_primitives": {"status": "unresolved"},
+    }
+    record["record_digest"] = canonical_digest(record)
+    dataset = {
+        "schema_version": "uefa-nations-league-causal-competition-state-v1",
+        "records": [record],
+    }
+    coverage = {
+        "expected_evaluation_fixture_count": 512,
+        "output_record_count": 1,
+        "fixture_coverage_complete": False,
+        "official_schedule_match_coverage_verified": False,
+        "dataset_digest": canonical_digest(dataset),
+    }
+    coverage["coverage_digest"] = canonical_digest(coverage)
+    blockers = validate_b4_artifact(dataset, coverage)
+    assert "B4_record_count_is_not_exactly_512" in blockers
+    assert "B4_kickoff_timestamp_missing" in blockers
+    assert "B4_complete_remaining_group_schedule_missing" in blockers
+    assert "B4_qualification_state_unresolved" in blockers
+
+    ready_record = {
+        **record,
+        "kickoff": "2024-09-05T18:00:00Z",
+        "matchday": 1,
+        "remaining_schedule": {"status": "complete", "fixtures": []},
+        "qualification_state": {
+            "home": {"mathematically_qualified": True, "can_still_qualify": True},
+            "away": {"mathematically_qualified": False, "can_still_qualify": True},
+        },
+        "relegation_state": {
+            "home": {"mathematically_relegated": False},
+            "away": {"mathematically_relegated": False},
+        },
+        "must_win_primitives": {
+            "home": {"win_required_for_mathematical_goal": True},
+            "away": {"win_required_for_mathematical_goal": False},
+        },
+    }
+    ready_record["record_digest"] = "e" * 64
+    projected = (
+        derive_context_rows([ready_record])
+        .set_index("fixture_id")
+        .loc["synthetic-unit-fixture"]
+    )
+    assert bool(projected["home_mathematically_qualified"]) is True
+    assert bool(projected["away_mathematically_qualified"]) is False
+    assert bool(projected["home_win_required_for_mathematical_goal"]) is True
+    assert bool(projected["away_win_required_for_mathematical_goal"]) is False
+
+
+def test_ablation_models_missing_context_as_unavailable_and_rejects_invalid_probabilities():
+    examples = pd.DataFrame(
+        {
+            "kickoff": pd.date_range("2020-01-01", periods=6, freq="D", tz="UTC"),
+            "outcome": [0, 1, 2, 0, 1, 2],
+            "base_p_home": [0.4] * 6,
+            "base_p_draw": [0.3] * 6,
+            "base_p_away": [0.3] * 6,
+            "context": [1, 2, None, 4, 5, 6],
+        }
+    )
+    missing_safe = run_paired_ablation(
+        examples, numeric_context=["context"], minimum_training_rows=3
+    )
+    assert missing_safe["no_lookahead"] is True
+    examples["context"] = 1
+    examples.loc[0, "base_p_home"] = 2.0
+    with pytest.raises(ValueError, match="sum to one"):
+        run_paired_ablation(
+            examples, numeric_context=["context"], minimum_training_rows=3
+        )
