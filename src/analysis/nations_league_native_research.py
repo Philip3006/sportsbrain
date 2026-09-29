@@ -60,6 +60,9 @@ RESEARCH_GBT_PARAMS = {
     "early_stopping": False,
     "verbose": 0,
 }
+EVALUATION_HORIZON = max(
+    pd.Timestamp(block["end"]) for block in validation.HISTORICAL_BLOCKS
+)
 
 
 @dataclass(frozen=True)
@@ -139,6 +142,14 @@ def classify_training_match(row: Any) -> str:
         if home_confed == away_confed == "UEFA":
             return "uefa_competitive"
     return "excluded_or_unclassified"
+
+
+def restrict_to_evaluation_horizon(results: pd.DataFrame) -> tuple[pd.DataFrame, int]:
+    """Exclude all post-evaluation results before any model/feature processing."""
+    if "date" not in results:
+        raise ValueError("Results data is missing date")
+    keep = pd.to_datetime(results["date"]) <= EVALUATION_HORIZON
+    return results.loc[keep].copy().reset_index(drop=True), int((~keep).sum())
 
 
 def _recency_weight(
@@ -390,6 +401,7 @@ def run_native_research(results: pd.DataFrame) -> dict[str, Any]:
     if "native_row_id" not in results:
         results = results.copy().reset_index(drop=True)
         results["native_row_id"] = np.arange(len(results), dtype=int)
+    results, _ = restrict_to_evaluation_horizon(results)
     features = causal_feature_frame(results)
     source = results.copy()
     source["source_class"] = source.apply(classify_training_match, axis=1)

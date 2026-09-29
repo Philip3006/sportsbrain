@@ -115,6 +115,20 @@ def test_training_cutoff_is_exclusive():
         )
 
 
+def test_post_evaluation_horizon_rows_are_removed_before_model_processing():
+    source = pd.DataFrame(
+        [
+            _row("2025-06-08", "France", "Germany", 1, 0),
+            _row("2025-06-09", "France", "Germany", 99, 99),
+            _row("2026-08-26", "France", "Germany", 99, 0),
+        ]
+    )
+    filtered, excluded = research.restrict_to_evaluation_horizon(source)
+    assert excluded == 2
+    assert filtered["date"].max() == pd.Timestamp("2025-06-08")
+    assert set(filtered["home_score"]) == {1}
+
+
 def test_result_features_exclude_same_day_and_future_outcomes():
     source = pd.DataFrame(
         [

@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
@@ -12,6 +13,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.analysis import nations_league_validation as validation
 from src.analysis.nations_league_native_research import (
+    FEATURE_COLUMNS,
+    RESEARCH_GBT_PARAMS,
+    restrict_to_evaluation_horizon,
     run_native_research,
     weight_specs,
 )
@@ -22,6 +26,45 @@ DEFAULT_OUTPUT = Path(
 DEFAULT_PRIOR_AUDIT = Path(
     "results/audits/nations_league_model_validation_20260927.json"
 )
+
+
+def research_design() -> dict[str, Any]:
+    return {
+        "candidate": "Existing SportsBrain HistGradientBoostingClassifier through src.models.lgbm_model",
+        "feature_columns": list(FEATURE_COLUMNS),
+        "gbt_parameters": RESEARCH_GBT_PARAMS,
+        "weight_grid": [asdict(spec) for spec in weight_specs()],
+        "tournament_classification": {
+            "highest_weight": "exact UEFA Nations League rows",
+            "transfer_data": "UEFA-labelled competitive rows; FIFA World Cup rows only when both teams have known UEFA mapping",
+            "friendlies": "separate sensitivity, weight is 10% of selected UEFA competitive transfer weight",
+            "ambiguous_global_competitions": "excluded rather than assigned to UEFA",
+            "weights_are_research_hyperparameters": True,
+        },
+        "recency_sensitivity_half_life_years": [None, 3.0, 6.0],
+        "evaluation": {
+            "blocks": [
+                "2020/21",
+                "2022/23",
+                "2022/23-delayed-relegation-playoffs",
+                "2024/25",
+            ],
+            "training_cutoff": "exclusive; fit at evaluation-block start, before every prediction in that block",
+            "random_splits": False,
+            "same_day_results_in_features": False,
+            "paired_bootstrap": "1000 date-cluster replicates within evaluation blocks; fixed seed 20260929",
+            "metrics": [
+                "multiclass Brier",
+                "multiclass log loss",
+                "ECE",
+                "home/draw/away calibration",
+                "accuracy secondary",
+                "coverage",
+                "mean max probability/sharpness",
+            ],
+        },
+        "snapshot_policy": "audit-only; no trained model snapshot written or referenced by production",
+    }
 
 
 def _prior_reference(path: Path) -> dict[str, Any] | None:
@@ -121,6 +164,7 @@ def blocked_report(
         "schema": "nations-league-native-model-research-v1",
         "status": "BLOCKED_MISSING_LOCAL_RESULTS_CACHE",
         "research_harness_ready": True,
+        "research_design": research_design(),
         "source_sha": source_sha,
         "verified_current_main_sha": verified_current_main_sha,
         "data_provenance": {
@@ -216,22 +260,43 @@ def main() -> int:
         )
         return 0
 
-    results, cache_digest = validation.load_local_results(args.results_cache)
+    source_results, cache_digest = validation.load_local_results(args.results_cache)
+    results, excluded_post_horizon = restrict_to_evaluation_horizon(source_results)
     baseline = validation.run_validation(
         results=results,
         cache_sha256=cache_digest,
         source_sha=args.source_sha,
         verified_current_main_sha=args.verified_current_main_sha,
     )
+    cache_audit = baseline["strict_validation"]["results_cache"]
+    cache_audit.update(
+        {
+            "source_file_row_count": len(source_results),
+            "row_count_used_for_evaluation": len(results),
+            "post_evaluation_horizon_rows_excluded_by_date_only": excluded_post_horizon,
+            "max_date_used_for_evaluation": (
+                results["date"].max().date().isoformat() if not results.empty else None
+            ),
+        }
+    )
+    cache_audit["row_count"] = len(results)
+    baseline["strict_validation"]["current_2026_27_observations_in_cache"] = 0
+    baseline["strict_validation"]["current_2026_27_observations_in_cache_note"] = (
+        "Evaluation input was truncated at the final declared historical block; "
+        "this is not a claim that the full source cache has no later rows."
+    )
     native = run_native_research(results)
     report = {
         "schema": "nations-league-native-model-research-v1",
         "status": "EVALUATED_RESEARCH_ONLY",
         "research_harness_ready": True,
+        "research_design": research_design(),
         "source_sha": args.source_sha,
         "verified_current_main_sha": args.verified_current_main_sha,
         "dataset_sizes": {
             "results_cache_rows": len(results),
+            "source_cache_rows": len(source_results),
+            "post_evaluation_horizon_rows_excluded_by_date_only": excluded_post_horizon,
             "nations_league_evaluation_matches": native["evaluation_match_count"],
             "historical_blocks": [
                 {"period": row["id"], "matches": row["match_count"]}
