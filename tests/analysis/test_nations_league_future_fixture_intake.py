@@ -15,7 +15,7 @@ from src.analysis.nations_league_future_fixture_intake import (
     parse_utc,
     validate_manifest,
 )
-from src.analysis.nations_league_v1 import validate_target_fixture
+from src.analysis.nations_league_v1_1 import validate_target_fixture, model_digest
 
 
 def test_manifest_contains_only_unstarted_verified_public_schedule_rows():
@@ -24,6 +24,8 @@ def test_manifest_contains_only_unstarted_verified_public_schedule_rows():
     assert {fixture["status"] for fixture in manifest["fixtures"]} == {"VERIFIED"}
     assert manifest["predictions"] == []
     assert manifest["provider_ids_used"] == []
+    assert manifest["forward_shadow_model"] == "nations_league_v1_1"
+    assert manifest["forward_shadow_model_digest"] == model_digest()
     assert all(fixture["source_provenance_records"] for fixture in manifest["fixtures"])
 
 

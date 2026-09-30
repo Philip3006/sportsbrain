@@ -10,13 +10,14 @@ import pytest
 
 from scripts.nations_league_forward_queue import due_state, execute, plan, read_store
 from src.analysis.nations_league_forward_input import build_input_state
-from src.analysis.nations_league_v1 import model_digest
+from src.analysis.nations_league_v1_1 import model_digest
 
 
 def manifest():
     return {
         "schema": "nations-league-future-fixture-manifest-v1",
-        "forward_shadow_model": "nations_league_v1",
+        "forward_shadow_model": "nations_league_v1_1",
+        "forward_shadow_model_digest": model_digest(),
         "observed_at_utc": "2026-10-01T00:00:00Z",
         "fixtures": [
             {
@@ -87,6 +88,10 @@ def test_default_cli_plan_has_zero_side_effects(tmp_path):
 def test_invalid_manifest_and_model(tmp_path):
     with pytest.raises(ValueError, match="schema"):
         plan({}, "2026-10-01T20:00:00Z", tmp_path / "store")
+    old = manifest()
+    old["forward_shadow_model"] = "nations_league_v1"
+    with pytest.raises(ValueError, match="model"):
+        plan(old, "2026-10-01T20:00:00Z", tmp_path / "store")
     with pytest.raises(ValueError, match="model digest"):
         plan(
             manifest(),

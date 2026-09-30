@@ -12,7 +12,7 @@ from src.analysis.nations_league_forward_input import (
     predict_from_input_state,
     timeline_training,
 )
-from src.analysis.nations_league_v1 import model_digest
+from src.analysis.nations_league_v1_1 import model_digest
 
 CUTOFF = "2026-10-01T20:00:00+00:00"
 
@@ -151,6 +151,13 @@ def test_frozen_digest_mismatch(monkeypatch):
     )
     with pytest.raises(ValueError, match="frozen model digest"):
         state()
+
+
+def test_historical_v1_digest_is_not_accepted_as_active_input():
+    snapshot = state()
+    snapshot["model_digest"] = "f55549e7225f55deac23c7a31b757acf509ad0b4810b93ba8244301d3395a8ee"
+    with pytest.raises(ValueError, match="mismatch"):
+        predict_from_input_state(snapshot, "uefa-nl:future", phase="initial")
 
 
 def test_equivalent_utc_input_same_digest():

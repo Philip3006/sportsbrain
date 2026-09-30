@@ -22,7 +22,7 @@ from src.analysis.nations_league_forward_campaign import (
     serialize_forward_summary,
     update_forward_campaign,
 )
-from src.analysis.nations_league_v1 import (
+from src.analysis.nations_league_v1_1 import (
     COMPETITION,
     build_forward_shadow_prediction,
     build_shadow_settlement,
@@ -70,6 +70,7 @@ def _campaign():
         edition="2024/25",
         campaign_start="2026-09-30T10:00:00Z",
         fixture_manifest=_manifest(),
+        fixture_manifest_digest=TIMELINE_DIGEST,
     )
 
 
@@ -132,6 +133,8 @@ def _settlement(prediction):
 
 
 def test_zero_real_samples_is_explicit_and_does_not_hide_exceptions():
+    assert _campaign().campaign.model_version == "nations_league_v1_1"
+    assert _campaign().campaign.fixture_manifest_digest == TIMELINE_DIGEST
     summary = build_forward_evidence_summary(_campaign())
     assert summary["evidence_state"] == NO_FORWARD_EVIDENCE
     assert summary["completeness"] == {
@@ -227,6 +230,7 @@ def test_criteria_state_is_external_frozen_review_only():
             edition="2024/25",
             campaign_start="2026-09-30T10:00:00Z",
             fixture_manifest=_manifest(),
+            fixture_manifest_digest=TIMELINE_DIGEST,
             promotion_criteria_digest="d" * 64,
         ),
         _prediction(),

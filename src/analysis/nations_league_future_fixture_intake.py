@@ -1,7 +1,7 @@
 """Offline UEFA Nations League future-fixture intake.
 
 This module contains only public schedule material and deterministic validation
-for the frozen ``nations_league_v1`` forward-shadow runner.  It deliberately
+for the frozen ``nations_league_v1_1`` forward-shadow runner.  It deliberately
 does not call providers, read credentials, or produce predictions.
 """
 
@@ -13,6 +13,8 @@ import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
+
+from src.analysis.nations_league_v1_1 import MODEL_VERSION, model_digest
 
 COMPETITION = "UEFA Nations League"
 EDITION = "2026/27"
@@ -307,7 +309,8 @@ def build_manifest(observed_at_utc: str = OBSERVED_AT_UTC) -> dict[str, Any]:
         "observed_at_utc": observed_at_utc,
         "source_timezone": SOURCE_TIMEZONE,
         "source_urls": [OFFICIAL_FIXTURES_URL, OFFICIAL_FIXTURE_PDF_URL],
-        "forward_shadow_model": "nations_league_v1",
+        "forward_shadow_model": MODEL_VERSION,
+        "forward_shadow_model_digest": model_digest(),
         "provider_ids_used": [],
         "predictions": [],
         "fixtures": fixtures,
@@ -318,6 +321,10 @@ def build_manifest(observed_at_utc: str = OBSERVED_AT_UTC) -> dict[str, Any]:
 
 
 def validate_manifest(manifest: dict[str, Any]) -> None:
+    if manifest.get("forward_shadow_model") != MODEL_VERSION:
+        raise ValueError("future manifest must bind Nations League v1.1")
+    if manifest.get("forward_shadow_model_digest") != model_digest():
+        raise ValueError("future manifest model digest mismatch")
     fixtures = manifest.get("fixtures")
     if not isinstance(fixtures, list):
         raise TypeError("fixtures must be a list")

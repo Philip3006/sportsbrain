@@ -1,4 +1,4 @@
-"""Offline, fail-closed input gate for the frozen Nations League shadow runner.
+"""Offline, fail-closed input gate for the frozen Nations League v1.1 runner.
 
 Completeness is an explicit upstream assertion, never inferred from the last match.
 No provider, odds, ledger, filesystem or clock access occurs here.
@@ -7,18 +7,20 @@ No provider, odds, ledger, filesystem or clock access occurs here.
 from copy import deepcopy
 
 from src.analysis.nations_league_competition_state import canonical_team
-from src.analysis.nations_league_v1 import (
+from src.analysis.nations_league_v1_1 import (
     _parse_utc,
     _require_digest,
     build_forward_shadow_prediction,
     fit_causal_elo,
     model_digest,
     sha256_json,
+    training_records_from_timeline,
     validate_point_in_time_training,
     validate_target_fixture,
 )
 
-FROZEN_DIGEST = "f55549e7225f55deac23c7a31b757acf509ad0b4810b93ba8244301d3395a8ee"
+FROZEN_DIGEST = model_digest()
+MODEL_VERSION = "nations_league_v1_1"
 
 
 def timeline_training(timeline):
@@ -27,42 +29,7 @@ def timeline_training(timeline):
     Administrative exceptions remain excluded, not fabricated as played results.
     The frozen model's existing absent-neutral default is preserved.
     """
-    if timeline.get("competition") != "UEFA Nations League":
-        raise ValueError("wrong competition")
-    digest = timeline.get("dataset_digest")
-    if digest != sha256_json(
-        {k: v for k, v in timeline.items() if k != "dataset_digest"}
-    ):
-        raise ValueError("timeline digest mismatch")
-    rows = []
-    for record in timeline["records"]:
-        if record.get("record_digest") != sha256_json(
-            {k: v for k, v in record.items() if k != "record_digest"}
-        ):
-            raise ValueError("timeline record digest mismatch")
-        if record.get("administrative_exception") is not None:
-            continue
-        row = {
-            k: record[k]
-            for k in (
-                "fixture_id",
-                "edition",
-                "home_team",
-                "away_team",
-                "kickoff_utc",
-                "result_safe_available_at",
-                "home_score",
-                "away_score",
-            )
-        }
-        row.update(
-            competition=timeline["competition"],
-            evaluation_block=record["validation_period"],
-            source_provenance=f"canonical-timeline:{digest}",
-            source_digest=record["record_digest"],
-        )
-        rows.append(row)
-    return rows
+    return training_records_from_timeline(timeline)
 
 
 def build_input_state(fixtures, training_records, *, prediction_cutoff, provenance):
@@ -140,7 +107,8 @@ def build_input_state(fixtures, training_records, *, prediction_cutoff, provenan
                 else freshness
             )
     snapshot = {
-        "schema": "nations-league-forward-input-v1",
+        "schema": "nations-league-forward-input-v1_1",
+        "model_version": MODEL_VERSION,
         "prediction_cutoff": cutoff.isoformat(),
         "model_digest": FROZEN_DIGEST,
         "training_records": rows,

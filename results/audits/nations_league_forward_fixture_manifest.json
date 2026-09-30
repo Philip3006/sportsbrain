@@ -9,7 +9,8 @@
     "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/",
     "https://editorial.uefa.com/resources/02a4-207fdf4b084e-a8a8727f0805-1000/unl_2627_-_league_phase_fixture_list_per_matchday_28_april_2026.pdf"
   ],
-  "forward_shadow_model": "nations_league_v1",
+  "forward_shadow_model": "nations_league_v1_1",
+  "forward_shadow_model_digest": "50fc0f9120009b86eda1ebf016c14e93c9bd72c256b849577d5f55217d77f626",
   "provider_ids_used": [],
   "predictions": [],
   "fixtures": [
@@ -4798,5 +4799,5 @@
       }
     }
   ],
-  "manifest_digest": "728dcfae2400c798b3b92b07196d52473944302e763887923327fc7ac275772e"
+  "manifest_digest": "f4c8e7c5e0115f48437d39b0bd42f311c40ecb0aa8a0f8ecbbdcb9d79ce451e1"
 }

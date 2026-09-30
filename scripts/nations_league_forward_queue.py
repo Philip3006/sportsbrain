@@ -15,7 +15,7 @@ from src.analysis.nations_league_forward_input import (
     build_input_state,
     predict_from_input_state,
 )
-from src.analysis.nations_league_v1 import (
+from src.analysis.nations_league_v1_1 import (
     MODEL_VERSION,
     deterministic_record_id,
     model_digest,
@@ -65,6 +65,8 @@ def plan(manifest, as_of, store, existing=(), expected_model_digest=None):
         raise ValueError("invalid manifest schema")
     if manifest.get("forward_shadow_model") != MODEL_VERSION:
         raise ValueError("wrong manifest model")
+    if manifest.get("forward_shadow_model_digest") != model_digest():
+        raise ValueError("wrong manifest model digest")
     if utc(manifest["observed_at_utc"]) > clock:
         raise ValueError("manifest observation is after as-of")
     if "manifest_digest" in manifest and manifest["manifest_digest"] != sha256_json(
@@ -185,6 +187,10 @@ def plan(manifest, as_of, store, existing=(), expected_model_digest=None):
 def execute(manifest, as_of, store, input_state, expected_model_digest=None):
     if utc(input_state["prediction_cutoff"]) != utc(as_of):
         raise ValueError("input-state prediction cutoff must match as-of")
+    if input_state.get("model_version") != MODEL_VERSION:
+        raise ValueError("input-state model version mismatch")
+    if input_state.get("model_digest") != model_digest():
+        raise ValueError("input-state model digest mismatch")
     rebuilt = build_input_state(
         input_state["fixtures"],
         input_state["training_records"],

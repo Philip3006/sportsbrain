@@ -1,7 +1,7 @@
 """Governance and accounting for real Nations League forward-shadow evidence.
 
 The frozen prediction, settlement, and metric contracts live in
-``nations_league_v1``.  This module is deliberately a small envelope around
+``nations_league_v1_1``.  This module is deliberately a small envelope around
 those contracts: it binds one campaign to a fixture manifest and immutable
 evaluation policy, accounts for missed windows explicitly, and excludes
 ``SYNTHETIC_ONLY`` records from real-campaign reporting.
@@ -19,9 +19,10 @@ from dataclasses import dataclass
 from datetime import timedelta
 from typing import Any
 
-from src.analysis.nations_league_v1 import (
+from src.analysis.nations_league_v1_1 import (
     COMPETITION,
     INITIAL_WINDOW,
+    MODEL_VERSION,
     REFINEMENT_WINDOW,
     calculate_forward_metrics,
     model_digest,
@@ -29,8 +30,8 @@ from src.analysis.nations_league_v1 import (
     validate_shadow_record,
 )
 
-FORWARD_CAMPAIGN_SCHEMA_VERSION = "nations-league-forward-evidence-campaign-v1"
-FORWARD_SUMMARY_SCHEMA_VERSION = "nations-league-forward-evidence-summary-v1"
+FORWARD_CAMPAIGN_SCHEMA_VERSION = "nations-league-forward-evidence-campaign-v1_1"
+FORWARD_SUMMARY_SCHEMA_VERSION = "nations-league-forward-evidence-summary-v1_1"
 SHADOW_ONLY = "SHADOW_ONLY"
 NO_BET = True
 
@@ -144,9 +145,11 @@ class ForwardEvidenceCampaign:
     campaign_id: str
     competition: str
     edition: str
+    model_version: str
     model_digest_value: str
     campaign_start: str
     fixture_manifest: tuple[dict[str, Any], ...]
+    fixture_manifest_digest: str
     initial_policy: CapturePolicy
     refinement_policy: CapturePolicy
     promotion_criteria_digest: str | None
@@ -160,10 +163,12 @@ class ForwardEvidenceCampaign:
             "campaign_id": self.campaign_id,
             "competition": self.competition,
             "edition": self.edition,
+            "model_version": self.model_version,
             "model_digest": self.model_digest_value,
             "campaign_start": self.campaign_start,
             "fixture_manifest": list(self.fixture_manifest),
-            "fixture_manifest_digest": sha256_json(list(self.fixture_manifest)),
+            "fixture_manifest_digest": self.fixture_manifest_digest,
+            "fixture_manifest_rows_digest": sha256_json(list(self.fixture_manifest)),
             "initial_policy": self.initial_policy.to_payload(),
             "refinement_policy": self.refinement_policy.to_payload(),
             "promotion_criteria_digest": self.promotion_criteria_digest,
@@ -210,6 +215,10 @@ def _validate_campaign(campaign: ForwardEvidenceCampaign) -> None:
         raise ForwardCampaignError("campaign identity is incomplete")
     if campaign.competition != COMPETITION:
         raise ForwardCampaignError("unsupported campaign competition")
+    if campaign.model_version != MODEL_VERSION:
+        raise ForwardCampaignError(
+            "campaign model version is not the frozen v1.1 model"
+        )
     _digest(campaign.model_digest_value, "model_digest")
     if campaign.model_digest_value != model_digest():
         raise ForwardCampaignError("campaign model digest is not the frozen model")
@@ -223,6 +232,7 @@ def _validate_campaign(campaign: ForwardEvidenceCampaign) -> None:
     manifest = _canonical_manifest(campaign.fixture_manifest)
     if manifest != campaign.fixture_manifest:
         raise ForwardCampaignError("fixture manifest is not canonical")
+    _digest(campaign.fixture_manifest_digest, "fixture_manifest_digest")
     _digest(campaign.evaluation_contract_digest, "evaluation_contract_digest")
     if sha256_json(campaign.contract_payload()) != campaign.evaluation_contract_digest:
         raise ForwardCampaignError("evaluation contract digest mismatch")
@@ -234,20 +244,24 @@ def create_forward_campaign(
     edition: str,
     campaign_start: str,
     fixture_manifest: Iterable[Mapping[str, Any]],
+    fixture_manifest_digest: str,
     promotion_criteria_digest: str | None = None,
 ) -> ForwardCampaignArtifact:
-    """Create a new empty campaign bound to the current frozen model."""
+    """Create a new empty v1.1 campaign bound to the exact fixture manifest."""
 
     canonical_manifest = _canonical_manifest(fixture_manifest)
     if promotion_criteria_digest is not None:
         _digest(promotion_criteria_digest, "promotion_criteria_digest")
+    _digest(fixture_manifest_digest, "fixture_manifest_digest")
     campaign = ForwardEvidenceCampaign(
         campaign_id=campaign_id,
         competition=COMPETITION,
         edition=edition,
+        model_version=MODEL_VERSION,
         model_digest_value=model_digest(),
         campaign_start=campaign_start,
         fixture_manifest=canonical_manifest,
+        fixture_manifest_digest=fixture_manifest_digest,
         initial_policy=INITIAL_CAPTURE_POLICY,
         refinement_policy=REFINEMENT_CAPTURE_POLICY,
         promotion_criteria_digest=promotion_criteria_digest,
