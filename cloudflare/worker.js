@@ -670,7 +670,7 @@ function _validatePublicNationsLeague(value) {
       if (!hasExactKeys(fixture, [
         'fixture_id', 'competition', 'source_prediction_record_id', 'source_identity',
         'canonical_identity', 'kickoff_utc', 'phase', 'probabilities',
-        'prediction_cutoff', 'updated_at',
+        'prediction_cutoff', 'updated_at', 'model_release',
       ]) || typeof fixture.fixture_id !== 'string' || !fixture.fixture_id ||
           ids.has(fixture.fixture_id) || fixture.competition !== value.competition ||
           !['initial', 'refinement'].includes(fixture.phase) ||
@@ -682,7 +682,19 @@ function _validatePublicNationsLeague(value) {
           typeof fixture.source_identity.home_team !== 'string' ||
           typeof fixture.source_identity.away_team !== 'string' ||
           typeof fixture.canonical_identity.home_team !== 'string' ||
-          typeof fixture.canonical_identity.away_team !== 'string') {
+          typeof fixture.canonical_identity.away_team !== 'string' ||
+          !fixture.model_release ||
+          !hasExactKeys(fixture.model_release, [
+            'model_family', 'model_version', 'algorithm_digest', 'release_id',
+            'training_data_digest', 'trained_state_digest', 'training_cutoff', 'binding_digest',
+          ]) || fixture.model_release.model_family !== 'nations_league_v1_1' ||
+          fixture.model_release.model_version !== 'nations_league_v1_1' ||
+          !/^[0-9a-f]{64}$/.test(fixture.model_release.release_id || '') ||
+          !/^[0-9a-f]{64}$/.test(fixture.model_release.algorithm_digest || '') ||
+          !/^[0-9a-f]{64}$/.test(fixture.model_release.training_data_digest || '') ||
+          !/^[0-9a-f]{64}$/.test(fixture.model_release.trained_state_digest || '') ||
+          !/^[0-9a-f]{64}$/.test(fixture.model_release.binding_digest || '') ||
+          typeof fixture.model_release.training_cutoff !== 'string') {
         fail('malformed LIVE fixture');
       }
       ids.add(fixture.fixture_id);

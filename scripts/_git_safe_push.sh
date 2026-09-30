@@ -26,6 +26,8 @@ _bot_permitted() {
   local f="$1"
   case "$f" in
     docs/data/*|data/cache/*|data/live_scores.json|data/odds_history/*|\
+    results/audits/continuous_model_lifecycle_registry.json|\
+    results/research/nations_league_v1_1_live_prediction_store.jsonl|\
     results/health/*|results/scans/*|\
     results/tennis_live_signals.json|results/tennis_scan_*|\
     results/tennis_cal_stats.json|\

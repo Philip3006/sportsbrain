@@ -56,6 +56,7 @@ _PUBLIC_FIXTURE_KEYS = frozenset(
         "probabilities",
         "prediction_cutoff",
         "updated_at",
+        "model_release",
     }
 )
 _RELEASE_KEYS = frozenset(
@@ -161,36 +162,70 @@ def _validate_release(release: ModelRelease) -> dict[str, Any]:
 
 
 def _source_fixture(record: Mapping[str, Any], binding: Mapping[str, Any]) -> dict[str, Any]:
-    if (
-        record.get("record_type") != "prediction"
-        or record.get("competition") != COMPETITION
-        or record.get("model_version") != MODEL_VERSION
-        or record.get("model_digest") != FROZEN_ALGORITHM_DIGEST
-        or record.get("shadow") is not True
-        or record.get("no_bet") is not True
-        or record.get("publication_enabled") is not False
-        or record.get("ledger_mutation") is not False
-    ):
+    is_live = record.get("status") == "LIVE"
+    if is_live:
+        valid = (
+            record.get("record_type") == "prediction"
+            and record.get("competition") == COMPETITION
+            and record.get("model_version") == MODEL_VERSION
+            and record.get("model_digest") == FROZEN_ALGORITHM_DIGEST
+            and record.get("no_bet") is True
+            and record.get("betting_enabled") is False
+            and record.get("publication_enabled") is True
+            and record.get("ledger_mutation") is False
+        )
+    else:
+        valid = (
+            record.get("record_type") == "prediction"
+            and record.get("competition") == COMPETITION
+            and record.get("model_version") == MODEL_VERSION
+            and record.get("model_digest") == FROZEN_ALGORITHM_DIGEST
+            and record.get("shadow") is True
+            and record.get("no_bet") is True
+            and record.get("publication_enabled") is False
+            and record.get("ledger_mutation") is False
+        )
+    if not valid:
         raise NationsLeagueLivePublicError("source record violates frozen evidence safety")
     record_id = _digest_text(record.get("record_id"), "record_id")
-    if record_id != binding["source_prediction_record_id"]:
-        raise NationsLeagueLivePublicError("source record identity differs from binding")
-    input_provenance = record.get("input_provenance")
-    if not isinstance(input_provenance, Mapping) or input_provenance.get(
-        "input_snapshot_digest"
-    ) != binding["input_snapshot_digest"]:
-        raise NationsLeagueLivePublicError("source record input-state binding differs")
+    if not is_live:
+        if record_id != binding["source_prediction_record_id"]:
+            raise NationsLeagueLivePublicError("source record identity differs from binding")
+        input_provenance = record.get("input_provenance")
+        if not isinstance(input_provenance, Mapping) or input_provenance.get(
+            "input_snapshot_digest"
+        ) != binding["input_snapshot_digest"]:
+            raise NationsLeagueLivePublicError("source record input-state binding differs")
     probabilities = _probabilities(record.get("probabilities"))
-    source_home = _required_text(record.get("home_team"), "home_team")
-    source_away = _required_text(record.get("away_team"), "away_team")
+    source_identity = record.get("source_identity")
+    if source_identity is not None:
+        if not isinstance(source_identity, Mapping):
+            raise NationsLeagueLivePublicError("source identity is malformed")
+        source_home = _required_text(source_identity.get("home_team"), "source home_team")
+        source_away = _required_text(source_identity.get("away_team"), "source away_team")
+    else:
+        source_home = _required_text(record.get("home_team"), "home_team")
+        source_away = _required_text(record.get("away_team"), "away_team")
     identity = record.get("model_identity")
-    canonical_home = source_home
-    canonical_away = source_away
+    canonical_identity = record.get("canonical_identity")
+    if canonical_identity is not None:
+        if not isinstance(canonical_identity, Mapping):
+            raise NationsLeagueLivePublicError("canonical identity is malformed")
+        canonical_home = _required_text(
+            canonical_identity.get("home_team"), "canonical home_team"
+        )
+        canonical_away = _required_text(
+            canonical_identity.get("away_team"), "canonical away_team"
+        )
+    else:
+        canonical_home = source_home
+        canonical_away = source_away
     if identity is not None:
         if not isinstance(identity, Mapping):
             raise NationsLeagueLivePublicError("source model identity is malformed")
-        canonical_home = _required_text(identity.get("home_team"), "canonical home_team")
-        canonical_away = _required_text(identity.get("away_team"), "canonical away_team")
+        if canonical_identity is None:
+            canonical_home = _required_text(identity.get("home_team"), "canonical home_team")
+            canonical_away = _required_text(identity.get("away_team"), "canonical away_team")
     return {
         "fixture_id": _required_text(record.get("fixture_id"), "fixture_id"),
         "competition": COMPETITION,
@@ -204,7 +239,34 @@ def _source_fixture(record: Mapping[str, Any], binding: Mapping[str, Any]) -> di
             record.get("prediction_timestamp"), "prediction_timestamp"
         ),
         "updated_at": _required_text(record.get("prediction_timestamp"), "prediction_timestamp"),
+        "model_release": dict(binding.get("model_release", {})),
     }
+
+
+def _release_binding(value: object) -> dict[str, Any]:
+    if not isinstance(value, Mapping) or set(value) != _RELEASE_KEYS:
+        raise NationsLeagueLivePublicError("fixture model release is missing")
+    result = dict(value)
+    if (
+        result.get("model_family") != MODEL_FAMILY
+        or result.get("model_version") != MODEL_VERSION
+        or result.get("algorithm_digest") != FROZEN_ALGORITHM_DIGEST
+    ):
+        raise NationsLeagueLivePublicError("fixture model release identity is invalid")
+    for field in ("release_id", "algorithm_digest", "training_data_digest", "trained_state_digest", "binding_digest"):
+        _digest_text(result.get(field), f"fixture.model_release.{field}")
+    expected_binding = _digest(
+        {
+            "release_id": result["release_id"],
+            "algorithm_digest": result["algorithm_digest"],
+            "training_data_digest": result["training_data_digest"],
+            "trained_state_digest": result["trained_state_digest"],
+        }
+    )
+    if result["binding_digest"] != expected_binding:
+        raise NationsLeagueLivePublicError("fixture model release binding is invalid")
+    _required_text(result.get("training_cutoff"), "fixture.model_release.training_cutoff")
+    return result
 
 
 def build_live_public_nations_league(
@@ -234,14 +296,38 @@ def build_live_public_nations_league(
         seen_records.add(record_id)
         binding = bindings.get(record_id)
         if binding is None:
-            raise NationsLeagueLivePublicError("source record is absent from evidence binding")
-        if (
-            binding["training_data_digest"] != release["training_data_digest"]
-            or binding["trained_state_digest"] != release["trained_state_digest"]
-        ):
-            raise NationsLeagueLivePublicError("source record does not bind to active state")
+            if record.get("status") != "LIVE":
+                raise NationsLeagueLivePublicError("source record is absent from evidence binding")
+            generated = {
+                "model_family": MODEL_FAMILY,
+                "model_version": MODEL_VERSION,
+                "algorithm_digest": record.get("algorithm_digest"),
+                "release_id": record.get("model_release_id"),
+                "training_data_digest": record.get("training_data_digest"),
+                "trained_state_digest": record.get("trained_state_digest"),
+                "training_cutoff": record.get("training_cutoff"),
+            }
+            generated["binding_digest"] = _digest(
+                {
+                    key: generated[key]
+                    for key in (
+                        "release_id",
+                        "algorithm_digest",
+                        "training_data_digest",
+                        "trained_state_digest",
+                    )
+                }
+            )
+            binding = {
+                "model_release": generated,
+                "source_prediction_record_id": record_id,
+            }
+        elif "model_release" not in binding:
+            binding = dict(binding)
+            binding["model_release"] = evidence_binding.get("active_model_release")
+        binding["model_release"] = _release_binding(binding.get("model_release"))
         parsed.append(_source_fixture(record, binding))
-    if set(bindings) != seen_records:
+    if not set(bindings).issubset(seen_records):
         raise NationsLeagueLivePublicError("LIVE evidence binding coverage is incomplete")
     selected: dict[str, dict[str, Any]] = {}
     audit: dict[str, list[str]] = {}
@@ -335,6 +421,7 @@ def validate_live_public_nations_league(value: Mapping[str, Any]) -> dict[str, A
         _required_text(fixture.get("kickoff_utc"), "kickoff_utc")
         _required_text(fixture.get("prediction_cutoff"), "prediction_cutoff")
         _required_text(fixture.get("updated_at"), "updated_at")
+        _release_binding(fixture.get("model_release"))
         _probabilities(fixture.get("probabilities"))
         for identity in ("source_identity", "canonical_identity"):
             item = fixture.get(identity)

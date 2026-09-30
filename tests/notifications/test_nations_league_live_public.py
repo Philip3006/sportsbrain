@@ -6,6 +6,9 @@ from pathlib import Path
 
 import pytest
 
+from src.analysis.nations_league_live_runtime import (
+    build_fresh_input_state,
+)
 from src.analysis.nations_league_model_lifecycle import establish_initial_active_release
 from src.notifications.nations_league_live_public import (
     NationsLeagueLivePublicError,
@@ -108,3 +111,58 @@ def test_state_or_source_substitution_fails_closed():
         build_live_public_nations_league(
             _records(), active_release=_active_release(), evidence_binding=binding
         )
+
+
+def test_future_live_refinement_carries_its_own_release_and_keeps_initial_audit():
+    manifest = _json("results/audits/nations_league_forward_fixture_manifest.json")
+    base = _json("results/research/nations_league_fixture_timeline_v1.json")
+    extension = _json(
+        "results/research/nations_league_v1_1_result_extension_20260930T200124Z.json"
+    )
+    state = build_fresh_input_state(
+        manifest,
+        base,
+        extension,
+        prediction_cutoff="2026-09-30T20:01:24.572945Z",
+    )
+    release = _active_release()
+    fixture_id = _records()[0]["fixture_id"]
+    refinement = deepcopy(_records()[0])
+    refinement.update(
+        {
+            "status": "LIVE",
+            "phase": "refinement",
+            "prediction_timestamp": "2026-09-30T17:15:00Z",
+            "betting_enabled": False,
+            "publication_enabled": True,
+            "ledger_mutation": False,
+            "model_release_id": release.release_id,
+            "algorithm_digest": release.snapshot.algorithm_digest,
+            "training_data_digest": release.snapshot.training_data_digest,
+            "trained_state_digest": release.snapshot.trained_state_digest,
+            "training_cutoff": release.snapshot.training_cutoff,
+            "input_snapshot_digest": state["input_snapshot_digest"],
+        }
+    )
+    import hashlib
+
+    identity = {
+        "fixture_id": fixture_id,
+        "phase": "refinement",
+        "release_id": release.release_id,
+        "input_snapshot_digest": state["input_snapshot_digest"],
+    }
+    refinement["record_id"] = hashlib.sha256(
+        json.dumps(
+            identity, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+        ).encode()
+    ).hexdigest()
+    output = build_live_public_nations_league(
+        [*_records(), refinement], active_release=release, evidence_binding=_binding()
+    )
+    fixture = next(row for row in output["fixtures"] if row["fixture_id"] == fixture_id)
+    assert fixture["phase"] == "refinement"
+    assert fixture["model_release"]["release_id"] == release.release_id
+    audit = next(row for row in output["audit_history"] if row["fixture_id"] == fixture_id)
+    assert len(audit["source_prediction_record_ids"]) == 2
+    assert validate_live_public_nations_league(output) == output

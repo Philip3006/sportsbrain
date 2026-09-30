@@ -7,6 +7,9 @@ import pytest
 
 from src.analysis.nations_league_live_runtime import (
     NationsLeagueLiveRuntimeError,
+    append_live_store,
+    build_fresh_input_state,
+    build_live_prediction,
     due_state,
     load_active_release,
     refresh_result_state,
@@ -125,6 +128,11 @@ def test_live_execute_uses_the_frozen_model_adapter_for_a_matching_input_cutoff(
     assert record["model_release_id"] == release.release_id
     assert record["publication_enabled"] is True
     assert record["no_bet"] is True
+    assert record["source_identity"] == {
+        "home_team": record["home_team"],
+        "away_team": record["away_team"],
+    }
+    assert record["canonical_identity"] == record["source_identity"]
 
 
 def test_result_refresh_is_noop_or_requires_new_release_without_guessing():
@@ -154,3 +162,65 @@ def test_non_utc_live_clock_fails_closed():
     release = load_active_release(ROOT / "results/audits/continuous_model_lifecycle_registry.json")
     with pytest.raises(NationsLeagueLiveRuntimeError, match="UTC"):
         run_live_cycle(manifest, state, release, as_of="2026-10-01T16:45:00+02:00")
+
+
+def test_fresh_input_state_uses_exact_cutoff_and_all_verified_future_targets():
+    manifest = _json("results/audits/nations_league_forward_fixture_manifest.json")
+    base = _json("results/research/nations_league_fixture_timeline_v1.json")
+    extension = _json(
+        "results/research/nations_league_v1_1_result_extension_20260930T200124Z.json"
+    )
+    state = build_fresh_input_state(
+        manifest,
+        base,
+        extension,
+        prediction_cutoff="2026-09-30T20:01:24.572945Z",
+    )
+    assert state["prediction_cutoff"] == "2026-09-30T20:01:24.572945+00:00"
+    assert len(state["fixtures"]) > 1
+    assert set(state["team_readiness"].values()) == {"READY"}
+
+
+def test_fresh_input_state_rejects_stale_official_completeness():
+    manifest = _json("results/audits/nations_league_forward_fixture_manifest.json")
+    base = _json("results/research/nations_league_fixture_timeline_v1.json")
+    extension = _json(
+        "results/research/nations_league_v1_1_result_extension_20260930T200124Z.json"
+    )
+    with pytest.raises(NationsLeagueLiveRuntimeError, match="STALE_INPUT"):
+        build_fresh_input_state(
+            manifest,
+            base,
+            extension,
+            prediction_cutoff="2026-10-01T17:15:00Z",
+        )
+
+
+def test_append_live_store_rejects_substitution_and_is_idempotent(tmp_path):
+    manifest = _json("results/audits/nations_league_forward_fixture_manifest.json")
+    base = _json("results/research/nations_league_fixture_timeline_v1.json")
+    extension = _json(
+        "results/research/nations_league_v1_1_result_extension_20260930T200124Z.json"
+    )
+    state = build_fresh_input_state(
+        manifest,
+        base,
+        extension,
+        prediction_cutoff="2026-09-30T20:01:24.572945Z",
+    )
+    release = load_active_release(ROOT / "results/audits/continuous_model_lifecycle_registry.json")
+    result = run_live_cycle(
+        manifest,
+        state,
+        release,
+        as_of="2026-09-30T20:01:24.572945Z",
+        prediction_builder=lambda *args, **kwargs: build_live_prediction(*args, **kwargs),
+        execute=True,
+    )
+    store = tmp_path / "live.jsonl"
+    append_live_store(store, [], result["appended_records"][:1])
+    append_live_store(store, result["appended_records"][:1], result["appended_records"][:1])
+    tampered = dict(result["appended_records"][0])
+    tampered["probabilities"] = {"home": 1.0, "draw": 0.0, "away": 0.0}
+    with pytest.raises(NationsLeagueLiveRuntimeError, match="substitution"):
+        append_live_store(store, result["appended_records"][:1], [tampered])

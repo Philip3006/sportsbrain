@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from src.analysis.nations_league_live_runtime import load_live_store
 from src.analysis.nations_league_model_lifecycle import active_release_from_registry
 from src.notifications.nations_league_live_public import (
     build_live_public_nations_league,
@@ -47,11 +48,15 @@ def materialize(
     registry: Path,
     binding: Path,
     inputs: list[Path],
+    store: Path | None,
     output: Path,
 ) -> dict:
     release = active_release_from_registry(_json(registry))
+    records = _campaign_records(campaign)
+    if store is not None:
+        records.extend(load_live_store(store))
     bundle = build_live_public_nations_league(
-        _campaign_records(campaign),
+        records,
         active_release=release,
         evidence_binding=_json(binding),
     )
@@ -72,6 +77,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--registry", type=Path, required=True)
     parser.add_argument("--binding", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--store", type=Path)
     parser.add_argument("--input", dest="inputs", action="append", type=Path)
     args = parser.parse_args(argv)
     try:
@@ -80,6 +86,7 @@ def main(argv: list[str] | None = None) -> int:
             registry=args.registry,
             binding=args.binding,
             inputs=args.inputs or [],
+            store=args.store,
             output=args.output,
         )
     except (OSError, ValueError, KeyError, TypeError) as exc:
