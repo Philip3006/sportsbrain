@@ -44,8 +44,12 @@ MODEL_DIGEST = "50fc0f9120009b86eda1ebf016c14e93c9bd72c256b849577d5f55217d77f626
 MANIFEST_DIGEST = "5dd24bf5f820e456ec40f9df1ecf45a57f17f13a50e8e1341853c2f42b81091f"
 TARGET_ID = "uefa-nl:future-3fe70ff0ba848e39b50908d6"
 BASE_TIMELINE = ROOT / "results/research/nations_league_fixture_timeline_v1.json"
-SOURCE_INVENTORY = ROOT / "data/research/nations_league/post_base_official_results_20260930.json"
-PREVIOUS_EXTENSION = ROOT / "results/research/nations_league_v1_1_result_extension_20260930.json"
+SOURCE_INVENTORY = (
+    ROOT / "data/research/nations_league/post_base_official_results_20260930.json"
+)
+PREVIOUS_EXTENSION = (
+    ROOT / "results/research/nations_league_v1_1_result_extension_20260930.json"
+)
 MANIFEST = ROOT / "results/audits/nations_league_forward_fixture_manifest.json"
 
 
@@ -165,8 +169,13 @@ def main() -> int:
     for row in manifest["fixtures"]:
         item = deepcopy(row)
         kickoff = parse_utc(row["kickoff_utc"])
-        item["initial_eligible"] = row["status"] == "VERIFIED" and kickoff - timedelta(hours=26) <= capture_dt <= kickoff - timedelta(hours=22)
-        item["refinement_eligible"] = row["status"] == "VERIFIED" and kickoff - timedelta(minutes=120) <= capture_dt <= kickoff - timedelta(minutes=60)
+        item["initial_eligible"] = (
+            row["status"] == "VERIFIED" and kickoff - timedelta(hours=22) >= capture_dt
+        )
+        item["refinement_eligible"] = (
+            row["status"] == "VERIFIED"
+            and kickoff - timedelta(minutes=60) >= capture_dt
+        )
         campaign_rows.append(item)
     campaign = create_forward_campaign(
         campaign_id=f"nl-v1-1-forward-{args.output_suffix}",
@@ -175,17 +184,38 @@ def main() -> int:
         fixture_manifest=campaign_rows,
         fixture_manifest_digest=MANIFEST_DIGEST,
     )
-    campaign = append_forward_prediction(campaign, prediction, evidence_class=EVIDENCE_REAL)
-    summary = build_forward_evidence_summary(campaign)
+    campaign = append_forward_prediction(
+        campaign, prediction, evidence_class=EVIDENCE_REAL
+    )
+    summary = build_forward_evidence_summary(campaign, as_of=capture)
 
     suffix = args.output_suffix
-    write(ROOT / f"data/research/nations_league/post_base_official_results_{suffix}.json", inventory)
-    write(ROOT / f"results/research/nations_league_v1_1_result_extension_{suffix}.json", extension)
-    write(ROOT / f"results/audits/nations_league_v1_1_result_completeness_{suffix}.json", proof)
-    write(ROOT / f"results/research/nations_league_v1_1_input_state_{suffix}.json", snapshot)
-    write(ROOT / f"results/research/nations_league_v1_1_forward_campaign_{suffix}.json", campaign.to_payload())
-    (ROOT / f"results/research/nations_league_v1_1_forward_shadow_store_{suffix}.jsonl").write_text(
-        json.dumps(prediction, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8"
+    write(
+        ROOT / f"data/research/nations_league/post_base_official_results_{suffix}.json",
+        inventory,
+    )
+    write(
+        ROOT / f"results/research/nations_league_v1_1_result_extension_{suffix}.json",
+        extension,
+    )
+    write(
+        ROOT / f"results/audits/nations_league_v1_1_result_completeness_{suffix}.json",
+        proof,
+    )
+    write(
+        ROOT / f"results/research/nations_league_v1_1_input_state_{suffix}.json",
+        snapshot,
+    )
+    write(
+        ROOT / f"results/research/nations_league_v1_1_forward_campaign_{suffix}.json",
+        campaign.to_payload(),
+    )
+    (
+        ROOT
+        / f"results/research/nations_league_v1_1_forward_shadow_store_{suffix}.jsonl"
+    ).write_text(
+        json.dumps(prediction, ensure_ascii=False, sort_keys=True) + "\n",
+        encoding="utf-8",
     )
     audit = {
         "schema": "nations-league-v1-1-real-observed-initial-capture-v1",
@@ -215,9 +245,14 @@ def main() -> int:
     audit["artifact_digest"] = sha256_json(
         {k: v for k, v in audit.items() if k != "artifact_digest"}
     )
-    write(ROOT / f"results/audits/nations_league_v1_1_real_observed_initial_{suffix}.json", audit)
     write(
-        ROOT / f"results/audits/nations_league_v1_1_forward_campaign_summary_{suffix}.json",
+        ROOT
+        / f"results/audits/nations_league_v1_1_real_observed_initial_{suffix}.json",
+        audit,
+    )
+    write(
+        ROOT
+        / f"results/audits/nations_league_v1_1_forward_campaign_summary_{suffix}.json",
         json.loads(serialize_forward_summary(summary)),
     )
     print(

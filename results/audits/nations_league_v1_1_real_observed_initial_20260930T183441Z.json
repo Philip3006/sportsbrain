@@ -1,9 +1,9 @@
 {
-  "artifact_digest": "5df5ef693024430072bba46b6516a6536fa525309d74660d574ff8aa43e21c26",
+  "artifact_digest": "ce2c199e53e0eb48bbd2fdbe8efdcf058fd510966b366fe2063bc45da9be6622",
   "base_timeline_digest": "2c60c6b823b0cae948947fffe2a0e3456495c1fc5d510379ae95690e1c3fa6ef",
-  "campaign_contract_digest": "f1cd6d33885f0a4057e6b2f3171b637b6bc3ba67e90c195086f193a71b882821",
+  "campaign_contract_digest": "45ff44edcfb85e57bc372af9c5baff0898b7abc6384f94318887918b505fc0f8",
   "campaign_id": "nl-v1-1-forward-20260930T183441Z",
-  "campaign_summary_digest": "78926b9fe26f5a07793b1bc4d0350d024ededa0c53faf3b77e594b01e349391b",
+  "campaign_summary_digest": "f2ac85d0cf110841a4bd23a0b12fac9565b2eb88be9f00dd657c7368e8c88b29",
   "capture_at": "2026-09-30T18:34:41.239075Z",
   "completeness_digest": "82629140b8bb8aff3c62e1e39893b79dee3d0b10a926c6c3dc3a3a151c7775ad",
   "evidence_class": "REAL_OBSERVED",
