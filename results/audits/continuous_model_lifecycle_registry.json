@@ -2,9 +2,14 @@
   "health": [
     {
       "active_release_id": "78161c4097c06e596efa95721aa62db0ed72a057a3fd664cbecd32f0c0be29bb",
+      "active_training_cutoff": "2026-09-30T20:01:24.572945+00:00",
+      "last_failure_reason": null,
+      "last_result_watermark": "2026-09-30T17:04:37.634354+00:00",
       "last_retrain_outcome": "CREATED",
+      "last_successful_retrain": "2026-09-30T20:01:24.572945Z",
       "model_family": "nations_league_v1_1",
       "status": "ACTIVE",
+      "training_row_count": 566,
       "updated_at": "2026-09-30T20:01:24.572945Z"
     }
   ],
@@ -71,7 +76,7 @@
     "schema": "continuous-model-lifecycle-state-v1"
   },
   "nations_league_live_evidence_binding_digest": "6f3cca76f598862d0595616416cecd73b2cdd8213d4b1aecd493eb03261a12a8",
-  "registry_digest": "3359264f5d280b0dc38eb5331490769c5cccb03332d3b424a4f19b9b30943206",
+  "registry_digest": "7c5ebb6cb3dd6c8db9b8101311d509df1ce425d1daf97965cb6891585e0f647b",
   "schema": "continuous-model-lifecycle-registry-v1",
   "source_release_sha": "267a5df80ee326cfe41ee6ddc27d3e8c547ab222"
 }

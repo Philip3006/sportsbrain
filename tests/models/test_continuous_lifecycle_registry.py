@@ -54,3 +54,27 @@ def test_inventory_is_explicit_about_legacy_disabled_and_candidate_boundaries():
     assert families["bundesliga2_dixon_coles"]["rollback"] == "NOT_IMPLEMENTED"
     assert families["world_cup_global_dc_lgbm_stacker"]["status"] == "DISABLED"
     assert families["top5_football"]["status"] == "CANDIDATE"
+
+
+def test_committed_nl_health_is_pointer_authoritative_and_operational():
+    registry = _read("results/audits/continuous_model_lifecycle_registry.json")
+    health = next(
+        item
+        for item in registry["health"]
+        if item["model_family"] == "nations_league_v1_1"
+    )
+    assert health["status"] == "ACTIVE"
+    assert health["active_release_id"] == (
+        "78161c4097c06e596efa95721aa62db0ed72a057a3fd664cbecd32f0c0be29bb"
+    )
+    assert health["active_training_cutoff"] == "2026-09-30T20:01:24.572945+00:00"
+    assert health["last_result_watermark"] == "2026-09-30T17:04:37.634354+00:00"
+    assert health["training_row_count"] == 566
+    assert health["last_successful_retrain"] == "2026-09-30T20:01:24.572945Z"
+    assert health["last_failure_reason"] is None
+
+    binding = _read("results/audits/nations_league_v1_1_live_evidence_binding.json")
+    assert binding["binding_digest"] == (
+        "6f3cca76f598862d0595616416cecd73b2cdd8213d4b1aecd493eb03261a12a8"
+    )
+    assert len(binding["source_records"]) == 7

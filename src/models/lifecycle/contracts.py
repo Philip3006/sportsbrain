@@ -323,7 +323,12 @@ class ModelHealth:
     model_family: str
     status: str
     active_release_id: str | None
+    active_training_cutoff: str | None
+    last_result_watermark: str | None
+    training_row_count: int | None
+    last_successful_retrain: str | None
     last_retrain_outcome: str | None
+    last_failure_reason: str | None
     updated_at: str
 
     def to_payload(self) -> dict[str, Any]:
@@ -342,6 +347,37 @@ class ModelLifecycle:
         self._pointers: dict[str, ActiveModelPointer] = {}
         self._receipts: list[RetrainReceipt | ActivationReceipt] = []
         self._lock = threading.RLock()
+
+    def _validate_active_invariants(
+        self,
+        *,
+        releases: Mapping[str, ModelRelease] | None = None,
+        pointers: Mapping[str, ActiveModelPointer] | None = None,
+    ) -> None:
+        """Reject any serialized state whose ACTIVE set disagrees with pointers."""
+
+        release_map = self._releases if releases is None else releases
+        pointer_map = self._pointers if pointers is None else pointers
+        active_by_family: dict[str, list[str]] = {}
+        for release_id, release in release_map.items():
+            family = release.snapshot.model_family
+            if release.status == ACTIVE:
+                active_by_family.setdefault(family, []).append(release_id)
+        for family, pointer in pointer_map.items():
+            release = release_map.get(pointer.release_id)
+            if release is None:
+                raise LifecycleError("active pointer references an unknown release")
+            if release.snapshot.model_family != family:
+                raise LifecycleError("active pointer family does not match release")
+            if release.status != ACTIVE:
+                raise LifecycleError("active pointer does not reference an ACTIVE release")
+            active_ids = active_by_family.get(family, [])
+            if active_ids != [pointer.release_id]:
+                raise LifecycleError("active release set is not exclusive")
+        for family, active_ids in active_by_family.items():
+            pointer = pointer_map.get(family)
+            if pointer is None or active_ids != [pointer.release_id]:
+                raise LifecycleError("ACTIVE release has no matching active pointer")
 
     @property
     def releases(self) -> dict[str, ModelRelease]:
@@ -394,6 +430,7 @@ class ModelLifecycle:
             else:
                 release = existing
                 outcome = "NO_OP"
+            self._validate_active_invariants()
             receipt = RetrainReceipt(
                 receipt_id=canonical_digest(
                     {
@@ -420,6 +457,7 @@ class ModelLifecycle:
         trained_state: Any,
         parameter_payload: Any,
         prediction_smoke: Mapping[str, Any] | None = None,
+        validated_at: str | None = None,
     ) -> ModelRelease:
         """Perform only reproducibility/integrity technical validation.
 
@@ -459,6 +497,28 @@ class ModelLifecycle:
             except LifecycleError as exc:
                 rejected = replace(release, status=REJECTED, rejection_reason=str(exc))
                 self._releases[release_id] = rejected
+                failure_at = validated_at or release.snapshot.captured_at
+                _utc(failure_at, "validated_at")
+                self._receipts.append(
+                    RetrainReceipt(
+                        receipt_id=canonical_digest(
+                            {
+                                "kind": "retrain-validation",
+                                "outcome": REJECTED,
+                                "release_id": release_id,
+                                "created_at": failure_at,
+                                "reason": str(exc),
+                            }
+                        ),
+                        model_family=release.snapshot.model_family,
+                        release_id=release_id,
+                        outcome=REJECTED,
+                        training_snapshot_digest=release.snapshot.snapshot_digest,
+                        created_at=failure_at,
+                        reason=str(exc),
+                    )
+                )
+                self._validate_active_invariants()
                 return rejected
             validation_digest = canonical_digest(
                 {
@@ -473,6 +533,7 @@ class ModelLifecycle:
                 release, status=VALIDATED, validation_digest=validation_digest
             )
             self._releases[release_id] = validated
+            self._validate_active_invariants()
             return validated
 
     def activate(self, release_id: str, *, activated_at: str) -> ActivationReceipt:
@@ -480,6 +541,7 @@ class ModelLifecycle:
 
         _utc(activated_at, "activated_at")
         with self._lock:
+            self._validate_active_invariants()
             release = self._releases.get(release_id)
             if release is None or release.status != VALIDATED:
                 raise LifecycleError("only a VALIDATED release may become active")
@@ -491,10 +553,21 @@ class ModelLifecycle:
                 activated_at=activated_at,
                 revision=(current.revision + 1) if current else 1,
             )
-            # The single assignment is the atomic commit point.  The prior
-            # pointer remains in the receipt and is never discarded from releases.
-            self._pointers[release.snapshot.model_family] = pointer
-            self._releases[release_id] = replace(release, status=ACTIVE)
+            next_releases = dict(self._releases)
+            if current is not None:
+                next_releases[current.release_id] = replace(
+                    next_releases[current.release_id], status=VALIDATED
+                )
+            next_releases[release_id] = replace(release, status=ACTIVE)
+            next_pointers = dict(self._pointers)
+            next_pointers[release.snapshot.model_family] = pointer
+            self._validate_active_invariants(
+                releases=next_releases, pointers=next_pointers
+            )
+            # Commit all three related changes only after the candidate state
+            # has passed the invariant checker while still holding the lock.
+            self._releases = next_releases
+            self._pointers = next_pointers
             receipt = ActivationReceipt(
                 receipt_id=canonical_digest(
                     {
@@ -512,6 +585,7 @@ class ModelLifecycle:
                 activated_at=activated_at,
             )
             self._receipts.append(receipt)
+            self._validate_active_invariants()
             return receipt
 
     def rollback(self, model_family: str, *, activated_at: str) -> ActivationReceipt:
@@ -519,6 +593,7 @@ class ModelLifecycle:
 
         _utc(activated_at, "activated_at")
         with self._lock:
+            self._validate_active_invariants()
             current = self._pointers.get(model_family)
             if current is None or current.previous_release_id is None:
                 raise LifecycleError("no previous release is available for rollback")
@@ -532,8 +607,18 @@ class ModelLifecycle:
                 activated_at=activated_at,
                 revision=current.revision + 1,
             )
-            self._pointers[model_family] = pointer
-            self._releases[target.release_id] = replace(target, status=ACTIVE)
+            next_releases = dict(self._releases)
+            next_releases[current.release_id] = replace(
+                next_releases[current.release_id], status=VALIDATED
+            )
+            next_releases[target.release_id] = replace(target, status=ACTIVE)
+            next_pointers = dict(self._pointers)
+            next_pointers[model_family] = pointer
+            self._validate_active_invariants(
+                releases=next_releases, pointers=next_pointers
+            )
+            self._releases = next_releases
+            self._pointers = next_pointers
             receipt = ActivationReceipt(
                 receipt_id=canonical_digest(
                     {
@@ -551,34 +636,94 @@ class ModelLifecycle:
                 activated_at=activated_at,
             )
             self._receipts.append(receipt)
+            self._validate_active_invariants()
             return receipt
 
     def health(self, model_family: str, *, updated_at: str) -> ModelHealth:
-        _utc(updated_at, "updated_at")
-        pointer = self._pointers.get(model_family)
-        family_receipts = [
-            item for item in self._receipts if item.model_family == model_family
-        ]
-        retrain = next(
-            (item for item in reversed(family_receipts) if isinstance(item, RetrainReceipt)),
-            None,
-        )
-        return ModelHealth(
-            model_family=model_family,
-            status="ACTIVE" if pointer else "NO_ACTIVE_RELEASE",
-            active_release_id=pointer.release_id if pointer else None,
-            last_retrain_outcome=retrain.outcome if retrain else None,
-            updated_at=updated_at,
-        )
+        with self._lock:
+            _utc(updated_at, "updated_at")
+            self._validate_active_invariants()
+            pointer = self._pointers.get(model_family)
+            active = self._releases.get(pointer.release_id) if pointer else None
+            family_receipts = [
+                item for item in self._receipts if item.model_family == model_family
+            ]
+            retrain_receipts = [
+                item for item in family_receipts if isinstance(item, RetrainReceipt)
+            ]
+            latest_retrain = retrain_receipts[-1] if retrain_receipts else None
+            successful = [
+                item
+                for item in retrain_receipts
+                if item.outcome in {"CREATED", "NO_OP"}
+            ]
+            last_successful = successful[-1] if successful else None
+            latest_rejection = next(
+                (
+                    index
+                    for index in range(len(family_receipts) - 1, -1, -1)
+                    if isinstance(family_receipts[index], RetrainReceipt)
+                    and family_receipts[index].outcome == REJECTED
+                ),
+                None,
+            )
+            latest_activation = next(
+                (
+                    index
+                    for index in range(len(family_receipts) - 1, -1, -1)
+                    if isinstance(family_receipts[index], ActivationReceipt)
+                    and family_receipts[index].action == "ACTIVATE"
+                ),
+                None,
+            )
+            failure_active = latest_rejection is not None and (
+                latest_activation is None or latest_rejection > latest_activation
+            )
+            return ModelHealth(
+                model_family=model_family,
+                status=(
+                    "ACTIVE_WITH_RETRAIN_FAILURE"
+                    if pointer and failure_active
+                    else "ACTIVE"
+                    if pointer
+                    else "NO_ACTIVE_RELEASE"
+                ),
+                active_release_id=pointer.release_id if pointer else None,
+                active_training_cutoff=(
+                    active.snapshot.training_cutoff if active else None
+                ),
+                last_result_watermark=(
+                    active.snapshot.result_safe_watermark if active else None
+                ),
+                training_row_count=(
+                    active.snapshot.training_row_count if active else None
+                ),
+                last_successful_retrain=(
+                    last_successful.created_at if last_successful else None
+                ),
+                last_retrain_outcome=(
+                    latest_retrain.outcome if latest_retrain else None
+                ),
+                last_failure_reason=(
+                    family_receipts[latest_rejection].reason
+                    if failure_active and latest_rejection is not None
+                    else None
+                ),
+                updated_at=updated_at,
+            )
 
     def to_payload(self) -> dict[str, Any]:
-        return {
-            "schema": "continuous-model-lifecycle-state-v1",
-            "releases": [
-                self._releases[key].to_payload() for key in sorted(self._releases)
-            ],
-            "active_pointers": [
-                self._pointers[key].to_payload() for key in sorted(self._pointers)
-            ],
-            "receipts": [item.to_payload() for item in self._receipts],
-        }
+        with self._lock:
+            self._validate_active_invariants()
+            return {
+                "schema": "continuous-model-lifecycle-state-v1",
+                "releases": [
+                    self._releases[key].to_payload()
+                    for key in sorted(self._releases)
+                ],
+                "active_pointers": [
+                    self._pointers[key].to_payload()
+                    for key in sorted(self._pointers)
+                ],
+                "receipts": [item.to_payload() for item in self._receipts],
+            }
