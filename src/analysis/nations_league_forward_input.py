@@ -75,6 +75,42 @@ def _identity_bindings_digest(bindings):
     )
 
 
+def _validate_legacy_snapshot_identity(snapshot):
+    """Allow legacy replay only for exact canonical source identities."""
+
+    ratings = snapshot.get("elo_state")
+    fixtures = snapshot.get("fixtures")
+    training = snapshot.get("training_records")
+    if not isinstance(ratings, dict) or not isinstance(fixtures, list):
+        raise TypeError("legacy snapshot requires sealed identity binding")
+    historical_spellings = {}
+    for row in training or []:
+        for field in ("home_team", "away_team"):
+            source_team = row.get(field)
+            if (
+                not isinstance(source_team, str)
+                or not source_team
+                or canonical_team(source_team) != source_team
+            ):
+                raise ValueError("legacy snapshot requires sealed identity binding")
+            key = source_team.casefold()
+            if key in historical_spellings and historical_spellings[key] != source_team:
+                raise ValueError("legacy snapshot requires sealed identity binding")
+            historical_spellings[key] = source_team
+    for fixture in fixtures:
+        for field in ("home_team", "away_team"):
+            source_team = fixture.get(field)
+            if (
+                not isinstance(source_team, str)
+                or not source_team
+                or canonical_team(source_team) != source_team
+                or source_team not in ratings
+                or historical_spellings.get(source_team.casefold(), source_team)
+                != source_team
+            ):
+                raise ValueError("legacy snapshot requires sealed identity binding")
+
+
 def timeline_training(timeline):
     """Verify committed timeline hashes and adapt its 510 safe result records.
 
@@ -207,9 +243,15 @@ def build_input_state(
             conflicting_identity = (
                 spellings.get(canonical.casefold(), canonical) != canonical
             )
+            unsealed_alias = (
+                not include_identity_bindings
+                and binding["resolution"] == "EXPLICIT_EXISTING_ALIAS"
+            )
             readiness[team] = (
                 "AMBIGUOUS_IDENTITY"
-                if conflicting_identity or (not known_identity and canonical in ratings)
+                if conflicting_identity
+                or unsealed_alias
+                or (not known_identity and canonical in ratings)
                 else "MISSING_TEAM"
                 if canonical not in ratings
                 else freshness
@@ -253,6 +295,10 @@ def build_input_state(
 def predict_from_input_state(snapshot, fixture_id, *, phase):
     """Bind #227 to verified actual input; do not modify previous shadow records."""
     legacy_snapshot = "identity_bindings" not in snapshot
+    if legacy_snapshot:
+        _validate_legacy_snapshot_identity(snapshot)
+    elif "identity_binding_digest" not in snapshot:
+        raise ValueError("sealed identity binding digest missing")
     rebuilt = build_input_state(
         snapshot["fixtures"],
         snapshot["training_records"],

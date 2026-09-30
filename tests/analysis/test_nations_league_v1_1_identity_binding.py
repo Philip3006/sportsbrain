@@ -116,6 +116,111 @@ def test_tampered_identity_binding_invalidates_snapshot():
         predict_from_input_state(tampered, TARGET_ID, phase="initial")
 
 
+def test_missing_identity_binding_digest_is_rejected():
+    *_, state = alias_context()
+    tampered = deepcopy(state)
+    del tampered["identity_binding_digest"]
+    with pytest.raises(ValueError, match="sealed identity binding digest missing"):
+        predict_from_input_state(tampered, TARGET_ID, phase="initial")
+
+
+def test_new_no_binding_republic_of_ireland_snapshot_cannot_predict():
+    base, extension, proof, _, target, training, _ = alias_context()
+    snapshot = build_input_state(
+        [target],
+        training,
+        prediction_cutoff=proof["prediction_cutoff"],
+        provenance={
+            "source_digest": target["source_digest"],
+            "source_provenance": "legacy-bypass regression",
+        },
+        base_timeline=base,
+        result_extension=extension,
+        completeness_artifact=proof,
+        include_identity_bindings=False,
+    )
+    assert snapshot["team_readiness"]["Republic of Ireland"] == "AMBIGUOUS_IDENTITY"
+    with pytest.raises(
+        ValueError, match="legacy snapshot requires sealed identity binding"
+    ):
+        predict_from_input_state(snapshot, TARGET_ID, phase="initial")
+
+
+def test_new_no_binding_turkey_alias_snapshot_cannot_predict():
+    base, extension, proof, _, target, training, _ = alias_context()
+    turkey = deepcopy(target)
+    turkey["fixture_id"] = "uefa-nl:future-turkey-identity-regression"
+    turkey["home_team"] = "Turkey"
+    snapshot = build_input_state(
+        [turkey],
+        training,
+        prediction_cutoff=proof["prediction_cutoff"],
+        provenance={
+            "source_digest": turkey["source_digest"],
+            "source_provenance": "legacy-bypass regression",
+        },
+        base_timeline=base,
+        result_extension=extension,
+        completeness_artifact=proof,
+        include_identity_bindings=False,
+    )
+    assert snapshot["team_readiness"]["Turkey"] == "AMBIGUOUS_IDENTITY"
+    with pytest.raises(
+        ValueError, match="legacy snapshot requires sealed identity binding"
+    ):
+        predict_from_input_state(snapshot, turkey["fixture_id"], phase="initial")
+
+
+def test_new_no_binding_canonical_germany_snapshot_replays():
+    old_snapshot = load(
+        "results/research/nations_league_v1_1_input_state_20260930T183441Z.json"
+    )
+    rebuilt = build_input_state(
+        old_snapshot["fixtures"],
+        old_snapshot["training_records"],
+        prediction_cutoff=old_snapshot["prediction_cutoff"],
+        provenance=old_snapshot["provenance"],
+        base_timeline=old_snapshot["base_timeline"],
+        result_extension=old_snapshot["result_extension"],
+        completeness_artifact=old_snapshot["completeness"],
+        include_identity_bindings=False,
+    )
+    assert "identity_bindings" not in rebuilt
+    expected = load(
+        "results/audits/nations_league_v1_1_real_observed_initial_20260930T183441Z.json"
+    )["prediction"]
+    assert (
+        predict_from_input_state(
+            rebuilt,
+            "uefa-nl:future-3fe70ff0ba848e39b50908d6",
+            phase="initial",
+        )
+        == expected
+    )
+
+
+@pytest.mark.parametrize(
+    "source_team", ["Ireland Republic", "Republic Ireland", "Irish Team"]
+)
+def test_unknown_aliases_remain_fail_closed(source_team):
+    _, _, proof, _, target, training, _ = alias_context()
+    unknown = deepcopy(target)
+    unknown["fixture_id"] = f"uefa-nl:future-{source_team.casefold().replace(' ', '-')}"
+    unknown["home_team"] = source_team
+    snapshot = build_input_state(
+        [unknown],
+        training,
+        prediction_cutoff=proof["prediction_cutoff"],
+        provenance={
+            "source_digest": unknown["source_digest"],
+            "source_provenance": "unknown identity regression",
+        },
+    )
+    assert snapshot["team_readiness"][source_team] != "READY"
+    with pytest.raises(ValueError, match="not READY|sealed identity binding"):
+        predict_from_input_state(snapshot, unknown["fixture_id"], phase="initial")
+
+
 def test_missing_canonical_elo_is_not_ready():
     _, _, proof, _, target, training, _ = alias_context()
     without_ireland = [

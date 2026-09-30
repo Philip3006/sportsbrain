@@ -105,6 +105,21 @@ def test_campaign_successor_preserves_six_and_closes_initial_due_state():
     successor_by_id = {row["record_id"]: row for row in successor.records}
     assert len(previous.records) == 6
     assert len(successor.records) == 7
+    successor_payload = load(
+        f"results/research/nations_league_v1_1_forward_campaign_{SUFFIX}.json"
+    )
+    assert sha256_json(successor_payload) == (
+        "18fe4b9840527be6a172f8d1a1baab0747e3a7954089e9f211896f68c383a3e2"
+    )
+    assert [row["record_id"] for row in successor.records] == [
+        "2fab2e3afb12d51f554f883d786720e3c4306ef14ff66b329f26c608c19f676e",
+        "288431fa7d2fe5505a1652713076dde381e2c1daaca91fcd1c7bf532b47cb50f",
+        "29bd6d5baf1fad641f45a5511f4f8da027b3e96d335a6e490dc7e118286ce4ec",
+        "a202d272871ec3fe9502bd4f7c487cd9f26285aa70232fb8842ebc85c0997262",
+        "88ac4b489e5d402ec405f694781625da87acd666ca3cac3d8f7e72c5eb975961",
+        "22e95a1051519ea54ac657c557f84f28eee630618051602c5ed063e563a996b9",
+        RECORD_ID,
+    ]
     assert set(previous_by_id).issubset(successor_by_id)
     for record_id, record in previous_by_id.items():
         assert successor_by_id[record_id] == record
