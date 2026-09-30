@@ -113,6 +113,30 @@ function render(payload) {
   return element;
 }
 
+function renderLive(payload) {
+  const element = {
+    hidden: false,
+    innerHTML: '',
+    replaceChildren() { this.innerHTML = ''; },
+  };
+  const context = {
+    Date,
+    Number,
+    Math,
+    String,
+    document: { getElementById: (id) => id === 'nations-league-live' ? element : null },
+    esc: (value) => String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;'),
+  };
+  vm.createContext(context);
+  const start = viewsSource.indexOf('function renderNationsLeagueLive(');
+  const end = viewsSource.indexOf('\nfunction renderNationsLeagueShadow', start);
+  assert.notEqual(start, -1);
+  assert.notEqual(end, -1);
+  vm.runInContext(viewsSource.slice(start, end) + '\nglobalThis.renderNl = renderNationsLeagueLive;', context);
+  context.renderNl(payload);
+  return element;
+}
+
 function appNlHelpers() {
   const context = { crypto: webcrypto, TextEncoder, JSON, Object, Array, Uint8Array, String, Date, Number, Math };
   vm.createContext(context);
@@ -134,6 +158,48 @@ test('Worker public allowlist preserves the validated Nations League shadow enve
   assert.throws(() => serializePublicProduct({ nations_league: publicBundle({ fixture_count: 2 }) }), /Nations League/);
   assert.throws(() => serializePublicProduct({ nations_league: publicBundle({ provider: 'the_odds_api' }) }), /Nations League/);
   assert.throws(() => serializePublicProduct({ nations_league: publicBundle({ provider_league_id: 999 }) }), /Nations League/);
+});
+
+test('LIVE Nations League projection passes the serializer boundary without betting semantics', async () => {
+  const live = JSON.parse(readFileSync(resolve(__dir, '../../docs/data/signals.json'), 'utf8')).nations_league;
+  assert.equal(live.status, 'LIVE');
+  assert.equal(live.fixture_count, 7);
+  assert.equal(live.no_bet, true);
+  assert.equal(live.betting_enabled, false);
+  assert.equal(live.ledger_mutation, false);
+  assert.equal(await validatePublicNationsLeagueDigest(live), true);
+  assert.deepEqual(serializePublicProduct({ nations_league: live }).nations_league, live);
+  assert.equal(await appNlHelpers().valid(live), true);
+});
+
+test('expired LIVE projection accepts zero current fixtures and PWA hides the panel', async () => {
+  const live = JSON.parse(readFileSync(resolve(__dir, '../../docs/data/signals.json'), 'utf8')).nations_league;
+  const expired = structuredClone(live);
+  expired.fixtures = [];
+  expired.fixture_count = 0;
+  expired.updated_at = new Date(NOW).toISOString();
+  bindPublicDigest(expired);
+  assert.equal(await validatePublicNationsLeagueDigest(expired), true);
+  assert.deepEqual(serializePublicProduct({ nations_league: expired }).nations_league, expired);
+  assert.equal(await appNlHelpers().valid(expired), true);
+  assert.equal(renderLive(expired).hidden, true);
+});
+
+test('PWA renders future LIVE fixtures only and never exposes a bet action', () => {
+  const live = JSON.parse(readFileSync(resolve(__dir, '../../docs/data/signals.json'), 'utf8')).nations_league;
+  const payload = structuredClone(live);
+  payload.fixtures = payload.fixtures.slice(0, 2).map((fixture, index) => ({
+    ...fixture,
+    kickoff_utc: new Date(NOW + (index + 1) * 3600000).toISOString(),
+  }));
+  payload.fixture_count = 2;
+  const rendered = renderLive(payload);
+  assert.equal(rendered.hidden, false);
+  assert.match(rendered.innerHTML, /UEFA Nations League/);
+  assert.match(rendered.innerHTML, />LIVE</);
+  assert.match(rendered.innerHTML, /NO BET/);
+  assert.match(rendered.innerHTML, /Germany|Greece|Denmark|Wales/);
+  assert.doesNotMatch(rendered.innerHTML, /place-bet|data-stake|wette abgeben/i);
 });
 
 test('Worker and PWA verify the public projection digest and reject tampering', async () => {

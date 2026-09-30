@@ -64,6 +64,27 @@ def test_result_availability_must_strictly_precede_training_cutoff():
         )
 
 
+def test_serialized_lifecycle_restores_with_one_active_release_and_history():
+    lifecycle = ModelLifecycle()
+    first, _ = lifecycle.create_or_noop(
+        _snapshot(),
+        parameter_digest=canonical_digest({"k": 1}),
+        created_at="2026-09-03T12:00:00Z",
+    )
+    lifecycle.validate(
+        first.release_id,
+        training_rows=_rows(),
+        trained_state={"rating": 1500.0},
+        parameter_payload={"k": 1},
+        prediction_smoke={"home": 0.4, "draw": 0.2, "away": 0.4},
+    )
+    lifecycle.activate(first.release_id, activated_at="2026-09-03T12:01:00Z")
+    restored = ModelLifecycle.from_payload(lifecycle.to_payload())
+    assert restored.to_payload() == lifecycle.to_payload()
+    assert restored.pointers["test_family"].release_id == first.release_id
+    assert sum(item.status == ACTIVE for item in restored.releases.values()) == 1
+
+
 def test_release_identity_is_deterministic_and_repeat_is_noop_after_activation():
     lifecycle = ModelLifecycle()
     first, receipt = lifecycle.create_or_noop(

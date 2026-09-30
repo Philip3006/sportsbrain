@@ -172,6 +172,20 @@ def validate_public_nations_league(
     max_age: timedelta = MAX_PUBLIC_SHADOW_AGE,
 ) -> dict[str, Any]:
     """Validate the already-projected public bundle without private fields."""
+    # The historical iSports shadow contract remains strict below.  The
+    # explicit LIVE schema is dispatched to its dedicated validator so a LIVE
+    # bundle cannot accidentally inherit SHADOW_ONLY assumptions (or weaken
+    # them by being treated as a legacy artifact).
+    if isinstance(value, Mapping) and value.get("schema") == "nations-league-live-public-v1":
+        from src.notifications.nations_league_live_public import (
+            NationsLeagueLivePublicError,
+            validate_live_public_nations_league,
+        )
+
+        try:
+            return validate_live_public_nations_league(value)
+        except NationsLeagueLivePublicError as exc:
+            raise NationsLeaguePublicError(str(exc)) from exc
     if not isinstance(value, Mapping):
         raise NationsLeaguePublicError("public Nations League bundle is not an object")
     payload = dict(value)
@@ -320,15 +334,27 @@ def select_freshest_valid_public_nations_league(
     current = now.astimezone(timezone.utc) if now else datetime.now(timezone.utc)
     selected: dict[str, Any] | None = None
     selected_capture: datetime | None = None
+    selected_is_live = False
     for candidate in candidates:
         try:
             validated = validate_public_nations_league(candidate, now=current)
         except NationsLeaguePublicError:
             continue
-        captured = _timestamp(validated.get("captured_at"), "captured_at")
-        if selected_capture is None or captured > selected_capture:
+        timestamp_field = (
+            "updated_at"
+            if validated.get("schema") == "nations-league-live-public-v1"
+            else "captured_at"
+        )
+        is_live = validated.get("schema") == "nations-league-live-public-v1"
+        captured = _timestamp(validated.get(timestamp_field), timestamp_field)
+        if (
+            selected_capture is None
+            or (is_live and not selected_is_live)
+            or (is_live == selected_is_live and captured > selected_capture)
+        ):
             selected = validated
             selected_capture = captured
+            selected_is_live = is_live
     return selected
 
 

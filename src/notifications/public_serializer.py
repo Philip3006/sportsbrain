@@ -1450,12 +1450,10 @@ def _serialize_public_product(snapshot: dict | None, *, prepublication: bool) ->
         pub["football"] = serialize_public_football_records(pub["football"])
     if "nations_league" in pub:
         try:
-            pub["nations_league"] = validate_public_nations_league(
-                pub["nations_league"]
-            )
+            pub["nations_league"] = validate_public_nations_league(pub["nations_league"])
         except NationsLeaguePublicError as exc:
             raise PublicFootballCompatibilityError(
-                f"invalid public Nations League shadow: {exc}"
+                f"invalid public Nations League projection: {exc}"
             ) from exc
     if "top5_release" in pub:
         pub["top5_release"] = _public_top5_release(

@@ -34,6 +34,12 @@ def inputs():
     return base, source
 
 
+def schedule_manifest():
+    return json.loads(
+        (ROOT / "results/audits/nations_league_forward_fixture_manifest.json").read_text()
+    )
+
+
 def extension():
     return build_extension(*inputs(), generated_at=GENERATED)
 
@@ -128,6 +134,47 @@ def test_stale_future_cutoff_and_causal_snapshot_ready():
     assert completeness(value, value["results_verified_through"])["status"] == "READY"
     with pytest.raises(ValueError, match="noncausal"):
         completeness(value, "2026-09-30T16:00:00Z")
+
+
+@pytest.mark.parametrize(
+    "cutoff",
+    [
+        "2026-10-01T14:30:00Z",
+        "2026-10-01T17:15:00Z",
+        "2026-10-01T22:00:00Z",
+    ],
+)
+def test_schedule_causal_carry_forward_keeps_older_complete_extension_ready(cutoff):
+    proof = completeness(extension(), cutoff, schedule_manifest=schedule_manifest())
+    assert proof["status"] == "READY"
+    assert proof["coverage_mode"] == "SCHEDULE_CAUSAL_CARRY_FORWARD"
+    assert proof["next_possible_result_safe_at"] == "2026-10-01T22:00:00+00:00"
+    assert proof["schedule_manifest_digest"] == schedule_manifest()["manifest_digest"]
+
+
+def test_schedule_carry_forward_requires_new_results_after_safe_horizon():
+    proof = completeness(
+        extension(), "2026-10-01T22:15:00Z", schedule_manifest=schedule_manifest()
+    )
+    assert proof["status"] == "LIVE_RESULT_REFRESH_REQUIRED"
+    assert proof["coverage_mode"] == "DIRECT_OFFICIAL_OBSERVATION_REQUIRED"
+
+
+def test_schedule_carry_forward_rejects_tampered_or_unresolved_schedule():
+    manifest = schedule_manifest()
+    tampered = deepcopy(manifest)
+    tampered["fixtures"][0]["home_team"] = "Unknown Team"
+    with pytest.raises(ValueError, match="schedule carry-forward"):
+        completeness(extension(), "2026-10-01T17:15:00Z", schedule_manifest=tampered)
+    unresolved = deepcopy(manifest)
+    unresolved["fixtures"][0]["status"] = "UNRESOLVED"
+    unresolved["manifest_digest"] = sha256_json(
+        {key: value for key, value in unresolved.items() if key != "manifest_digest"}
+    )
+    with pytest.raises(ValueError, match="schedule carry-forward"):
+        completeness(
+            extension(), "2026-10-01T17:15:00Z", schedule_manifest=unresolved
+        )
 
 
 def test_removal_or_changed_result_changes_state_or_fails():

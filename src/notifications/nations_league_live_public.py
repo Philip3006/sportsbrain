@@ -13,6 +13,7 @@ import json
 import math
 from collections.abc import Iterable, Mapping
 from copy import deepcopy
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from src.analysis.nations_league_model_lifecycle import (
@@ -26,10 +27,87 @@ from src.models.lifecycle import ACTIVE, ModelRelease
 SCHEMA = "nations-league-live-public-v1"
 COMPETITION = "UEFA Nations League"
 _OUTCOMES = ("home", "draw", "away")
+_PUBLIC_KEYS = frozenset(
+    {
+        "schema",
+        "competition",
+        "status",
+        "experimental",
+        "publication_enabled",
+        "no_bet",
+        "betting_enabled",
+        "ledger_mutation",
+        "model_release",
+        "fixture_count",
+        "fixtures",
+        "audit_history",
+        "updated_at",
+        "public_digest",
+    }
+)
+_PUBLIC_FIXTURE_KEYS = frozenset(
+    {
+        "fixture_id",
+        "competition",
+        "source_prediction_record_id",
+        "source_identity",
+        "canonical_identity",
+        "kickoff_utc",
+        "phase",
+        "probabilities",
+        "prediction_cutoff",
+        "updated_at",
+        "model_release",
+    }
+)
+_RELEASE_KEYS = frozenset(
+    {
+        "model_family",
+        "model_version",
+        "algorithm_digest",
+        "release_id",
+        "training_data_digest",
+        "trained_state_digest",
+        "training_cutoff",
+        "binding_digest",
+    }
+)
 
 
 class NationsLeagueLivePublicError(ValueError):
     """Source evidence is not eligible for an immutable LIVE projection."""
+
+
+def _utc(value: object, field: str) -> datetime:
+    if not isinstance(value, str) or not value.strip():
+        raise NationsLeagueLivePublicError(f"{field} is required")
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise NationsLeagueLivePublicError(f"{field} is malformed") from exc
+    if parsed.tzinfo is None or parsed.utcoffset() != timedelta(0):
+        raise NationsLeagueLivePublicError(f"{field} must be explicit UTC")
+    return parsed.astimezone(timezone.utc)
+
+
+def _stamp(value: datetime) -> str:
+    return value.isoformat().replace("+00:00", "Z")
+
+
+def _zero_view_updated_at(
+    selected: Mapping[str, Mapping[str, Any]], release: Mapping[str, Any]
+) -> str:
+    """Return the immutable semantic timestamp for an empty current view."""
+
+    timestamps = [_utc(release["training_cutoff"], "training_cutoff")]
+    for fixture in selected.values():
+        timestamps.extend(
+            [
+                _utc(fixture["updated_at"], "fixture.updated_at"),
+                _utc(fixture["kickoff_utc"], "fixture.kickoff_utc"),
+            ]
+        )
+    return _stamp(max(timestamps))
 
 
 def _canonical_json(value: Any) -> bytes:
@@ -117,36 +195,70 @@ def _validate_release(release: ModelRelease) -> dict[str, Any]:
 
 
 def _source_fixture(record: Mapping[str, Any], binding: Mapping[str, Any]) -> dict[str, Any]:
-    if (
-        record.get("record_type") != "prediction"
-        or record.get("competition") != COMPETITION
-        or record.get("model_version") != MODEL_VERSION
-        or record.get("model_digest") != FROZEN_ALGORITHM_DIGEST
-        or record.get("shadow") is not True
-        or record.get("no_bet") is not True
-        or record.get("publication_enabled") is not False
-        or record.get("ledger_mutation") is not False
-    ):
+    is_live = record.get("status") == "LIVE"
+    if is_live:
+        valid = (
+            record.get("record_type") == "prediction"
+            and record.get("competition") == COMPETITION
+            and record.get("model_version") == MODEL_VERSION
+            and record.get("model_digest") == FROZEN_ALGORITHM_DIGEST
+            and record.get("no_bet") is True
+            and record.get("betting_enabled") is False
+            and record.get("publication_enabled") is True
+            and record.get("ledger_mutation") is False
+        )
+    else:
+        valid = (
+            record.get("record_type") == "prediction"
+            and record.get("competition") == COMPETITION
+            and record.get("model_version") == MODEL_VERSION
+            and record.get("model_digest") == FROZEN_ALGORITHM_DIGEST
+            and record.get("shadow") is True
+            and record.get("no_bet") is True
+            and record.get("publication_enabled") is False
+            and record.get("ledger_mutation") is False
+        )
+    if not valid:
         raise NationsLeagueLivePublicError("source record violates frozen evidence safety")
     record_id = _digest_text(record.get("record_id"), "record_id")
-    if record_id != binding["source_prediction_record_id"]:
-        raise NationsLeagueLivePublicError("source record identity differs from binding")
-    input_provenance = record.get("input_provenance")
-    if not isinstance(input_provenance, Mapping) or input_provenance.get(
-        "input_snapshot_digest"
-    ) != binding["input_snapshot_digest"]:
-        raise NationsLeagueLivePublicError("source record input-state binding differs")
+    if not is_live:
+        if record_id != binding["source_prediction_record_id"]:
+            raise NationsLeagueLivePublicError("source record identity differs from binding")
+        input_provenance = record.get("input_provenance")
+        if not isinstance(input_provenance, Mapping) or input_provenance.get(
+            "input_snapshot_digest"
+        ) != binding["input_snapshot_digest"]:
+            raise NationsLeagueLivePublicError("source record input-state binding differs")
     probabilities = _probabilities(record.get("probabilities"))
-    source_home = _required_text(record.get("home_team"), "home_team")
-    source_away = _required_text(record.get("away_team"), "away_team")
+    source_identity = record.get("source_identity")
+    if source_identity is not None:
+        if not isinstance(source_identity, Mapping):
+            raise NationsLeagueLivePublicError("source identity is malformed")
+        source_home = _required_text(source_identity.get("home_team"), "source home_team")
+        source_away = _required_text(source_identity.get("away_team"), "source away_team")
+    else:
+        source_home = _required_text(record.get("home_team"), "home_team")
+        source_away = _required_text(record.get("away_team"), "away_team")
     identity = record.get("model_identity")
-    canonical_home = source_home
-    canonical_away = source_away
+    canonical_identity = record.get("canonical_identity")
+    if canonical_identity is not None:
+        if not isinstance(canonical_identity, Mapping):
+            raise NationsLeagueLivePublicError("canonical identity is malformed")
+        canonical_home = _required_text(
+            canonical_identity.get("home_team"), "canonical home_team"
+        )
+        canonical_away = _required_text(
+            canonical_identity.get("away_team"), "canonical away_team"
+        )
+    else:
+        canonical_home = source_home
+        canonical_away = source_away
     if identity is not None:
         if not isinstance(identity, Mapping):
             raise NationsLeagueLivePublicError("source model identity is malformed")
-        canonical_home = _required_text(identity.get("home_team"), "canonical home_team")
-        canonical_away = _required_text(identity.get("away_team"), "canonical away_team")
+        if canonical_identity is None:
+            canonical_home = _required_text(identity.get("home_team"), "canonical home_team")
+            canonical_away = _required_text(identity.get("away_team"), "canonical away_team")
     return {
         "fixture_id": _required_text(record.get("fixture_id"), "fixture_id"),
         "competition": COMPETITION,
@@ -160,7 +272,34 @@ def _source_fixture(record: Mapping[str, Any], binding: Mapping[str, Any]) -> di
             record.get("prediction_timestamp"), "prediction_timestamp"
         ),
         "updated_at": _required_text(record.get("prediction_timestamp"), "prediction_timestamp"),
+        "model_release": dict(binding.get("model_release", {})),
     }
+
+
+def _release_binding(value: object) -> dict[str, Any]:
+    if not isinstance(value, Mapping) or set(value) != _RELEASE_KEYS:
+        raise NationsLeagueLivePublicError("fixture model release is missing")
+    result = dict(value)
+    if (
+        result.get("model_family") != MODEL_FAMILY
+        or result.get("model_version") != MODEL_VERSION
+        or result.get("algorithm_digest") != FROZEN_ALGORITHM_DIGEST
+    ):
+        raise NationsLeagueLivePublicError("fixture model release identity is invalid")
+    for field in ("release_id", "algorithm_digest", "training_data_digest", "trained_state_digest", "binding_digest"):
+        _digest_text(result.get(field), f"fixture.model_release.{field}")
+    expected_binding = _digest(
+        {
+            "release_id": result["release_id"],
+            "algorithm_digest": result["algorithm_digest"],
+            "training_data_digest": result["training_data_digest"],
+            "trained_state_digest": result["trained_state_digest"],
+        }
+    )
+    if result["binding_digest"] != expected_binding:
+        raise NationsLeagueLivePublicError("fixture model release binding is invalid")
+    _required_text(result.get("training_cutoff"), "fixture.model_release.training_cutoff")
+    return result
 
 
 def build_live_public_nations_league(
@@ -168,6 +307,7 @@ def build_live_public_nations_league(
     *,
     active_release: ModelRelease,
     evidence_binding: Mapping[str, Any],
+    as_of: str,
 ) -> dict[str, Any]:
     """Project immutable source records as a deterministic, non-betting LIVE view.
 
@@ -177,6 +317,7 @@ def build_live_public_nations_league(
     """
 
     release = _validate_release(active_release)
+    cutoff = _utc(as_of, "as_of")
     bindings = _binding_index(evidence_binding)
     parsed: list[dict[str, Any]] = []
     seen_records: set[str] = set()
@@ -190,15 +331,42 @@ def build_live_public_nations_league(
         seen_records.add(record_id)
         binding = bindings.get(record_id)
         if binding is None:
-            raise NationsLeagueLivePublicError("source record is absent from evidence binding")
-        if (
-            binding["training_data_digest"] != release["training_data_digest"]
-            or binding["trained_state_digest"] != release["trained_state_digest"]
-        ):
-            raise NationsLeagueLivePublicError("source record does not bind to active state")
+            if record.get("status") != "LIVE":
+                raise NationsLeagueLivePublicError("source record is absent from evidence binding")
+            generated = {
+                "model_family": MODEL_FAMILY,
+                "model_version": MODEL_VERSION,
+                "algorithm_digest": record.get("algorithm_digest"),
+                "release_id": record.get("model_release_id"),
+                "training_data_digest": record.get("training_data_digest"),
+                "trained_state_digest": record.get("trained_state_digest"),
+                "training_cutoff": record.get("training_cutoff"),
+            }
+            generated["binding_digest"] = _digest(
+                {
+                    key: generated[key]
+                    for key in (
+                        "release_id",
+                        "algorithm_digest",
+                        "training_data_digest",
+                        "trained_state_digest",
+                    )
+                }
+            )
+            binding = {
+                "model_release": generated,
+                "source_prediction_record_id": record_id,
+            }
+        elif "model_release" not in binding:
+            binding = dict(binding)
+            binding["model_release"] = evidence_binding.get("active_model_release")
+        binding["model_release"] = _release_binding(binding.get("model_release"))
         parsed.append(_source_fixture(record, binding))
-    if set(bindings) != seen_records:
+    if not set(bindings).issubset(seen_records):
         raise NationsLeagueLivePublicError("LIVE evidence binding coverage is incomplete")
+    parsed_by_record_id = {
+        fixture["source_prediction_record_id"]: fixture for fixture in parsed
+    }
     selected: dict[str, dict[str, Any]] = {}
     audit: dict[str, list[str]] = {}
     for fixture in sorted(parsed, key=lambda item: (item["fixture_id"], item["phase"], item["source_prediction_record_id"])):
@@ -212,7 +380,26 @@ def build_live_public_nations_league(
             selected[fixture_id] = fixture
         elif current["phase"] == phase:
             raise NationsLeagueLivePublicError("duplicate source lifecycle record")
-    fixtures = [selected[key] for key in sorted(selected)]
+    fixtures = [
+        selected[key]
+        for key in sorted(selected)
+        if _utc(selected[key]["kickoff_utc"], "kickoff_utc") > cutoff
+    ]
+    audit_history = [
+        {"fixture_id": fixture_id, "source_prediction_record_ids": audit[fixture_id]}
+        for fixture_id in sorted(audit)
+    ]
+    if not fixtures:
+        audit_history = [
+            {
+                **entry,
+                "source_record_digests": [
+                    _digest(parsed_by_record_id[record_id])
+                    for record_id in entry["source_prediction_record_ids"]
+                ],
+            }
+            for entry in audit_history
+        ]
     payload: dict[str, Any] = {
         "schema": SCHEMA,
         "competition": COMPETITION,
@@ -225,11 +412,13 @@ def build_live_public_nations_league(
         "model_release": release,
         "fixture_count": len(fixtures),
         "fixtures": fixtures,
-        "audit_history": [
-            {"fixture_id": fixture_id, "source_prediction_record_ids": audit[fixture_id]}
-            for fixture_id in sorted(audit)
-        ],
+        "audit_history": audit_history,
     }
+    payload["updated_at"] = (
+        max(fixture["updated_at"] for fixture in fixtures)
+        if fixtures
+        else _zero_view_updated_at(selected, release)
+    )
     payload["public_digest"] = _digest(payload)
     return payload
 
@@ -240,6 +429,8 @@ def validate_live_public_nations_league(value: Mapping[str, Any]) -> dict[str, A
     if not isinstance(value, Mapping):
         raise NationsLeagueLivePublicError("LIVE public payload is malformed")
     payload = deepcopy(dict(value))
+    if set(payload) != _PUBLIC_KEYS:
+        raise NationsLeagueLivePublicError("LIVE public fields are not allowlisted")
     digest = payload.pop("public_digest", None)
     if not isinstance(digest, str) or digest != _digest(payload):
         raise NationsLeagueLivePublicError("LIVE public digest mismatch")
@@ -251,8 +442,61 @@ def validate_live_public_nations_league(value: Mapping[str, Any]) -> dict[str, A
         or payload.get("no_bet") is not True
         or payload.get("betting_enabled") is not False
         or payload.get("ledger_mutation") is not False
+        or payload.get("experimental") is not True
     ):
         raise NationsLeagueLivePublicError("LIVE public safety contract is invalid")
-    if payload.get("fixture_count") != len(payload.get("fixtures", [])):
+    updated_at = _required_text(payload.get("updated_at"), "updated_at")
+    model_release = payload.get("model_release")
+    if not isinstance(model_release, Mapping) or set(model_release) != _RELEASE_KEYS:
+        raise NationsLeagueLivePublicError("LIVE model release is missing")
+    if (
+        model_release.get("model_family") != MODEL_FAMILY
+        or model_release.get("model_version") != MODEL_VERSION
+        or model_release.get("algorithm_digest") != FROZEN_ALGORITHM_DIGEST
+    ):
+        raise NationsLeagueLivePublicError("LIVE model release identity is invalid")
+    for field in ("release_id", "algorithm_digest", "training_data_digest", "trained_state_digest", "binding_digest"):
+        _digest_text(model_release.get(field), f"model_release.{field}")
+    fixtures = payload.get("fixtures")
+    fixture_count = payload.get("fixture_count")
+    if (
+        type(fixture_count) is not int
+        or fixture_count < 0
+        or fixture_count != len(fixtures if isinstance(fixtures, list) else [])
+    ):
         raise NationsLeagueLivePublicError("LIVE public fixture count is invalid")
+    if not isinstance(fixtures, list):
+        raise NationsLeagueLivePublicError("LIVE public fixture coverage is malformed")
+    audit_history = payload.get("audit_history")
+    if not isinstance(audit_history, list) or not audit_history:
+        raise NationsLeagueLivePublicError("LIVE audit history is missing")
+    if not fixtures:
+        return dict(value)
+    if fixture_count < 1:
+        raise NationsLeagueLivePublicError("LIVE public fixture coverage is incomplete")
+    identities: set[str] = set()
+    for fixture in fixtures:
+        if not isinstance(fixture, Mapping) or set(fixture) != _PUBLIC_FIXTURE_KEYS:
+            raise NationsLeagueLivePublicError("LIVE fixture fields are not allowlisted")
+        fixture_id = _required_text(fixture.get("fixture_id"), "fixture_id")
+        if fixture_id in identities:
+            raise NationsLeagueLivePublicError("LIVE fixture identity is duplicated")
+        identities.add(fixture_id)
+        if fixture.get("competition") != COMPETITION:
+            raise NationsLeagueLivePublicError("LIVE fixture competition is invalid")
+        if fixture.get("phase") not in {"initial", "refinement"}:
+            raise NationsLeagueLivePublicError("LIVE fixture phase is invalid")
+        _required_text(fixture.get("kickoff_utc"), "kickoff_utc")
+        _required_text(fixture.get("prediction_cutoff"), "prediction_cutoff")
+        _required_text(fixture.get("updated_at"), "updated_at")
+        _release_binding(fixture.get("model_release"))
+        _probabilities(fixture.get("probabilities"))
+        for identity in ("source_identity", "canonical_identity"):
+            item = fixture.get(identity)
+            if not isinstance(item, Mapping):
+                raise NationsLeagueLivePublicError(f"LIVE {identity} is missing")
+            _required_text(item.get("home_team"), f"{identity}.home_team")
+            _required_text(item.get("away_team"), f"{identity}.away_team")
+    if updated_at != max(fixture["updated_at"] for fixture in fixtures):
+        raise NationsLeagueLivePublicError("LIVE updated_at is not deterministic")
     return dict(value)

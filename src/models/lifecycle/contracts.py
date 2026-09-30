@@ -348,6 +348,121 @@ class ModelLifecycle:
         self._receipts: list[RetrainReceipt | ActivationReceipt] = []
         self._lock = threading.RLock()
 
+    @classmethod
+    def from_payload(cls, payload: Mapping[str, Any]) -> ModelLifecycle:
+        """Restore an already validated lifecycle without replaying transitions.
+
+        Persistence adapters use this for the committed registry.  The
+        serialized state is revalidated in full before it becomes readable;
+        no release is created, activated, or rewritten during restoration.
+        """
+
+        if not isinstance(payload, Mapping) or payload.get("schema") != "continuous-model-lifecycle-state-v1":
+            raise LifecycleError("unsupported lifecycle state schema")
+        release_rows = payload.get("releases")
+        pointer_rows = payload.get("active_pointers")
+        receipt_rows = payload.get("receipts")
+        if not all(isinstance(value, list) for value in (release_rows, pointer_rows, receipt_rows)):
+            raise LifecycleError("lifecycle state collections are missing")
+        lifecycle = cls()
+        releases: dict[str, ModelRelease] = {}
+        for raw in release_rows:
+            if not isinstance(raw, Mapping):
+                raise LifecycleError("lifecycle release is malformed")
+            snapshot_raw = raw.get("training_snapshot")
+            if not isinstance(snapshot_raw, Mapping):
+                raise LifecycleError("lifecycle training snapshot is missing")
+            snapshot = TrainingSnapshot(
+                model_family=_nonempty(snapshot_raw.get("model_family"), "model_family"),
+                sport=_nonempty(snapshot_raw.get("sport"), "sport"),
+                scope=_nonempty(snapshot_raw.get("scope"), "scope"),
+                algorithm_version=_nonempty(snapshot_raw.get("algorithm_version"), "algorithm_version"),
+                algorithm_digest=_digest(snapshot_raw.get("algorithm_digest"), "algorithm_digest"),
+                training_data_digest=_digest(snapshot_raw.get("training_data_digest"), "training_data_digest"),
+                training_cutoff=_nonempty(snapshot_raw.get("training_cutoff"), "training_cutoff"),
+                training_row_count=snapshot_raw.get("training_row_count"),
+                result_safe_watermark=_nonempty(snapshot_raw.get("result_safe_watermark"), "result_safe_watermark"),
+                feature_schema_digest=_digest(snapshot_raw.get("feature_schema_digest"), "feature_schema_digest"),
+                trained_state_digest=_digest(snapshot_raw.get("trained_state_digest"), "trained_state_digest"),
+                source_release_sha=_nonempty(snapshot_raw.get("source_release_sha"), "source_release_sha"),
+                captured_at=_nonempty(snapshot_raw.get("captured_at"), "captured_at"),
+            )
+            if snapshot_raw.get("snapshot_digest") != snapshot.snapshot_digest:
+                raise LifecycleError("lifecycle training snapshot digest mismatch")
+            candidate = ModelRelease.create(
+                snapshot,
+                parameter_digest=_digest(raw.get("parameter_digest"), "parameter_digest"),
+                parent_release_id=raw.get("parent_release_id"),
+            )
+            if candidate.release_id != raw.get("release_id"):
+                raise LifecycleError("lifecycle release identity mismatch")
+            release = replace(
+                candidate,
+                status=raw.get("status"),
+                validation_digest=raw.get("validation_digest"),
+                rejection_reason=raw.get("rejection_reason"),
+            )
+            releases[release.release_id] = release
+        pointers: dict[str, ActiveModelPointer] = {}
+        for raw in pointer_rows:
+            if not isinstance(raw, Mapping):
+                raise LifecycleError("lifecycle pointer is malformed")
+            pointer = ActiveModelPointer(
+                model_family=_nonempty(raw.get("model_family"), "pointer.model_family"),
+                release_id=_digest(raw.get("release_id"), "pointer.release_id"),
+                previous_release_id=(
+                    _digest(raw.get("previous_release_id"), "pointer.previous_release_id")
+                    if raw.get("previous_release_id") is not None
+                    else None
+                ),
+                activated_at=_nonempty(raw.get("activated_at"), "pointer.activated_at"),
+                revision=raw.get("revision"),
+            )
+            if not isinstance(pointer.revision, int) or isinstance(pointer.revision, bool) or pointer.revision < 1:
+                raise LifecycleError("pointer revision is invalid")
+            if pointer.model_family in pointers:
+                raise LifecycleError("duplicate lifecycle pointer")
+            pointers[pointer.model_family] = pointer
+        receipts: list[RetrainReceipt | ActivationReceipt] = []
+        for raw in receipt_rows:
+            if not isinstance(raw, Mapping):
+                raise LifecycleError("lifecycle receipt is malformed")
+            if "outcome" in raw:
+                receipts.append(
+                    RetrainReceipt(
+                        receipt_id=_digest(raw.get("receipt_id"), "receipt_id"),
+                        model_family=_nonempty(raw.get("model_family"), "receipt.model_family"),
+                        release_id=_digest(raw.get("release_id"), "receipt.release_id"),
+                        outcome=_nonempty(raw.get("outcome"), "receipt.outcome"),
+                        training_snapshot_digest=_digest(raw.get("training_snapshot_digest"), "training_snapshot_digest"),
+                        created_at=_nonempty(raw.get("created_at"), "receipt.created_at"),
+                        reason=raw.get("reason"),
+                    )
+                )
+            elif "action" in raw:
+                receipts.append(
+                    ActivationReceipt(
+                        receipt_id=_digest(raw.get("receipt_id"), "receipt_id"),
+                        model_family=_nonempty(raw.get("model_family"), "receipt.model_family"),
+                        release_id=_digest(raw.get("release_id"), "receipt.release_id"),
+                        previous_release_id=(
+                            _digest(raw.get("previous_release_id"), "receipt.previous_release_id")
+                            if raw.get("previous_release_id") is not None
+                            else None
+                        ),
+                        action=_nonempty(raw.get("action"), "receipt.action"),
+                        pointer_digest=_digest(raw.get("pointer_digest"), "pointer_digest"),
+                        activated_at=_nonempty(raw.get("activated_at"), "receipt.activated_at"),
+                    )
+                )
+            else:
+                raise LifecycleError("unknown lifecycle receipt")
+        lifecycle._releases = releases
+        lifecycle._pointers = pointers
+        lifecycle._receipts = receipts
+        lifecycle._validate_active_invariants()
+        return lifecycle
+
     def _validate_active_invariants(
         self,
         *,

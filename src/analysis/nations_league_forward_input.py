@@ -129,6 +129,7 @@ def build_input_state(
     base_timeline=None,
     result_extension=None,
     completeness_artifact=None,
+    future_manifest=None,
     include_identity_bindings=True,
 ):
     """Construct exact causal state; report readiness without default team ratings.
@@ -136,7 +137,8 @@ def build_input_state(
     READY is derived only from the sealed #235 completeness artifact and its
     sealed extension/base bindings.  Caller-supplied watermark fields alone
     can never produce READY.  Missing evidence requires live-result refresh;
-    an older valid proof is STALE_INPUT.
+    an older valid proof may use an explicitly sealed schedule carry-forward
+    proof; absent that proof, it remains STALE_INPUT.
     """
     if model_digest() != FROZEN_DIGEST:
         raise ValueError("frozen model digest mismatch")
@@ -169,7 +171,11 @@ def build_input_state(
         for value in (base_timeline, result_extension, completeness_artifact)
     ):
         base_rows = training_records_from_timeline(base_timeline)
-        expected_completeness = completeness(result_extension, cutoff.isoformat())
+        expected_completeness = completeness(
+            result_extension,
+            cutoff.isoformat(),
+            schedule_manifest=future_manifest,
+        )
         if expected_completeness != completeness_artifact:
             raise ValueError("completeness artifact mismatch")
         expected_source_rows = deepcopy(base_rows + result_extension["result_rows"])
@@ -288,6 +294,8 @@ def build_input_state(
         snapshot["identity_binding_digest"] = _identity_bindings_digest(
             identity_bindings
         )
+    if future_manifest is not None:
+        snapshot["future_manifest"] = deepcopy(future_manifest)
     snapshot["input_snapshot_digest"] = sha256_json(snapshot)
     return snapshot
 
@@ -307,6 +315,7 @@ def predict_from_input_state(snapshot, fixture_id, *, phase):
         base_timeline=snapshot.get("base_timeline"),
         result_extension=snapshot.get("result_extension"),
         completeness_artifact=snapshot.get("completeness"),
+        future_manifest=snapshot.get("future_manifest"),
         include_identity_bindings=not legacy_snapshot,
     )
     if rebuilt != snapshot:

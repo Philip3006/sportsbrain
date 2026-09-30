@@ -123,7 +123,17 @@ def _validated_nl(value: object, expected_digest: str, now: datetime) -> dict:
         public = validate_public_nations_league(value, now=now)
     except NationsLeaguePublicError as exc:
         raise RepublishBlocked from exc
-    if (
+    if public.get("schema") == "nations-league-live-public-v1":
+        if (
+            public.get("status") != "LIVE"
+            or public.get("publication_enabled") is not True
+            or public.get("no_bet") is not True
+            or public.get("betting_enabled") is not False
+            or public.get("ledger_mutation") is not False
+            or public.get("public_digest") != expected_digest
+        ):
+            raise RepublishBlocked
+    elif (
         public.get("schema") != _NL_SCHEMA
         or public.get("lifecycle") != "SHADOW_ONLY"
         or public.get("evidence_status") != "WEAK_EVIDENCE_SHADOW_ONLY"

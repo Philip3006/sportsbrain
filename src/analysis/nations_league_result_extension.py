@@ -1,5 +1,6 @@
 """Offline post-base NL evidence and Elo continuation; never predictions."""
 
+from collections.abc import Mapping
 from copy import deepcopy
 from datetime import timedelta
 
@@ -37,6 +38,74 @@ def check_seal(payload, field):
         {k: v for k, v in payload.items() if k != field}
     ):
         raise ValueError(f"{field} mismatch")
+
+
+def _schedule_carry_forward(extension, cutoff, schedule_manifest):
+    """Return a sealed schedule proof for an older, otherwise complete extension.
+
+    The manifest is the only allowed source for proving that no result could
+    have become safe between the extension watermark and ``cutoff``.  It is
+    deliberately strict: an incomplete or ambiguous schedule cannot turn an
+    older result observation into current evidence.
+    """
+
+    if not isinstance(schedule_manifest, Mapping):
+        raise TypeError("schedule coverage is unavailable")
+    if schedule_manifest.get("schema") != "nations-league-future-fixture-manifest-v1":
+        raise ValueError("unsupported schedule manifest")
+    if schedule_manifest.get("competition") != COMPETITION:
+        raise ValueError("schedule competition mismatch")
+    expected_digest = schedule_manifest.get("manifest_digest")
+    if expected_digest != sha256_json(
+        {key: value for key, value in schedule_manifest.items() if key != "manifest_digest"}
+    ):
+        raise ValueError("schedule manifest digest mismatch")
+    fixtures = schedule_manifest.get("fixtures")
+    if not isinstance(fixtures, list) or not fixtures:
+        raise ValueError("schedule coverage is unavailable")
+    watermark = utc(extension["results_verified_through"])
+    identities = set()
+    future = []
+    for raw in fixtures:
+        if not isinstance(raw, Mapping):
+            raise TypeError("schedule fixture is malformed")
+        fixture_id = raw.get("fixture_id")
+        if not isinstance(fixture_id, str) or not fixture_id.strip():
+            raise ValueError("schedule fixture identity is missing")
+        kickoff = utc(raw.get("kickoff_utc"))
+        home = raw.get("home_team")
+        away = raw.get("away_team")
+        if (
+            not isinstance(home, str)
+            or not isinstance(away, str)
+            or not home.strip()
+            or not away.strip()
+            or canonical_team(home) == canonical_team(away)
+        ):
+            raise ValueError("ambiguous schedule fixture identity")
+        identity = (kickoff.isoformat(), canonical_team(home), canonical_team(away))
+        if fixture_id in identities or identity in identities:
+            raise ValueError("duplicate schedule fixture identity")
+        identities.add(fixture_id)
+        identities.add(identity)
+        if raw.get("status") != "VERIFIED":
+            if kickoff > watermark:
+                raise ValueError("schedule coverage is unresolved")
+            continue
+        source_digest = raw.get("source_digest")
+        if not isinstance(source_digest, str) or len(source_digest) != 64 or any(
+            char not in "0123456789abcdef" for char in source_digest
+        ):
+            raise ValueError("schedule source digest is missing")
+        provenance = raw.get("source_provenance_records")
+        if not isinstance(provenance, list) or not provenance:
+            raise ValueError("schedule source provenance is missing")
+        if kickoff > watermark:
+            future.append(kickoff + timedelta(hours=6))
+    if not future:
+        raise ValueError("schedule coverage is unavailable")
+    next_possible = min(future)
+    return next_possible
 
 
 def build_extension(base, inventory, *, generated_at):
@@ -181,7 +250,7 @@ def build_extension(base, inventory, *, generated_at):
     )
 
 
-def completeness(extension, prediction_cutoff):
+def completeness(extension, prediction_cutoff, *, schedule_manifest=None):
     check_seal(extension, "extension_digest")
     cutoff = utc(prediction_cutoff)
     if (
@@ -235,17 +304,40 @@ def completeness(extension, prediction_cutoff):
         if extension["ambiguous_team_identities"]
         else "UNAMBIGUOUS"
     )
+    coverage_mode = None
+    next_possible_result_safe_at = None
+    schedule_manifest_digest = None
+    if (
+        identity_status == "UNAMBIGUOUS"
+        and not extension["unresolved_rows"]
+        and extension["interval_complete"]
+        and utc(extension["results_verified_through"]) != cutoff
+        and schedule_manifest is not None
+    ):
+        try:
+            next_possible = _schedule_carry_forward(
+                extension, cutoff, schedule_manifest
+            )
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError("schedule carry-forward proof is invalid") from exc
+        coverage_mode = "SCHEDULE_CAUSAL_CARRY_FORWARD"
+        next_possible_result_safe_at = next_possible.isoformat()
+        schedule_manifest_digest = schedule_manifest["manifest_digest"]
+        if cutoff > next_possible:
+            coverage_mode = "DIRECT_OFFICIAL_OBSERVATION_REQUIRED"
     status = (
         "AMBIGUOUS_IDENTITY"
         if identity_status != "UNAMBIGUOUS"
         else "LIVE_RESULT_REFRESH_REQUIRED"
         if extension["unresolved_rows"] or not extension["interval_complete"]
-        else "STALE_INPUT"
-        if utc(extension["results_verified_through"]) != cutoff
         else "READY"
+        if utc(extension["results_verified_through"]) == cutoff
+        or coverage_mode == "SCHEDULE_CAUSAL_CARRY_FORWARD"
+        else "LIVE_RESULT_REFRESH_REQUIRED"
+        if coverage_mode == "DIRECT_OFFICIAL_OBSERVATION_REQUIRED"
+        else "STALE_INPUT"
     )
-    return seal(
-        {
+    proof = {
             "schema": "nations-league-v1-1-result-completeness-v1",
             "model_version": MODEL_VERSION,
             "model_digest": MODEL_DIGEST,
@@ -264,13 +356,22 @@ def completeness(extension, prediction_cutoff):
             "status": status,
             "no_bet": True,
             "publication_enabled": False,
-        },
-        "completeness_digest",
+    }
+    if schedule_manifest is not None:
+        proof.update(
+            {
+                "coverage_mode": coverage_mode or "DIRECT_OFFICIAL_OBSERVATION",
+                "next_possible_result_safe_at": next_possible_result_safe_at,
+                "schedule_manifest_digest": schedule_manifest_digest,
+            }
+        )
+    return seal(proof, "completeness_digest")
+
+
+def elo_continuation(base, extension, prediction_cutoff, *, schedule_manifest=None):
+    proof = completeness(
+        extension, prediction_cutoff, schedule_manifest=schedule_manifest
     )
-
-
-def elo_continuation(base, extension, prediction_cutoff):
-    proof = completeness(extension, prediction_cutoff)
     if (
         proof["unresolved_count"]
         or not extension["interval_complete"]
