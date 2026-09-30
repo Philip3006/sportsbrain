@@ -145,6 +145,20 @@ def test_noncausal_proof():
         state(proof=proof)
 
 
+def test_frozen_digest_mismatch(monkeypatch):
+    monkeypatch.setattr(
+        "src.analysis.nations_league_forward_input.model_digest", lambda: "f" * 64
+    )
+    with pytest.raises(ValueError, match="frozen model digest"):
+        state()
+
+
+def test_equivalent_utc_input_same_digest():
+    _, history, _ = inputs()
+    history[0]["result_safe_available_at"] = "2026-10-01T19:59:59+00:00"
+    assert state(history=history) == state()
+
+
 def test_repository_timeline():
     path = (
         Path(__file__).resolve().parents[2]
