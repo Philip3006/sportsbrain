@@ -82,6 +82,7 @@ def test_execute_cycle_appends_publicly_materializable_record_and_rerun_is_idemp
         inputs=[ROOT / "docs/data/signals.json"],
         store=store,
         output=output,
+        as_of="2026-10-01T17:15:00Z",
     )
     product = json.loads(output.read_text(encoding="utf-8"))["nations_league"]
     assert product["fixture_count"] == 8

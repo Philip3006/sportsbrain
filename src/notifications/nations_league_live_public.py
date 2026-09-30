@@ -13,6 +13,7 @@ import json
 import math
 from collections.abc import Iterable, Mapping
 from copy import deepcopy
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from src.analysis.nations_league_model_lifecycle import (
@@ -75,6 +76,22 @@ _RELEASE_KEYS = frozenset(
 
 class NationsLeagueLivePublicError(ValueError):
     """Source evidence is not eligible for an immutable LIVE projection."""
+
+
+def _utc(value: object, field: str) -> datetime:
+    if not isinstance(value, str) or not value.strip():
+        raise NationsLeagueLivePublicError(f"{field} is required")
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise NationsLeagueLivePublicError(f"{field} is malformed") from exc
+    if parsed.tzinfo is None or parsed.utcoffset() != timedelta(0):
+        raise NationsLeagueLivePublicError(f"{field} must be explicit UTC")
+    return parsed.astimezone(timezone.utc)
+
+
+def _stamp(value: datetime) -> str:
+    return value.isoformat().replace("+00:00", "Z")
 
 
 def _canonical_json(value: Any) -> bytes:
@@ -274,6 +291,7 @@ def build_live_public_nations_league(
     *,
     active_release: ModelRelease,
     evidence_binding: Mapping[str, Any],
+    as_of: str,
 ) -> dict[str, Any]:
     """Project immutable source records as a deterministic, non-betting LIVE view.
 
@@ -283,6 +301,7 @@ def build_live_public_nations_league(
     """
 
     release = _validate_release(active_release)
+    cutoff = _utc(as_of, "as_of")
     bindings = _binding_index(evidence_binding)
     parsed: list[dict[str, Any]] = []
     seen_records: set[str] = set()
@@ -342,7 +361,11 @@ def build_live_public_nations_league(
             selected[fixture_id] = fixture
         elif current["phase"] == phase:
             raise NationsLeagueLivePublicError("duplicate source lifecycle record")
-    fixtures = [selected[key] for key in sorted(selected)]
+    fixtures = [
+        selected[key]
+        for key in sorted(selected)
+        if _utc(selected[key]["kickoff_utc"], "kickoff_utc") > cutoff
+    ]
     payload: dict[str, Any] = {
         "schema": SCHEMA,
         "competition": COMPETITION,
@@ -360,9 +383,11 @@ def build_live_public_nations_league(
             for fixture_id in sorted(audit)
         ],
     }
-    payload["updated_at"] = max(
-        fixture["updated_at"] for fixture in fixtures
-    ) if fixtures else release["training_cutoff"]
+    payload["updated_at"] = (
+        max(fixture["updated_at"] for fixture in fixtures)
+        if fixtures
+        else _stamp(cutoff)
+    )
     payload["public_digest"] = _digest(payload)
     return payload
 
@@ -401,10 +426,22 @@ def validate_live_public_nations_league(value: Mapping[str, Any]) -> dict[str, A
         raise NationsLeagueLivePublicError("LIVE model release identity is invalid")
     for field in ("release_id", "algorithm_digest", "training_data_digest", "trained_state_digest", "binding_digest"):
         _digest_text(model_release.get(field), f"model_release.{field}")
-    if payload.get("fixture_count") != len(payload.get("fixtures", [])):
-        raise NationsLeagueLivePublicError("LIVE public fixture count is invalid")
     fixtures = payload.get("fixtures")
-    if not isinstance(fixtures, list) or not fixtures:
+    fixture_count = payload.get("fixture_count")
+    if (
+        type(fixture_count) is not int
+        or fixture_count < 0
+        or fixture_count != len(fixtures if isinstance(fixtures, list) else [])
+    ):
+        raise NationsLeagueLivePublicError("LIVE public fixture count is invalid")
+    if not isinstance(fixtures, list):
+        raise NationsLeagueLivePublicError("LIVE public fixture coverage is malformed")
+    audit_history = payload.get("audit_history")
+    if not isinstance(audit_history, list) or not audit_history:
+        raise NationsLeagueLivePublicError("LIVE audit history is missing")
+    if not fixtures:
+        return dict(value)
+    if fixture_count < 1:
         raise NationsLeagueLivePublicError("LIVE public fixture coverage is incomplete")
     identities: set[str] = set()
     for fixture in fixtures:

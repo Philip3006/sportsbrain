@@ -129,7 +129,11 @@ def build_fresh_input_state(
     ):
         raise NationsLeagueLiveRuntimeError("future fixture manifest digest mismatch")
     try:
-        proof = completeness(result_extension, _stamp(cutoff))
+        proof = completeness(
+            result_extension,
+            _stamp(cutoff),
+            schedule_manifest=manifest,
+        )
     except (KeyError, TypeError, ValueError) as exc:
         raise NationsLeagueLiveRuntimeError("official result completeness is invalid") from exc
     if proof.get("status") != "READY":
@@ -172,6 +176,7 @@ def build_fresh_input_state(
             base_timeline=base_timeline,
             result_extension=result_extension,
             completeness_artifact=proof,
+            future_manifest=manifest,
         )
     except (KeyError, TypeError, ValueError) as exc:
         raise NationsLeagueLiveRuntimeError("fresh causal input-state is invalid") from exc
@@ -225,6 +230,22 @@ def build_live_prediction(
     shadow = predict_from_input_state(input_state, fixture_id, phase=phase)
     probabilities = _probabilities(shadow["probabilities"])
     fixture = next(row for row in input_state["fixtures"] if row["fixture_id"] == fixture_id)
+    bindings = input_state.get("identity_bindings")
+    if not isinstance(bindings, Mapping):
+        raise NationsLeagueLiveRuntimeError("sealed identity bindings are required")
+    home_binding = bindings.get(fixture["home_team"])
+    away_binding = bindings.get(fixture["away_team"])
+    if (
+        not isinstance(home_binding, Mapping)
+        or not isinstance(away_binding, Mapping)
+        or home_binding.get("resolution") not in {"IDENTITY", "EXPLICIT_EXISTING_ALIAS"}
+        or away_binding.get("resolution") not in {"IDENTITY", "EXPLICIT_EXISTING_ALIAS"}
+    ):
+        raise NationsLeagueLiveRuntimeError("sealed identity bindings are not READY")
+    canonical_identity = {
+        "home_team": home_binding["canonical_team"],
+        "away_team": away_binding["canonical_team"],
+    }
     return {
         "record_id": _digest(
             {
@@ -245,10 +266,7 @@ def build_live_prediction(
             "home_team": fixture["home_team"],
             "away_team": fixture["away_team"],
         },
-        "canonical_identity": {
-            "home_team": fixture["home_team"],
-            "away_team": fixture["away_team"],
-        },
+        "canonical_identity": canonical_identity,
         "kickoff_utc": fixture["kickoff_utc"],
         "phase": phase,
         "prediction_timestamp": _stamp(captured),

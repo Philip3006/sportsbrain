@@ -167,6 +167,7 @@ def _require_input_state(snapshot: Mapping[str, Any]) -> None:
         base_timeline=snapshot.get("base_timeline"),
         result_extension=snapshot.get("result_extension"),
         completeness_artifact=snapshot.get("completeness"),
+        future_manifest=snapshot.get("future_manifest"),
         include_identity_bindings="identity_bindings" in snapshot,
     )
     if rebuilt != snapshot:

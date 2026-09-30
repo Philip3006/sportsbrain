@@ -50,6 +50,7 @@ def materialize(
     inputs: list[Path],
     store: Path | None,
     output: Path,
+    as_of: str,
 ) -> dict:
     release = active_release_from_registry(_json(registry))
     records = _campaign_records(campaign)
@@ -59,6 +60,7 @@ def materialize(
         records,
         active_release=release,
         evidence_binding=_json(binding),
+        as_of=as_of,
     )
     snapshots = [_json(path) for path in inputs]
     if not snapshots:
@@ -79,6 +81,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--store", type=Path)
     parser.add_argument("--input", dest="inputs", action="append", type=Path)
+    parser.add_argument("--as-of", required=True)
     args = parser.parse_args(argv)
     try:
         bundle = materialize(
@@ -88,6 +91,7 @@ def main(argv: list[str] | None = None) -> int:
             inputs=args.inputs or [],
             store=args.store,
             output=args.output,
+            as_of=args.as_of,
         )
     except (OSError, ValueError, KeyError, TypeError) as exc:
         print(f"Nations League LIVE materialization blocked: {exc}", file=sys.stderr)

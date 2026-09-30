@@ -12,6 +12,7 @@ from src.analysis.nations_league_live_runtime import (
     build_live_prediction,
     due_state,
     load_active_release,
+    refresh_and_activate,
     refresh_result_state,
     run_live_cycle,
 )
@@ -132,7 +133,10 @@ def test_live_execute_uses_the_frozen_model_adapter_for_a_matching_input_cutoff(
         "home_team": record["home_team"],
         "away_team": record["away_team"],
     }
-    assert record["canonical_identity"] == record["source_identity"]
+    assert record["canonical_identity"] == {
+        "home_team": state["identity_bindings"][record["home_team"]]["canonical_team"],
+        "away_team": state["identity_bindings"][record["away_team"]]["canonical_team"],
+    }
 
 
 def test_result_refresh_is_noop_or_requires_new_release_without_guessing():
@@ -181,19 +185,65 @@ def test_fresh_input_state_uses_exact_cutoff_and_all_verified_future_targets():
     assert set(state["team_readiness"].values()) == {"READY"}
 
 
-def test_fresh_input_state_rejects_stale_official_completeness():
+def test_schedule_carry_forward_keeps_october_one_cutoffs_ready_and_noop():
     manifest = _json("results/audits/nations_league_forward_fixture_manifest.json")
     base = _json("results/research/nations_league_fixture_timeline_v1.json")
     extension = _json(
         "results/research/nations_league_v1_1_result_extension_20260930T200124Z.json"
     )
-    with pytest.raises(NationsLeagueLiveRuntimeError, match="STALE_INPUT"):
-        build_fresh_input_state(
-            manifest,
-            base,
-            extension,
-            prediction_cutoff="2026-10-01T17:15:00Z",
+    registry_path = ROOT / "results/audits/continuous_model_lifecycle_registry.json"
+    registry = _json("results/audits/continuous_model_lifecycle_registry.json")
+    for cutoff in ("2026-10-01T14:30:00Z", "2026-10-01T17:15:00Z"):
+        state = build_fresh_input_state(
+            manifest, base, extension, prediction_cutoff=cutoff
         )
+        assert state["completeness"]["status"] == "READY"
+        updated, active, decision = refresh_and_activate(
+            registry,
+            state,
+            source_release_sha="267a5df80ee326cfe41ee6ddc27d3e8c547ab222",
+            activated_at=cutoff,
+        )
+        assert decision["status"] == "NO_OP"
+        assert updated == registry
+        assert active.release_id == load_active_release(registry_path).release_id
+    with pytest.raises(NationsLeagueLiveRuntimeError, match="LIVE_RESULT_REFRESH_REQUIRED"):
+        build_fresh_input_state(
+            manifest, base, extension, prediction_cutoff="2026-10-01T22:15:00Z"
+        )
+
+
+def test_live_prediction_uses_sealed_source_and_canonical_identity_for_ireland():
+    manifest = _json("results/audits/nations_league_forward_fixture_manifest.json")
+    base = _json("results/research/nations_league_fixture_timeline_v1.json")
+    extension = _json(
+        "results/research/nations_league_v1_1_result_extension_20260930T200124Z.json"
+    )
+    state = build_fresh_input_state(
+        manifest, base, extension, prediction_cutoff="2026-10-01T17:15:00Z"
+    )
+    fixture = next(
+        row
+        for row in state["fixtures"]
+        if row["home_team"] == "Republic of Ireland" and row["away_team"] == "Austria"
+    )
+    record = build_live_prediction(
+        state,
+        fixture["fixture_id"],
+        phase="refinement",
+        active_release=load_active_release(
+            ROOT / "results/audits/continuous_model_lifecycle_registry.json"
+        ),
+        captured_at="2026-10-01T17:15:00Z",
+    )
+    assert record["source_identity"] == {
+        "home_team": "Republic of Ireland",
+        "away_team": "Austria",
+    }
+    assert record["canonical_identity"] == {
+        "home_team": "Ireland",
+        "away_team": "Austria",
+    }
 
 
 def test_append_live_store_rejects_substitution_and_is_idempotent(tmp_path):

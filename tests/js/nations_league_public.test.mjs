@@ -172,6 +172,19 @@ test('LIVE Nations League projection passes the serializer boundary without bett
   assert.equal(await appNlHelpers().valid(live), true);
 });
 
+test('expired LIVE projection accepts zero current fixtures and PWA hides the panel', async () => {
+  const live = JSON.parse(readFileSync(resolve(__dir, '../../docs/data/signals.json'), 'utf8')).nations_league;
+  const expired = structuredClone(live);
+  expired.fixtures = [];
+  expired.fixture_count = 0;
+  expired.updated_at = new Date(NOW).toISOString();
+  bindPublicDigest(expired);
+  assert.equal(await validatePublicNationsLeagueDigest(expired), true);
+  assert.deepEqual(serializePublicProduct({ nations_league: expired }).nations_league, expired);
+  assert.equal(await appNlHelpers().valid(expired), true);
+  assert.equal(renderLive(expired).hidden, true);
+});
+
 test('PWA renders future LIVE fixtures only and never exposes a bet action', () => {
   const live = JSON.parse(readFileSync(resolve(__dir, '../../docs/data/signals.json'), 'utf8')).nations_league;
   const payload = structuredClone(live);

@@ -44,7 +44,8 @@ def _binding() -> dict:
 
 def test_seven_immutable_real_records_are_live_serializable_without_sample_gate():
     output = build_live_public_nations_league(
-        _records(), active_release=_active_release(), evidence_binding=_binding()
+        _records(), active_release=_active_release(), evidence_binding=_binding(),
+        as_of="2026-09-30T20:01:24Z"
     )
     assert output["status"] == "LIVE"
     assert output["publication_enabled"] is True
@@ -63,7 +64,8 @@ def test_seven_immutable_real_records_are_live_serializable_without_sample_gate(
 
 def test_source_and_canonical_team_identity_are_both_preserved_for_alias_binding():
     output = build_live_public_nations_league(
-        _records(), active_release=_active_release(), evidence_binding=_binding()
+        _records(), active_release=_active_release(), evidence_binding=_binding(),
+        as_of="2026-09-30T20:01:24Z"
     )
     ireland = next(
         item
@@ -71,6 +73,19 @@ def test_source_and_canonical_team_identity_are_both_preserved_for_alias_binding
         if item["source_identity"]["home_team"] == "Republic of Ireland"
     )
     assert ireland["canonical_identity"]["home_team"] == "Ireland"
+
+
+def test_expired_live_view_is_valid_zero_fixture_envelope_with_audit_history():
+    output = build_live_public_nations_league(
+        _records(),
+        active_release=_active_release(),
+        evidence_binding=_binding(),
+        as_of="2027-01-01T00:00:00Z",
+    )
+    assert output["fixture_count"] == 0
+    assert output["fixtures"] == []
+    assert len(output["audit_history"]) == 7
+    assert validate_live_public_nations_league(output) == output
 
 
 def test_refinement_replaces_initial_only_in_public_view_and_keeps_audit_history():
@@ -96,7 +111,8 @@ def test_refinement_replaces_initial_only_in_public_view_and_keeps_audit_history
         json.dumps(body, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
     ).hexdigest()
     output = build_live_public_nations_league(
-        [*records, refined], active_release=_active_release(), evidence_binding=binding
+        [*records, refined], active_release=_active_release(), evidence_binding=binding,
+        as_of="2026-09-30T20:01:24Z"
     )
     fixture = next(item for item in output["fixtures"] if item["fixture_id"] == refined["fixture_id"])
     assert fixture["phase"] == "refinement"
@@ -109,7 +125,8 @@ def test_state_or_source_substitution_fails_closed():
     binding["source_records"][0]["trained_state_digest"] = "b" * 64
     with pytest.raises(NationsLeagueLivePublicError, match="binding digest"):
         build_live_public_nations_league(
-            _records(), active_release=_active_release(), evidence_binding=binding
+            _records(), active_release=_active_release(), evidence_binding=binding,
+            as_of="2026-09-30T20:01:24Z"
         )
 
 
@@ -158,7 +175,8 @@ def test_future_live_refinement_carries_its_own_release_and_keeps_initial_audit(
         ).encode()
     ).hexdigest()
     output = build_live_public_nations_league(
-        [*_records(), refinement], active_release=release, evidence_binding=_binding()
+        [*_records(), refinement], active_release=release, evidence_binding=_binding(),
+        as_of="2026-09-30T20:01:24Z"
     )
     fixture = next(row for row in output["fixtures"] if row["fixture_id"] == fixture_id)
     assert fixture["phase"] == "refinement"

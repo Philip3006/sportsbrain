@@ -120,9 +120,11 @@ async function _validNationsLeaguePublicPayload(value, nowMs = Date.now()) {
         !/^[0-9a-f]{64}$/.test(value.model_release.training_data_digest || '') ||
         !/^[0-9a-f]{64}$/.test(value.model_release.trained_state_digest || '') ||
         !/^[0-9a-f]{64}$/.test(value.model_release.binding_digest || '') ||
-        !Number.isSafeInteger(value.fixture_count) || value.fixture_count < 1 ||
+        !Number.isSafeInteger(value.fixture_count) || value.fixture_count < 0 ||
         !Array.isArray(value.fixtures) || value.fixtures.length !== value.fixture_count ||
         !Number.isFinite(Date.parse(value.updated_at || ''))) return false;
+    if (!Array.isArray(value.audit_history) || value.audit_history.length === 0) return false;
+    if (value.fixture_count === 0) return true;
     const validProbabilities = (probabilities) => exactKeys(probabilities, ['home', 'draw', 'away']) &&
       ['home', 'draw', 'away'].every((key) => Number.isFinite(probabilities[key]) &&
         probabilities[key] >= 0 && probabilities[key] <= 1) &&

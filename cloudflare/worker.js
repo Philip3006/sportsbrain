@@ -657,11 +657,15 @@ function _validatePublicNationsLeague(value) {
       fail('unsafe LIVE lifecycle');
     }
     if (!/^[0-9a-f]{64}$/.test(value.public_digest || '') ||
-        !Number.isSafeInteger(value.fixture_count) || value.fixture_count < 1 ||
+        !Number.isSafeInteger(value.fixture_count) || value.fixture_count < 0 ||
         !Array.isArray(value.fixtures) || value.fixtures.length !== value.fixture_count ||
         typeof value.updated_at !== 'string' || !Number.isFinite(Date.parse(value.updated_at))) {
       fail('malformed LIVE provenance');
     }
+    if (!Array.isArray(value.audit_history) || value.audit_history.length === 0) {
+      fail('LIVE audit history is missing');
+    }
+    if (value.fixture_count === 0) return;
     const probabilities = (item) => item && ['home', 'draw', 'away'].every((key) =>
       typeof item[key] === 'number' && Number.isFinite(item[key]) && item[key] >= 0 && item[key] <= 1) &&
       Math.abs(item.home + item.draw + item.away - 1) <= 1e-9;
