@@ -17,7 +17,9 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from src.analysis.nations_league_model_lifecycle import active_release_from_registry
-from src.notifications.nations_league_live_public import build_live_public_nations_league
+from src.notifications.nations_league_live_public import (
+    build_live_public_nations_league,
+)
 from src.notifications.public_serializer import (
     assert_no_private_fields,
     serialize_public_product,
