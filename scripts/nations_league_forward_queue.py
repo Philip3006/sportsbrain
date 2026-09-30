@@ -35,8 +35,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--execute", action="store_true", help="execute locally and append JSONL"
     )
-    parser.add_argument("--training", type=Path)
-    parser.add_argument("--input-provenance", type=Path)
+    parser.add_argument("--input-state", type=Path)
     return parser
 
 
@@ -57,13 +56,12 @@ def main() -> int:
         print(json.dumps(plan, ensure_ascii=False, sort_keys=True, indent=2))
         if not args.execute:
             return 0
-        if args.training is None or args.input_provenance is None:
-            raise QueueError("--execute requires --training and --input-provenance")
+        if args.input_state is None:
+            raise QueueError("--execute requires --input-state")
         results = execute_plan(
             manifest,
             plan,
-            training_records=_read_json(args.training),
-            input_provenance=_read_json(args.input_provenance),
+            input_state=_read_json(args.input_state),
         )
         print(json.dumps({"execution": results}, ensure_ascii=False, sort_keys=True))
         return 0

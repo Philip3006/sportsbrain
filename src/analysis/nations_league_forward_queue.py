@@ -16,8 +16,11 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
+from src.analysis.nations_league_forward_input import (
+    build_input_state,
+    predict_from_input_state,
+)
 from src.analysis.nations_league_v1 import (
-    build_forward_shadow_prediction,
     deterministic_record_id,
     model_digest,
     sha256_json,
@@ -66,7 +69,8 @@ def _parse_utc(value: str, field: str) -> datetime:
 
 
 def _iso(value: datetime) -> str:
-    return value.astimezone(UTC).isoformat().replace("+00:00", "Z")
+    # Match #229's canonical ``datetime.isoformat()`` UTC representation.
+    return value.astimezone(UTC).isoformat()
 
 
 def _digest(value: Any, field: str) -> None:
@@ -333,20 +337,17 @@ def execute_plan(
     manifest: Any,
     plan: dict[str, Any],
     *,
-    training_records: list[dict[str, Any]],
-    input_provenance: dict[str, Any],
+    input_state: dict[str, Any],
 ) -> list[dict[str, Any]]:
-    """Execute only due entries locally through the frozen offline runner."""
+    """Execute only due entries through the #229 READY-gated input state."""
     rows = validate_manifest(manifest)
     if plan.get("model_digest") != model_digest():
         raise QueueError("plan model digest is not frozen")
-    missing = [key for key in REQUIRED_INPUT_PROVENANCE if key not in input_provenance]
-    if missing:
-        raise QueueError(f"input provenance missing: {', '.join(missing)}")
     store = Path(plan["destination_shadow_store"])
     records = read_shadow_store(store)
     index = _capture_index(records)
     by_id = {row["fixture_id"]: row for row in rows}
+    due_items: list[dict[str, Any]] = []
     results: list[dict[str, Any]] = []
     for item in plan.get("plans", []):
         fixture_id = item["fixture_id"]
@@ -355,16 +356,67 @@ def execute_plan(
         if status == "ALREADY_CAPTURED":
             results.append({"fixture_id": fixture_id, "phase": phase, "status": status})
             continue
-        fixture = by_id.get(fixture_id)
-        if fixture is None:
+        if fixture_id not in by_id:
             raise QueueError(f"plan fixture is absent from manifest: {fixture_id}")
-        record = build_forward_shadow_prediction(
-            fixture,
-            phase=phase,
-            prediction_timestamp=item["prediction_cutoff"],
-            training_records=training_records,
-            input_provenance=input_provenance,
+        due_items.append(item)
+
+    if not due_items:
+        return results
+
+    if not isinstance(input_state, dict):
+        raise QueueError("execute requires a #229 input-state object")
+    snapshot_cutoff = input_state.get("prediction_cutoff")
+    plan_cutoff = plan.get("as_of")
+    if snapshot_cutoff != plan_cutoff or any(
+        item["prediction_cutoff"] != plan_cutoff for item in due_items
+    ):
+        raise QueueError("input-state, plan, and --as-of prediction cutoffs differ")
+    try:
+        rebuilt = build_input_state(
+            input_state["fixtures"],
+            input_state["training_records"],
+            prediction_cutoff=snapshot_cutoff,
+            provenance=input_state["provenance"],
         )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise QueueError(f"#229 input-state rebuild failed: {exc}") from exc
+    if rebuilt != input_state:
+        raise QueueError("#229 input-state digest mismatch")
+    if rebuilt.get("model_digest") != model_digest():
+        raise QueueError("#229 input-state model digest is not frozen")
+
+    input_fixtures = {fixture["fixture_id"]: fixture for fixture in rebuilt["fixtures"]}
+    records_to_append: list[dict[str, Any]] = []
+    for item in due_items:
+        fixture_id = item["fixture_id"]
+        fixture = by_id[fixture_id]
+        snapshot_fixture = input_fixtures.get(fixture_id)
+        if snapshot_fixture is None:
+            raise QueueError(f"#229 input-state fixture is absent: {fixture_id}")
+        for field in (
+            "fixture_id",
+            "edition",
+            "evaluation_block",
+            "home_team",
+            "away_team",
+            "kickoff_utc",
+            "competition",
+            "source_digest",
+        ):
+            if snapshot_fixture.get(field) != fixture.get(field):
+                raise QueueError(
+                    f"#228 manifest binding mismatch: {fixture_id}:{field}"
+                )
+        readiness = rebuilt.get("team_readiness", {})
+        for team in (fixture["home_team"], fixture["away_team"]):
+            if readiness.get(team) != "READY":
+                raise QueueError(
+                    f"#229 input-state is not READY: {fixture_id}:{team}:{readiness.get(team)}"
+                )
+        try:
+            record = predict_from_input_state(rebuilt, fixture_id, phase=phase)
+        except (KeyError, TypeError, ValueError) as exc:
+            raise QueueError(f"#229 prediction blocked: {fixture_id}:{exc}") from exc
         if (
             record.get("model_digest") != model_digest()
             or record.get("shadow") is not True
@@ -373,6 +425,13 @@ def execute_plan(
             or record.get("ledger_mutation") is not False
         ):
             raise QueueError("offline prediction safety contract failed")
+        if record.get("prediction_timestamp") != item["prediction_cutoff"]:
+            raise QueueError("prediction cutoff binding failed")
+        records_to_append.append(record)
+
+    for record in records_to_append:
+        fixture_id = record["fixture_id"]
+        phase = record["phase"]
         store.parent.mkdir(parents=True, exist_ok=True)
         with store.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n")
