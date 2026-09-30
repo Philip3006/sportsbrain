@@ -52,8 +52,53 @@ def test_identity_is_deterministic_and_provider_independent():
 
 
 def test_cet_source_kickoff_is_normalized_to_utc():
-    assert kickoff_to_utc("2026-10-01", "20:45") == "2026-10-01T19:45:00Z"
-    assert kickoff_to_utc("2026-10-02", "16:00") == "2026-10-02T15:00:00Z"
+    assert kickoff_to_utc("2026-10-01", "20:45") == "2026-10-01T18:45:00Z"
+    assert kickoff_to_utc("2026-10-02", "16:00") == "2026-10-02T14:00:00Z"
+
+
+def test_daylight_saving_transition_is_date_aware():
+    assert kickoff_to_utc("2026-10-01", "18:00") == "2026-10-01T16:00:00Z"
+    assert kickoff_to_utc("2026-11-12", "20:45") == "2026-11-12T19:45:00Z"
+
+
+def test_corrected_official_utc_examples_and_digest_are_deterministic():
+    manifest = build_manifest()
+    azerbaijan = next(
+        row
+        for row in manifest["fixtures"]
+        if row["home_team"] == "Azerbaijan"
+        and row["away_team"] == "Liechtenstein"
+    )
+    germany = next(
+        row
+        for row in manifest["fixtures"]
+        if row["home_team"] == "Germany" and row["away_team"] == "Serbia"
+    )
+    assert azerbaijan["kickoff_utc"] == "2026-10-01T16:00:00Z"
+    assert germany["kickoff_utc"] == "2026-10-01T18:45:00Z"
+    assert germany["fixture_id"] == canonical_future_fixture_id(
+        competition=germany["competition"],
+        edition=germany["edition"],
+        stage=germany["stage"],
+        group=germany["group"],
+        home_team=germany["home_team"],
+        away_team=germany["away_team"],
+        kickoff_utc=germany["kickoff_utc"],
+    )
+    assert germany["fixture_id"] != canonical_future_fixture_id(
+        competition=germany["competition"],
+        edition=germany["edition"],
+        stage=germany["stage"],
+        group=germany["group"],
+        home_team=germany["home_team"],
+        away_team=germany["away_team"],
+        kickoff_utc="2026-10-01T19:45:00Z",
+    )
+    assert azerbaijan["capture_windows"]["initial"]["start_utc"] == (
+        "2026-09-30T14:00:00Z"
+    )
+    assert build_manifest()["manifest_digest"] == manifest["manifest_digest"]
+    assert "UTC+01:00" not in manifest["source_timezone"]
 
 
 def test_capture_windows_match_frozen_forward_shadow_windows():

@@ -18,10 +18,10 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+from src.analysis.nations_league_forward_input import predict_from_input_state
 from src.analysis.nations_league_v1_1 import (
     append_shadow_record,
     append_shadow_settlement,
-    build_forward_shadow_prediction,
     build_shadow_settlement,
     calculate_forward_metrics,
 )
@@ -56,32 +56,9 @@ def _append(path: Path, record: dict[str, Any]) -> None:
         handle.write(json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n")
 
 
-def _fixture(value: Any) -> dict[str, Any]:
-    if isinstance(value, dict) and isinstance(value.get("fixture"), dict):
-        value = value["fixture"]
-    if not isinstance(value, dict):
-        raise TypeError("fixture input must be an object")
-    return value
-
-
-def _records(value: Any) -> list[dict[str, Any]]:
-    if isinstance(value, dict):
-        value = value.get("records", value.get("matches"))
-    if not isinstance(value, list) or not all(isinstance(row, dict) for row in value):
-        raise ValueError("training input must be a list of records")
-    return value
-
-
 def _predict(args: argparse.Namespace) -> int:
-    fixture = _fixture(_read_json(args.fixture))
-    training = _records(_read_json(args.training))
-    record = build_forward_shadow_prediction(
-        fixture,
-        phase=args.phase,
-        prediction_timestamp=args.prediction_timestamp,
-        training_records=training,
-        input_provenance=_read_json(args.input_provenance),
-    )
+    snapshot = _read_json(args.input_state)
+    record = predict_from_input_state(snapshot, args.fixture_id, phase=args.phase)
     existing = _read_records(args.store)
     append_shadow_record(
         [
@@ -139,12 +116,12 @@ def _metrics(args: argparse.Namespace) -> int:
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
-    predict = commands.add_parser("predict", help="append one v1.1 prediction")
-    predict.add_argument("--fixture", type=Path, required=True)
-    predict.add_argument("--training", type=Path, required=True)
-    predict.add_argument("--input-provenance", type=Path, required=True)
+    predict = commands.add_parser(
+        "predict", help="append one v1.1 prediction from a validated input-state"
+    )
+    predict.add_argument("--input-state", type=Path, required=True)
+    predict.add_argument("--fixture-id", required=True)
     predict.add_argument("--phase", choices=("initial", "refinement"), required=True)
-    predict.add_argument("--prediction-timestamp", required=True)
     predict.add_argument("--store", type=Path, required=True)
     predict.set_defaults(handler=_predict)
     settle = commands.add_parser("settle", help="append one result settlement")

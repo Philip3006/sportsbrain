@@ -13,6 +13,7 @@ import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from src.analysis.nations_league_v1_1 import MODEL_VERSION, model_digest
 
@@ -20,7 +21,7 @@ COMPETITION = "UEFA Nations League"
 EDITION = "2026/27"
 EVALUATION_BLOCK = "NL_2026_27"
 STAGE = "league_phase"
-SOURCE_TIMEZONE = "CET (UTC+01:00)"
+SOURCE_TIMEZONE = "Europe/Vienna (date-aware UEFA local time)"
 OBSERVED_AT_UTC = "2026-09-30T15:31:41Z"
 OFFICIAL_FIXTURES_URL = (
     "https://www.uefa.com/uefanationsleague/news/"
@@ -31,7 +32,7 @@ OFFICIAL_FIXTURE_PDF_URL = (
     "a8a8727f0805-1000/unl_2627_-_league_phase_fixture_list_per_matchday_28_april_2026.pdf"
 )
 UTC = timezone.utc
-CET = timezone(timedelta(hours=1), name="CET")
+UEFA_LOCAL_TIMEZONE = ZoneInfo("Europe/Vienna")
 STATUS_VALUES = frozenset(
     {"VERIFIED", "UNRESOLVED", "STARTED", "CANCELLED", "POSTPONED"}
 )
@@ -173,7 +174,7 @@ def kickoff_to_utc(date_value: str, time_value: str) -> str:
     try:
         parsed = datetime.strptime(
             f"{date_value} {time_value}", "%Y-%m-%d %H:%M"
-        ).replace(tzinfo=CET)
+        ).replace(tzinfo=UEFA_LOCAL_TIMEZONE)
     except ValueError as exc:
         raise ValueError("source kickoff must be YYYY-MM-DD HH:MM") from exc
     return parsed.astimezone(UTC).isoformat().replace("+00:00", "Z")

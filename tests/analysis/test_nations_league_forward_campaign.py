@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import json
 from copy import deepcopy
+from pathlib import Path
 
 import pytest
 
@@ -31,6 +33,9 @@ from src.analysis.nations_league_v1_1 import (
 
 TIMELINE_DIGEST = "a" * 64
 SOURCE_DIGEST = "b" * 64
+MANIFEST_DIGEST = json.loads(
+    Path("results/audits/nations_league_forward_fixture_manifest.json").read_text()
+)["manifest_digest"]
 
 
 def _manifest():
@@ -70,7 +75,7 @@ def _campaign():
         edition="2024/25",
         campaign_start="2026-09-30T10:00:00Z",
         fixture_manifest=_manifest(),
-        fixture_manifest_digest=TIMELINE_DIGEST,
+        fixture_manifest_digest=MANIFEST_DIGEST,
     )
 
 
@@ -134,7 +139,7 @@ def _settlement(prediction):
 
 def test_zero_real_samples_is_explicit_and_does_not_hide_exceptions():
     assert _campaign().campaign.model_version == "nations_league_v1_1"
-    assert _campaign().campaign.fixture_manifest_digest == TIMELINE_DIGEST
+    assert _campaign().campaign.fixture_manifest_digest == MANIFEST_DIGEST
     summary = build_forward_evidence_summary(_campaign())
     assert summary["evidence_state"] == NO_FORWARD_EVIDENCE
     assert summary["completeness"] == {
@@ -230,7 +235,7 @@ def test_criteria_state_is_external_frozen_review_only():
             edition="2024/25",
             campaign_start="2026-09-30T10:00:00Z",
             fixture_manifest=_manifest(),
-            fixture_manifest_digest=TIMELINE_DIGEST,
+            fixture_manifest_digest=MANIFEST_DIGEST,
             promotion_criteria_digest="d" * 64,
         ),
         _prediction(),

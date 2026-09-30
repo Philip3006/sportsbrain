@@ -196,6 +196,9 @@ def execute(manifest, as_of, store, input_state, expected_model_digest=None):
         input_state["training_records"],
         prediction_cutoff=input_state["prediction_cutoff"],
         provenance=input_state["provenance"],
+        base_timeline=input_state.get("base_timeline"),
+        result_extension=input_state.get("result_extension"),
+        completeness_artifact=input_state.get("completeness"),
     )
     if rebuilt != input_state:
         raise ValueError("input snapshot mismatch")

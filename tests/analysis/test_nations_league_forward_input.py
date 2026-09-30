@@ -12,9 +12,17 @@ from src.analysis.nations_league_forward_input import (
     predict_from_input_state,
     timeline_training,
 )
-from src.analysis.nations_league_v1_1 import model_digest
+from src.analysis.nations_league_result_extension import completeness
+from src.analysis.nations_league_v1_1 import model_digest, training_records_from_timeline
 
-CUTOFF = "2026-10-01T20:00:00+00:00"
+ROOT = Path(__file__).resolve().parents[2]
+BASE = json.loads(
+    (ROOT / "results/research/nations_league_fixture_timeline_v1.json").read_text()
+)
+EXTENSION = json.loads(
+    (ROOT / "results/research/nations_league_v1_1_result_extension_20260930.json").read_text()
+)
+CUTOFF = EXTENSION["results_verified_through"]
 
 
 def inputs():
@@ -24,28 +32,17 @@ def inputs():
         "competition": "UEFA Nations League",
         "home_team": "Austria",
         "away_team": "Belgium",
-        "source_digest": "a" * 64,
+        "source_digest": BASE["dataset_digest"],
         "source_provenance": "deterministic synthetic test",
         "neutral": False,
     }
     fixture = dict(
-        common, fixture_id="uefa-nl:future", kickoff_utc="2026-10-02T20:00:00Z"
+        common, fixture_id="uefa-nl:future", kickoff_utc="2026-10-01T16:00:00Z"
     )
-    history = [
-        dict(
-            common,
-            fixture_id="uefa-nl:past",
-            kickoff_utc="2026-10-01T10:00:00Z",
-            result_safe_available_at="2026-10-01T19:59:59Z",
-            home_score=1,
-            away_score=0,
-        )
-    ]
+    history = training_records_from_timeline(BASE) + EXTENSION["result_rows"]
     proof = {
-        "source_digest": "b" * 64,
+        "source_digest": BASE["dataset_digest"],
         "source_provenance": "synthetic completeness proof",
-        "results_verified_through": CUTOFF,
-        "observed_at": CUTOFF,
     }
     return [fixture], history, proof
 
@@ -57,6 +54,11 @@ def state(fixtures=None, history=None, proof=None):
         h if history is None else history,
         prediction_cutoff=CUTOFF,
         provenance=p if proof is None else proof,
+        base_timeline=BASE if proof is None else None,
+        result_extension=EXTENSION if proof is None else None,
+        completeness_artifact=(
+            completeness(EXTENSION, CUTOFF) if proof is None else None
+        ),
     )
 
 
@@ -72,7 +74,7 @@ def test_prior_second_and_binding():
     assert record["no_bet"] and not record["publication_enabled"]
 
 
-@pytest.mark.parametrize("safe", ["2026-10-01T20:00:00Z", "2026-10-01T20:00:01Z"])
+@pytest.mark.parametrize("safe", [CUTOFF, "2026-09-30T17:04:37.635373Z"])
 def test_equal_or_future_result_rejected(safe):
     _, history, _ = inputs()
     history[0]["result_safe_available_at"] = safe
@@ -94,8 +96,8 @@ def test_ambiguous_alias():
 
 def test_missing_team():
     fixtures, _, _ = inputs()
-    fixtures[0]["away_team"] = "France"
-    assert state(fixtures=fixtures)["team_readiness"]["France"] == "MISSING_TEAM"
+    fixtures[0]["away_team"] = "Atlantis"
+    assert state(fixtures=fixtures)["team_readiness"]["Atlantis"] == "MISSING_TEAM"
 
 
 @pytest.mark.parametrize(
@@ -110,9 +112,9 @@ def test_missing_team():
                 "source_digest": "b" * 64,
                 "source_provenance": "test",
                 "observed_at": CUTOFF,
-                "results_verified_through": "2026-09-30T20:00:00Z",
+                "results_verified_through": "2026-09-30T16:00:00Z",
             },
-            "STALE_INPUT",
+            "LIVE_RESULT_REFRESH_REQUIRED",
         ),
     ],
 )
@@ -141,8 +143,57 @@ def test_non_future_target():
 def test_noncausal_proof():
     _, _, proof = inputs()
     proof["observed_at"] = "2026-10-01T20:00:01Z"
-    with pytest.raises(ValueError, match="noncausal"):
-        state(proof=proof)
+    snapshot = state(proof=proof)
+    assert set(snapshot["team_readiness"].values()) == {
+        "LIVE_RESULT_REFRESH_REQUIRED"
+    }
+
+
+def test_valid_stale_completeness_artifact_cannot_become_ready():
+    stale_cutoff = "2026-10-01T20:00:00Z"
+    fixtures, history, proof = inputs()
+    fixtures[0]["kickoff_utc"] = "2026-10-02T20:00:00Z"
+    snapshot = build_input_state(
+        fixtures,
+        history,
+        prediction_cutoff=stale_cutoff,
+        provenance=proof,
+        base_timeline=BASE,
+        result_extension=EXTENSION,
+        completeness_artifact=completeness(EXTENSION, stale_cutoff),
+    )
+    assert set(snapshot["team_readiness"].values()) == {"STALE_INPUT"}
+
+
+@pytest.mark.parametrize(
+    "field",
+    ["base_timeline", "result_extension", "completeness"],
+)
+def test_sealed_completeness_bindings_reject_tampering(field):
+    snapshot = state()
+    if field == "base_timeline":
+        snapshot[field]["dataset_digest"] = "a" * 64
+    elif field == "result_extension":
+        snapshot[field]["extension_digest"] = "a" * 64
+    else:
+        snapshot[field]["completeness_digest"] = "a" * 64
+    with pytest.raises(ValueError):
+        predict_from_input_state(snapshot, "uefa-nl:future", phase="initial")
+
+
+def test_forged_current_watermark_never_produces_ready():
+    fixtures, history, proof = inputs()
+    proof["results_verified_through"] = CUTOFF
+    proof["observed_at"] = CUTOFF
+    snapshot = build_input_state(
+        fixtures,
+        history,
+        prediction_cutoff=CUTOFF,
+        provenance=proof,
+    )
+    assert set(snapshot["team_readiness"].values()) == {
+        "LIVE_RESULT_REFRESH_REQUIRED"
+    }
 
 
 def test_frozen_digest_mismatch(monkeypatch):
@@ -162,7 +213,9 @@ def test_historical_v1_digest_is_not_accepted_as_active_input():
 
 def test_equivalent_utc_input_same_digest():
     _, history, _ = inputs()
-    history[0]["result_safe_available_at"] = "2026-10-01T19:59:59+00:00"
+    history[0]["result_safe_available_at"] = history[0][
+        "result_safe_available_at"
+    ].replace("Z", "+00:00")
     assert state(history=history) == state()
 
 
