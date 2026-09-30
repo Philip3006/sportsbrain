@@ -571,7 +571,7 @@ def test_foreign_provider_and_malformed_withdrawal_are_rejected_by_canonical_cor
             },
         )
 
-    with pytest.raises(SignalLifecycleError, match="explicit withdrawal"):
+    with pytest.raises(SignalLifecycleError, match="WITHDRAWN requires"):
         refine_signal(
             initial[0],
             fixture=_fixture(),

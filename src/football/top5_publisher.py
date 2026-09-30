@@ -520,6 +520,8 @@ class ControlledTop5PublicationPayload:
                 "session_id": record.get("qualification_session_id")
                 or self.qualification_session_id,
             }
+            if "top5_signal_decision" in record:
+                envelope["top5_signal_decision"] = record["top5_signal_decision"]
             lifecycle_by_market = record.get("lifecycle_by_market")
             if "top5_signal_lifecycles" in record:
                 if lifecycle_by_market is not None:

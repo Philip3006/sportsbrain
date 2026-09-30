@@ -18,6 +18,9 @@ from typing import Protocol
 import requests
 from requests.adapters import HTTPAdapter
 
+from src.betting.gates import gate_for
+from src.betting.odds_utils import remove_margin_shin
+from src.betting.value_detector import detect_value
 from src.football.odds.base import canonical_team
 from src.football.odds.the_odds_api import parse_top5_consensus_h2h
 from src.football.production_contracts import (
@@ -392,6 +395,139 @@ def _probabilities(value: Mapping[str, float]) -> dict[str, float]:
     return result
 
 
+def _top5_value_decision(
+    *,
+    fixture: Fixture,
+    probabilities: Mapping[str, float],
+    odds: Mapping[str, float],
+    activation_id: str,
+    snapshot_id: str,
+) -> dict[str, object]:
+    """Evaluate the existing football value detector without betting side effects."""
+
+    gate = gate_for("football", "h2h")
+    raw_odds = (float(odds["home"]), float(odds["draw"]), float(odds["away"]))
+    market = dict(zip(("home", "draw", "away"), remove_margin_shin(raw_odds)))
+    # detect_value's vector convention is [away, draw, home]. Its stake fields
+    # are deliberately discarded; the fixed neutral bankroll is not persisted.
+    detected = detect_value(
+        fixture.home_team,
+        fixture.away_team,
+        (
+            float(probabilities["away"]),
+            float(probabilities["draw"]),
+            float(probabilities["home"]),
+        ),
+        raw_odds,
+        bankroll=1000.0,
+        min_edge=gate.min_edge,
+        match_id=fixture.fixture_key,
+    )
+    accepted = {
+        signal.market: signal
+        for signal in detected
+        if signal.market in {"home", "draw", "away"}
+        and math.isfinite(float(signal.ev))
+        and float(signal.ev) <= gate.max_ev
+    }
+    outcomes: dict[str, object] = {}
+    for outcome in ("home", "draw", "away"):
+        signal = accepted.get(outcome)
+        model_probability = float(probabilities[outcome])
+        fair_probability = float(market[outcome])
+        decimal_odds = float(odds[outcome])
+        expected_value = model_probability * decimal_odds - 1.0
+        if signal is not None:
+            state = "SIGNAL"
+            reason = "value_detector_passed"
+            confidence = str(signal.confidence)
+        else:
+            state = "NO_SIGNAL"
+            reason = (
+                "above_maximum_expected_value"
+                if expected_value > gate.max_ev
+                else "below_value_detector_threshold"
+            )
+            confidence = None
+        outcomes[outcome] = {
+            "state": state,
+            "reason": reason,
+            "model_probability": model_probability,
+            "market_implied_probability": fair_probability,
+            "decimal_odds": decimal_odds,
+            "expected_value": expected_value,
+            "confidence": confidence,
+        }
+    decision_body: dict[str, object] = {
+        "schema_version": "top5-value-decision-v1",
+        "detector": "src.betting.value_detector.detect_value",
+        "policy": {
+            "version": "football-h2h-gate-v1",
+            "minimum_edge": gate.min_edge,
+            "maximum_expected_value": gate.max_ev,
+        },
+        "state": "SIGNAL"
+        if any(item["state"] == "SIGNAL" for item in outcomes.values())  # type: ignore[index]
+        else "NO_SIGNAL",
+        "outcomes": outcomes,
+        "activation_id": activation_id,
+        "snapshot_id": snapshot_id,
+    }
+    decision_digest = _sha(decision_body)
+    return {
+        **decision_body,
+        "decision_id": f"top5-value-decision-v1:{decision_digest[:32]}",
+        "decision_digest": decision_digest,
+    }
+
+
+_CAPTURE_DIGEST_FIELDS = (
+    "activation_id",
+    "activation_plan_digest",
+    "signed_authorization_digest",
+    "league",
+    "fixture_key",
+    "provider_event_id",
+    "provider_authority",
+    "provider_request_count",
+    "retry_count",
+    "request_shape_digest",
+    "http_status",
+    "response_digest",
+    "snapshot_id",
+    "snapshot_source",
+    "captured_at",
+    "odds",
+    "model_identity",
+    "model_artifact_hash",
+    "source_sha",
+    "research_sha",
+    "prediction_id",
+    "candidate_id",
+    "prediction_timestamp",
+    "probabilities",
+    "signal_decision",
+    "lifecycle_set_digest",
+    "execution_started_at",
+    "request_started_at",
+    "response_finished_at",
+    "execution_finished_at",
+)
+
+
+def one_shot_capture_digest(result: Mapping[str, object]) -> str:
+    """Digest provider/model/lifecycle evidence used by safe orchestration resume."""
+
+    if any(name not in result for name in _CAPTURE_DIGEST_FIELDS):
+        raise OneShotExecutionError("capture evidence is incomplete")
+    return _sha(
+        {
+            "schema_version": ONE_SHOT_RESULT_SCHEMA,
+            **{name: result[name] for name in _CAPTURE_DIGEST_FIELDS},
+        }
+    )
+
+
 class Top5OneShotProductionRuntime:
     """Exact one-league canary runner; never schedules or publishes output."""
 
@@ -717,6 +853,29 @@ class Top5OneShotProductionRuntime:
                 probabilities=probabilities,
             )
             prediction.validate()
+            signal_decision = _top5_value_decision(
+                fixture=fixture,
+                probabilities=probabilities,
+                odds=snapshot.odds,
+                activation_id=binding.activation_id,
+                snapshot_id=snapshot.snapshot_id,
+            )
+            decision_outcomes = signal_decision["outcomes"]
+            if not isinstance(decision_outcomes, Mapping):
+                raise OneShotExecutionError("value decision output is malformed")
+            market_probabilities = {
+                outcome: float(decision_outcomes[outcome]["market_implied_probability"])
+                for outcome in TOP5_H2H_OUTCOMES
+            }
+            edge_manifest: dict[str, float] = {}
+            for outcome in TOP5_H2H_OUTCOMES:
+                edge_manifest[outcome] = (
+                    probabilities[outcome] - market_probabilities[outcome]
+                ) * 100
+                edge_manifest[f"expected_value_{outcome}"] = float(
+                    decision_outcomes[outcome]["expected_value"]
+                )
+            decision_id = str(signal_decision["decision_id"])
             if binding.lifecycle_stage == "INITIAL":
                 next_lifecycles = {
                     outcome: create_initial_signal(
@@ -731,13 +890,30 @@ class Top5OneShotProductionRuntime:
                         source_sha=binding.source_sha,
                         research_sha=binding.research_sha,
                         model_artifact_hash=binding.model_artifact_hash,
-                        eligibility_decision=True,
-                        decision_id=binding.activation_authorization_id,
-                        decision_reason="signed manual canary; no wager/actionability threshold",
+                        eligibility_decision=(
+                            decision_outcomes[outcome]["state"] == "SIGNAL"
+                        ),
+                        decision_id=decision_id,
+                        decision_reason=str(decision_outcomes[outcome]["reason"]),
                         contract=DEFAULT_SIGNAL_LIFECYCLE_CONTRACT,
+                        implied_probabilities=market_probabilities,
+                        edges=edge_manifest,
                         confidence_metadata={
                             "canary_execution_id": binding.activation_id,
                             "request_shape_digest": binding.request_shape_digest,
+                            "signal_decision_id": decision_id,
+                            "signal_decision_digest": signal_decision[
+                                "decision_digest"
+                            ],
+                            "signal_decision_schema_version": signal_decision[
+                                "schema_version"
+                            ],
+                            "signal_decision_detector": signal_decision["detector"],
+                            "signal_decision_policy": signal_decision["policy"],
+                            "signal_state": decision_outcomes[outcome]["state"],
+                            "signal_confidence": decision_outcomes[outcome][
+                                "confidence"
+                            ],
                         },
                     )
                     for outcome in TOP5_H2H_OUTCOMES
@@ -763,14 +939,31 @@ class Top5OneShotProductionRuntime:
                         snapshot=snapshot,
                         now=post_response_now,
                         probabilities=probabilities,
-                        eligibility_decision=True,
+                        eligibility_decision=(
+                            decision_outcomes[outcome]["state"] == "SIGNAL"
+                        ),
                         withdrawal_authorized=False,
-                        decision_id=binding.activation_authorization_id,
-                        decision_reason="signed manual canary; deterministic probability comparison",
+                        decision_id=decision_id,
+                        decision_reason=str(decision_outcomes[outcome]["reason"]),
                         classification=classification,
+                        implied_probabilities=market_probabilities,
+                        edges=edge_manifest,
                         confidence_metadata={
                             "canary_execution_id": binding.activation_id,
                             "request_shape_digest": binding.request_shape_digest,
+                            "signal_decision_id": decision_id,
+                            "signal_decision_digest": signal_decision[
+                                "decision_digest"
+                            ],
+                            "signal_decision_schema_version": signal_decision[
+                                "schema_version"
+                            ],
+                            "signal_decision_detector": signal_decision["detector"],
+                            "signal_decision_policy": signal_decision["policy"],
+                            "signal_state": decision_outcomes[outcome]["state"],
+                            "signal_confidence": decision_outcomes[outcome][
+                                "confidence"
+                            ],
                         },
                     )
             proposed_lifecycle_set = tuple(
@@ -858,6 +1051,7 @@ class Top5OneShotProductionRuntime:
                 "candidate_id": M5_CANDIDATE_ID,
                 "prediction_timestamp": prediction.generated_at.isoformat(),
                 "probabilities": dict(prediction.probabilities),
+                "signal_decision": signal_decision,
                 "lifecycle_ids": lifecycle_ids,
                 "lifecycle_versions": lifecycle_versions,
                 "lifecycle_version_digests": lifecycle_version_digests,
@@ -877,6 +1071,7 @@ class Top5OneShotProductionRuntime:
                 "betting": False,
                 "ledger_mutation": False,
             }
+            result_body["capture_result_digest"] = one_shot_capture_digest(result_body)
             production_evidence = {
                 name: result_body[name]
                 for name in (
@@ -899,17 +1094,30 @@ class Top5OneShotProductionRuntime:
                     "retry_count",
                     "http_status",
                     "provider_event_id",
+                    "provider_authority",
+                    "provider_request_count",
+                    "retry_count",
+                    "request_shape_digest",
                     "snapshot_id",
+                    "snapshot_source",
                     "lifecycle_ids",
                     "lifecycle_versions",
                     "lifecycle_version_digests",
                     "lifecycle_digests",
                     "lifecycle_set_digest",
                     "response_digest",
+                    "odds",
+                    "probabilities",
+                    "candidate_id",
+                    "prediction_id",
+                    "prediction_timestamp",
+                    "signal_decision",
                     "captured_at",
+                    "execution_started_at",
                     "request_started_at",
                     "response_finished_at",
                     "execution_finished_at",
+                    "capture_result_digest",
                     "route_state_consumed",
                     "health_status",
                     "no_bet",
@@ -967,4 +1175,5 @@ __all__ = [
     "OneShotTransport",
     "TheOddsApiOneShotHttpTransport",
     "Top5OneShotProductionRuntime",
+    "one_shot_capture_digest",
 ]

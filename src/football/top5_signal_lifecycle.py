@@ -154,7 +154,10 @@ def _validate_snapshot_source_binding(
         raise SignalLifecycleError(
             "signal lifecycle provider identity is not the_odds_api"
         )
-    if _canonical_snapshot_provider(snapshot_source) not in _SUPPORTED_SIGNAL_EVIDENCE_SOURCES:
+    if (
+        _canonical_snapshot_provider(snapshot_source)
+        not in _SUPPORTED_SIGNAL_EVIDENCE_SOURCES
+    ):
         raise SignalLifecycleError(
             "snapshot source does not canonically bind to an accepted evidence provider"
         )
@@ -641,7 +644,6 @@ class Top5SignalLifecycleVersion:
                 self.version_number != 1
                 or self.predecessor_version_digest is not None
                 or self.classification is not None
-                or not self.eligibility_decision
                 or self.withdrawal_authorized
             ):
                 raise SignalLifecycleError("INITIAL version state is malformed")
@@ -667,7 +669,6 @@ class Top5SignalLifecycleVersion:
                     RefinementClassification.WEAKENED,
                     RefinementClassification.UNCHANGED,
                 }
-                or not self.eligibility_decision
                 or self.withdrawal_authorized
             ):
                 raise SignalLifecycleError("REFINED version decision is malformed")
@@ -1013,10 +1014,6 @@ def canonical_top5_h2h_lifecycle_set(
             "implied_probabilities",
             "edges",
             "decision_id",
-            "decision_reason",
-            "eligibility_decision",
-            "withdrawal_authorized",
-            "confidence_metadata",
         ):
             if getattr(initial, field_name) != getattr(reference_initial, field_name):
                 raise SignalLifecycleError(
@@ -1043,10 +1040,6 @@ def canonical_top5_h2h_lifecycle_set(
             "implied_probabilities",
             "edges",
             "decision_id",
-            "decision_reason",
-            "eligibility_decision",
-            "withdrawal_authorized",
-            "confidence_metadata",
         ):
             if getattr(current, field_name) != getattr(reference_current, field_name):
                 raise SignalLifecycleError(
@@ -1265,10 +1258,13 @@ def create_initial_signal(
     edges: Mapping[str, float] | None = None,
     confidence_metadata: Mapping[str, object] | None = None,
 ) -> Top5SignalLifecycle:
-    """Create immutable version 1 only from an eligible fresh INITIAL input."""
+    """Create immutable version 1 from a fresh INITIAL input.
 
-    if not _boolean(eligibility_decision, "eligibility_decision"):
-        raise SignalLifecycleError("caller marked the INITIAL signal ineligible")
+    ``eligibility_decision`` records the independently evaluated value-signal
+    outcome. False means a valid no-signal lifecycle, not a failed capture.
+    """
+
+    eligible = _boolean(eligibility_decision, "eligibility_decision")
     version = _build_version(
         fixture=fixture,
         snapshot=snapshot,
@@ -1286,7 +1282,7 @@ def create_initial_signal(
         model_artifact_hash=model_artifact_hash,
         decision_id=decision_id,
         decision_reason=decision_reason,
-        eligibility_decision=True,
+        eligibility_decision=eligible,
         withdrawal_authorized=False,
         classification=None,
         predecessor_version_digest=None,
@@ -1328,10 +1324,6 @@ def refine_signal(
         resolved_classification = RefinementClassification.WITHDRAWN
         stage = SignalLifecycleStage.WITHDRAWN
     else:
-        if not eligible:
-            raise SignalLifecycleError(
-                "ineligible refinement requires an explicit withdrawal decision"
-            )
         if classification is None:
             raise SignalLifecycleError(
                 "refinement requires a caller-supplied classification"
