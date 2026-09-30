@@ -1,0 +1,157 @@
+{
+  "schema_version": "uefa-nations-league-edition-contracts-v1",
+  "competition": "UEFA Nations League",
+  "normalization_version": "sportsbrain-nl-team-aliases-v1",
+  "editions": {
+    "2020/21": {
+      "edition_status": "partially_source_verified",
+      "group_format": "Leagues A-C: four groups of four; League D: one group of four and one group of three; double round-robin within each group.",
+      "points": {"win": 3, "draw": 1, "loss": 0},
+      "groups": {
+        "A1": ["Netherlands", "Italy", "Bosnia and Herzegovina", "Poland"],
+        "A2": ["England", "Belgium", "Denmark", "Iceland"],
+        "A3": ["Portugal", "France", "Sweden", "Croatia"],
+        "A4": ["Switzerland", "Spain", "Ukraine", "Germany"],
+        "B1": ["Austria", "Norway", "Northern Ireland", "Romania"],
+        "B2": ["Czechia", "Scotland", "Slovakia", "Israel"],
+        "B3": ["Russia", "Serbia", "Türkiye", "Hungary"],
+        "B4": ["Wales", "Finland", "Republic of Ireland", "Bulgaria"],
+        "C1": ["Montenegro", "Cyprus", "Luxembourg", "Azerbaijan"],
+        "C2": ["Georgia", "North Macedonia", "Estonia", "Armenia"],
+        "C3": ["Greece", "Kosovo", "Slovenia", "Moldova"],
+        "C4": ["Albania", "Belarus", "Lithuania", "Kazakhstan"],
+        "D1": ["Faroe Islands", "Latvia", "Andorra", "Malta"],
+        "D2": ["Gibraltar", "Liechtenstein", "San Marino"]
+      },
+      "league_phase_rules": {
+        "league_a_qualification": "Each group winner qualifies for the Nations League Finals (two semi-finals, third-place match and final).",
+        "promotion": "Group winners in Leagues B, C and D are promoted.",
+        "direct_relegation": "Bottom teams in Leagues A and B are relegated.",
+        "league_c_relegation": "Four fourth-placed League C teams enter two-legged play-outs; two lose and are relegated. The original 2020/21 play-outs were rescheduled to March 2022 and had a later away-goals amendment; those four matches are not in this 512-match target window."
+      },
+      "league_c_playout_allocation": {
+        "status": "rule_supported; outside_target_window",
+        "supported_components": ["fourth_placed_league_c_teams_enter_playouts", "two_losers_move_to_league_d"],
+        "unresolved_components": ["historical_playout_result_not_in_target_window"]
+      },
+      "tiebreak": {
+        "status": "official_rule_text_verified_but_not_fully_operationalized",
+        "rule_reference": "2020/21 Regulations, Article 15",
+        "criteria": ["head_to_head_points", "head_to_head_goal_difference", "head_to_head_goals", "head_to_head_away_goals", "reapply_head_to_head_for_remaining_tied_teams", "overall_goal_difference", "overall_goals", "overall_away_goals", "overall_wins", "overall_away_wins", "disciplinary_points", "2020_21_access_list_position"],
+        "operationalization_gap": "The frozen match source has no disciplinary-card totals. Exact positions remain unresolved where an applicable tie reaches that criterion; the dataset never sorts tied teams arbitrarily."
+      },
+      "sources": [
+        {"source": "UEFA 2020/21 group draw and format", "url": "https://www.uefa.com/uefanationsleague/news/0253-0d821c7c9ca8-3e97e8cc9b99-1000--2020-21-nations-league-who-will-play-who/", "retrieved_at": "2026-09-29T16:00:59Z", "source_digest": null, "digest_note": "Web-readable official page; raw HTML bytes were not vendored, so no raw-source digest is asserted."},
+        {"source": "UEFA 2020/21 Nations League Regulations", "url": "https://editorial.uefa.com/resources/0256-0f842fa4944a-f636da185247-1000/regulations_of_the_uefa_nations_league_2020_21.pdf", "retrieved_at": "2026-09-29T16:00:59Z", "source_digest": null, "digest_note": "Rule text reviewed via official public PDF; no local raw PDF digest is asserted."},
+        {"source": "UEFA 2020/21 official fixtures list with matchdays and kick-off times", "url": "https://editorial.uefa.com/resources/025b-0ed7e6dacfbb-9e8567b03e90-1000/2020-21_-_unl_-_fixtures_list_league.pdf", "retrieved_at": "2026-09-29T16:00:59Z", "source_digest": null, "digest_note": "Schedule reviewed, but its full rows have not been ingested into this snapshot."}
+      ]
+    },
+    "2022/23": {
+      "edition_status": "partially_source_verified",
+      "group_format": "Leagues A-C: four groups of four; League D: one group of four and one group of three; double round-robin among eligible participants.",
+      "points": {"win": 3, "draw": 1, "loss": 0},
+      "groups": {
+        "A1": ["France", "Denmark", "Croatia", "Austria"],
+        "A2": ["Spain", "Portugal", "Switzerland", "Czechia"],
+        "A3": ["Italy", "Germany", "England", "Hungary"],
+        "A4": ["Belgium", "Netherlands", "Poland", "Wales"],
+        "B1": ["Ukraine", "Scotland", "Republic of Ireland", "Armenia"],
+        "B2": ["Iceland", "Russia", "Israel", "Albania"],
+        "B3": ["Bosnia and Herzegovina", "Finland", "Romania", "Montenegro"],
+        "B4": ["Sweden", "Norway", "Serbia", "Slovenia"],
+        "C1": ["Türkiye", "Luxembourg", "Lithuania", "Faroe Islands"],
+        "C2": ["Northern Ireland", "Greece", "Kosovo", "Cyprus"],
+        "C3": ["Slovakia", "Belarus", "Azerbaijan", "Kazakhstan"],
+        "C4": ["Bulgaria", "North Macedonia", "Georgia", "Gibraltar"],
+        "D1": ["Liechtenstein", "Moldova", "Andorra", "Latvia"],
+        "D2": ["Malta", "Estonia", "San Marino"]
+      },
+      "participant_exceptions": {
+        "Russia": {"group": "B2", "status": "suspended_non_participant_automatically_ranked_fourth_and_relegated", "eligible_for_fixture_schedule": false, "effective_before_first_group_fixture": true}
+      },
+      "league_phase_rules": {
+        "league_a_qualification": "Each group winner qualifies for the Nations League Finals.",
+        "promotion": "Group winners in Leagues B, C and D are promoted.",
+        "direct_relegation": "Bottom teams in Leagues A and B are relegated.",
+        "league_c_relegation": "All four League C group fourth-placed teams enter the March 2024 play-outs; two defeated teams move to League D. The frozen target includes the Lithuania-Gibraltar two-legged tie. The exact cross-group pairing/allocation for any additional tie is not inferred without a complete authoritative ranking input."
+      },
+      "league_c_playout_allocation": {
+        "status": "partially_supported; cross_group_pairing_unresolved",
+        "source": "UEFA 2022/23 Nations League format and 2022/23 play-out schedule",
+        "source_urls": ["https://www.uefa.com/news/026e-13698f20e8cb-8372848125f5-1000--2022-23-uefa-nations-league/", "https://editorial.uefa.com/resources/028a-1a1e18631263-95c63cec8617-1000/202425_unl_qualifying.pdf"],
+        "supported_components": ["fourth_placed_league_c_teams_enter_playouts", "two_playout_losers_move_to_league_d", "lithuania_gibraltar_tie_is_in_target_source", "playout_winner_remains_in_league_c"],
+        "inputs_required": ["exact_final_group_rank_of_all_four_league_c_fourth_placed_teams", "playout_match_results"],
+        "inputs_available": {"exact_final_group_rank_of_all_four_league_c_fourth_placed_teams": false, "playout_match_results": true},
+        "unresolved_components": ["cross_group_pairing", "pre_playout_relegation_allocation"]
+      },
+      "tiebreak": {
+        "status": "official_rule_text_frozen_but_historical_inputs_incomplete",
+        "rule_reference": "2022/23 Regulations, Article 15",
+        "source": {"source": "UEFA Regulations of the Nations League 2022/23, Article 15", "url": "https://web.archive.org/web/20210927201456/https://documents.uefa.com/api/khub/maps/5qGTXCxubTzMfOeAyWGmuQ/attachments/5avrJwcMhtmUTz_I1lWP9g/content?filename=UNL_Regulations_1_October_2021_EN_strPDF.pdf", "retrieved_at": "2026-09-30T00:00:00Z", "source_digest": null, "digest_note": "Archived copy of the official UEFA regulation attachment; raw PDF bytes are not vendored."},
+        "criteria": ["head_to_head_points", "head_to_head_goal_difference", "head_to_head_goals", "reapply_head_to_head_for_remaining_tied_teams", "overall_goal_difference", "overall_goals", "overall_away_goals", "overall_wins", "overall_away_wins", "disciplinary_points", "2022_23_access_list_position"],
+        "inputs_required": ["all_group_results", "disciplinary_card_totals", "2022_23_access_list_position"],
+        "inputs_available": {"all_group_results": true, "disciplinary_card_totals": false, "2022_23_access_list_position": false},
+        "operationalization_gap": "The rule order is frozen, but the historical match snapshot has no disciplinary-card totals or frozen access-list positions. Exact tied-team rank and any boundary state depending on those criteria remain UNRESOLVED."
+      },
+      "euro_2024_qualification": {
+        "status": "not_computed",
+        "note": "The Nations League supplied group-winner inputs to a separate EURO 2024 play-off selection process; EURO qualification outcomes are outside this 512-match source and are not represented as Nations League qualification state."
+      },
+      "sources": [
+        {"source": "UEFA 2022/23 league-phase draw procedure", "url": "https://editorial.uefa.com/resources/026f-13c241515097-67a9c87ed1b2-1000/unl_2022-23_league_phase_draw_procedure_en.pdf", "retrieved_at": "2026-09-29T16:00:59Z", "source_digest": null, "digest_note": "Group allocation and group structure reviewed via official PDF; no raw PDF digest asserted."},
+        {"source": "UEFA 2022/23 Nations League format and participants", "url": "https://www.uefa.com/uefanationsleague/news/026e-13698f20e8cb-8372848125f5-1000--uefa-nations-league-2022-23-calendario-partidos-ligas-forma/", "retrieved_at": "2026-09-29T16:00:59Z", "source_digest": null, "digest_note": "Official UEFA page states groups, promotion/relegation, the play-out window, and automatic Russia fourth-place status."},
+        {"source": "UEFA decision on Russian teams", "url": "https://www.uefa.com/uefanationsleague/news/0275-150d0b0a13f1-90de757e6bab-1000--suspension-of-russian-teams-and-clubs/", "retrieved_at": "2026-09-29T16:00:59Z", "source_digest": null, "digest_note": "Official UEFA decision; Russia did not participate, was automatically ranked fourth in B2 and relegated."},
+        {"source": "UEFA 2022/23 fixtures and results", "url": "https://www.uefa.com/uefanationsleague/news/0270-13fa7d271b2d-786414f61047-1000--nations-league-fixtures-and-results/", "retrieved_at": "2026-09-29T16:00:59Z", "source_digest": null, "digest_note": "Official result page used to confirm played fixtures; kickoff timestamps were not ingested."},
+        {"source": "UEFA 2022/23 C/D play-out outcome and 2024/25 draw dependency", "url": "https://editorial.uefa.com/resources/028a-1a1e18631263-95c63cec8617-1000/202425_unl_qualifying.pdf", "retrieved_at": "2026-09-29T16:00:59Z", "source_digest": null, "digest_note": "Official UEFA press kit states the 2022/23 play-out was Lithuania versus Gibraltar; detailed full rule source still not frozen."}
+      ]
+    },
+    "2024/25": {
+      "edition_status": "partially_source_verified",
+      "group_format": "Leagues A-C: four groups of four; League D: two groups of three; double round-robin within each group.",
+      "points": {"win": 3, "draw": 1, "loss": 0},
+      "groups": {
+        "A1": ["Croatia", "Portugal", "Poland", "Scotland"],
+        "A2": ["Italy", "Belgium", "France", "Israel"],
+        "A3": ["Netherlands", "Hungary", "Germany", "Bosnia and Herzegovina"],
+        "A4": ["Spain", "Denmark", "Switzerland", "Serbia"],
+        "B1": ["Czechia", "Ukraine", "Albania", "Georgia"],
+        "B2": ["England", "Finland", "Republic of Ireland", "Greece"],
+        "B3": ["Austria", "Norway", "Slovenia", "Kazakhstan"],
+        "B4": ["Wales", "Iceland", "Montenegro", "Türkiye"],
+        "C1": ["Sweden", "Azerbaijan", "Slovakia", "Estonia"],
+        "C2": ["Romania", "Kosovo", "Cyprus", "Lithuania"],
+        "C3": ["Luxembourg", "Bulgaria", "Northern Ireland", "Belarus"],
+        "C4": ["Armenia", "Faroe Islands", "North Macedonia", "Latvia"],
+        "D1": ["Gibraltar", "San Marino", "Liechtenstein"],
+        "D2": ["Moldova", "Malta", "Andorra"]
+      },
+      "league_phase_rules": {
+        "league_a_qualification": "Top two from each League A group enter two-legged quarter-finals; winners enter the final tournament.",
+        "promotion": "Group winners in Leagues B, C and D are promoted.",
+        "direct_relegation": "Bottom teams in Leagues A and B are directly relegated.",
+        "league_c_relegation": "The two lowest-ranked fourth-placed League C teams are directly relegated; the other two fourth-placed teams play the two League D runners-up in two-legged C/D ties scheduled after this target block.",
+        "promotion_relegation_playoffs": "League A third-placed teams play League B runners-up; League B third-placed teams play League C runners-up; two-legged ties.",
+        "league_d_schedule_note": "Each D team plays four group matches; the calendar also contains two friendlies per League D team. Friendlies are not counted in Nations League group standings."
+      },
+      "league_c_playout_allocation": {
+        "status": "rule_supported; target_post_phase_allocation_not_causal_for_league_phase_rows",
+        "supported_components": ["two_lowest_league_c_fourth_placed_teams_directly_relegated", "other_two_league_c_fourth_placed_teams_play_league_d_runners_up", "playout_winner_remains_in_league_c", "playout_loser_moves_to_league_d"],
+        "unresolved_components": ["exact_final_tie_break_inputs_when_required"],
+        "source": "UEFA 2024/25 Nations League Draw Press Kit, pp. 5-8",
+        "source_url": "https://editorial.uefa.com/resources/028a-1a1e18631263-95c63cec8617-1000/202425_unl_qualifying.pdf"
+      },
+      "tiebreak": {
+        "status": "official_rule_text_verified_but_not_fully_operationalized",
+        "rule_reference": "2024/25 Regulations, Article 15",
+        "criteria": ["head_to_head_points", "head_to_head_goal_difference", "head_to_head_goals", "reapply_head_to_head_for_remaining_tied_teams", "overall_goal_difference", "overall_goals", "overall_away_goals", "overall_wins", "overall_away_wins", "disciplinary_points", "2024_25_access_list_position"],
+        "operationalization_gap": "No disciplinary-card totals are present in the frozen match source. Tied ranks remain unresolved when required criteria are missing."
+      },
+      "sources": [
+        {"source": "UEFA 2024/25 league-phase draw and format", "url": "https://www.uefa.com/uefanationsleague/news/028a-1a1579c12dec-5cadac35d0a0-1000/", "retrieved_at": "2026-09-29T16:00:59Z", "source_digest": null, "digest_note": "Official page confirms groups, actual Lithuania assignment, league match counts and format changes."},
+        {"source": "UEFA 2024/25 official league-phase fixture list", "url": "https://editorial.uefa.com/resources/028a-1a2379ee841a-226ce0a39213-1000/uefa_nations_league_-_2024-2025_-_league_phase_-_fixtures_by_league.pdf", "retrieved_at": "2026-09-29T16:00:59Z", "source_digest": null, "digest_note": "Official dates, matchdays and kick-off times exist in this PDF but have not been ingested into the canonical fixture source."},
+        {"source": "UEFA 2024/25 Regulations, Article 15", "url": "https://documents.uefa.com/r/Regulations-of-the-UEFA-Nations-League-2024/25/Article-15-Equality-of-points-league-phase-Online", "retrieved_at": "2026-09-29T16:00:59Z", "source_digest": null, "digest_note": "Official rule text; raw source digest not asserted."},
+        {"source": "UEFA 2024/25 competition format", "url": "https://www.uefa.com/uefanationsleague/news/0288-19a14a0f77d0-8b88a4fd8106-1000/", "retrieved_at": "2026-09-29T16:00:59Z", "source_digest": null, "digest_note": "Official format summary for new quarter-final and promotion/relegation structure."}
+      ]
+    }
+  }
+}
