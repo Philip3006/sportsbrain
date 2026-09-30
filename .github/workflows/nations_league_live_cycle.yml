@@ -1,0 +1,31 @@
+name: Nations League LIVE lifecycle
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/15 * * * *'
+
+concurrency:
+  group: nations-league-live-cycle
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  lifecycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Plan current LIVE lifecycle
+        run: |
+          python3 scripts/nations_league_live_cycle.py \
+            --manifest results/audits/nations_league_forward_fixture_manifest.json \
+            --input-state results/research/nations_league_v1_1_input_state_20260930T200124Z.json \
+            --registry results/audits/continuous_model_lifecycle_registry.json \
+            --store /tmp/nations-league-live-predictions.jsonl \
+            --as-of "$(date -u +%Y-%m-%dT%H:%M:%SZ)"

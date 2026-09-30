@@ -54,6 +54,80 @@ class NationsLeagueLifecycleError(ValueError):
     """A sealed v1.1 input-state cannot form a safe lifecycle release."""
 
 
+def active_release_from_registry(registry: Mapping[str, Any]) -> ModelRelease:
+    """Rehydrate the single committed ACTIVE pointer without mutable state.
+
+    The registry is the persisted release pointer for the live read path.  It
+    is intentionally validated before any prediction or public projection is
+    allowed to consume it.  No filesystem, provider, or runtime-state write is
+    performed here.
+    """
+
+    lifecycle = registry.get("lifecycle")
+    if not isinstance(lifecycle, Mapping):
+        raise NationsLeagueLifecycleError("lifecycle registry is missing")
+    releases = lifecycle.get("releases")
+    pointers = lifecycle.get("active_pointers")
+    if not isinstance(releases, list) or not isinstance(pointers, list):
+        raise NationsLeagueLifecycleError("lifecycle registry is incomplete")
+    active_pointers = [
+        pointer
+        for pointer in pointers
+        if isinstance(pointer, Mapping) and pointer.get("model_family") == MODEL_FAMILY
+    ]
+    if len(active_pointers) != 1:
+        raise NationsLeagueLifecycleError("exactly one active Nations League pointer is required")
+    pointer = active_pointers[0]
+    release_rows = [
+        row
+        for row in releases
+        if isinstance(row, Mapping) and row.get("release_id") == pointer.get("release_id")
+    ]
+    if len(release_rows) != 1:
+        raise NationsLeagueLifecycleError("active release is not present exactly once")
+    row = release_rows[0]
+    snapshot_row = row.get("training_snapshot")
+    if not isinstance(snapshot_row, Mapping):
+        raise NationsLeagueLifecycleError("active release snapshot is missing")
+    snapshot = TrainingSnapshot(
+        model_family=str(snapshot_row.get("model_family", "")),
+        sport=str(snapshot_row.get("sport", "")),
+        scope=str(snapshot_row.get("scope", "")),
+        algorithm_version=str(snapshot_row.get("algorithm_version", "")),
+        algorithm_digest=str(snapshot_row.get("algorithm_digest", "")),
+        training_data_digest=str(snapshot_row.get("training_data_digest", "")),
+        training_cutoff=str(snapshot_row.get("training_cutoff", "")),
+        training_row_count=snapshot_row.get("training_row_count", 0),
+        result_safe_watermark=str(snapshot_row.get("result_safe_watermark", "")),
+        feature_schema_digest=str(snapshot_row.get("feature_schema_digest", "")),
+        trained_state_digest=str(snapshot_row.get("trained_state_digest", "")),
+        source_release_sha=str(snapshot_row.get("source_release_sha", "")),
+        captured_at=str(snapshot_row.get("captured_at", "")),
+    )
+    if snapshot.model_family != MODEL_FAMILY or snapshot.algorithm_digest != FROZEN_ALGORITHM_DIGEST:
+        raise NationsLeagueLifecycleError("registry active release is not the frozen Nations League model")
+    if snapshot_row.get("snapshot_digest") != snapshot.snapshot_digest:
+        raise NationsLeagueLifecycleError("active release snapshot digest is invalid")
+    parameter_digest = str(row.get("parameter_digest", ""))
+    parent_release_id = row.get("parent_release_id")
+    expected_id = ModelRelease.create(
+        snapshot,
+        parameter_digest=parameter_digest,
+        parent_release_id=parent_release_id,
+    ).release_id
+    if expected_id != row.get("release_id") or row.get("status") != ACTIVE:
+        raise NationsLeagueLifecycleError("active release identity or status is invalid")
+    return ModelRelease(
+        release_id=str(row["release_id"]),
+        snapshot=snapshot,
+        parameter_digest=parameter_digest,
+        status=ACTIVE,
+        parent_release_id=parent_release_id,
+        validation_digest=row.get("validation_digest"),
+        rejection_reason=row.get("rejection_reason"),
+    )
+
+
 def parameter_payload() -> dict[str, Any]:
     """The immutable algorithm material, distinct from trained Elo state."""
 

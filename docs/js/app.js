@@ -100,7 +100,56 @@ async function _validNationsLeaguePublicPayload(value, nowMs = Date.now()) {
     const expected = [...keys].sort();
     return actual.length === expected.length && actual.every((key, index) => key === expected[index]);
   };
-  if (!await _validNationsLeaguePublicDigest(value) || !exactKeys(value, [
+  if (!await _validNationsLeaguePublicDigest(value)) return false;
+  if (value?.schema === 'nations-league-live-public-v1') {
+    if (!exactKeys(value, [
+      'schema', 'competition', 'status', 'experimental', 'publication_enabled',
+      'no_bet', 'betting_enabled', 'ledger_mutation', 'model_release',
+      'fixture_count', 'fixtures', 'audit_history', 'updated_at', 'public_digest',
+    ]) || value.competition !== 'UEFA Nations League' || value.status !== 'LIVE' ||
+        value.experimental !== true || value.publication_enabled !== true ||
+        value.no_bet !== true || value.betting_enabled !== false ||
+        value.ledger_mutation !== false || !value.model_release ||
+        !exactKeys(value.model_release, [
+          'model_family', 'model_version', 'algorithm_digest', 'release_id',
+          'training_data_digest', 'trained_state_digest', 'training_cutoff', 'binding_digest',
+        ]) || value.model_release.model_family !== 'nations_league_v1_1' ||
+        value.model_release.model_version !== 'nations_league_v1_1' ||
+        !/^[0-9a-f]{64}$/.test(value.model_release.algorithm_digest || '') ||
+        !/^[0-9a-f]{64}$/.test(value.model_release.release_id || '') ||
+        !/^[0-9a-f]{64}$/.test(value.model_release.training_data_digest || '') ||
+        !/^[0-9a-f]{64}$/.test(value.model_release.trained_state_digest || '') ||
+        !/^[0-9a-f]{64}$/.test(value.model_release.binding_digest || '') ||
+        !Number.isSafeInteger(value.fixture_count) || value.fixture_count < 1 ||
+        !Array.isArray(value.fixtures) || value.fixtures.length !== value.fixture_count ||
+        !Number.isFinite(Date.parse(value.updated_at || ''))) return false;
+    const validProbabilities = (probabilities) => exactKeys(probabilities, ['home', 'draw', 'away']) &&
+      ['home', 'draw', 'away'].every((key) => Number.isFinite(probabilities[key]) &&
+        probabilities[key] >= 0 && probabilities[key] <= 1) &&
+      Math.abs(probabilities.home + probabilities.draw + probabilities.away - 1) <= 1e-9;
+    const ids = new Set();
+    for (const fixture of value.fixtures) {
+      if (!exactKeys(fixture, [
+        'fixture_id', 'competition', 'source_prediction_record_id', 'source_identity',
+        'canonical_identity', 'kickoff_utc', 'phase', 'probabilities',
+        'prediction_cutoff', 'updated_at',
+      ]) || typeof fixture.fixture_id !== 'string' || !fixture.fixture_id ||
+          ids.has(fixture.fixture_id) || fixture.competition !== value.competition ||
+          !['initial', 'refinement'].includes(fixture.phase) ||
+          !validProbabilities(fixture.probabilities) ||
+          !Number.isFinite(Date.parse(fixture.kickoff_utc || '')) ||
+          !Number.isFinite(Date.parse(fixture.prediction_cutoff || '')) ||
+          !Number.isFinite(Date.parse(fixture.updated_at || '')) ||
+          !fixture.source_identity || !fixture.canonical_identity ||
+          typeof fixture.source_identity.home_team !== 'string' ||
+          typeof fixture.source_identity.away_team !== 'string' ||
+          typeof fixture.canonical_identity.home_team !== 'string' ||
+          typeof fixture.canonical_identity.away_team !== 'string') return false;
+      ids.add(fixture.fixture_id);
+    }
+    return value.updated_at === [...value.fixtures].map((item) => item.updated_at).sort().at(-1);
+  }
+  if (!exactKeys(value, [
     'schema', 'competition', 'provider', 'provider_league_id', 'evidence_status', 'lifecycle',
     'no_bet', 'publication_enabled', 'captured_at', 'source_sha', 'artifact_digest',
     'model_snapshot_digest', 'fixture_count', 'fixtures', 'public_digest',
@@ -1416,7 +1465,7 @@ async function _load() {
     source = 'static';
   }
   d = await _mergeStaticNationsLeagueIfMissing(d, source, fetch);
-  if (d.nations_league && !(await _validNationsLeaguePublicDigest(d.nations_league))) {
+  if (d.nations_league && !(await _validNationsLeaguePublicPayload(d.nations_league))) {
     d = Object.assign({}, d, { nations_league: null });
   }
 
@@ -1440,7 +1489,10 @@ async function _load() {
   _signals = [...(d.football||[]), ...(d.tennis||[])];
   // Nations League shadow fixtures have a separate read-only renderer and are
   // deliberately never added to the actionable football signal collection.
-  if (typeof renderNationsLeagueShadow === 'function') {
+  if (d.nations_league?.schema === 'nations-league-live-public-v1' &&
+      typeof renderNationsLeagueLive === 'function') {
+    renderNationsLeagueLive(d.nations_league || null);
+  } else if (typeof renderNationsLeagueShadow === 'function') {
     renderNationsLeagueShadow(d.nations_league || null);
   }
   _tennisStats = d.tennis_stats || {};

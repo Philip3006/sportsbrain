@@ -527,6 +527,41 @@ function _footballLeagueLabel(league) {
   return _FOOTBALL_LEAGUE_LABELS[String(league || '').toLowerCase()] || '⚽ Fußball';
 }
 
+function renderNationsLeagueLive(payload) {
+  const container = document.getElementById('nations-league-live');
+  if (!container) return;
+  const now = Date.now();
+  const valid = payload && payload.schema === 'nations-league-live-public-v1' &&
+    payload.competition === 'UEFA Nations League' && payload.status === 'LIVE' &&
+    payload.publication_enabled === true && payload.no_bet === true &&
+    payload.betting_enabled === false && payload.ledger_mutation === false &&
+    Number.isInteger(payload.fixture_count) && payload.fixture_count > 0 &&
+    Array.isArray(payload.fixtures) && payload.fixtures.length === payload.fixture_count;
+  if (!valid) {
+    container.replaceChildren();
+    container.hidden = true;
+    return;
+  }
+  const pct = (value) => `${(Number(value) * 100).toFixed(1)}%`;
+  const fixtures = payload.fixtures.filter((fixture) => Date.parse(fixture?.kickoff_utc || '') > now).map((fixture) => {
+    const probabilities = fixture.probabilities || {};
+    const teams = fixture.canonical_identity || fixture.source_identity || {};
+    if (!teams.home_team || !teams.away_team ||
+        !['home', 'draw', 'away'].every((key) => Number.isFinite(probabilities[key]))) return null;
+    const kickoff = new Date(fixture.kickoff_utc).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    const rows = [['1', teams.home_team, probabilities.home], ['X', 'Remis', probabilities.draw], ['2', teams.away_team, probabilities.away]].map(([label, team, value]) =>
+      `<div class="nl-shadow-outcome"><span>${esc(label)} · ${esc(team)}</span><b>${pct(value)}</b></div>`).join('');
+    return `<article class="nl-shadow-fixture"><div class="nl-shadow-fixture-title"><b>${esc(teams.home_team)} vs ${esc(teams.away_team)}</b><span>${kickoff}</span></div>${rows}<small>LIVE · ${esc(fixture.phase)} · Modell ${esc(fixture.model_release_id || payload.model_release?.release_id || '—')} · NO BET</small></article>`;
+  });
+  if (!fixtures.length || fixtures.some((fixture) => fixture === null)) {
+    container.replaceChildren();
+    container.hidden = true;
+    return;
+  }
+  container.hidden = false;
+  container.innerHTML = `<section class="nl-shadow-panel" aria-label="UEFA Nations League live model"><header><div><b>UEFA Nations League</b><span class="nl-shadow-badge">LIVE</span></div><small>LIVE public forecast · Experimental · NO BET · Keine Wettfunktion</small></header>${fixtures.join('')}</section>`;
+}
+
 function renderNationsLeagueShadow(payload) {
   const container = document.getElementById('nations-league-shadow');
   if (!container) return;

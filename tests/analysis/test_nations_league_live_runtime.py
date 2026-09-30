@@ -1,0 +1,156 @@
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+import pytest
+
+from src.analysis.nations_league_live_runtime import (
+    NationsLeagueLiveRuntimeError,
+    due_state,
+    load_active_release,
+    refresh_result_state,
+    run_live_cycle,
+)
+from src.notifications.nations_league_public import (
+    select_freshest_valid_public_nations_league,
+    validate_public_nations_league,
+)
+from src.notifications.public_serializer import serialize_public_product
+
+ROOT = Path(__file__).parents[2]
+
+
+def _json(path: str) -> dict:
+    return json.loads((ROOT / path).read_text(encoding="utf-8"))
+
+
+def test_live_release_rehydrates_the_single_committed_active_pointer():
+    release = load_active_release(ROOT / "results/audits/continuous_model_lifecycle_registry.json")
+    assert release.status == "ACTIVE"
+    assert release.release_id == "78161c4097c06e596efa95721aa62db0ed72a057a3fd664cbecd32f0c0be29bb"
+    assert release.snapshot.training_row_count == 566
+
+
+@pytest.mark.parametrize(
+    ("kickoff", "as_of", "expected"),
+    [
+        ("2026-10-02T18:45:00Z", "2026-10-01T16:44:59Z", "TOO_EARLY"),
+        ("2026-10-02T18:45:00Z", "2026-10-01T16:45:00Z", "INITIAL_DUE"),
+        ("2026-10-01T18:45:00Z", "2026-10-01T20:45:00Z", "STARTED"),
+    ],
+)
+def test_live_due_window_boundaries(kickoff, as_of, expected):
+    assert due_state(kickoff, as_of) == expected
+
+
+def test_live_plan_does_not_call_prediction_builder():
+    manifest = _json("results/audits/nations_league_forward_fixture_manifest.json")
+    state = _json("results/research/nations_league_v1_1_input_state_20260930T200124Z.json")
+    release = load_active_release(ROOT / "results/audits/continuous_model_lifecycle_registry.json")
+    called = []
+
+    def forbidden(*_args, **_kwargs):
+        called.append(True)
+        raise AssertionError("plan mode must not predict")
+
+    result = run_live_cycle(
+        manifest,
+        state,
+        release,
+        as_of="2026-10-01T16:45:00Z",
+        prediction_builder=forbidden,
+        execute=False,
+    )
+    assert result["appended_count"] == 0
+    assert called == []
+    assert any(row["status"] == "DUE" for row in result["predictions"])
+
+
+def test_live_execute_is_release_bound_and_idempotent_with_explicit_builder():
+    manifest = _json("results/audits/nations_league_forward_fixture_manifest.json")
+    state = _json("results/research/nations_league_v1_1_input_state_20260930T200124Z.json")
+    release = load_active_release(ROOT / "results/audits/continuous_model_lifecycle_registry.json")
+    fixture_id = state["fixtures"][0]["fixture_id"]
+    manifest = {**manifest, "fixtures": [row for row in manifest["fixtures"] if row["fixture_id"] == fixture_id]}
+
+    def builder(_state, identity, *, phase, active_release, captured_at):
+        return {
+            "fixture_id": identity,
+            "phase": phase,
+            "model_release_id": active_release.release_id,
+            "status": "LIVE",
+            "no_bet": True,
+            "captured_at": captured_at,
+        }
+
+    first = run_live_cycle(
+        manifest,
+        state,
+        release,
+        as_of="2026-10-01T16:45:00Z",
+        prediction_builder=builder,
+        execute=True,
+    )
+    assert first["appended_count"] == 1
+    second = run_live_cycle(
+        manifest,
+        state,
+        release,
+        as_of="2026-10-01T16:45:00Z",
+        existing_records=first["appended_records"],
+        prediction_builder=builder,
+        execute=True,
+    )
+    assert second["appended_count"] == 0
+    assert second["predictions"][0]["status"] == "ALREADY_CAPTURED"
+
+
+def test_live_execute_uses_the_frozen_model_adapter_for_a_matching_input_cutoff():
+    manifest = _json("results/audits/nations_league_forward_fixture_manifest.json")
+    state = _json("results/research/nations_league_v1_1_input_state_20260930T200124Z.json")
+    release = load_active_release(ROOT / "results/audits/continuous_model_lifecycle_registry.json")
+    ids = {row["fixture_id"] for row in state["fixtures"]}
+    manifest = {**manifest, "fixtures": [row for row in manifest["fixtures"] if row["fixture_id"] in ids]}
+    result = run_live_cycle(
+        manifest,
+        state,
+        release,
+        as_of=state["prediction_cutoff"].replace("+00:00", "Z"),
+        execute=True,
+    )
+    assert result["appended_count"] == 1
+    record = result["appended_records"][0]
+    assert record["status"] == "LIVE"
+    assert record["model_release_id"] == release.release_id
+    assert record["publication_enabled"] is True
+    assert record["no_bet"] is True
+
+
+def test_result_refresh_is_noop_or_requires_new_release_without_guessing():
+    state = _json("results/research/nations_league_v1_1_input_state_20260930T200124Z.json")
+    current = {"result_extension_digest": state["result_extension_digest"]}
+    assert refresh_result_state(current, state)["status"] == "NO_OP"
+    changed = {**state, "result_extension_digest": "a" * 64}
+    decision = refresh_result_state(current, changed)
+    assert decision["status"] == "RESULTS_CHANGED"
+    assert decision["retrain_required"] is True
+    assert decision["no_bet"] is True
+
+
+def test_materialized_live_bundle_uses_serializer_and_live_dispatch():
+    signals = _json("docs/data/signals.json")
+    live = signals["nations_league"]
+    assert live["status"] == "LIVE"
+    assert live["fixture_count"] == 7
+    assert validate_public_nations_league(live)["public_digest"] == live["public_digest"]
+    assert select_freshest_valid_public_nations_league([live]) == live
+    assert serialize_public_product(signals)["nations_league"] == live
+
+
+def test_non_utc_live_clock_fails_closed():
+    manifest = _json("results/audits/nations_league_forward_fixture_manifest.json")
+    state = _json("results/research/nations_league_v1_1_input_state_20260930T200124Z.json")
+    release = load_active_release(ROOT / "results/audits/continuous_model_lifecycle_registry.json")
+    with pytest.raises(NationsLeagueLiveRuntimeError, match="UTC"):
+        run_live_cycle(manifest, state, release, as_of="2026-10-01T16:45:00+02:00")
