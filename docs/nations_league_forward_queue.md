@@ -17,12 +17,17 @@ Output includes both windows, next pending window starts, due/missed/captured
 phase identities and exact prediction cutoff. Past missed phases remain visible
 even when the refinement phase is due.
 
-Manual execution adds `--execute-offline --training training.json
---input-provenance provenance.json`. Training is a local canonical record list.
-Provenance is keyed by fixture ID and supplies `timeline_digest`, exact
-`fixture_source_digest` and `training_cutoff` equal to `--as-of`. The merged
-#227 frozen runner validates causal training and builds predictions. No network
-transport exists. `--model-digest` optionally pins the expected frozen digest.
+Manual execution adds `--execute-offline --input-state input-state.json`.
+The snapshot must be produced by merged #229 `build_input_state(...)` using
+canonical causal history and completeness proof. Its cutoff must equal `--as-of`
+(equivalent UTC spellings accepted). The queue rebuilds and verifies the entire
+snapshot, requires every team READY, binds its fixture objects including source
+digests to the supplied #228 manifest, then calls `predict_from_input_state(...)`
+for each due uncaptured phase. LIVE_RESULT_REFRESH_REQUIRED, STALE_INPUT,
+MISSING_TEAM and AMBIGUOUS_IDENTITY fail before any prediction append. All due
+fixtures must be present in the snapshot. Raw `--training` / `--input-provenance`
+flags are removed. No network transport exists. `--model-digest` optionally pins
+the expected frozen digest. A fixture manifest alone is insufficient to execute.
 
 Store inspection is read-only in plan mode. Execution locks the JSONL store,
 validates all due records before append, and never rewrites existing predictions

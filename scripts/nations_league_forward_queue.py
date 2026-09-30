@@ -11,9 +11,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from src.analysis.nations_league_forward_input import (
+    build_input_state,
+    predict_from_input_state,
+)
 from src.analysis.nations_league_v1 import (
     MODEL_VERSION,
-    build_forward_shadow_prediction,
     deterministic_record_id,
     model_digest,
     sha256_json,
@@ -179,7 +182,24 @@ def plan(manifest, as_of, store, existing=(), expected_model_digest=None):
     }
 
 
-def execute(manifest, as_of, store, training, provenance, expected_model_digest=None):
+def execute(manifest, as_of, store, input_state, expected_model_digest=None):
+    if utc(input_state["prediction_cutoff"]) != utc(as_of):
+        raise ValueError("input-state prediction cutoff must match as-of")
+    rebuilt = build_input_state(
+        input_state["fixtures"],
+        input_state["training_records"],
+        prediction_cutoff=input_state["prediction_cutoff"],
+        provenance=input_state["provenance"],
+    )
+    if rebuilt != input_state:
+        raise ValueError("input snapshot mismatch")
+    if any(value != "READY" for value in rebuilt["team_readiness"].values()):
+        raise ValueError("forward input is not READY")
+    manifest_fixtures = {row["fixture_id"]: row for row in manifest["fixtures"]}
+    state_fixtures = {row["fixture_id"]: row for row in rebuilt["fixtures"]}
+    for identity, fixture in state_fixtures.items():
+        if fixture != manifest_fixtures.get(identity):
+            raise ValueError("input-state fixture/source binding differs from manifest")
     # Manual execution serializes inspection and append under one OS lock.
     store.parent.mkdir(parents=True, exist_ok=True)
     with store.open("a+", encoding="utf-8") as handle:
@@ -187,24 +207,18 @@ def execute(manifest, as_of, store, training, provenance, expected_model_digest=
         handle.seek(0)
         existing = [json.loads(line) for line in handle if line.strip()]
         result = plan(manifest, as_of, store, existing, expected_model_digest)
-        fixtures = {row["fixture_id"]: row for row in manifest["fixtures"]}
         pending = []
         for row in result["fixtures"]:
             if row["status"] != "DUE":
                 continue
             identity = row["fixture_id"]
-            inputs = provenance[identity]
-            if inputs["fixture_source_digest"] != fixtures[identity]["source_digest"]:
-                raise ValueError("input provenance fixture digest mismatch")
-            if utc(inputs["training_cutoff"]) != utc(as_of):
-                raise ValueError("training cutoff must match prediction cutoff")
+            if identity not in state_fixtures:
+                raise ValueError("due fixture missing from input state")
             pending.append(
-                build_forward_shadow_prediction(
-                    fixtures[identity],
+                predict_from_input_state(
+                    rebuilt,
+                    identity,
                     phase=row["lifecycle"],
-                    prediction_timestamp=as_of,
-                    training_records=training,
-                    input_provenance=inputs,
                 )
             )
         # Validate all due predictions before writing any prediction lines.
@@ -226,22 +240,20 @@ def main():
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--plan", action="store_true")
     mode.add_argument("--execute-offline", action="store_true")
-    parser.add_argument("--training", type=Path)
-    parser.add_argument("--input-provenance", type=Path)
+    parser.add_argument("--input-state", type=Path)
     args = parser.parse_args()
     try:
         manifest = json.loads(args.manifest.read_text())
         if args.execute_offline:
-            if not args.training or not args.input_provenance:
+            if not args.input_state:
                 raise ValueError(
-                    "offline execution requires training and per-fixture provenance"
+                    "offline execution requires a #229 input-state snapshot"
                 )
             result = execute(
                 manifest,
                 args.as_of,
                 args.store,
-                json.loads(args.training.read_text()),
-                json.loads(args.input_provenance.read_text()),
+                json.loads(args.input_state.read_text()),
                 args.model_digest,
             )
         else:
