@@ -1,0 +1,21 @@
+{
+  "base_timeline_digest": "2c60c6b823b0cae948947fffe2a0e3456495c1fc5d510379ae95690e1c3fa6ef",
+  "completeness_digest": "f5bf22bf4755469840f45512493a9f5842aace7a5218eddace2d5c39148fab7b",
+  "exception_count": 0,
+  "expected_count": 56,
+  "extension_digest": "b5a46881009447f4726a368f40281bcb22b96c223a056ffff5ed794345b1f110",
+  "identity_status": "UNAMBIGUOUS",
+  "model_digest": "50fc0f9120009b86eda1ebf016c14e93c9bd72c256b849577d5f55217d77f626",
+  "model_version": "nations_league_v1_1",
+  "no_bet": true,
+  "observed_at": "2026-09-30T19:34:47.774518Z",
+  "prediction_cutoff": "2026-09-30T19:34:47.774518+00:00",
+  "provenance_digest": "d3ea145ae2abae006a907263af6bba2d92958585fce8d67ae8dad0a0c7dd02ed",
+  "publication_enabled": false,
+  "results_verified_through": "2026-09-30T19:34:47.774518Z",
+  "schema": "nations-league-v1-1-result-completeness-v1",
+  "source_provenance": "reviewed official post-base inventory",
+  "status": "READY",
+  "unresolved_count": 0,
+  "verified_count": 56
+}
