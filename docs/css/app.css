@@ -704,3 +704,27 @@
 .nl-shadow-detail-outcome b{font-size:18px;color:var(--text)}
 .nl-shadow-detail-outcome .nl-shadow-detail-market{color:var(--yellow);font-size:12px;font-weight:900}
 .nl-shadow-detail-meta{margin-top:11px;color:var(--muted);font-size:10px;line-height:1.5}
+.nl-diagnostics{margin-top:13px;padding-top:13px;border-top:1px solid var(--border)}
+.nl-diagnostics-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.nl-diagnostics-heading>div{display:flex;min-width:0;flex-direction:column;gap:2px}
+.nl-diagnostics-heading strong{font-size:13px}
+.nl-diagnostics-kicker{color:var(--muted);font-size:9px;font-weight:800;letter-spacing:.7px;text-transform:uppercase}
+.nl-diagnostics-status{flex:none;padding:3px 6px;border:1px solid rgba(255,165,0,.35);border-radius:999px;background:rgba(255,165,0,.07);color:var(--yellow);font-size:9px;font-weight:850;text-transform:uppercase}
+.nl-diag-table{overflow:hidden;border:1px solid var(--border);border-radius:9px;background:rgba(255,255,255,.01)}
+.nl-diag-row{display:grid;grid-template-columns:minmax(92px,1.4fr) repeat(3,minmax(45px,.6fr));align-items:center;border-top:1px solid rgba(48,54,61,.55)}
+.nl-diag-row:first-child{border-top:0}
+.nl-diag-label,.nl-diag-cell{min-width:0;padding:8px 6px;font-size:10px}
+.nl-diag-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
+.nl-diag-cell{text-align:center;font-variant-numeric:tabular-nums}
+.nl-diag-header{background:rgba(255,255,255,.035);color:var(--muted);font-weight:800;text-transform:uppercase}
+.nl-diag-final{background:rgba(77,159,255,.055)}
+.nl-diag-market{background:rgba(255,255,255,.02)}
+.nl-diag-edge-row{background:rgba(255,165,0,.035)}
+.nl-diag-edge.positive{color:var(--green);font-weight:850}
+.nl-diag-edge.negative{color:var(--red);font-weight:850}
+.nl-diag-edge.neutral{color:var(--muted);font-weight:750}
+.nl-diag-na{color:var(--muted);font-weight:600}
+.nl-diag-meta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:7px;margin-top:9px}
+.nl-diag-meta-grid>div{display:flex;min-width:0;flex-direction:column;gap:3px;padding:8px;border:1px solid var(--border);border-radius:8px;background:rgba(255,255,255,.018)}
+.nl-diag-meta-grid span{color:var(--muted);font-size:9px;font-weight:750;text-transform:uppercase}
+.nl-diag-meta-grid strong{overflow-wrap:anywhere;font-size:10px;line-height:1.35}

@@ -125,6 +125,27 @@ function appNlHelpers() {
   return context.nlHelpers;
 }
 
+function diagnosticsHtml(fixture, payload) {
+  const context = {
+    Date,
+    Number,
+    String,
+    Math,
+    esc: (value) => String(value ?? '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;'),
+  };
+  vm.createContext(context);
+  const start = appSource.indexOf('const _NL_DIAGNOSTIC_OUTCOMES =');
+  const end = appSource.indexOf('\nfunction openNationsLeagueMatch(', start);
+  assert.notEqual(start, -1);
+  assert.notEqual(end, -1);
+  vm.runInContext(appSource.slice(start, end) +
+    '\nglobalThis.renderDiagnostics = _nationsLeagueDiagnosticsHtml;', context);
+  return context.renderDiagnostics(fixture, payload);
+}
+
 test('Worker public allowlist preserves the validated Nations League shadow envelope', () => {
   const source = { nations_league: publicBundle(), private_marker: 'must disappear' };
   const output = serializePublicProduct(source);
@@ -198,6 +219,32 @@ test('PWA renders UEFA Nations League as read-only Shadow with model and market 
   assert.equal((element.innerHTML.match(/class="nl-shadow-fixture"/g) || []).length, 2);
   assert.match(element.innerHTML, /Kein Wett- oder Produktionssignal/);
   assert.doesNotMatch(element.innerHTML, /place-bet|data-stake|wette abgeben/i);
+});
+
+test('NL match diagnostics expose existing model components and degrade missing fields safely', () => {
+  const bundle = publicBundle();
+  const complete = diagnosticsHtml(bundle.fixtures[0], bundle);
+  assert.match(complete, /Prediction Diagnostics/);
+  assert.match(complete, /Final Model[\s\S]*52\.0%[\s\S]*25\.0%[\s\S]*23\.0%/);
+  assert.match(complete, /Dixon-Coles/);
+  assert.match(complete, /GBT/);
+  assert.match(complete, /Market[\s\S]*48\.0%[\s\S]*27\.0%[\s\S]*25\.0%/);
+  assert.match(complete, /Model − Market[\s\S]*\+4\.0 pp[\s\S]*-2\.0 pp[\s\S]*-2\.0 pp/);
+  assert.match(complete, /Confidence[\s\S]*Nicht verfügbar/);
+  assert.match(complete, /Datenzeitpunkt/);
+  assert.match(complete, /SHADOW ONLY/);
+  assert.doesNotMatch(complete, /<button|place-bet|data-stake/i);
+
+  const partial = diagnosticsHtml({
+    model: { probabilities: { home: 0.6 }, components: {} },
+    market: { probabilities: { home: 0.55 } },
+    captured_at: null,
+  }, { lifecycle: 'SHADOW_ONLY', publication_enabled: false });
+  assert.match(partial, /Final Model[\s\S]*60\.0%/);
+  assert.match(partial, /Model − Market[\s\S]*\+5\.0 pp/);
+  assert.match(partial, /Nicht verfügbar/);
+  assert.doesNotMatch(partial, /undefined|NaN/);
+  assert.doesNotMatch(partial, /<button|place-bet|data-stake/i);
 });
 
 test('PWA renders a 16-minute Shadow snapshot with visible freshness and keeps it read-only', () => {
