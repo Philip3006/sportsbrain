@@ -6,7 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).parents[2]
 SCRIPT = ROOT / "scripts/build_continuous_model_lifecycle_registry.py"
-SOURCE_SHA = "e4d7c579ce347e385e08817c5083527faf6bcc87"
+SOURCE_SHA = "267a5df80ee326cfe41ee6ddc27d3e8c547ab222"
 
 
 def _module():

@@ -13,7 +13,7 @@ from src.analysis.nations_league_model_lifecycle import (
 )
 
 ROOT = Path(__file__).parents[2]
-SOURCE_SHA = "e4d7c579ce347e385e08817c5083527faf6bcc87"
+SOURCE_SHA = "267a5df80ee326cfe41ee6ddc27d3e8c547ab222"
 INPUT = ROOT / "results/research/nations_league_v1_1_input_state_20260930T200124Z.json"
 
 
@@ -25,7 +25,7 @@ def test_sealed_v11_state_establishes_exact_active_release_without_retraining():
     lifecycle, release = establish_initial_active_release(
         _input_state(), source_release_sha=SOURCE_SHA
     )
-    assert release.release_id == "d1da2a3b9464304c2359c62b8259eb1a39ebff716c2d6bfe18954afe80955287"
+    assert release.release_id == "78161c4097c06e596efa95721aa62db0ed72a057a3fd664cbecd32f0c0be29bb"
     assert release.snapshot.algorithm_digest == FROZEN_ALGORITHM_DIGEST
     assert release.snapshot.training_row_count == 566
     assert release.snapshot.training_data_digest == (

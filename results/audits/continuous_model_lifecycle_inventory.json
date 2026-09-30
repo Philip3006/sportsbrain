@@ -168,7 +168,7 @@
       "training_source": "governed B4 evidence"
     }
   ],
-  "inventory_digest": "5365fe71e3efa1d77e945fedb40d42b111723c4da4f13bbabf7bb1a6e4efe8dd",
+  "inventory_digest": "ec12c428ccb6363856f58283a276b892691713d4f22c26f33ed7250e6777411c",
   "schema": "continuous-model-lifecycle-inventory-v1",
-  "source_release_sha": "e4d7c579ce347e385e08817c5083527faf6bcc87"
+  "source_release_sha": "267a5df80ee326cfe41ee6ddc27d3e8c547ab222"
 }
