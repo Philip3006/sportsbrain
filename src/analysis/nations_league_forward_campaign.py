@@ -494,7 +494,12 @@ def build_forward_evidence_summary(
         if row.get("record_type") == "settlement"
     }
     manifest = artifact.campaign.fixture_manifest
-    eligible = [row for row in manifest if row.get("exception") is None]
+    eligible = [
+        row
+        for row in manifest
+        if row.get("exception") is None
+        and (row["initial_eligible"] or row["refinement_eligible"])
+    ]
     initial_eligible = [row for row in eligible if row["initial_eligible"]]
     refinement_eligible = [row for row in eligible if row["refinement_eligible"]]
     captured_initial = {
