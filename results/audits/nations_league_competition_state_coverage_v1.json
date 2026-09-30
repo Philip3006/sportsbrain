@@ -1,0 +1,365 @@
+{
+  "built_at": "2026-09-29T16:00:59Z",
+  "coverage_digest": "04f86e1b8c5a1ec2f43dcb59c9d692060cba189683502ee896eaef41a5ecf298",
+  "dataset_digest": "26c80331d248bb4918bab1624e044c5d3476dabeead5f1825ac7e3e3dccaafb0",
+  "edition_rule_coverage": {
+    "2020/21": "partially_source_verified",
+    "2022/23": "partially_source_verified",
+    "2024/25": "partially_source_verified"
+  },
+  "expected_evaluation_fixture_count": 512,
+  "field_status_contract": {
+    "consumer_rule": "B5 may select only SAFE_EXACT or SAFE_BOUND fields; UNRESOLVED and NOT_APPLICABLE are never interpreted as sporting outcomes.",
+    "values": [
+      "NOT_APPLICABLE",
+      "SAFE_BOUND",
+      "SAFE_EXACT",
+      "UNRESOLVED"
+    ]
+  },
+  "field_status_counts": {
+    "away_group": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "away_league_tier": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "away_score": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "away_team": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "competition": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "edition": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "edition_rule_digest": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "fixture_date": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "fixture_id": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "group": {
+      "NOT_APPLICABLE": 38,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 474,
+      "UNRESOLVED": 0
+    },
+    "home_group": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "home_league_tier": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "home_score": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "home_team": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "kickoff": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "kickoff_status": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "league_tier": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "matchday": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 0,
+      "UNRESOLVED": 512
+    },
+    "matchday_status": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 0,
+      "UNRESOLVED": 512
+    },
+    "must_win_primitives": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 0,
+      "UNRESOLVED": 512
+    },
+    "neutral": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "official_fixture_id": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 0,
+      "UNRESOLVED": 512
+    },
+    "promotion_state": {
+      "NOT_APPLICABLE": 182,
+      "SAFE_BOUND": 330,
+      "SAFE_EXACT": 0,
+      "UNRESOLVED": 0
+    },
+    "qualification_state": {
+      "NOT_APPLICABLE": 38,
+      "SAFE_BOUND": 474,
+      "SAFE_EXACT": 0,
+      "UNRESOLVED": 0
+    },
+    "rank": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 319,
+      "SAFE_EXACT": 193,
+      "UNRESOLVED": 0
+    },
+    "relegation_state": {
+      "NOT_APPLICABLE": 86,
+      "SAFE_BOUND": 282,
+      "SAFE_EXACT": 0,
+      "UNRESOLVED": 144
+    },
+    "remaining_schedule": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "result_safe_available_at": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 510,
+      "UNRESOLVED": 2
+    },
+    "rule_provenance": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 512,
+      "SAFE_EXACT": 0,
+      "UNRESOLVED": 0
+    },
+    "rule_version": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "source_digest": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "source_fixture_identity_status": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 512,
+      "SAFE_EXACT": 0,
+      "UNRESOLVED": 0
+    },
+    "stage": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "standings_before": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "state_cutoff": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "state_cutoff_basis": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "timeline_dataset_digest": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "timeline_provenance": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "timeline_record_digest": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    },
+    "validation_period": {
+      "NOT_APPLICABLE": 0,
+      "SAFE_BOUND": 0,
+      "SAFE_EXACT": 512,
+      "UNRESOLVED": 0
+    }
+  },
+  "fields": {
+    "canonical_participants": {
+      "missing": 0,
+      "present": 512,
+      "status": "covered"
+    },
+    "causal_date_cutoff": {
+      "present": 512,
+      "status": "strict_target_kickoff; result-safe evidence must precede cutoff",
+      "strict_kickoff_timestamp_comparison": 512
+    },
+    "kickoff_timestamp": {
+      "missing": 0,
+      "present": 512,
+      "status": "verified_from_fixture_timeline"
+    },
+    "league_and_group_mapping": {
+      "missing": 38,
+      "present": 474,
+      "status": "partial_knockout_records_have_no_single_group"
+    },
+    "matchday": {
+      "missing": 512,
+      "present": 0,
+      "status": "not_frozen_in_fixture_timeline_schedule_evidence"
+    },
+    "official_fixture_id": {
+      "missing": 512,
+      "present": 0,
+      "status": "not_present_in_source_or_timeline; canonical_timeline_id_used"
+    },
+    "qualification_and_relegation_math": {
+      "computed_exact": 0,
+      "computed_points_bounds": 474,
+      "safe_consumability": "SAFE_BOUND_OR_UNRESOLVED_ONLY",
+      "status": "points_bounds_available; exact edition tie-break and allocation states remain unresolved",
+      "unresolved": 512
+    },
+    "standings_before": {
+      "missing": 0,
+      "present": 512,
+      "status": "covered_where_official_group_mapping_exists"
+    }
+  },
+  "fixture_coverage_basis": "one-to-one coverage of the hash-verified existing 512-row evaluation source; not an independent official-UEFA-ID crosswalk",
+  "fixture_coverage_complete": true,
+  "leakage_checks": {
+    "final_standings_backfilled": false,
+    "final_tables_read": false,
+    "future_match_scores_in_state": false,
+    "same_day_results_excluded": true,
+    "uses_only_result_dates_strictly_before_fixture_date": true
+  },
+  "limitations": [
+    "Official provider match IDs are absent; the canonical fixture timeline ID is the stable cross-contract identity.",
+    "Matchday labels were not present in the completed timeline schedule evidence and remain null rather than inferred.",
+    "2022/23 edition-specific Article 15 tie-break text was not frozen, so exact tie ranks and qualification/relegation boundary states remain unresolved.",
+    "2020/21 and 2024/25 tie-break rules require disciplinary points and access-list values absent from the 512-result snapshot for some tied ranks.",
+    "The 2022/23 delayed C/D play-out is represented as its observed two-leg pair; its provenance and exact two-leg result do not constitute the absent full scheduled fixture snapshot."
+  ],
+  "missing_source_fixtures": [],
+  "official_schedule_match_coverage_verified": true,
+  "output_record_count": 512,
+  "period_counts": {
+    "2020/21": 166,
+    "2022/23": 160,
+    "2022/23-delayed-relegation-playoffs": 2,
+    "2024/25": 184
+  },
+  "ready_gate": {
+    "administrative_result_exceptions_isolated": true,
+    "all_kickoffs_verified": true,
+    "all_record_fields_statused": true,
+    "causal_timing_complete": true,
+    "exact_rule_and_tiebreak_state_complete": false,
+    "fixture_timeline_join_complete": true,
+    "matchday_complete": false,
+    "safe_consumability_complete": true,
+    "status": "READY",
+    "unresolved_optional_fields_explicit": true
+  },
+  "schema_version": "uefa-nations-league-competition-state-coverage-v1",
+  "source_fixture_count": 512,
+  "stage_counts": {
+    "2020/21:league_a_finals": 4,
+    "2020/21:league_phase": 162,
+    "2022/23:league_a_finals": 4,
+    "2022/23:league_c_relegation_playout": 2,
+    "2022/23:league_phase": 156,
+    "2024/25:league_a_final_tournament": 4,
+    "2024/25:league_a_quarter_final": 8,
+    "2024/25:league_phase": 156,
+    "2024/25:promotion_relegation_playoff": 16
+  },
+  "status": "NL_COMPETITION_STATE_READY",
+  "timeline_join": {
+    "joined_complete": true,
+    "joined_records": 512,
+    "missing_fixture_ids": [],
+    "timeline_dataset_digest": "2c60c6b823b0cae948947fffe2a0e3456495c1fc5d510379ae95690e1c3fa6ef",
+    "timeline_schema": "uefa-nations-league-fixture-timeline-v1"
+  },
+  "unresolved_points_tie_rows": 950
+}

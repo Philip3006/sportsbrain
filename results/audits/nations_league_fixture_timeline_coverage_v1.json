@@ -1,0 +1,172 @@
+{
+  "administrative_exception_count": 2,
+  "administrative_exceptions": [
+    {
+      "away_team": "Ukraine",
+      "date": "2020-11-17",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:c07e17c2e1a35c4b056be0aa",
+      "home_team": "Switzerland",
+      "kickoff_utc": "2020-11-17T19:45:00Z",
+      "kind": "unplayed_fixture_award",
+      "reason": "administrative_award_has_no_played_match_completion_time",
+      "result_safe_available_at": null,
+      "source": "https://www.uefa.com/news-media/news/0263-10f07669c421-a1b7e2cc6859-1000--ab-switzerland-v-ukraine/"
+    },
+    {
+      "away_team": "Kosovo",
+      "date": "2024-11-15",
+      "edition": "2024/25",
+      "fixture_id": "uefa-nl:63f926e0ced3f284c077ee10",
+      "home_team": "Romania",
+      "kickoff_utc": "2024-11-15T19:45:00Z",
+      "kind": "abandoned_match_administrative_award",
+      "reason": "abandoned_match_has_no_deterministic_result_safe_time",
+      "result_safe_available_at": null,
+      "source": "https://www.uefa.com/uefanationsleague/news/028a-1a23b4c739a8-07fe752f503f-1000/"
+    }
+  ],
+  "ambiguous_identity_conflicts": 0,
+  "by_edition": {
+    "2020/21": {
+      "administrative_exceptions": 1,
+      "fixtures": 166,
+      "result_safe_bounds": 165,
+      "unresolved_kickoffs": 0,
+      "verified_kickoffs": 166
+    },
+    "2022/23": {
+      "administrative_exceptions": 0,
+      "fixtures": 162,
+      "result_safe_bounds": 162,
+      "unresolved_kickoffs": 0,
+      "verified_kickoffs": 162
+    },
+    "2024/25": {
+      "administrative_exceptions": 1,
+      "fixtures": 184,
+      "result_safe_bounds": 183,
+      "unresolved_kickoffs": 0,
+      "verified_kickoffs": 184
+    }
+  },
+  "coverage_digest": "3a8fe9933685c7cf01798a2ca25bb8ec648fdfcd1edc59047fa15c650c83b7ac",
+  "dataset_digest": "2c60c6b823b0cae948947fffe2a0e3456495c1fc5d510379ae95690e1c3fa6ef",
+  "duplicate_fixture_ids": [],
+  "identity_crosswalk_complete": true,
+  "ready_gate": {
+    "administrative_exceptions_exactly_isolated": true,
+    "all_512_kickoffs_verified": true,
+    "all_normal_completed_results_have_safe_bounds": true,
+    "identity_complete": true,
+    "zero_identity_conflicts": true
+  },
+  "reference_cutoff": {
+    "at": "2022-06-11T00:25:00Z",
+    "fixtures": [
+      {
+        "away_team": "Italy",
+        "fixture_id": "uefa-nl:414287f2c388b02543fd1496",
+        "home_team": "England",
+        "kickoff_utc": "2022-06-11T18:45:00Z",
+        "relative_to_2022_06_11T00_25Z": "future"
+      },
+      {
+        "away_team": "Lithuania",
+        "fixture_id": "uefa-nl:5e6fe1bd3c8aa0570c0d02e7",
+        "home_team": "Faroe Islands",
+        "kickoff_utc": "2022-06-11T16:00:00Z",
+        "relative_to_2022_06_11T00_25Z": "future"
+      },
+      {
+        "away_team": "Germany",
+        "fixture_id": "uefa-nl:39fff7a7549b51adef4c97d5",
+        "home_team": "Hungary",
+        "kickoff_utc": "2022-06-11T18:45:00Z",
+        "relative_to_2022_06_11T00_25Z": "future"
+      },
+      {
+        "away_team": "Scotland",
+        "fixture_id": "uefa-nl:62dfd2fd8bc441f3704addcc",
+        "home_team": "Ireland",
+        "kickoff_utc": "2022-06-11T16:00:00Z",
+        "relative_to_2022_06_11T00_25Z": "future"
+      },
+      {
+        "away_team": "Türkiye",
+        "fixture_id": "uefa-nl:894aaf30d3b57793345df3cd",
+        "home_team": "Luxembourg",
+        "kickoff_utc": "2022-06-11T18:45:00Z",
+        "relative_to_2022_06_11T00_25Z": "future"
+      },
+      {
+        "away_team": "Bosnia and Herzegovina",
+        "fixture_id": "uefa-nl:1f3c64c337a909eeec98c7f7",
+        "home_team": "Montenegro",
+        "kickoff_utc": "2022-06-11T13:00:00Z",
+        "relative_to_2022_06_11T00_25Z": "future"
+      },
+      {
+        "away_team": "Poland",
+        "fixture_id": "uefa-nl:e4db9fd6f18234746122e17c",
+        "home_team": "Netherlands",
+        "kickoff_utc": "2022-06-11T18:45:00Z",
+        "relative_to_2022_06_11T00_25Z": "future"
+      },
+      {
+        "away_team": "Finland",
+        "fixture_id": "uefa-nl:9761cb25bfd6f6819cba75b7",
+        "home_team": "Romania",
+        "kickoff_utc": "2022-06-11T18:45:00Z",
+        "relative_to_2022_06_11T00_25Z": "future"
+      },
+      {
+        "away_team": "Armenia",
+        "fixture_id": "uefa-nl:4ee152dedc59604ca77ddfd9",
+        "home_team": "Ukraine",
+        "kickoff_utc": "2022-06-11T18:45:00Z",
+        "relative_to_2022_06_11T00_25Z": "future"
+      },
+      {
+        "away_team": "Belgium",
+        "fixture_id": "uefa-nl:df19f887f6424cc2f8447fed",
+        "home_team": "Wales",
+        "kickoff_utc": "2022-06-11T18:45:00Z",
+        "relative_to_2022_06_11T00_25Z": "future"
+      }
+    ],
+    "fixtures_on_date": 10
+  },
+  "result_safe_bounds": 510,
+  "schema_version": "uefa-nations-league-fixture-timeline-coverage-v1",
+  "source_fixture_ids_missing": 512,
+  "source_identity_duplicates": [],
+  "source_results_count": 512,
+  "status": "NL_FIXTURE_TIMELINE_READY",
+  "timeline_record_count": 512,
+  "unique_fixture_ids": 512,
+  "unresolved_count": 2,
+  "unresolved_fixtures": [
+    {
+      "away_team": "Ukraine",
+      "candidate_count": 0,
+      "date": "2020-11-17",
+      "edition": "2020/21",
+      "fixture_id": "uefa-nl:c07e17c2e1a35c4b056be0aa",
+      "home_team": "Switzerland",
+      "reason": "administrative_award_has_no_played_match_completion_time"
+    },
+    {
+      "away_team": "Kosovo",
+      "candidate_count": 0,
+      "date": "2024-11-15",
+      "edition": "2024/25",
+      "fixture_id": "uefa-nl:63f926e0ced3f284c077ee10",
+      "home_team": "Romania",
+      "reason": "abandoned_match_has_no_deterministic_result_safe_time"
+    }
+  ],
+  "unresolved_kickoff_count": 0,
+  "unresolved_kickoff_fixtures": [],
+  "verified_utc_kickoffs": 512
+}
