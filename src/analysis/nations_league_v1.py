@@ -29,7 +29,7 @@ MODEL_VERSION = "nations_league_v1"
 SCHEMA_VERSION = "nations-league-v1-forward-shadow-v1"
 COMPETITION = "UEFA Nations League"
 IMPLEMENTATION_SOURCE = "src.models.elo:compute_elo_series,elo_win_probability"
-IMPLEMENTATION_SOURCE_SHA = "cf014a08ffd1c32a766df05ce0c9afc2860047ae"
+IMPLEMENTATION_SOURCE_SHA = "289ccd07e266763aa0b869487bd3abb1ac4d7966"
 
 UTC = timezone.utc
 INITIAL_WINDOW = (timedelta(hours=22), timedelta(hours=26))
