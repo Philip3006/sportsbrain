@@ -13,6 +13,7 @@ import base64
 import fcntl
 import hashlib
 import json
+import math
 import os
 import stat
 from collections.abc import Mapping, Sequence
@@ -21,6 +22,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Protocol
 
+from src.betting.odds_utils import remove_margin_shin
 from src.football.production_contracts import Fixture, ProductionContractError
 from src.football.top5_publisher import (
     TOP5_PUBLIC_RELEASE_LEAGUES,
@@ -39,7 +41,7 @@ from src.notifications.public_serializer import serialize_public_product
 from src.runtime.paths import runtime_state_path
 from src.utils.atomic_io import atomic_write_json
 
-TOP5_CANARY_BATCH_SCHEMA = "top5-canary-signal-batch-v1"
+TOP5_CANARY_BATCH_SCHEMA = "top5-canary-signal-batch-v2"
 TOP5_CANARY_BATCH_STORE_SCHEMA = "top5-canary-batch-store-v1"
 TOP5_CANARY_BATCH_STATE_DIR = "football/top5/canary_batches"
 TOP5_CANARY_MAX_ODDS_AGE_SECONDS = 900
@@ -149,6 +151,167 @@ def _probability_map(value: object) -> dict[str, float]:
             "fixture model probabilities do not sum to one"
         )
     return result
+
+
+def _signal_decision(
+    *,
+    ordered: Mapping[str, object],
+    probabilities: Mapping[str, float],
+    odds: Mapping[str, float],
+    activation_id: str,
+) -> dict[str, object]:
+    versions = {
+        outcome: ordered[outcome].current_version  # type: ignore[attr-defined]
+        for outcome in _OUTCOMES
+    }
+    metadata = {outcome: versions[outcome].confidence_metadata for outcome in _OUTCOMES}
+    shared_names = (
+        "signal_decision_id",
+        "signal_decision_digest",
+        "signal_decision_schema_version",
+        "signal_decision_detector",
+        "signal_decision_policy",
+    )
+    shared: dict[str, object] = {}
+    for name in shared_names:
+        values = [meta.get(name) for meta in metadata.values()]
+        if not values or any(value != values[0] for value in values[1:]):
+            raise Top5CanaryBatchStorageError(
+                "lifecycle signal-decision metadata is not consistent"
+            )
+        shared[name] = values[0]
+    decision_id = _required_text(shared["signal_decision_id"], "signal_decision_id")
+    decision_digest = _required_text(
+        shared["signal_decision_digest"], "signal_decision_digest"
+    )
+    if (
+        shared["signal_decision_schema_version"] != "top5-value-decision-v1"
+        or shared["signal_decision_detector"]
+        != "src.betting.value_detector.detect_value"
+        or not isinstance(shared["signal_decision_policy"], Mapping)
+        or len(decision_digest) != 64
+        or any(character not in "0123456789abcdef" for character in decision_digest)
+        or decision_id != f"top5-value-decision-v1:{decision_digest[:32]}"
+    ):
+        raise Top5CanaryBatchStorageError("signal-decision identity is malformed")
+    policy = dict(shared["signal_decision_policy"])
+    if set(policy) != {"version", "minimum_edge", "maximum_expected_value"}:
+        raise Top5CanaryBatchStorageError("signal-decision policy is malformed")
+    if (
+        not isinstance(policy["version"], str)
+        or not policy["version"]
+        or any(
+            isinstance(policy[name], bool) or not isinstance(policy[name], (int, float))
+            for name in ("minimum_edge", "maximum_expected_value")
+        )
+    ):
+        raise Top5CanaryBatchStorageError("signal-decision thresholds are malformed")
+    minimum_edge = float(policy["minimum_edge"])
+    maximum_ev = float(policy["maximum_expected_value"])
+    if not math.isfinite(minimum_edge) or not math.isfinite(maximum_ev):
+        raise Top5CanaryBatchStorageError("signal-decision thresholds are invalid")
+    expected_market = dict(
+        zip(_OUTCOMES, remove_margin_shin((odds["home"], odds["draw"], odds["away"])))
+    )
+
+    outcomes: dict[str, object] = {}
+    for outcome in _OUTCOMES:
+        version = versions[outcome]
+        meta = metadata[outcome]
+        edge_map = version.edges
+        expected_value = edge_map.get(f"expected_value_{outcome}")
+        signal_confidence = meta.get("signal_confidence")
+        expected_ev = float(probabilities[outcome]) * float(odds[outcome]) - 1.0
+        if (
+            not math.isclose(float(expected_value), expected_ev, abs_tol=1e-9)
+            if isinstance(expected_value, (int, float))
+            and not isinstance(expected_value, bool)
+            else True
+        ):
+            raise Top5CanaryBatchStorageError(
+                "lifecycle expected value disagrees with model/odds"
+            )
+        state = "SIGNAL" if version.eligibility_decision else "NO_SIGNAL"
+        expected_state = (
+            "NO_SIGNAL"
+            if expected_ev < minimum_edge - 1e-9 or expected_ev > maximum_ev
+            else "SIGNAL"
+        )
+        expected_reason = (
+            "above_maximum_expected_value"
+            if expected_ev > maximum_ev
+            else "below_value_detector_threshold"
+            if expected_ev < minimum_edge - 1e-9
+            else "value_detector_passed"
+        )
+        if state != expected_state or version.decision_reason != expected_reason:
+            raise Top5CanaryBatchStorageError(
+                "lifecycle signal decision disagrees with the declared value gate"
+            )
+        if not math.isclose(
+            float(edge_map.get(outcome, math.nan)),
+            (
+                float(probabilities[outcome])
+                - float(version.implied_probabilities.get(outcome, -1))
+            )
+            * 100,
+            abs_tol=1e-9,
+        ):
+            raise Top5CanaryBatchStorageError(
+                "lifecycle edge disagrees with model and market probabilities"
+            )
+        if signal_confidence is not None and signal_confidence not in {
+            "HIGH",
+            "MEDIUM",
+            "LOW",
+        }:
+            raise Top5CanaryBatchStorageError("signal confidence is malformed")
+        if (
+            isinstance(expected_value, bool)
+            or not isinstance(expected_value, (int, float))
+            or not math.isfinite(float(expected_value))
+        ):
+            raise Top5CanaryBatchStorageError("signal expected value is missing")
+        outcomes[outcome] = {
+            "state": state,
+            "reason": _required_text(version.decision_reason, "decision_reason"),
+            "model_probability": float(probabilities[outcome]),
+            "market_implied_probability": float(
+                version.implied_probabilities.get(outcome, -1)
+            ),
+            "decimal_odds": float(odds[outcome]),
+            "expected_value": float(expected_value),
+            "confidence": signal_confidence,
+        }
+        market_probability = outcomes[outcome]["market_implied_probability"]  # type: ignore[index]
+        if (
+            isinstance(market_probability, bool)
+            or not isinstance(market_probability, (int, float))
+            or not 0 <= float(market_probability) <= 1
+            or not math.isclose(
+                float(market_probability), float(expected_market[outcome]), abs_tol=1e-8
+            )
+        ):
+            raise Top5CanaryBatchStorageError("market probability is malformed")
+
+    body: dict[str, object] = {
+        "schema_version": "top5-value-decision-v1",
+        "detector": shared["signal_decision_detector"],
+        "policy": policy,
+        "state": "SIGNAL"
+        if any(item["state"] == "SIGNAL" for item in outcomes.values())  # type: ignore[index]
+        else "NO_SIGNAL",
+        "outcomes": outcomes,
+        "activation_id": activation_id,
+        "snapshot_id": versions["home"].snapshot_id,
+    }
+    if _digest(body) != decision_digest:
+        raise Top5CanaryBatchStorageError("signal-decision digest mismatch")
+    return {
+        **body,
+        "decision_id": decision_id,
+        "decision_digest": decision_digest,
+    }
 
 
 def _assert_no_private_keys(value: object) -> None:
@@ -268,6 +431,12 @@ def canonical_top5_canary_batch(
         try:
             ordered = canonical_top5_h2h_lifecycle_set(lifecycles)
             current = ordered["home"].current_version
+            signal_decision = _signal_decision(
+                ordered=ordered,
+                probabilities=probabilities,
+                odds=normalized_odds,
+                activation_id=activation_id,
+            )
             lifecycle_projection = project_top5_signal_lifecycles(
                 tuple(ordered[outcome] for outcome in _OUTCOMES),
                 prediction_probabilities=probabilities,
@@ -309,10 +478,35 @@ def canonical_top5_canary_batch(
             raise Top5CanaryBatchStorageError(
                 "activation authorization identity differs across outcomes"
             )
-        signal_decision = current.eligibility_decision
-        if not isinstance(signal_decision, bool):
-            raise Top5CanaryBatchStorageError("signal decision is malformed")
+        activation_authorization_id = _required_text(
+            source.get("activation_authorization_id"),
+            "activation_authorization_id",
+        )
+        provider_event_id = _required_text(
+            source.get("provider_event_id"), "provider_event_id"
+        )
+        provider_response_digest = _required_text(
+            source.get("provider_response_digest"), "provider_response_digest"
+        )
+        capture_result_digest = _required_text(
+            source.get("capture_result_digest"), "capture_result_digest"
+        )
+        if any(
+            len(digest) != 64
+            or any(character not in "0123456789abcdef" for character in digest)
+            for digest in (
+                provider_response_digest,
+                capture_result_digest,
+                activation_authorization_id,
+            )
+        ):
+            raise Top5CanaryBatchStorageError(
+                "provider or activation evidence digest is malformed"
+            )
+        decision_outcomes = signal_decision["outcomes"]
+        assert isinstance(decision_outcomes, Mapping)
         canonical_record: dict[str, object] = {
+            "schema_version": "top5-canary-signal-v2",
             "fixture_identity": fixture_key,
             "league": league,
             "home": home,
@@ -334,14 +528,35 @@ def canonical_top5_canary_batch(
             "model_identity": payload.model_identity,
             "model_version": payload.model_artifact_hash,
             "probabilities": probabilities,
-            "confidence": {
-                "kind": "highest_outcome_probability",
-                "value": max(probabilities.values()),
+            "odds": normalized_odds,
+            "market_implied_probabilities": {
+                outcome: float(decision_outcomes[outcome]["market_implied_probability"])
+                for outcome in _OUTCOMES
             },
-            "signal_state": "SIGNAL" if signal_decision else "NO_SIGNAL",
-            "signal_decision_id": next(iter(decision_ids)),
+            "confidence": {
+                "kind": "existing_value_detector",
+                "by_outcome": {
+                    outcome: decision_outcomes[outcome]["confidence"]
+                    for outcome in _OUTCOMES
+                },
+            },
+            "signal_state": signal_decision["state"],
+            "signal_no_signal_reasons": {
+                outcome: decision_outcomes[outcome]["reason"]
+                for outcome in _OUTCOMES
+                if decision_outcomes[outcome]["state"] == "NO_SIGNAL"
+            },
+            "signal_decision_id": signal_decision["decision_id"],
+            "signal_decision_digest": signal_decision["decision_digest"],
+            "signal_decision": signal_decision,
             "source": {
                 "provider_authority": payload.provider_authority,
+                "provider_event_id": provider_event_id,
+                "provider_response_digest": provider_response_digest,
+                "capture_result_digest": capture_result_digest,
+                "request_count": 1,
+                "retry_count": 0,
+                "http_status": source.get("http_status"),
                 "snapshot_source": current.snapshot_source,
                 "snapshot_id": current.snapshot_id,
                 "captured_at": captured_at.isoformat(),
@@ -355,7 +570,7 @@ def canonical_top5_canary_batch(
                 "maximum_age_seconds": TOP5_CANARY_MAX_ODDS_AGE_SECONDS,
             },
             "activation_id": activation_id,
-            "activation_authorization_id": next(iter(decision_ids)),
+            "activation_authorization_id": activation_authorization_id,
             "publication_authorization_id": publication_authorization_id,
             "generated_at": generated_at.isoformat(),
             "artifact_digest": artifact.artifact_digest,
@@ -379,7 +594,20 @@ def canonical_top5_canary_batch(
     ]
     if len(public_top5) != 15:
         raise Top5CanaryBatchStorageError("public adapter must contain all 15 outcomes")
+    provider_event_ids = {
+        record["source"]["provider_event_id"]
+        for record in records
+        if isinstance(record.get("source"), Mapping)
+    }
+    if len(provider_event_ids) != 5:
+        raise Top5CanaryBatchStorageError(
+            "five unique provider event identities are required"
+        )
     for canonical_record in records:
+        canonical_decision = canonical_record["signal_decision"]
+        assert isinstance(canonical_decision, Mapping)
+        canonical_outcomes = canonical_decision["outcomes"]
+        assert isinstance(canonical_outcomes, Mapping)
         grouped = [
             record
             for record in public_top5
@@ -414,6 +642,17 @@ def canonical_top5_canary_batch(
                 raise Top5CanaryBatchStorageError(
                     "public adapter probabilities/odds differ from canonical fixture"
                 )
+            if (
+                by_market[outcome].get("top5_signal_state")
+                != canonical_outcomes[outcome]["state"]
+                or by_market[outcome].get("top5_signal_decision_id")
+                != canonical_decision["decision_id"]
+                or by_market[outcome].get("top5_signal_decision_digest")
+                != canonical_decision["decision_digest"]
+            ):
+                raise Top5CanaryBatchStorageError(
+                    "public adapter signal decision differs from private evidence"
+                )
 
     canonical_batch: dict[str, object] = {
         "schema_version": TOP5_CANARY_BATCH_SCHEMA,
@@ -421,6 +660,7 @@ def canonical_top5_canary_batch(
         "artifact_digest": artifact.artifact_digest,
         "generation_id": batch_id,
         "provider_authority": "the_odds_api",
+        "provider_event_count": 5,
         "activation_id": activation_id,
         "publication_authorization_id": publication_authorization_id,
         "generated_at": _parse_time(
@@ -884,6 +1124,37 @@ def execute_stored_top5_batch(
     attestation.validate(  # type: ignore[attr-defined]
         plan=plan, artifact=artifact, capability=capability, now=now
     )
+    existing = store.load(str(canonical_batch["batch_id"]))
+    expected = hashlib.sha256(plan.serialized_payload).hexdigest()  # type: ignore[attr-defined]
+    static = getattr(executor, "static_transport", None)
+    worker = getattr(executor, "worker_transport", None)
+    if (
+        existing is not None
+        and existing.get("state") == Top5CanaryBatchState.COMMITTED.value
+    ):
+        current = _bytes(serialize_public_product(dict(current_public_snapshot)))
+        current_digest = hashlib.sha256(current).hexdigest()
+        if (
+            existing.get("canonical_batch_digest") != _digest(canonical_batch)
+            or existing.get("artifact_digest") != artifact.artifact_digest
+            or existing.get("public_payload_digest") != expected
+            or current_digest not in {expected, existing.get("previous_payload_digest")}
+            or static is None
+            or worker is None
+            or _transport_digest(static) != expected
+            or _transport_digest(worker) != expected
+        ):
+            raise Top5CanaryBatchStorageError(
+                "committed batch idempotency readback does not match exact artifact"
+            )
+        from src.football.top5_public_delivery import Top5DeliveryExecutionResult
+
+        return Top5DeliveryExecutionResult(
+            "TOP5_DELIVERY_IDEMPOTENT",
+            ("PREPARED",),
+            str(canonical_batch["generation_id"]),
+            expected,
+        )
     previous = _bytes(serialize_public_product(dict(current_public_snapshot)))
     store.prepare(
         canonical_batch=canonical_batch,
@@ -894,10 +1165,7 @@ def execute_stored_top5_batch(
     )
     current_record = store.load(canonical_batch["batch_id"])
     assert current_record is not None
-    expected = hashlib.sha256(plan.serialized_payload).hexdigest()  # type: ignore[attr-defined]
     previous_digest = hashlib.sha256(previous).hexdigest()
-    static = getattr(executor, "static_transport", None)
-    worker = getattr(executor, "worker_transport", None)
     if current_record.get("state") == Top5CanaryBatchState.COMMITTED.value:
         if (
             static is None

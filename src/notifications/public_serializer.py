@@ -1102,6 +1102,28 @@ def map_prediction_to_public_football_signals(
         # downgrade without enabling betting.
         item["current_odds"] = item["odds"]
         item["current_ev_pct"] = item["ev_pct"]
+        top5_decision = record.get("top5_signal_decision")
+        if top5_decision is not None:
+            if (
+                not isinstance(top5_decision, Mapping)
+                or top5_decision.get("schema_version") != "top5-value-decision-v1"
+                or not isinstance(top5_decision.get("decision_id"), str)
+                or not isinstance(top5_decision.get("decision_digest"), str)
+                or not isinstance(top5_decision.get("outcomes"), Mapping)
+            ):
+                raise PublicFootballCompatibilityError(
+                    "Top-5 value decision is malformed"
+                )
+            outcome_decision = top5_decision["outcomes"].get(outcome)
+            if not isinstance(outcome_decision, Mapping) or outcome_decision.get(
+                "state"
+            ) not in {"SIGNAL", "NO_SIGNAL"}:
+                raise PublicFootballCompatibilityError(
+                    "Top-5 value decision outcome is malformed"
+                )
+            item["top5_signal_state"] = outcome_decision["state"]
+            item["top5_signal_decision_id"] = top5_decision["decision_id"]
+            item["top5_signal_decision_digest"] = top5_decision["decision_digest"]
         lifecycle_value = (
             raw_lifecycle_by_market.get(outcome)
             if isinstance(raw_lifecycle_by_market, Mapping)
@@ -1114,6 +1136,10 @@ def map_prediction_to_public_football_signals(
                 model_identity=model_identity,
                 provenance=public_provenance,
             )
+            if "current_market_probability" in lifecycle:
+                item["fair_prob"] = round(
+                    float(lifecycle["current_market_probability"]) * 100, 4
+                )
             if (
                 "current_probability" in lifecycle
                 and abs(

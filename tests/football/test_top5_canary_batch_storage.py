@@ -22,7 +22,10 @@ from src.football.top5_canary_batch_storage import (
     execute_stored_top5_batch,
     rollback_committed_top5_batch,
 )
-from src.football.top5_one_shot_runtime import TheOddsApiOneShotHttpTransport
+from src.football.top5_one_shot_runtime import (
+    TheOddsApiOneShotHttpTransport,
+    _top5_value_decision,
+)
 from src.football.top5_public_delivery import (
     InMemoryDeliveryCapabilityConsumer,
     InMemoryStaticDeliveryTransport,
@@ -68,9 +71,28 @@ def _make_lifecycles(league: str, *, refined: bool):
         odds=ODDS,
         snapshot_id=f"snapshot:{league}:initial",
     )
-    implied = {key: (1 / value) for key, value in ODDS.items()}
-    total = sum(implied.values())
-    implied = {key: value / total for key, value in implied.items()}
+    initial_decision = _top5_value_decision(
+        fixture=fixture,
+        probabilities=INITIAL_PROBABILITIES,
+        odds=ODDS,
+        activation_id=_controlled_payload(league).activation_id,
+        snapshot_id=initial_snapshot.snapshot_id,
+    )
+    initial_outcomes = initial_decision["outcomes"]
+    implied = {
+        key: initial_outcomes[key]["market_implied_probability"]
+        for key in ("home", "draw", "away")
+    }
+    initial_edges = {
+        key: (INITIAL_PROBABILITIES[key] - implied[key]) * 100
+        for key in ("home", "draw", "away")
+    }
+    initial_edges.update(
+        {
+            f"expected_value_{key}": initial_outcomes[key]["expected_value"]
+            for key in ("home", "draw", "away")
+        }
+    )
     initial = tuple(
         create_initial_signal(
             fixture=fixture,
@@ -85,10 +107,20 @@ def _make_lifecycles(league: str, *, refined: bool):
             source_sha=SOURCE_SHA,
             research_sha=RESEARCH_SHA,
             model_artifact_hash=MODEL_HASH,
-            eligibility_decision=True,
-            decision_id=f"activation-auth:{league}:initial",
-            decision_reason="authorized offline test decision",
+            eligibility_decision=initial_outcomes[outcome]["state"] == "SIGNAL",
+            decision_id=initial_decision["decision_id"],
+            decision_reason=initial_outcomes[outcome]["reason"],
             implied_probabilities=implied,
+            edges=initial_edges,
+            confidence_metadata={
+                "signal_decision_id": initial_decision["decision_id"],
+                "signal_decision_digest": initial_decision["decision_digest"],
+                "signal_decision_schema_version": initial_decision["schema_version"],
+                "signal_decision_detector": initial_decision["detector"],
+                "signal_decision_policy": initial_decision["policy"],
+                "signal_state": initial_outcomes[outcome]["state"],
+                "signal_confidence": initial_outcomes[outcome]["confidence"],
+            },
         )
         for outcome in ("home", "draw", "away")
     )
@@ -113,6 +145,28 @@ def _make_lifecycles(league: str, *, refined: bool):
         odds=ODDS,
         snapshot_id=f"snapshot:{league}:refinement",
     )
+    refined_decision = _top5_value_decision(
+        fixture=fixture,
+        probabilities=REFINED_PROBABILITIES,
+        odds=ODDS,
+        activation_id=_controlled_payload(league).activation_id,
+        snapshot_id=refinement_snapshot.snapshot_id,
+    )
+    refined_outcomes = refined_decision["outcomes"]
+    implied = {
+        key: refined_outcomes[key]["market_implied_probability"]
+        for key in ("home", "draw", "away")
+    }
+    refined_edges = {
+        key: (REFINED_PROBABILITIES[key] - implied[key]) * 100
+        for key in ("home", "draw", "away")
+    }
+    refined_edges.update(
+        {
+            f"expected_value_{key}": refined_outcomes[key]["expected_value"]
+            for key in ("home", "draw", "away")
+        }
+    )
     refined = tuple(
         refine_signal(
             lifecycle,
@@ -120,12 +174,31 @@ def _make_lifecycles(league: str, *, refined: bool):
             snapshot=refinement_snapshot,
             now=refinement_at,
             probabilities=REFINED_PROBABILITIES,
-            eligibility_decision=True,
+            eligibility_decision=refined_outcomes[lifecycle.initial_version.outcome_id][
+                "state"
+            ]
+            == "SIGNAL",
             withdrawal_authorized=False,
-            decision_id=f"activation-auth:{league}:refinement",
-            decision_reason="authorized offline refinement decision",
+            decision_id=refined_decision["decision_id"],
+            decision_reason=refined_outcomes[lifecycle.initial_version.outcome_id][
+                "reason"
+            ],
             classification=RefinementClassification.STRENGTHENED,
             implied_probabilities=implied,
+            edges=refined_edges,
+            confidence_metadata={
+                "signal_decision_id": refined_decision["decision_id"],
+                "signal_decision_digest": refined_decision["decision_digest"],
+                "signal_decision_schema_version": refined_decision["schema_version"],
+                "signal_decision_detector": refined_decision["detector"],
+                "signal_decision_policy": refined_decision["policy"],
+                "signal_state": refined_outcomes[lifecycle.initial_version.outcome_id][
+                    "state"
+                ],
+                "signal_confidence": refined_outcomes[
+                    lifecycle.initial_version.outcome_id
+                ]["confidence"],
+            },
         )
         for lifecycle in initial
     )
@@ -163,6 +236,9 @@ def _artifact(*, refined: bool = False):
             "research_sha": base.research_sha,
             "signal_time_experiment_id": base.signal_time_experiment_id,
             "activation_id": base.activation_id,
+            "activation_authorization_id": hashlib.sha256(
+                f"auth:{league}".encode()
+            ).hexdigest(),
             "evidence_digest": base.evidence_digest,
             "controlled_shadow_run_id": base.controlled_shadow_run_id,
             "qualification_session_id": base.qualification_session_id,
@@ -170,6 +246,21 @@ def _artifact(*, refined: bool = False):
             "prediction_timestamp": prediction_at.isoformat(),
             "signal_timestamp": captured_at.isoformat(),
             "snapshot_id": f"snapshot:{league}:{'refinement' if refined else 'initial'}",
+            "provider_event_id": f"provider-event:{league}",
+            "provider_response_digest": hashlib.sha256(
+                f"response:{league}".encode()
+            ).hexdigest(),
+            "capture_result_digest": hashlib.sha256(
+                f"capture:{league}".encode()
+            ).hexdigest(),
+            "http_status": 200,
+            "top5_signal_decision": _top5_value_decision(
+                fixture=Fixture(fixture_key, league, home, away, kickoff),
+                probabilities=probabilities,
+                odds=ODDS,
+                activation_id=base.activation_id,
+                snapshot_id=f"snapshot:{league}:{'refinement' if refined else 'initial'}",
+            ),
             "snapshot_kind": "SIGNAL_TIME",
             "probabilities": probabilities,
             "odds": ODDS,
@@ -258,7 +349,7 @@ def _delivery(artifact, now):
 def test_canonical_batch_is_exactly_five_private_initial_fixture_records():
     artifact, _ = _artifact()
     batch = canonical_top5_canary_batch(artifact)
-    assert batch["schema_version"] == "top5-canary-signal-batch-v1"
+    assert batch["schema_version"] == "top5-canary-signal-batch-v2"
     assert batch["fixture_count"] == 5
     assert {row["league"] for row in batch["fixture_records"]} == set(LEAGUES)
     assert {row["lifecycle_stage"] for row in batch["fixture_records"]} == {"INITIAL"}

@@ -899,7 +899,7 @@ def test_signed_initial_execution_commits_complete_set_atomically_or_recovers(
         for lifecycle in persisted
     )
     assert {item.initial_version.decision_id for item in persisted} == {
-        initial_binding.activation_authorization_id
+        result["signal_decision"]["decision_id"]
     }
     assert set(_project_runtime_lifecycle_set(fresh_store, result, fixture)) == set(
         TOP5_H2H_OUTCOMES

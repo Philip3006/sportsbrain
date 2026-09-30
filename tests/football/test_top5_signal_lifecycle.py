@@ -381,11 +381,15 @@ def test_refinement_preserves_initial_and_records_explicit_classification(
     assert refined.current_version.activation_enabled is False
 
 
-def test_unavailable_refinement_preserves_initial_until_explicit_withdrawal() -> None:
+def test_no_signal_refinement_is_not_misclassified_as_withdrawal() -> None:
     first = initial()
-    with pytest.raises(SignalLifecycleError, match="explicit withdrawal"):
-        refinement(first, eligible=False)
-    assert first.versions == (first.initial_version,)
+    no_signal = refinement(first, eligible=False)
+    assert no_signal.current_version.stage is SignalLifecycleStage.REFINED
+    assert no_signal.current_version.eligibility_decision is False
+    assert no_signal.current_version.withdrawal_authorized is False
+    assert no_signal.current_version.predecessor_version_digest == (
+        first.initial_version.version_digest
+    )
     withdrawn = refinement(first, eligible=False, withdrawal_authorized=True)
     assert withdrawn.current_version.stage is SignalLifecycleStage.WITHDRAWN
     assert withdrawn.current_version.withdrawal_authorized is True
