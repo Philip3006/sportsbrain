@@ -1,0 +1,1218 @@
+{
+  "coverage": {
+    "basis": "Official UEFA result index and match pages observed at the exact capture cutoff; all post-base results through 2026-09-29 are accounted for and 2026-10-01 is the next scheduled match date.",
+    "competition": "UEFA Nations League",
+    "editions": {
+      "2024/25": 4,
+      "2026/27": 52
+    },
+    "expected_count": 56,
+    "interval_complete": true,
+    "interval_start_exclusive": "2025-06-08T19:00:00Z",
+    "next_scheduled_date": "2026-10-01",
+    "observation_method": "ordinary public official UEFA web sources",
+    "verified_through": "2026-09-30T19:34:47.774518Z"
+  },
+  "expected_source_match_ids": [
+    "2043052",
+    "2043053",
+    "2043054",
+    "2043055",
+    "2047976",
+    "2047977",
+    "2047978",
+    "2047979",
+    "2047980",
+    "2047981",
+    "2047982",
+    "2047983",
+    "2047984",
+    "2047985",
+    "2047986",
+    "2047987",
+    "2047988",
+    "2047989",
+    "2047990",
+    "2047991",
+    "2047992",
+    "2047993",
+    "2047994",
+    "2047995",
+    "2047996",
+    "2047997",
+    "2047998",
+    "2047999",
+    "2048000",
+    "2048001",
+    "2048002",
+    "2048003",
+    "2048004",
+    "2048005",
+    "2048006",
+    "2048007",
+    "2048008",
+    "2048009",
+    "2048010",
+    "2048011",
+    "2048012",
+    "2048013",
+    "2048014",
+    "2048015",
+    "2048016",
+    "2048017",
+    "2048018",
+    "2048019",
+    "2048020",
+    "2048021",
+    "2048022",
+    "2048023",
+    "2048024",
+    "2048025",
+    "2048026",
+    "2048027"
+  ],
+  "fresh_observation": {
+    "observed_at": "2026-09-30T19:34:47.774518Z",
+    "result_cutoff_basis": "latest listed completed match is 2026-09-29; next scheduled date is 2026-10-01",
+    "scope": "post-base result completeness and remaining Oct-1 targets",
+    "source_urls": [
+      "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/",
+      "https://de.uefa.com/uefanationsleague/match/2047954--germany-vs-serbia/"
+    ]
+  },
+  "observed_at": "2026-09-30T19:34:47.774518Z",
+  "records": [
+    {
+      "away_score": 1,
+      "away_team_source": "Latvia",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team_source": "Gibraltar",
+      "kickoff_utc": "2026-03-26T17:00:00+00:00",
+      "match_page_sha256": "161b1cb7c6099d7067f8ff51f0968c24af7420fe1f333799bb5e93dabae88b3c",
+      "observed_at": "2026-09-30T17:04:25.442481+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-03-26T18:50:46.676+00:00",
+      "result_source": {
+        "content_sha256": "91ceca8cc1e29656a6e10cba054f845982a896f764dd2eb69354f281a4382a2b",
+        "observed_at": "2026-09-30T17:04:24.122416+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/028a-1a23b4c739a8-07fe752f503f-1000/"
+      },
+      "source_match_id": "2043052",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2043052--gibraltar-vs-latvia/",
+      "stage": "promotion_relegation_playoffs_cd"
+    },
+    {
+      "away_score": 2,
+      "away_team_source": "Luxembourg",
+      "edition": "2024/25",
+      "home_score": 0,
+      "home_team_source": "Malta",
+      "kickoff_utc": "2026-03-26T17:00:00+00:00",
+      "match_page_sha256": "82036f3da200eaa97a40c942348b4ac8b26fa985b4ddba23c6831a2d45267b60",
+      "observed_at": "2026-09-30T17:04:25.863927+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-03-26T19:08:24.473+00:00",
+      "result_source": {
+        "content_sha256": "91ceca8cc1e29656a6e10cba054f845982a896f764dd2eb69354f281a4382a2b",
+        "observed_at": "2026-09-30T17:04:24.122416+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/028a-1a23b4c739a8-07fe752f503f-1000/"
+      },
+      "source_match_id": "2043053",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2043053--malta-vs-luxembourg/",
+      "stage": "promotion_relegation_playoffs_cd"
+    },
+    {
+      "away_score": 0,
+      "away_team_source": "Gibraltar",
+      "edition": "2024/25",
+      "home_score": 1,
+      "home_team_source": "Latvia",
+      "kickoff_utc": "2026-03-31T16:00:00+00:00",
+      "match_page_sha256": "495b78fa74200ce3315abb64a18901752521370c1a66cb50fceb371bea1ad1d7",
+      "observed_at": "2026-09-30T17:04:25.470677+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-03-31T17:56:27.421+00:00",
+      "result_source": {
+        "content_sha256": "91ceca8cc1e29656a6e10cba054f845982a896f764dd2eb69354f281a4382a2b",
+        "observed_at": "2026-09-30T17:04:24.122416+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/028a-1a23b4c739a8-07fe752f503f-1000/"
+      },
+      "source_match_id": "2043054",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2043054--latvia-vs-gibraltar/",
+      "stage": "promotion_relegation_playoffs_cd"
+    },
+    {
+      "away_score": 0,
+      "away_team_source": "Malta",
+      "edition": "2024/25",
+      "home_score": 3,
+      "home_team_source": "Luxembourg",
+      "kickoff_utc": "2026-03-31T16:00:00+00:00",
+      "match_page_sha256": "dac3d1a89bbf4823350112128ecce65baacd568fa08ada9b3b9be551283cc3ce",
+      "observed_at": "2026-09-30T17:04:24.831013+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-03-31T17:50:55.924+00:00",
+      "result_source": {
+        "content_sha256": "91ceca8cc1e29656a6e10cba054f845982a896f764dd2eb69354f281a4382a2b",
+        "observed_at": "2026-09-30T17:04:24.122416+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/028a-1a23b4c739a8-07fe752f503f-1000/"
+      },
+      "source_match_id": "2043055",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2043055--luxembourg-vs-malta/",
+      "stage": "promotion_relegation_playoffs_cd"
+    },
+    {
+      "away_score": 2,
+      "away_team_source": "Malta",
+      "edition": "2026/27",
+      "home_score": 1,
+      "home_team_source": "Andorra",
+      "kickoff_utc": "2026-09-24T16:00:00+00:00",
+      "match_page_sha256": "d1bf3a8c10effac0869207d13b9a4a6c1a2b5ad18ed99f83e189d864a58f9556",
+      "observed_at": "2026-09-30T17:04:25.282323+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-24T17:52:20.811+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2048009",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2048009--andorra-vs/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 0,
+      "away_team_source": "Wales",
+      "edition": "2026/27",
+      "home_score": 1,
+      "home_team_source": "Portugal",
+      "kickoff_utc": "2026-09-24T18:45:00+00:00",
+      "match_page_sha256": "e0cc581c71cf41c0378367c6c31e2ba9fd94fcd1cfbeb45c46f6c0c7d8f7f1d0",
+      "observed_at": "2026-09-30T17:04:26.183231+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-24T20:38:33.349+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2048002",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2048002--portugal-vs-wales/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 1,
+      "away_team_source": "Germany",
+      "edition": "2026/27",
+      "home_score": 1,
+      "home_team_source": "Netherlands",
+      "kickoff_utc": "2026-09-24T18:45:00+00:00",
+      "match_page_sha256": "81fb430f82a0a27d42481e2a4ebbc5756736b08a63ada7a5196d179ad2cbb019",
+      "observed_at": "2026-09-30T17:04:26.450291+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-24T20:42:14.107+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2048003",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2048003--netherlands-vs-germany/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 2,
+      "away_team_source": "Greece",
+      "edition": "2026/27",
+      "home_score": 1,
+      "home_team_source": "Serbia",
+      "kickoff_utc": "2026-09-24T18:45:00+00:00",
+      "match_page_sha256": "778ab534e46eaf84482e38307789dc6bab0885c66cbfabbd0a4b543bbd78483b",
+      "observed_at": "2026-09-30T17:04:26.487892+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-24T20:41:51.184+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2048004",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2048004--serbia-vs-greece/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 2,
+      "away_team_source": "Denmark",
+      "edition": "2026/27",
+      "home_score": 3,
+      "home_team_source": "Norway",
+      "kickoff_utc": "2026-09-24T18:45:00+00:00",
+      "match_page_sha256": "0cdc3ca1cd21437fb01ab37865bd89e733175f819482bde3796108db11865469",
+      "observed_at": "2026-09-30T17:04:26.406333+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-24T20:39:51.704+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2048005",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2048005--norway-vs-denmark/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 1,
+      "away_team_source": "Israel",
+      "edition": "2026/27",
+      "home_score": 3,
+      "home_team_source": "Austria",
+      "kickoff_utc": "2026-09-24T18:45:00+00:00",
+      "match_page_sha256": "7a8e820e2b0b8b5220f22257f81a51e3d44f1960d09ad9939139cf098e88b6c3",
+      "observed_at": "2026-09-30T17:04:27.205155+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-24T20:43:22.502+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2048006",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2048006--austria-vs-israel/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 0,
+      "away_team_source": "Republic of Ireland",
+      "edition": "2026/27",
+      "home_score": 1,
+      "home_team_source": "Kosovo",
+      "kickoff_utc": "2026-09-24T18:45:00+00:00",
+      "match_page_sha256": "b7ba410f1dff3e6fc1f306b5aa8f8b7f586f598695e09a11465a5e2d6ad114c1",
+      "observed_at": "2026-09-30T17:04:27.222124+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-24T20:36:41.698+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2048007",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2048007--kosovo-vs-republic-of-ireland/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 2,
+      "away_team_source": "Lithuania",
+      "edition": "2026/27",
+      "home_score": 0,
+      "home_team_source": "Liechtenstein",
+      "kickoff_utc": "2026-09-24T18:45:00+00:00",
+      "match_page_sha256": "7af002faf60a911b516a1b995d098ba76316538d8a7aacb4e431677084d84e52",
+      "observed_at": "2026-09-30T17:04:27.450938+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-24T20:35:03.924+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2048008",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2048008--liechtenstein-vs-lithuania/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 1,
+      "away_team_source": "Northern Ireland",
+      "edition": "2026/27",
+      "home_score": 0,
+      "home_team_source": "Georgia",
+      "kickoff_utc": "2026-09-25T16:00:00+00:00",
+      "match_page_sha256": "71a0888823a0207f4c0095020d097fb4619bfde29c5c0532afe503fea76e875f",
+      "observed_at": "2026-09-30T17:04:27.290828+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-25T18:02:16.673+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2048014",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2048014--georgia-vs-northern-ireland/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 0,
+      "away_team_source": "Latvia",
+      "edition": "2026/27",
+      "home_score": 2,
+      "home_team_source": "Armenia",
+      "kickoff_utc": "2026-09-25T16:00:00+00:00",
+      "match_page_sha256": "e7bc790c73b586184e0b91330d9868f636efd5a1012e7fb6eddbe18937c0b0fb",
+      "observed_at": "2026-09-30T17:04:28.100628+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-25T17:51:30.857+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2048017",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2048017--armenia-vs-latvia/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 2,
+      "away_team_source": "Belgium",
+      "edition": "2026/27",
+      "home_score": 0,
+      "home_team_source": "Italy",
+      "kickoff_utc": "2026-09-25T18:45:00+00:00",
+      "match_page_sha256": "a8870b6d20bad486ce39696f73ee64e725566fbd95d025c871c9a3be421afb2a",
+      "observed_at": "2026-09-30T17:04:28.049240+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-25T20:38:40.799+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2048010",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2048010--italy-vs-belgium/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 1,
+      "away_team_source": "France",
+      "edition": "2026/27",
+      "home_score": 0,
+      "home_team_source": "Türkiye",
+      "kickoff_utc": "2026-09-25T18:45:00+00:00",
+      "match_page_sha256": "85af2471e465b467974a15603760d3f3a71c978fea25ad91194ad5f3ed9e1fbd",
+      "observed_at": "2026-09-30T17:04:27.942082+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-25T20:45:17.224+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2048011",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2048011--turkiye-vs-france/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 1,
+      "away_team_source": "Ukraine",
+      "edition": "2026/27",
+      "home_score": 0,
+      "home_team_source": "Hungary",
+      "kickoff_utc": "2026-09-25T18:45:00+00:00",
+      "match_page_sha256": "39bd8d49abf568e2af40b1b3235f032ad326339a7c4416abca496f71564fff31",
+      "observed_at": "2026-09-30T17:04:28.521439+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-25T20:45:11.428+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2048012",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2048012--hungary-vs-ukraine/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 0,
+      "away_team_source": "Bosnia and Herzegovina",
+      "edition": "2026/27",
+      "home_score": 0,
+      "home_team_source": "Poland",
+      "kickoff_utc": "2026-09-25T18:45:00+00:00",
+      "match_page_sha256": "987147a20cad674955b9f25ecb90fb39dd7fcc892e5236e287cb733547a56486",
+      "observed_at": "2026-09-30T17:04:28.922374+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-25T20:40:09.194+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2048013",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2048013--poland-vs-bosnia-and-herzegovina/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 1,
+      "away_team_source": "Romania",
+      "edition": "2026/27",
+      "home_score": 2,
+      "home_team_source": "Sweden",
+      "kickoff_utc": "2026-09-25T18:45:00+00:00",
+      "match_page_sha256": "e2c3ca56a75d87a050d19f2c10ece7795fe500a416d48008aaf3dcc3f8f39ace",
+      "observed_at": "2026-09-30T17:04:29.411060+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-25T20:39:26.602+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2048015",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2048015--sweden-vs-romania/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 1,
+      "away_team_source": "Cyprus",
+      "edition": "2026/27",
+      "home_score": 2,
+      "home_team_source": "Montenegro",
+      "kickoff_utc": "2026-09-25T18:45:00+00:00",
+      "match_page_sha256": "8c44d76347a0c940888e715ad0f74852823cc63f57205ec7f590165bf35db6ba",
+      "observed_at": "2026-09-30T17:04:29.020311+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-25T20:40:01.722+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2048016",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2048016--montenegro-vs-cyprus/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 0,
+      "away_team_source": "Scotland",
+      "edition": "2026/27",
+      "home_score": 0,
+      "home_team_source": "Slovenia",
+      "kickoff_utc": "2026-09-26T13:00:00+00:00",
+      "match_page_sha256": "5099f2143fdb59b8691c76859bbb33ce9f40c85c8b7a3741450b288c1f12241c",
+      "observed_at": "2026-09-30T17:04:29.576529+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-26T14:52:15.703+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2048027",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2048027--slovenia-vs-scotland/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 1,
+      "away_team_source": "Estonia",
+      "edition": "2026/27",
+      "home_score": 1,
+      "home_team_source": "Iceland",
+      "kickoff_utc": "2026-09-26T16:00:00+00:00",
+      "match_page_sha256": "9987f56b356e810eb706c7d4b9c77969965a1207ec0ed3f570ecfd67c8cd302e",
+      "observed_at": "2026-09-30T17:04:30.449147+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-26T17:52:15.032+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2048019",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2048019--iceland-vs-estonia/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 1,
+      "away_team_source": "Kazakhstan",
+      "edition": "2026/27",
+      "home_score": 1,
+      "home_team_source": "Faroe Islands",
+      "kickoff_utc": "2026-09-26T16:00:00+00:00",
+      "match_page_sha256": "441553ae973dd283bbba0b0dbfe6cb956e717047941ced4fc8b5d53019c7a8e3",
+      "observed_at": "2026-09-30T17:04:29.972307+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-26T17:51:55.204+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2048024",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2048024--faroe-islands-vs-kazakhstan/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 7,
+      "away_team_source": "Finland",
+      "edition": "2026/27",
+      "home_score": 0,
+      "home_team_source": "San Marino",
+      "kickoff_utc": "2026-09-26T16:00:00+00:00",
+      "match_page_sha256": "4817953f21f459bba218eb9a6ca8246e6d63c1221a2b34ad77bdbe7ec0982124",
+      "observed_at": "2026-09-30T17:04:29.773827+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-26T17:53:48.68+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2048025",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2048025--san-marino-vs-finland/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 2,
+      "away_team_source": "Luxembourg",
+      "edition": "2026/27",
+      "home_score": 1,
+      "home_team_source": "Bulgaria",
+      "kickoff_utc": "2026-09-26T16:00:00+00:00",
+      "match_page_sha256": "b4101588c2ad65a81272facd0020662a4f23841bfbad84d4a6a2f1e41febbfa4",
+      "observed_at": "2026-09-30T17:04:30.233025+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-26T17:55:55+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2048026",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2048026--bulgaria-vs-luxembourg/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 3,
+      "away_team_source": "Spain",
+      "edition": "2026/27",
+      "home_score": 2,
+      "home_team_source": "England",
+      "kickoff_utc": "2026-09-26T18:45:00+00:00",
+      "match_page_sha256": "17b3707d31cdae7123c3b53d2b6ea59c460573a41ffe0b2b18874e8b6f5cb3a3",
+      "observed_at": "2026-09-30T17:04:31.083893+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-26T20:41:21.759+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2048018",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2048018--england-vs-spain/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 0,
+      "away_team_source": "Belarus",
+      "edition": "2026/27",
+      "home_score": 2,
+      "home_team_source": "Albania",
+      "kickoff_utc": "2026-09-26T18:45:00+00:00",
+      "match_page_sha256": "fbb87bb1de492c6cb5ebbc16dfa21ff2989400d451175abaaaeb43a4547da766",
+      "observed_at": "2026-09-30T17:04:31.422495+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-26T20:42:16.426+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2048020",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2048020--albania-vs-belarus/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 0,
+      "away_team_source": "Moldova",
+      "edition": "2026/27",
+      "home_score": 2,
+      "home_team_source": "Slovakia",
+      "kickoff_utc": "2026-09-26T18:45:00+00:00",
+      "match_page_sha256": "5fc0860baecc7a553101a0d7d9b11e618e1e5a64f843bf91114c6cb33b0cf21b",
+      "observed_at": "2026-09-30T17:04:32.020571+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-26T20:39:17.154+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2048021",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2048021--slovakia-vs-moldova/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 3,
+      "away_team_source": "Switzerland",
+      "edition": "2026/27",
+      "home_score": 0,
+      "home_team_source": "North Macedonia",
+      "kickoff_utc": "2026-09-26T18:45:00+00:00",
+      "match_page_sha256": "7d0eaf04740bf0fe159f4adcd8a3534b4c5a73f8b6f4c459023a8ef5aa539eb5",
+      "observed_at": "2026-09-30T17:04:30.891870+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-26T20:40:20.896+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2048022",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2048022--north-macedonia-vs-switzerland/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 2,
+      "away_team_source": "Croatia",
+      "edition": "2026/27",
+      "home_score": 1,
+      "home_team_source": "Czechia",
+      "kickoff_utc": "2026-09-26T18:45:00+00:00",
+      "match_page_sha256": "766c82c3dc552474380924cae7d5893a822576656fe7f9733638c9bf2c11f145",
+      "observed_at": "2026-09-30T17:04:31.202203+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-26T20:38:56.871+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2048023",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2048023--czechia-vs-croatia/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 1,
+      "away_team_source": "Azerbaijan",
+      "edition": "2026/27",
+      "home_score": 1,
+      "home_team_source": "Lithuania",
+      "kickoff_utc": "2026-09-27T13:00:00+00:00",
+      "match_page_sha256": "7dd4f70ad28c16068e3463e90ee07c10e2e63d3a8444bf0ce78a95298ee51350",
+      "observed_at": "2026-09-30T17:04:32.060459+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-27T14:53:13.977+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2047983",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2047983--lithuania-vs-azerbaijan/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 0,
+      "away_team_source": "Wales",
+      "edition": "2026/27",
+      "home_score": 2,
+      "home_team_source": "Denmark",
+      "kickoff_utc": "2026-09-27T16:00:00+00:00",
+      "match_page_sha256": "80349d7b22db25d67fdb3959402c5be132a3d02436df79d2260aa52d2ea642b6",
+      "observed_at": "2026-09-30T17:04:32.661102+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-27T17:51:47.652+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2047977",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2047977--denmark-vs-wales/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 1,
+      "away_team_source": "Kosovo",
+      "edition": "2026/27",
+      "home_score": 3,
+      "home_team_source": "Austria",
+      "kickoff_utc": "2026-09-27T16:00:00+00:00",
+      "match_page_sha256": "8f97c1c3d8c6f02eaa274b6f0d00d03f1aa8b46717b9802852eacdb1f401e070",
+      "observed_at": "2026-09-30T17:04:32.324837+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-27T17:56:11.582+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2047979",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2047979--austria-vs-kosovo/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 0,
+      "away_team_source": "Andorra",
+      "edition": "2026/27",
+      "home_score": 0,
+      "home_team_source": "Gibraltar",
+      "kickoff_utc": "2026-09-27T16:00:00+00:00",
+      "match_page_sha256": "55cb275ea46e67379101acd9138d7bf22cfdf59fcbd92e2ec1b3f18a909ad651",
+      "observed_at": "2026-09-30T17:04:33.089594+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-27T17:50:46.518+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2047980",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2047980--gibraltar-vs-andorra/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 2,
+      "away_team_source": "Netherlands",
+      "edition": "2026/27",
+      "home_score": 1,
+      "home_team_source": "Serbia",
+      "kickoff_utc": "2026-09-27T16:00:00+00:00",
+      "match_page_sha256": "08afd922a053d874ea06d1853ea38b6d66252b216bfcc3fa5df4a07a9a937105",
+      "observed_at": "2026-09-30T17:04:31.993664+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-27T17:52:32.088+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2047981",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2047981--serbia-vs-netherlands/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 1,
+      "away_team_source": "Greece",
+      "edition": "2026/27",
+      "home_score": 0,
+      "home_team_source": "Germany",
+      "kickoff_utc": "2026-09-27T18:45:00+00:00",
+      "match_page_sha256": "68704fdc705a2fd238aca728f9060c08ec1ce87cee6bc65cf5bd0651ab019c6d",
+      "observed_at": "2026-09-30T17:04:33.489790+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-27T20:39:40.971+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2047976",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2047976--germany-vs-greece/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 2,
+      "away_team_source": "Portugal",
+      "edition": "2026/27",
+      "home_score": 1,
+      "home_team_source": "Norway",
+      "kickoff_utc": "2026-09-27T18:45:00+00:00",
+      "match_page_sha256": "2a3f9543260457b8679ddaafc573dd7b73318a64b031ac0ce56402af47d212be",
+      "observed_at": "2026-09-30T17:04:33.789676+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-27T20:43:45.873+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2047978",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2047978--norway-vs-portugal/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 3,
+      "away_team_source": "Republic of Ireland",
+      "edition": "2026/27",
+      "home_score": 0,
+      "home_team_source": "Israel",
+      "kickoff_utc": "2026-09-27T18:45:00+00:00",
+      "match_page_sha256": "2c8d3a94695a52ffd14ccf6becabcdf8f663161f27b44c055faab212152274fc",
+      "observed_at": "2026-09-30T17:04:33.437092+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-27T20:35:11.203+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2047982",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2047982--israel-vs-republic-of-ireland/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 3,
+      "away_team_source": "Montenegro",
+      "edition": "2026/27",
+      "home_score": 2,
+      "home_team_source": "Armenia",
+      "kickoff_utc": "2026-09-28T16:00:00+00:00",
+      "match_page_sha256": "4c7b7851e2bcce7ebcc252379b3dba4c14d8d79d7d9e8acc2661680b18d1e00d",
+      "observed_at": "2026-09-30T17:04:34.861691+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-28T17:49:27.264+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2047987",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2047987--armenia-vs-montenegro/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 0,
+      "away_team_source": "Cyprus",
+      "edition": "2026/27",
+      "home_score": 0,
+      "home_team_source": "Latvia",
+      "kickoff_utc": "2026-09-28T16:00:00+00:00",
+      "match_page_sha256": "a93b7cedb29d49c77619eb2b9763a880651f624c5c3ecb3fa20f39ba3b521002",
+      "observed_at": "2026-09-30T17:04:35.142244+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-28T17:48:46.07+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2047988",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2047988--latvia%20-vs-cyprus/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 0,
+      "away_team_source": "Ukraine",
+      "edition": "2026/27",
+      "home_score": 0,
+      "home_team_source": "Georgia",
+      "kickoff_utc": "2026-09-28T16:00:00+00:00",
+      "match_page_sha256": "ff85084268fdcf0c2e04038fbb47d38db10520416bf9e80fdce546d55af87bc2",
+      "observed_at": "2026-09-30T17:04:33.473356+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-28T17:55:16.149+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2047991",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2047991--georgia-vs-ukraine/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 4,
+      "away_team_source": "Bosnia and Herzegovina",
+      "edition": "2026/27",
+      "home_score": 2,
+      "home_team_source": "Romania",
+      "kickoff_utc": "2026-09-28T18:45:00+00:00",
+      "match_page_sha256": "7b92564c93fb317742c0234aa98e8a3ea13890ba312e17333da4cf3bf42a0dab",
+      "observed_at": "2026-09-30T17:04:35.674546+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-28T20:34:54.568+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2047984",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2047984--romania-vs-bosnia-and-herzegovina/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 1,
+      "away_team_source": "Poland",
+      "edition": "2026/27",
+      "home_score": 3,
+      "home_team_source": "Sweden",
+      "kickoff_utc": "2026-09-28T18:45:00+00:00",
+      "match_page_sha256": "2c96629b90af4f4e2959918da14ef953a4c6fd39c844df2426288829a3440204",
+      "observed_at": "2026-09-30T17:04:35.899629+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-28T20:37:28.219+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2047985",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2047985--sweden-vs-poland/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 0,
+      "away_team_source": "Hungary",
+      "edition": "2026/27",
+      "home_score": 0,
+      "home_team_source": "Northern Ireland",
+      "kickoff_utc": "2026-09-28T18:45:00+00:00",
+      "match_page_sha256": "37b28cb542fcae12567bf694a6332d34f0b21d881932dda37e27877ec9086ed5",
+      "observed_at": "2026-09-30T17:04:36.223881+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-28T20:39:45.146+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2047986",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2047986--northern-ireland-vs-hungary/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 1,
+      "away_team_source": "France",
+      "edition": "2026/27",
+      "home_score": 0,
+      "home_team_source": "Belgium",
+      "kickoff_utc": "2026-09-28T18:45:00+00:00",
+      "match_page_sha256": "f43391205097c11e74dd612040a7523a36fbd97b1691316a8af2484a0c508717",
+      "observed_at": "2026-09-30T17:04:35.201319+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-28T20:42:24.844+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2047989",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2047989--belgium-vs-france/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 4,
+      "away_team_source": "Italy",
+      "edition": "2026/27",
+      "home_score": 1,
+      "home_team_source": "Türkiye",
+      "kickoff_utc": "2026-09-28T18:45:00+00:00",
+      "match_page_sha256": "52be0d7a68b4b40971ccc54261321e4a91bb973f9682903a9f0249264ad152a0",
+      "observed_at": "2026-09-30T17:04:34.909183+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-28T20:36:30.406+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2047990",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2047990--turkiye-vs-italy/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 0,
+      "away_team_source": "Belarus",
+      "edition": "2026/27",
+      "home_score": 0,
+      "home_team_source": "Finland",
+      "kickoff_utc": "2026-09-29T16:00:00+00:00",
+      "match_page_sha256": "c6733930e3f19003cb3506062595fc5863857a7b858dd4d37de79cbbb9025061",
+      "observed_at": "2026-09-30T17:04:35.910011+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-29T17:54:47.293+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2047993",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2047993--finland-vs-belarus/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 1,
+      "away_team_source": "Faroe Islands",
+      "edition": "2026/27",
+      "home_score": 1,
+      "home_team_source": "Moldova",
+      "kickoff_utc": "2026-09-29T16:00:00+00:00",
+      "match_page_sha256": "06e231ba254a195c447f079b43bfabb8f55650d26f02bc26de0a8abe1355c638",
+      "observed_at": "2026-09-30T17:04:36.642484+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-29T17:50:22.364+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2047994",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2047994--moldova-vs-faroe-islands/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 0,
+      "away_team_source": "North Macedonia",
+      "edition": "2026/27",
+      "home_score": 2,
+      "home_team_source": "Slovenia",
+      "kickoff_utc": "2026-09-29T18:45:00+00:00",
+      "match_page_sha256": "6777bd9286a3d501bb1ffea6130d0a111d1fc058cce9ce29fb02df07d957b94e",
+      "observed_at": "2026-09-30T17:04:36.966954+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-29T20:37:28.893+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2047992",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2047992--slovenia-vs-north-macedonia/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 3,
+      "away_team_source": "Albania",
+      "edition": "2026/27",
+      "home_score": 0,
+      "home_team_source": "San Marino",
+      "kickoff_utc": "2026-09-29T18:45:00+00:00",
+      "match_page_sha256": "176feca4f4f9de8d4cd1e6c1fce5b4edec44582bc797b32b08d49dbcf0bff6d3",
+      "observed_at": "2026-09-30T17:04:37.031746+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-29T20:37:42.163+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2047995",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2047995--san-marino-vs-albania/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 1,
+      "away_team_source": "Kazakhstan",
+      "edition": "2026/27",
+      "home_score": 2,
+      "home_team_source": "Slovakia",
+      "kickoff_utc": "2026-09-29T18:45:00+00:00",
+      "match_page_sha256": "a8e15961a7d9bb095797177e68ce3aebd4e74c4d530f2d1a518e4659975c7b05",
+      "observed_at": "2026-09-30T17:04:37.123082+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-29T20:35:40.516+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2047996",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2047996--slovakia-vs-kazakhstan/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 0,
+      "away_team_source": "Estonia",
+      "edition": "2026/27",
+      "home_score": 0,
+      "home_team_source": "Bulgaria",
+      "kickoff_utc": "2026-09-29T18:45:00+00:00",
+      "match_page_sha256": "d33ebcffd299b8db5003121b890509944d506aadd3b5b357afdbbc1d9a26dbbc",
+      "observed_at": "2026-09-30T17:04:37.634354+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-29T20:36:07.579+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2047997",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2047997--bulgaria-vs-estonia/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 3,
+      "away_team_source": "Iceland",
+      "edition": "2026/27",
+      "home_score": 0,
+      "home_team_source": "Luxembourg",
+      "kickoff_utc": "2026-09-29T18:45:00+00:00",
+      "match_page_sha256": "a2f9544046c3037af8c718229ab7c3177b1c8258f7e09928005e260b52c77d97",
+      "observed_at": "2026-09-30T17:04:37.522694+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-29T20:38:28.733+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2047998",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2047998--luxembourg-vs-iceland/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 1,
+      "away_team_source": "Croatia",
+      "edition": "2026/27",
+      "home_score": 4,
+      "home_team_source": "Spain",
+      "kickoff_utc": "2026-09-29T18:45:00+00:00",
+      "match_page_sha256": "9b9a76f9c4e1ffa0ff3f5bc4efc974ac27485e5e0954ecf62c8c18e52b3c9746",
+      "observed_at": "2026-09-30T17:04:36.283001+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-29T20:36:57.026+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2047999",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2047999--spain-vs-croatia/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 2,
+      "away_team_source": "England",
+      "edition": "2026/27",
+      "home_score": 0,
+      "home_team_source": "Czechia",
+      "kickoff_utc": "2026-09-29T18:45:00+00:00",
+      "match_page_sha256": "9f37cfe0b3b49b2740c5f1e9aeca8dace5ca855698efd50cf9a01ad79423c53b",
+      "observed_at": "2026-09-30T17:04:36.209946+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-29T20:36:36.167+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2048000",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2048000--czechia-vs-england/",
+      "stage": "league_phase"
+    },
+    {
+      "away_score": 3,
+      "away_team_source": "Switzerland",
+      "edition": "2026/27",
+      "home_score": 0,
+      "home_team_source": "Scotland",
+      "kickoff_utc": "2026-09-29T18:45:00+00:00",
+      "match_page_sha256": "2789879ed0e2f4e38251db20832e1a88f93e8d2b6ab643c127029159351c7263",
+      "observed_at": "2026-09-30T17:04:36.522352+00:00",
+      "played_status": "Finished",
+      "reported_full_time_at": "2026-09-29T20:38:22.534+00:00",
+      "result_source": {
+        "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+        "observed_at": "2026-09-30T17:04:24.582433+00:00",
+        "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+      },
+      "source_match_id": "2048001",
+      "source_url": "https://www.uefa.com/uefanationsleague/match/2048001--scotland-vs-switzerland/",
+      "stage": "league_phase"
+    }
+  ],
+  "sources": [
+    {
+      "content_sha256": "91ceca8cc1e29656a6e10cba054f845982a896f764dd2eb69354f281a4382a2b",
+      "observed_at": "2026-09-30T19:34:47.774518Z",
+      "url": "https://www.uefa.com/uefanationsleague/news/028a-1a23b4c739a8-07fe752f503f-1000/"
+    },
+    {
+      "content_sha256": "f7c26d1e5947ea6e336824a7eb5a0906f9d190eb781d9a8c94804dfce5a4ac25",
+      "observed_at": "2026-09-30T19:34:47.774518Z",
+      "url": "https://www.uefa.com/uefanationsleague/news/02a2-1fea18abbcbc-456e846509e7-1000--2026-27-uefa-nations-league-all-the-league-phase-fixtures/"
+    }
+  ]
+}

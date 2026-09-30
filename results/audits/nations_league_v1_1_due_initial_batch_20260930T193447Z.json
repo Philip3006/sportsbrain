@@ -1,0 +1,91 @@
+{
+  "artifact_digest": "40287530cc159080976dc7303486890e17b51b0dc66efc519dc0fa52d237a268",
+  "attempted_fixtures": [
+    {
+      "away_readiness": "READY",
+      "away_team": "Netherlands",
+      "blocker": null,
+      "captured": true,
+      "fixture_id": "uefa-nl:future-24e02c77e0dae6970194e816",
+      "home_readiness": "READY",
+      "home_team": "Greece",
+      "state": "READY"
+    },
+    {
+      "away_readiness": "READY",
+      "away_team": "Portugal",
+      "blocker": null,
+      "captured": true,
+      "fixture_id": "uefa-nl:future-0f2bd8c1791c064f46230190",
+      "home_readiness": "READY",
+      "home_team": "Denmark",
+      "state": "READY"
+    },
+    {
+      "away_readiness": "READY",
+      "away_team": "Norway",
+      "blocker": null,
+      "captured": true,
+      "fixture_id": "uefa-nl:future-3515b2e85084a8451012773f",
+      "home_readiness": "READY",
+      "home_team": "Wales",
+      "state": "READY"
+    },
+    {
+      "away_readiness": "READY",
+      "away_team": "Kosovo",
+      "blocker": null,
+      "captured": true,
+      "fixture_id": "uefa-nl:future-41e14a9086638f2d4bd278d8",
+      "home_readiness": "READY",
+      "home_team": "Israel",
+      "state": "READY"
+    },
+    {
+      "away_readiness": "READY",
+      "away_team": "Austria",
+      "blocker": "AMBIGUOUS_IDENTITY: target input is not READY",
+      "captured": false,
+      "fixture_id": "uefa-nl:future-596f9e31eff328f0e49a77b5",
+      "home_readiness": "AMBIGUOUS_IDENTITY",
+      "home_team": "Republic of Ireland",
+      "state": "AMBIGUOUS_IDENTITY"
+    },
+    {
+      "away_readiness": "READY",
+      "away_team": "Gibraltar",
+      "blocker": null,
+      "captured": true,
+      "fixture_id": "uefa-nl:future-392e2f375b6ddb9ac9b6cb14",
+      "home_readiness": "READY",
+      "home_team": "Malta",
+      "state": "READY"
+    }
+  ],
+  "base_timeline_digest": "2c60c6b823b0cae948947fffe2a0e3456495c1fc5d510379ae95690e1c3fa6ef",
+  "blocked_count": 1,
+  "capture_at": "2026-09-30T19:34:47.774518Z",
+  "completeness_digest": "f5bf22bf4755469840f45512493a9f5842aace7a5218eddace2d5c39148fab7b",
+  "evidence_class": "REAL_OBSERVED",
+  "fixture_manifest_digest": "5dd24bf5f820e456ec40f9df1ecf45a57f17f13a50e8e1341853c2f42b81091f",
+  "input_snapshot_digest": "f00cdd4d58794c83154a03d7b79c0b8fd14aeb2bb4d875149a9971d79d921d8c",
+  "ledger_mutation": false,
+  "model_digest": "50fc0f9120009b86eda1ebf016c14e93c9bd72c256b849577d5f55217d77f626",
+  "model_version": "nations_league_v1_1",
+  "new_prediction_record_ids": [
+    "288431fa7d2fe5505a1652713076dde381e2c1daaca91fcd1c7bf532b47cb50f",
+    "29bd6d5baf1fad641f45a5511f4f8da027b3e96d335a6e490dc7e118286ce4ec",
+    "a202d272871ec3fe9502bd4f7c487cd9f26285aa70232fb8842ebc85c0997262",
+    "88ac4b489e5d402ec405f694781625da87acd666ca3cac3d8f7e72c5eb975961",
+    "22e95a1051519ea54ac657c557f84f28eee630618051602c5ed063e563a996b9"
+  ],
+  "no_bet": true,
+  "prior_campaign_contract_digest": "45ff44edcfb85e57bc372af9c5baff0898b7abc6384f94318887918b505fc0f8",
+  "prior_campaign_id": "nl-v1-1-forward-20260930T183441Z",
+  "prior_germany_record_id": "2fab2e3afb12d51f554f883d786720e3c4306ef14ff66b329f26c608c19f676e",
+  "publication": false,
+  "ready_count": 5,
+  "result_extension_digest": "b5a46881009447f4726a368f40281bcb22b96c223a056ffff5ed794345b1f110",
+  "schema": "nations-league-v1-1-due-initial-batch-v1",
+  "signal_status": "SHADOW_ONLY"
+}
