@@ -51,6 +51,7 @@ const RELEASE = {
   schema_version: 'top5-public-release-v1',
   generation_id: 'generation:test',
   activation_state: 'CONTROLLED',
+  batch_state: 'COMMITTED',
   activation_id: 'activation:test',
   publication_status: 'PUBLISHED',
   publication_enabled: true,
@@ -138,6 +139,16 @@ describe('browser Top-5 public guard', () => {
     const guard = loadGuard();
     const result = guard(payload(), 'worker', NOW);
     assert.equal(result.football.length, 15);
+  });
+
+  test('rejects non-committed batch states without changing the public schema', () => {
+    const guard = loadGuard();
+    for (const batch_state of ['PREPARING', 'FAILED', 'ROLLED_BACK']) {
+      assert.throws(() => guard(payload({
+        top5_release: { ...RELEASE, batch_state },
+      }), 'worker', NOW), /not authorized and published/);
+    }
+    assert.equal(guard(payload(), 'worker', NOW).top5_release.batch_state, 'COMMITTED');
   });
 
   test('Worker source rejects partial or incomplete generations', () => {

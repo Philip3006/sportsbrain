@@ -12,6 +12,7 @@ const RELEASE = {
   release_type: 'CONTROLLED_TOP5',
   generation_id: 'top5-generation-v1:test',
   activation_state: 'CONTROLLED',
+  batch_state: 'COMMITTED',
   activation_id: 'activation:test',
   publication_status: 'PUBLISHED',
   publication_enabled: true,
@@ -73,10 +74,18 @@ describe('Worker Top-5 public release boundary', () => {
       bankroll_state: { free: 999 },
     });
     assert.equal(result.top5_release.generation_id, RELEASE.generation_id);
+    assert.equal(result.top5_release.batch_state, 'COMMITTED');
     assert.equal(result.top5_release.owner, undefined);
     assert.equal(result.bankroll_state, undefined);
     assert.deepEqual(result.top5_release.league_codes, [...TOP5_LEAGUES].sort());
     assert.equal(result.football.length, 15);
+  });
+
+  test('rejects a non-committed batch before it can enter the public route', () => {
+    assert.throws(() => worker.serializePublicProduct({
+      ...payload(),
+      top5_release: { ...RELEASE, batch_state: 'PREPARING' },
+    }), /COMMITTED batches/);
   });
 
   test('rejects a staged or disabled release fail-closed', () => {

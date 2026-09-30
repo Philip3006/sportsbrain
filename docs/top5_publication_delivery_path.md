@@ -242,3 +242,66 @@ captured evidence and this public-read precheck must both pass before the
 release is considered verified. No command in this section performs a live
 publication, Worker deployment, scheduler change, provider request, ledger
 mutation, or betting action.
+
+## Durable five-fixture batch state and operator rollback
+
+The explicit delivery command now wraps the existing publisher with the
+private `top5-canary-signal-batch-v1` / `top5-canary-batch-store-v1` store. It
+accepts exactly one canonical fixture from each Top-5 league and revalidates
+the typed INITIAL/REFINEMENT lifecycle, exact fixture key, model probabilities,
+The Odds API authority, signal-time odds age (maximum 900 seconds), activation
+decision identity, and publication authorization before writing `PREPARING`.
+The stored fixture object contains no bankroll, stake, credential, nonce, or
+user identity. `confidence` is the highest 1X2 model probability, not a
+separate calibration claim.
+
+`PREPARING`, `FAILED`, and `ROLLED_BACK` are private audit states. The public
+adapter remains the existing `/signals.json` schema: the complete JSON object
+is one atomic public generation, with `top5_release.batch_state=COMMITTED`,
+`publication_status=PUBLISHED`, and all 15 outcomes present. Python, Worker,
+and PWA guards reject explicit non-COMMITTED public batches. Older PUBLISHED
+v1 envelopes are normalized as COMMITTED for backward compatibility. No GET
+route, Worker adapter, PWA render, or monitoring path invokes a provider.
+
+The store preserves an owner-only, digest-verified copy of the previous
+canonical public snapshot and a hash-chained audit trail. Delivery is marked
+`COMMITTED` only after both static and Worker readbacks match the authorized
+payload. Operator rollback requires the exact generation and digest returned
+by delivery, verifies that both targets still contain that generation, and
+verifies the saved previous snapshot before any write. It stages the prior
+static snapshot, performs one Worker restore, commits the static restoration,
+and marks `ROLLED_BACK` only after both readbacks match the saved digest. It
+never deletes batch evidence and never retries a failed write; an unverifiable
+restoration is recorded as `FAILED` and requires operator investigation.
+
+Read-only rollback preflight:
+
+```text
+python3 scripts/top5_public_delivery.py rollback \
+  --batch-id <generation-id> \
+  --expected-generation <generation-id> \
+  --expected-current-digest <delivery-public-product-digest> \
+  --batch-state-root /absolute/runtime-state/football/top5/canary_batches
+```
+
+Explicit operator rollback (after reviewing the preflight output and
+confirming the generation/digest):
+
+```text
+python3 scripts/top5_public_delivery.py rollback \
+  --batch-id <generation-id> \
+  --expected-generation <generation-id> \
+  --expected-current-digest <delivery-public-product-digest> \
+  --batch-state-root /absolute/runtime-state/football/top5/canary_batches \
+  --execute \
+  --active-checkout /absolute/active/sportsbrain \
+  --stage-directory /absolute/stage/top5-rollback \
+  --runtime-log /absolute/logs/top5-rollback.log \
+  --worker-url https://example.invalid/signals.json
+```
+
+Rollback is storage-only: public Worker GET/readback, at most one authenticated
+Worker restore, and static read/stage/commit. It performs zero sports-provider
+requests, retries, scheduler changes, betting, or ledger mutations. This CLI
+path is covered with offline transport doubles only and is not invoked by CI
+or this change.
