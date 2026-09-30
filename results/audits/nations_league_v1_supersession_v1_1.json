@@ -1,0 +1,16 @@
+{
+  "artifact_digest": "1e28d0eb3f11e6f775ff043224bf8226521c536ad12781041081a32f4821d75a",
+  "historical_evidence": {
+    "historical_research_remains_background_only": true,
+    "old_v1_real_forward_outcome_consumed": false,
+    "old_v1_real_forward_prediction_generated": false,
+    "promotion_evidence_transferred_as_real_forward_evidence": false
+  },
+  "new_digest": "50fc0f9120009b86eda1ebf016c14e93c9bd72c256b849577d5f55217d77f626",
+  "new_version": "nations_league_v1_1",
+  "old_digest": "f55549e7225f55deac23c7a31b757acf509ad0b4810b93ba8244301d3395a8ee",
+  "old_status": "SUPERSEDED_BEFORE_REAL_FORWARD_EVIDENCE",
+  "old_version": "nations_league_v1",
+  "reason": "AMBIGUOUS_AND_INTERNALLY_INCONSISTENT_TRAINING_UNIVERSE",
+  "schema_version": "nations-league-model-supersession-v1"
+}
