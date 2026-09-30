@@ -386,6 +386,7 @@ _CLASS_A_STANDARD_RUNTIME = frozenset({
     "bundesliga2_closing_odds.yml",
     "bundesliga2_live_push.yml",
     "bundesliga2_scan.yml",
+    "nations_league_live_cycle.yml",  # LIVE model/public data, no financial state
 })
 
 _CLASS_B_FINANCIAL_LEDGER = frozenset({
