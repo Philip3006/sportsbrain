@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
@@ -40,7 +41,7 @@ def _read(path: Path) -> dict[str, Any]:
     with path.open(encoding="utf-8") as handle:
         value = json.load(handle)
     if not isinstance(value, dict):
-        raise ValueError(f"{path} is not a JSON object")
+        raise TypeError(f"{path} is not a JSON object")
     return value
 
 
@@ -213,7 +214,7 @@ def build_artifacts(root: Path, *, source_release_sha: str) -> tuple[dict[str, A
         for record in campaign.get("records", []):
             provenance = record.get("input_provenance")
             if not isinstance(provenance, dict):
-                raise ValueError("campaign record has no input provenance")
+                raise TypeError("campaign record has no input provenance")
             input_digest = provenance.get("input_snapshot_digest")
             state = by_snapshot.get(input_digest)
             if state is None:

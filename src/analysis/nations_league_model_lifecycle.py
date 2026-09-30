@@ -13,7 +13,6 @@ from typing import Any
 
 from src.analysis.nations_league_forward_input import build_input_state
 from src.analysis.nations_league_v1_1 import (
-    COMPETITION,
     MODEL_SPEC,
     MODEL_VERSION,
     model_digest,

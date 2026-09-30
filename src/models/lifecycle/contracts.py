@@ -224,7 +224,7 @@ class ModelRelease:
         *,
         parameter_digest: str,
         parent_release_id: str | None = None,
-    ) -> "ModelRelease":
+    ) -> ModelRelease:
         _digest(parameter_digest, "parameter_digest")
         if parent_release_id is not None:
             _digest(parent_release_id, "parent_release_id")
