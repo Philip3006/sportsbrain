@@ -13,14 +13,19 @@ from src.analysis.nations_league_forward_input import (
     timeline_training,
 )
 from src.analysis.nations_league_result_extension import completeness
-from src.analysis.nations_league_v1_1 import model_digest, training_records_from_timeline
+from src.analysis.nations_league_v1_1 import (
+    model_digest,
+    training_records_from_timeline,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = json.loads(
     (ROOT / "results/research/nations_league_fixture_timeline_v1.json").read_text()
 )
 EXTENSION = json.loads(
-    (ROOT / "results/research/nations_league_v1_1_result_extension_20260930.json").read_text()
+    (
+        ROOT / "results/research/nations_league_v1_1_result_extension_20260930.json"
+    ).read_text()
 )
 CUTOFF = EXTENSION["results_verified_through"]
 
@@ -88,10 +93,18 @@ def test_duplicate_result():
         state(history=history + deepcopy(history))
 
 
-def test_ambiguous_alias():
+def test_unknown_alias_is_fail_closed():
+    fixtures, _, _ = inputs()
+    fixtures[0]["away_team"] = "Ireland Republic"
+    assert (
+        state(fixtures=fixtures)["team_readiness"]["Ireland Republic"] == "MISSING_TEAM"
+    )
+
+
+def test_existing_explicit_alias_is_ready():
     fixtures, _, _ = inputs()
     fixtures[0]["away_team"] = "Turkey"
-    assert state(fixtures=fixtures)["team_readiness"]["Turkey"] == "AMBIGUOUS_IDENTITY"
+    assert state(fixtures=fixtures)["team_readiness"]["Turkey"] == "READY"
 
 
 def test_missing_team():
@@ -144,9 +157,7 @@ def test_noncausal_proof():
     _, _, proof = inputs()
     proof["observed_at"] = "2026-10-01T20:00:01Z"
     snapshot = state(proof=proof)
-    assert set(snapshot["team_readiness"].values()) == {
-        "LIVE_RESULT_REFRESH_REQUIRED"
-    }
+    assert set(snapshot["team_readiness"].values()) == {"LIVE_RESULT_REFRESH_REQUIRED"}
 
 
 def test_valid_stale_completeness_artifact_cannot_become_ready():
@@ -191,9 +202,7 @@ def test_forged_current_watermark_never_produces_ready():
         prediction_cutoff=CUTOFF,
         provenance=proof,
     )
-    assert set(snapshot["team_readiness"].values()) == {
-        "LIVE_RESULT_REFRESH_REQUIRED"
-    }
+    assert set(snapshot["team_readiness"].values()) == {"LIVE_RESULT_REFRESH_REQUIRED"}
 
 
 def test_frozen_digest_mismatch(monkeypatch):
@@ -206,7 +215,9 @@ def test_frozen_digest_mismatch(monkeypatch):
 
 def test_historical_v1_digest_is_not_accepted_as_active_input():
     snapshot = state()
-    snapshot["model_digest"] = "f55549e7225f55deac23c7a31b757acf509ad0b4810b93ba8244301d3395a8ee"
+    snapshot["model_digest"] = (
+        "f55549e7225f55deac23c7a31b757acf509ad0b4810b93ba8244301d3395a8ee"
+    )
     with pytest.raises(ValueError, match="mismatch"):
         predict_from_input_state(snapshot, "uefa-nl:future", phase="initial")
 

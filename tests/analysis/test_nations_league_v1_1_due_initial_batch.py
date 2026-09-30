@@ -77,17 +77,17 @@ def test_fresh_proof_and_extension_are_sealed_and_append_only():
     assert proof["base_timeline_digest"] == TRAINING_TIMELINE_DATASET_DIGEST
 
 
-def test_identity_block_is_explicit_and_does_not_bypass_the_manifest():
+def test_existing_alias_resolves_without_rewriting_the_manifest():
     base, _, extension, proof, targets, training = _batch_context()
     target = targets[BLOCKED_ID]
     state, readiness, _, blocker = preflight(
         target, training, base, extension, proof, CAPTURE
     )
     assert canonical_team("Republic of Ireland") == "Ireland"
-    assert state == "AMBIGUOUS_IDENTITY"
-    assert readiness["Republic of Ireland"] == "AMBIGUOUS_IDENTITY"
+    assert state == "READY"
+    assert readiness["Republic of Ireland"] == "READY"
     assert readiness["Austria"] == "READY"
-    assert blocker == "AMBIGUOUS_IDENTITY: target input is not READY"
+    assert blocker is None
     assert target["fixture_id"] == BLOCKED_ID
 
 
