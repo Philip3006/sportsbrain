@@ -1,0 +1,21 @@
+{
+  "schema": "nations-league-v1-1-result-completeness-v1",
+  "model_version": "nations_league_v1_1",
+  "model_digest": "50fc0f9120009b86eda1ebf016c14e93c9bd72c256b849577d5f55217d77f626",
+  "base_timeline_digest": "2c60c6b823b0cae948947fffe2a0e3456495c1fc5d510379ae95690e1c3fa6ef",
+  "extension_digest": "784aa3f7e4ef1292b62f312a47b49b09ff70fadef4e6bdcbf9954d5e0038c7d2",
+  "prediction_cutoff": "2026-09-30T20:00:00+00:00",
+  "results_verified_through": "2026-09-30T17:04:37.635372+00:00",
+  "observed_at": "2026-09-30T17:04:37.635372+00:00",
+  "source_provenance": "reviewed official post-base inventory",
+  "expected_count": 56,
+  "verified_count": 56,
+  "unresolved_count": 0,
+  "exception_count": 0,
+  "identity_status": "UNAMBIGUOUS",
+  "provenance_digest": "816a77ad72e01f81c0c1bc7273560e07aeb3ac8f9eca803e279879587780fc78",
+  "status": "STALE_INPUT",
+  "no_bet": true,
+  "publication_enabled": false,
+  "completeness_digest": "78c3b211c20c5a04e84be5b9ef417957726b0b9f8992a9b35776389defef3e6d"
+}
