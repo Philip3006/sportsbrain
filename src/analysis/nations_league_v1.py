@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 from collections.abc import Iterable
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
@@ -27,6 +28,8 @@ from src.models.elo import (
 
 MODEL_VERSION = "nations_league_v1"
 SCHEMA_VERSION = "nations-league-v1-forward-shadow-v1"
+FORWARD_RUN_SCHEMA_VERSION = "nations-league-v1-forward-shadow-run-v1"
+METRICS_SCHEMA_VERSION = "nations-league-v1-forward-shadow-metrics-v1"
 COMPETITION = "UEFA Nations League"
 IMPLEMENTATION_SOURCE = "src.models.elo:compute_elo_series,elo_win_probability"
 IMPLEMENTATION_SOURCE_SHA = "289ccd07e266763aa0b869487bd3abb1ac4d7966"
@@ -343,3 +346,360 @@ def append_shadow_record(
         raise ValueError("forward shadow records are append-only")
     result.append(deepcopy(record))
     return result
+
+
+def _validate_digest(value: Any, field: str) -> None:
+    _require_digest(value, field)
+
+
+def validate_target_fixture(fixture: dict[str, Any]) -> None:
+    """Validate the canonical identity needed for a future target fixture.
+
+    Future targets do not have a result-safe timestamp yet.  That field is
+    therefore optional here and is validated only when settlement occurs.
+    """
+
+    required = {
+        "fixture_id",
+        "edition",
+        "evaluation_block",
+        "home_team",
+        "away_team",
+        "kickoff_utc",
+        "competition",
+        "source_provenance",
+        "source_digest",
+    }
+    missing = sorted(required - fixture.keys())
+    if missing:
+        raise ValueError(f"target fixture missing fields: {', '.join(missing)}")
+    for field in (
+        "fixture_id",
+        "edition",
+        "evaluation_block",
+        "home_team",
+        "away_team",
+        "source_provenance",
+    ):
+        if not isinstance(fixture[field], str) or not fixture[field].strip():
+            raise ValueError(f"{field} must be a non-empty string")
+    if fixture["competition"] != COMPETITION:
+        raise ValueError("fixture competition is not UEFA Nations League")
+    if fixture["home_team"] == fixture["away_team"]:
+        raise ValueError("fixture cannot have identical teams")
+    _parse_utc(fixture["kickoff_utc"], "kickoff_utc")
+    _validate_digest(fixture["source_digest"], "source_digest")
+    if fixture.get("administrative_exception"):
+        raise ValueError("administrative fixtures cannot be forward-shadow targets")
+    if "neutral" in fixture and not isinstance(fixture["neutral"], bool):
+        raise ValueError("neutral must be boolean when present")
+
+
+def _validate_input_provenance(provenance: dict[str, Any]) -> None:
+    if not isinstance(provenance, dict):
+        raise TypeError("input_provenance must be an object")
+    for field in ("timeline_digest", "fixture_source_digest"):
+        _validate_digest(provenance.get(field), f"input_provenance.{field}")
+    forbidden = {
+        "odds",
+        "market_odds",
+        "closing_odds",
+        "provider_response",
+        "provider_request",
+        "api_key",
+        "credential",
+    }
+
+    def walk(value: Any) -> None:
+        if isinstance(value, dict):
+            for key, item in value.items():
+                if str(key).lower() in forbidden:
+                    raise ValueError(
+                        f"input provenance contains forbidden field: {key}"
+                    )
+                walk(item)
+        elif isinstance(value, list):
+            for item in value:
+                walk(item)
+
+    walk(provenance)
+
+
+def build_forward_shadow_prediction(
+    fixture: dict[str, Any],
+    *,
+    phase: str,
+    prediction_timestamp: str,
+    training_records: Iterable[dict[str, Any]],
+    input_provenance: dict[str, Any],
+) -> dict[str, Any]:
+    """Build one deterministic v1 prediction without network or market input."""
+
+    validate_target_fixture(fixture)
+    _validate_input_provenance(input_provenance)
+    validate_target_cutoff(fixture["kickoff_utc"], prediction_timestamp)
+    validate_lifecycle_timestamp(phase, prediction_timestamp, fixture["kickoff_utc"])
+    ratings = fit_causal_elo(training_records, prediction_timestamp)
+    probabilities = predict_1x2(
+        ratings,
+        fixture["home_team"],
+        fixture["away_team"],
+        neutral=bool(fixture.get("neutral", False)),
+    )
+    record = {
+        "record_type": "prediction",
+        "record_id": deterministic_record_id(fixture["fixture_id"], phase),
+        "fixture_id": fixture["fixture_id"],
+        "edition": fixture["edition"],
+        "evaluation_block": fixture["evaluation_block"],
+        "competition": COMPETITION,
+        "home_team": fixture["home_team"],
+        "away_team": fixture["away_team"],
+        "kickoff_utc": fixture["kickoff_utc"],
+        "phase": phase,
+        "prediction_timestamp": prediction_timestamp,
+        "model_version": MODEL_VERSION,
+        "model_digest": model_digest(),
+        "probabilities": probabilities,
+        "neutral": bool(fixture.get("neutral", False)),
+        "source_provenance": fixture["source_provenance"],
+        "source_digest": fixture["source_digest"],
+        "target_result_safe_available_at": fixture.get("result_safe_available_at"),
+        "input_provenance": deepcopy(input_provenance),
+        "input_provenance_digest": sha256_json(input_provenance),
+        "source_evidence": [
+            "canonical_fixture_timeline",
+            "causal_elo_training_cutoff",
+        ],
+        "eventual_result": None,
+        "brier_score": None,
+        "log_loss": None,
+        "calibration_bucket": None,
+        "shadow": True,
+        "signal_status": "SHADOW_ONLY",
+        "no_bet": True,
+        "publication_enabled": False,
+        "ledger_mutation": False,
+        "is_actionable_value_signal": False,
+    }
+    validate_shadow_record(record)
+    return record
+
+
+def _outcome(home_score: int, away_score: int) -> str:
+    if home_score > away_score:
+        return "home"
+    if home_score < away_score:
+        return "away"
+    return "draw"
+
+
+def build_shadow_settlement(
+    prediction: dict[str, Any],
+    *,
+    home_score: int,
+    away_score: int,
+    result_safe_available_at: str,
+    settled_at: str,
+    result_provenance: str,
+) -> dict[str, Any]:
+    """Create an append-only settlement event; the prediction is never edited."""
+
+    validate_shadow_record(prediction)
+    if prediction.get("record_type", "prediction") != "prediction":
+        raise ValueError("settlement requires a prediction record")
+    if (
+        not isinstance(home_score, int)
+        or isinstance(home_score, bool)
+        or home_score < 0
+        or not isinstance(away_score, int)
+        or isinstance(away_score, bool)
+        or away_score < 0
+    ):
+        raise ValueError("scores must be non-negative integers")
+    safe_at = _parse_utc(result_safe_available_at, "result_safe_available_at")
+    settled = _parse_utc(settled_at, "settled_at")
+    kickoff = _parse_utc(prediction["kickoff_utc"], "kickoff_utc")
+    if safe_at < kickoff:
+        raise ValueError("result-safe time cannot precede kickoff")
+    expected_safe_at = prediction.get("target_result_safe_available_at")
+    if expected_safe_at is not None and result_safe_available_at != expected_safe_at:
+        raise ValueError(
+            "settlement result-safe time does not match fixture provenance"
+        )
+    if settled < safe_at:
+        raise ValueError("settlement must occur after result-safe time")
+    if not isinstance(result_provenance, str) or not result_provenance.strip():
+        raise ValueError("result provenance is required")
+    outcome = _outcome(home_score, away_score)
+    settlement_identity = {
+        "prediction_record_id": prediction["record_id"],
+        "result_safe_available_at": result_safe_available_at,
+        "home_score": home_score,
+        "away_score": away_score,
+    }
+    return {
+        "record_type": "settlement",
+        "settlement_id": sha256_json(settlement_identity),
+        "prediction_record_id": prediction["record_id"],
+        "fixture_id": prediction["fixture_id"],
+        "phase": prediction["phase"],
+        "model_version": MODEL_VERSION,
+        "model_digest": model_digest(),
+        "eventual_result": {
+            "outcome": outcome,
+            "home_score": home_score,
+            "away_score": away_score,
+        },
+        "result_safe_available_at": result_safe_available_at,
+        "settled_at": settled_at,
+        "result_provenance": result_provenance,
+        "shadow": True,
+        "signal_status": "SHADOW_ONLY",
+        "no_bet": True,
+        "publication_enabled": False,
+        "ledger_mutation": False,
+        "is_actionable_value_signal": False,
+    }
+
+
+def append_shadow_settlement(
+    existing: Iterable[dict[str, Any]], settlement: dict[str, Any]
+) -> list[dict[str, Any]]:
+    """Append one settlement event while preserving all prior records exactly."""
+
+    if settlement.get("record_type") != "settlement":
+        raise ValueError("only settlement records may be appended here")
+    if settlement.get("model_digest") != model_digest():
+        raise ValueError("settlement model digest mismatch")
+    if settlement.get("shadow") is not True or settlement.get("no_bet") is not True:
+        raise ValueError("settlement must remain shadow and no-bet")
+    result = deepcopy(list(existing))
+    prediction_ids = {
+        item.get("record_id")
+        for item in result
+        if item.get("record_type", "prediction") == "prediction"
+    }
+    if settlement.get("prediction_record_id") not in prediction_ids:
+        raise ValueError("settlement references an unknown prediction")
+    settlement_ids = {item.get("settlement_id") for item in result}
+    settled_predictions = {
+        item.get("prediction_record_id")
+        for item in result
+        if item.get("record_type") == "settlement"
+    }
+    if (
+        settlement.get("settlement_id") in settlement_ids
+        or settlement.get("prediction_record_id") in settled_predictions
+    ):
+        raise ValueError("settlements are append-only and cannot conflict")
+    result.append(deepcopy(settlement))
+    return result
+
+
+def _metric_summary(
+    pairs: list[tuple[dict[str, Any], dict[str, Any]]],
+) -> dict[str, Any]:
+    if not pairs:
+        return {
+            "sample_count": 0,
+            "brier_score": None,
+            "log_loss": None,
+            "accuracy": None,
+            "calibration": {"ece": None, "by_outcome": {}},
+        }
+    classes = ("home", "draw", "away")
+    brier_values: list[float] = []
+    log_loss_values: list[float] = []
+    correct = 0
+    by_outcome: dict[str, list[tuple[float, float]]] = {
+        outcome: [] for outcome in classes
+    }
+    for prediction, settlement in pairs:
+        probs = prediction["probabilities"]
+        actual = settlement["eventual_result"]["outcome"]
+        brier_values.append(
+            sum((float(probs[name]) - float(name == actual)) ** 2 for name in classes)
+        )
+        log_loss_values.append(-math.log(max(float(probs[actual]), 1e-15)))
+        correct += int(max(classes, key=lambda name: float(probs[name])) == actual)
+        for name in classes:
+            by_outcome[name].append((float(probs[name]), float(name == actual)))
+
+    calibration: dict[str, Any] = {"by_outcome": {}, "ece": 0.0}
+    total_components = 0
+    for name, values in by_outcome.items():
+        mean_predicted = sum(p for p, _ in values) / len(values)
+        observed_rate = sum(y for _, y in values) / len(values)
+        gap = abs(mean_predicted - observed_rate)
+        calibration["by_outcome"][name] = {
+            "sample_count": len(values),
+            "mean_predicted": mean_predicted,
+            "observed_rate": observed_rate,
+            "absolute_gap": gap,
+        }
+        calibration["ece"] += gap * len(values)
+        total_components += len(values)
+    calibration["ece"] /= total_components
+    return {
+        "sample_count": len(pairs),
+        "brier_score": sum(brier_values) / len(brier_values),
+        "log_loss": sum(log_loss_values) / len(log_loss_values),
+        "accuracy": correct / len(pairs),
+        "calibration": calibration,
+    }
+
+
+def calculate_forward_metrics(records: Iterable[dict[str, Any]]) -> dict[str, Any]:
+    """Calculate settled forward evidence without modifying any record."""
+
+    rows = deepcopy(list(records))
+    predictions = {
+        row["record_id"]: row
+        for row in rows
+        if row.get("record_type", "prediction") == "prediction"
+    }
+    settlements = [row for row in rows if row.get("record_type") == "settlement"]
+    settled_prediction_ids: set[str] = set()
+    pairs_by_phase: dict[str, list[tuple[dict[str, Any], dict[str, Any]]]] = {}
+    for settlement in settlements:
+        prediction_id = settlement.get("prediction_record_id")
+        if prediction_id not in predictions:
+            raise ValueError("metrics contain settlement without prediction")
+        if prediction_id in settled_prediction_ids:
+            raise ValueError("metrics contain duplicate settlement")
+        settled_prediction_ids.add(prediction_id)
+        prediction = predictions[prediction_id]
+        validate_shadow_record(prediction)
+        if settlement.get("model_digest") != prediction.get("model_digest"):
+            raise ValueError("metrics contain a model-digest mismatch")
+        if (
+            settlement.get("shadow") is not True
+            or settlement.get("no_bet") is not True
+            or settlement.get("publication_enabled") is not False
+            or settlement.get("ledger_mutation") is not False
+            or settlement.get("eventual_result", {}).get("outcome")
+            not in {"home", "draw", "away"}
+        ):
+            raise ValueError("metrics contain an unsafe settlement")
+        if settlement.get("phase") != prediction.get("phase"):
+            raise ValueError("metrics settlement phase mismatch")
+        pairs_by_phase.setdefault(prediction["phase"], []).append(
+            (prediction, settlement)
+        )
+    overall_pairs = [pair for pairs in pairs_by_phase.values() for pair in pairs]
+    return {
+        "schema": METRICS_SCHEMA_VERSION,
+        "model_version": MODEL_VERSION,
+        "model_digest": model_digest(),
+        "shadow": True,
+        "no_bet": True,
+        "publication_enabled": False,
+        "ledger_mutation": False,
+        "sample_count": len(overall_pairs),
+        "overall": _metric_summary(overall_pairs),
+        "lifecycle_stage_breakdown": {
+            phase: _metric_summary(pairs)
+            for phase, pairs in sorted(pairs_by_phase.items())
+        },
+    }
