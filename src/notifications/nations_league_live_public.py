@@ -94,6 +94,22 @@ def _stamp(value: datetime) -> str:
     return value.isoformat().replace("+00:00", "Z")
 
 
+def _zero_view_updated_at(
+    selected: Mapping[str, Mapping[str, Any]], release: Mapping[str, Any]
+) -> str:
+    """Return the immutable semantic timestamp for an empty current view."""
+
+    timestamps = [_utc(release["training_cutoff"], "training_cutoff")]
+    for fixture in selected.values():
+        timestamps.extend(
+            [
+                _utc(fixture["updated_at"], "fixture.updated_at"),
+                _utc(fixture["kickoff_utc"], "fixture.kickoff_utc"),
+            ]
+        )
+    return _stamp(max(timestamps))
+
+
 def _canonical_json(value: Any) -> bytes:
     try:
         return json.dumps(
@@ -348,6 +364,9 @@ def build_live_public_nations_league(
         parsed.append(_source_fixture(record, binding))
     if not set(bindings).issubset(seen_records):
         raise NationsLeagueLivePublicError("LIVE evidence binding coverage is incomplete")
+    parsed_by_record_id = {
+        fixture["source_prediction_record_id"]: fixture for fixture in parsed
+    }
     selected: dict[str, dict[str, Any]] = {}
     audit: dict[str, list[str]] = {}
     for fixture in sorted(parsed, key=lambda item: (item["fixture_id"], item["phase"], item["source_prediction_record_id"])):
@@ -366,6 +385,21 @@ def build_live_public_nations_league(
         for key in sorted(selected)
         if _utc(selected[key]["kickoff_utc"], "kickoff_utc") > cutoff
     ]
+    audit_history = [
+        {"fixture_id": fixture_id, "source_prediction_record_ids": audit[fixture_id]}
+        for fixture_id in sorted(audit)
+    ]
+    if not fixtures:
+        audit_history = [
+            {
+                **entry,
+                "source_record_digests": [
+                    _digest(parsed_by_record_id[record_id])
+                    for record_id in entry["source_prediction_record_ids"]
+                ],
+            }
+            for entry in audit_history
+        ]
     payload: dict[str, Any] = {
         "schema": SCHEMA,
         "competition": COMPETITION,
@@ -378,15 +412,12 @@ def build_live_public_nations_league(
         "model_release": release,
         "fixture_count": len(fixtures),
         "fixtures": fixtures,
-        "audit_history": [
-            {"fixture_id": fixture_id, "source_prediction_record_ids": audit[fixture_id]}
-            for fixture_id in sorted(audit)
-        ],
+        "audit_history": audit_history,
     }
     payload["updated_at"] = (
         max(fixture["updated_at"] for fixture in fixtures)
         if fixtures
-        else _stamp(cutoff)
+        else _zero_view_updated_at(selected, release)
     )
     payload["public_digest"] = _digest(payload)
     return payload

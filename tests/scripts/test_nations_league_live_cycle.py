@@ -138,3 +138,31 @@ def test_result_refresh_creates_and_activates_one_successor_release_without_io()
     ]
     assert active_rows == [active.to_payload()]
     assert sum(row["status"] == "VALIDATED" for row in updated["lifecycle"]["releases"]) == 1
+
+
+def test_zero_fixture_public_materialization_is_byte_stable_across_scheduler_ticks(tmp_path):
+    public = _module(PUBLIC_SCRIPT, "nations_league_live_public_zero_test")
+    registry = ROOT / "results/audits/continuous_model_lifecycle_registry.json"
+    campaign = ROOT / "results/research/nations_league_v1_1_forward_campaign_20260930T200124Z.json"
+    binding = ROOT / "results/audits/nations_league_v1_1_live_evidence_binding.json"
+    output = tmp_path / "signals.json"
+    kwargs = {
+        "campaign": campaign,
+        "registry": registry,
+        "binding": binding,
+        "inputs": [ROOT / "docs/data/signals.json"],
+        "store": None,
+        "output": output,
+    }
+    public.materialize(**kwargs, as_of="2026-10-01T18:45:00Z")
+    first_bytes = output.read_bytes()
+    first = json.loads(first_bytes)["nations_league"]
+    public.materialize(**kwargs, as_of="2026-10-01T19:00:00Z")
+    second_bytes = output.read_bytes()
+    second = json.loads(second_bytes)["nations_league"]
+    public.materialize(**kwargs, as_of="2026-10-01T19:15:00Z")
+    third_bytes = output.read_bytes()
+    third = json.loads(third_bytes)["nations_league"]
+    assert first["fixture_count"] == second["fixture_count"] == third["fixture_count"] == 0
+    assert first["public_digest"] == second["public_digest"] == third["public_digest"]
+    assert first_bytes == second_bytes == third_bytes

@@ -75,17 +75,54 @@ def test_source_and_canonical_team_identity_are_both_preserved_for_alias_binding
     assert ireland["canonical_identity"]["home_team"] == "Ireland"
 
 
-def test_expired_live_view_is_valid_zero_fixture_envelope_with_audit_history():
-    output = build_live_public_nations_league(
-        _records(),
-        active_release=_active_release(),
-        evidence_binding=_binding(),
-        as_of="2027-01-01T00:00:00Z",
+def test_zero_fixture_view_transitions_once_and_is_stable_after_expiry():
+    records = _records()
+    release = _active_release()
+    binding = _binding()
+    before = build_live_public_nations_league(
+        records,
+        active_release=release,
+        evidence_binding=binding,
+        as_of="2026-10-01T18:44:59Z",
     )
-    assert output["fixture_count"] == 0
-    assert output["fixtures"] == []
-    assert len(output["audit_history"]) == 7
-    assert validate_live_public_nations_league(output) == output
+    first = build_live_public_nations_league(
+        records,
+        active_release=release,
+        evidence_binding=binding,
+        as_of="2026-10-01T18:45:00Z",
+    )
+    later = [
+        build_live_public_nations_league(
+            records,
+            active_release=release,
+            evidence_binding=binding,
+            as_of=cutoff,
+        )
+        for cutoff in ("2026-10-01T19:00:00Z", "2026-10-01T19:15:00Z")
+    ]
+    assert before["fixture_count"] == 7
+    assert first["fixture_count"] == 0
+    assert first["fixtures"] == []
+    assert first["updated_at"] == "2026-10-01T18:45:00Z"
+    assert len(first["audit_history"]) == 7
+    assert validate_live_public_nations_league(first) == first
+    assert all(bundle == first for bundle in later)
+    assert all(bundle["public_digest"] == first["public_digest"] for bundle in later)
+    assert [
+        row["source_prediction_record_ids"]
+        for row in first["audit_history"]
+    ] == [[record["record_id"]] for record in sorted(records, key=lambda item: item["fixture_id"])]
+
+    changed = deepcopy(records)
+    changed[0]["probabilities"]["home"] += 0.001
+    changed[0]["probabilities"]["away"] -= 0.001
+    changed_bundle = build_live_public_nations_league(
+        changed,
+        active_release=release,
+        evidence_binding=binding,
+        as_of="2026-10-01T19:15:00Z",
+    )
+    assert changed_bundle["public_digest"] != first["public_digest"]
 
 
 def test_refinement_replaces_initial_only_in_public_view_and_keeps_audit_history():
