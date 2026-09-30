@@ -4,9 +4,14 @@ Completeness is an explicit upstream assertion, never inferred from the last mat
 No provider, odds, ledger, filesystem or clock access occurs here.
 """
 
+import unicodedata
 from copy import deepcopy
 
-from src.analysis.nations_league_competition_state import canonical_team
+from src.analysis.nations_league_competition_state import (
+    ALIASES,
+    NORMALIZATION_VERSION,
+    canonical_team,
+)
 from src.analysis.nations_league_result_extension import completeness
 from src.analysis.nations_league_v1_1 import (
     TRAINING_TIMELINE_DATASET_DIGEST,
@@ -18,11 +23,92 @@ from src.analysis.nations_league_v1_1 import (
     sha256_json,
     training_records_from_timeline,
     validate_point_in_time_training,
+    validate_shadow_record,
     validate_target_fixture,
 )
 
 FROZEN_DIGEST = model_digest()
 MODEL_VERSION = "nations_league_v1_1"
+
+
+def _normalized_identity_key(value):
+    """Match the existing alias contract without adding normalization rules."""
+
+    return " ".join(unicodedata.normalize("NFC", value).split()).casefold()
+
+
+def _identity_binding(source_team, ratings, historical_spellings):
+    """Return the sealed source-to-model identity decision for one target team."""
+
+    canonical = canonical_team(source_team)
+    explicit_alias = (
+        source_team != canonical
+        and _normalized_identity_key(source_team) in ALIASES
+        and ALIASES[_normalized_identity_key(source_team)] == canonical
+    )
+    canonical_identity = source_team == canonical
+    if explicit_alias:
+        resolution = "EXPLICIT_EXISTING_ALIAS"
+    elif canonical_identity and canonical in ratings:
+        resolution = "IDENTITY"
+    else:
+        resolution = "UNRESOLVED"
+    if (
+        canonical.casefold() in historical_spellings
+        and historical_spellings[canonical.casefold()] != canonical
+    ):
+        resolution = "AMBIGUOUS_IDENTITY"
+    return {
+        "source_team": source_team,
+        "canonical_team": canonical,
+        "resolution": resolution,
+        "normalization_version": NORMALIZATION_VERSION,
+    }
+
+
+def _identity_bindings_digest(bindings):
+    return sha256_json(
+        {
+            "normalization_version": NORMALIZATION_VERSION,
+            "bindings": bindings,
+        }
+    )
+
+
+def _validate_legacy_snapshot_identity(snapshot):
+    """Allow legacy replay only for exact canonical source identities."""
+
+    ratings = snapshot.get("elo_state")
+    fixtures = snapshot.get("fixtures")
+    training = snapshot.get("training_records")
+    if not isinstance(ratings, dict) or not isinstance(fixtures, list):
+        raise TypeError("legacy snapshot requires sealed identity binding")
+    historical_spellings = {}
+    for row in training or []:
+        for field in ("home_team", "away_team"):
+            source_team = row.get(field)
+            if (
+                not isinstance(source_team, str)
+                or not source_team
+                or canonical_team(source_team) != source_team
+            ):
+                raise ValueError("legacy snapshot requires sealed identity binding")
+            key = source_team.casefold()
+            if key in historical_spellings and historical_spellings[key] != source_team:
+                raise ValueError("legacy snapshot requires sealed identity binding")
+            historical_spellings[key] = source_team
+    for fixture in fixtures:
+        for field in ("home_team", "away_team"):
+            source_team = fixture.get(field)
+            if (
+                not isinstance(source_team, str)
+                or not source_team
+                or canonical_team(source_team) != source_team
+                or source_team not in ratings
+                or historical_spellings.get(source_team.casefold(), source_team)
+                != source_team
+            ):
+                raise ValueError("legacy snapshot requires sealed identity binding")
 
 
 def timeline_training(timeline):
@@ -43,6 +129,7 @@ def build_input_state(
     base_timeline=None,
     result_extension=None,
     completeness_artifact=None,
+    include_identity_bindings=True,
 ):
     """Construct exact causal state; report readiness without default team ratings.
 
@@ -85,9 +172,7 @@ def build_input_state(
         expected_completeness = completeness(result_extension, cutoff.isoformat())
         if expected_completeness != completeness_artifact:
             raise ValueError("completeness artifact mismatch")
-        expected_source_rows = deepcopy(
-            base_rows + result_extension["result_rows"]
-        )
+        expected_source_rows = deepcopy(base_rows + result_extension["result_rows"])
         for row in expected_source_rows:
             row["result_safe_available_at"] = _parse_utc(
                 row["result_safe_available_at"], "result_safe_available_at"
@@ -138,6 +223,7 @@ def build_input_state(
     targets = deepcopy(list(fixtures))
     readiness = {}
     target_ids = set()
+    identity_bindings = {}
     for fixture in targets:
         validate_target_fixture(fixture)
         if fixture["fixture_id"] in target_ids or fixture["fixture_id"] in ids:
@@ -147,15 +233,27 @@ def build_input_state(
             raise ValueError("target must be future")
         for field in ("home_team", "away_team"):
             team = fixture[field]
-            ambiguous = (
-                canonical_team(team) != team
-                or spellings.get(team.casefold(), team) != team
+            binding = _identity_binding(team, ratings, spellings)
+            identity_bindings[team] = binding
+            canonical = binding["canonical_team"]
+            known_identity = binding["resolution"] in {
+                "IDENTITY",
+                "EXPLICIT_EXISTING_ALIAS",
+            }
+            conflicting_identity = (
+                spellings.get(canonical.casefold(), canonical) != canonical
+            )
+            unsealed_alias = (
+                not include_identity_bindings
+                and binding["resolution"] == "EXPLICIT_EXISTING_ALIAS"
             )
             readiness[team] = (
                 "AMBIGUOUS_IDENTITY"
-                if ambiguous
+                if conflicting_identity
+                or unsealed_alias
+                or (not known_identity and canonical in ratings)
                 else "MISSING_TEAM"
-                if team not in ratings
+                if canonical not in ratings
                 else freshness
             )
     snapshot = {
@@ -185,12 +283,22 @@ def build_input_state(
         "shadow": True,
         "no_bet": True,
     }
+    if include_identity_bindings:
+        snapshot["identity_bindings"] = identity_bindings
+        snapshot["identity_binding_digest"] = _identity_bindings_digest(
+            identity_bindings
+        )
     snapshot["input_snapshot_digest"] = sha256_json(snapshot)
     return snapshot
 
 
 def predict_from_input_state(snapshot, fixture_id, *, phase):
     """Bind #227 to verified actual input; do not modify previous shadow records."""
+    legacy_snapshot = "identity_bindings" not in snapshot
+    if legacy_snapshot:
+        _validate_legacy_snapshot_identity(snapshot)
+    elif "identity_binding_digest" not in snapshot:
+        raise ValueError("sealed identity binding digest missing")
     rebuilt = build_input_state(
         snapshot["fixtures"],
         snapshot["training_records"],
@@ -199,6 +307,7 @@ def predict_from_input_state(snapshot, fixture_id, *, phase):
         base_timeline=snapshot.get("base_timeline"),
         result_extension=snapshot.get("result_extension"),
         completeness_artifact=snapshot.get("completeness"),
+        include_identity_bindings=not legacy_snapshot,
     )
     if rebuilt != snapshot:
         raise ValueError("input snapshot mismatch")
@@ -212,8 +321,25 @@ def predict_from_input_state(snapshot, fixture_id, *, phase):
         for k in ("home_team", "away_team")
     ):
         raise ValueError("forward input is not READY")
-    return build_forward_shadow_prediction(
-        fixture,
+    model_fixture = deepcopy(fixture)
+    binding = None
+    if not legacy_snapshot:
+        binding = snapshot["identity_bindings"].get(fixture["home_team"])
+        away_binding = snapshot["identity_bindings"].get(fixture["away_team"])
+        if binding is None or away_binding is None:
+            raise ValueError("missing sealed identity binding")
+        if binding["resolution"] not in {
+            "IDENTITY",
+            "EXPLICIT_EXISTING_ALIAS",
+        } or away_binding["resolution"] not in {
+            "IDENTITY",
+            "EXPLICIT_EXISTING_ALIAS",
+        }:
+            raise ValueError("sealed identity binding is not READY")
+        model_fixture["home_team"] = binding["canonical_team"]
+        model_fixture["away_team"] = away_binding["canonical_team"]
+    record = build_forward_shadow_prediction(
+        model_fixture,
         phase=phase,
         prediction_timestamp=snapshot["prediction_cutoff"],
         training_records=snapshot["training_records"],
@@ -223,3 +349,18 @@ def predict_from_input_state(snapshot, fixture_id, *, phase):
             "input_snapshot_digest": snapshot["input_snapshot_digest"],
         },
     )
+    if not legacy_snapshot:
+        record["home_team"] = fixture["home_team"]
+        record["away_team"] = fixture["away_team"]
+        record["model_identity"] = {
+            "home_team": binding["canonical_team"],
+            "away_team": away_binding["canonical_team"],
+            "normalization_version": NORMALIZATION_VERSION,
+            "identity_binding_digest": snapshot["identity_binding_digest"],
+        }
+        record["source_evidence"] = [
+            *record["source_evidence"],
+            "sealed_identity_binding",
+        ]
+        validate_shadow_record(record)
+    return record

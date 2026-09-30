@@ -21,7 +21,9 @@ BASE = json.loads(
     (ROOT / "results/research/nations_league_fixture_timeline_v1.json").read_text()
 )
 EXTENSION = json.loads(
-    (ROOT / "results/research/nations_league_v1_1_result_extension_20260930.json").read_text()
+    (
+        ROOT / "results/research/nations_league_v1_1_result_extension_20260930.json"
+    ).read_text()
 )
 READY_CUTOFF = EXTENSION["results_verified_through"]
 
@@ -240,7 +242,7 @@ def test_non_ready_state_cannot_append(failure, tmp_path):
         kwargs["fixtures"] = fixtures
         run_manifest["fixtures"] = deepcopy(fixtures)
     else:
-        fixtures[0]["away_team"] = "Turkey"
+        fixtures[0]["away_team"] = "Austria "
         kwargs["fixtures"] = fixtures
         run_manifest["fixtures"] = deepcopy(fixtures)
     snapshot = input_state(**kwargs)
@@ -307,9 +309,7 @@ def test_legacy_raw_cli_flags_rejected(tmp_path):
 
 def test_cli_requires_validated_input_state(tmp_path):
     manifest_path = tmp_path / "manifest.json"
-    manifest_path.write_text(
-        json.dumps(manifest("2026-10-01T16:00:00Z"))
-    )
+    manifest_path.write_text(json.dumps(manifest("2026-10-01T16:00:00Z")))
     state_path = tmp_path / "state.json"
     state_path.write_text(
         json.dumps(input_state(fixture_kickoff="2026-10-01T16:00:00Z"))
