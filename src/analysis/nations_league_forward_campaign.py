@@ -16,7 +16,7 @@ import json
 from collections.abc import Iterable, Mapping
 from copy import deepcopy
 from dataclasses import dataclass
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from src.analysis.nations_league_v1_1 import (
@@ -31,7 +31,7 @@ from src.analysis.nations_league_v1_1 import (
 )
 
 FORWARD_CAMPAIGN_SCHEMA_VERSION = "nations-league-forward-evidence-campaign-v1_1"
-FORWARD_SUMMARY_SCHEMA_VERSION = "nations-league-forward-evidence-summary-v1_1"
+FORWARD_SUMMARY_SCHEMA_VERSION = "nations-league-forward-evidence-summary-v1_2"
 SHADOW_ONLY = "SHADOW_ONLY"
 NO_BET = True
 
@@ -59,17 +59,69 @@ class ForwardCampaignError(ValueError):
     """Raised when campaign evidence would violate an immutable boundary."""
 
 
-def _utc(value: str, field: str) -> None:
+def _utc(value: str, field: str) -> datetime:
     if not isinstance(value, str) or not value:
         raise ForwardCampaignError(f"{field} must be a non-empty ISO timestamp")
     try:
-        from datetime import datetime
-
         parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
     except ValueError as exc:
         raise ForwardCampaignError(f"{field} is not ISO-8601") from exc
     if parsed.tzinfo is None or parsed.utcoffset() != timedelta(0):
         raise ForwardCampaignError(f"{field} must carry UTC timezone")
+    return parsed.astimezone(timezone.utc)
+
+
+def _phase_window(row: Mapping[str, Any], phase: str) -> tuple[datetime, datetime]:
+    windows = row.get("capture_windows")
+    if not isinstance(windows, Mapping) or not isinstance(windows.get(phase), Mapping):
+        raise ForwardCampaignError(f"manifest requires {phase} capture window")
+    window = windows[phase]
+    start = _utc(window.get("start_utc"), f"{phase}.start_utc")
+    end = _utc(window.get("end_utc"), f"{phase}.end_utc")
+    if end < start:
+        raise ForwardCampaignError(f"{phase} capture window is inverted")
+    return start, end
+
+
+def _phase_eligible(
+    campaign: ForwardEvidenceCampaign, row: Mapping[str, Any], phase: str
+) -> bool:
+    if row.get("exception") in _EXCEPTIONS:
+        return False
+    _, end = _phase_window(row, phase)
+    return end >= _utc(campaign.campaign_start, "campaign_start")
+
+
+def _validate_manifest_eligibility(campaign: ForwardEvidenceCampaign) -> None:
+    for row in campaign.fixture_manifest:
+        for phase in ("initial", "refinement"):
+            expected = _phase_eligible(campaign, row, phase)
+            if row[f"{phase}_eligible"] is not expected:
+                raise ForwardCampaignError(
+                    f"{phase} eligibility does not match campaign responsibility"
+                )
+
+
+def _real_prediction_window_check(
+    campaign: ForwardEvidenceCampaign,
+    record: Mapping[str, Any],
+    fixture_by_id: Mapping[str, Mapping[str, Any]],
+) -> None:
+    fixture = fixture_by_id.get(record.get("fixture_id"))
+    if fixture is None:
+        raise ForwardCampaignError("prediction fixture is outside campaign manifest")
+    phase = record.get("phase")
+    if phase not in ("initial", "refinement"):
+        raise ForwardCampaignError("prediction lifecycle phase is unsupported")
+    if not _phase_eligible(campaign, fixture, phase):
+        raise ForwardCampaignError("prediction phase is not campaign-eligible")
+    prediction_at = _utc(record.get("prediction_timestamp"), "prediction_timestamp")
+    campaign_start = _utc(campaign.campaign_start, "campaign_start")
+    if prediction_at < campaign_start:
+        raise ForwardCampaignError("real prediction precedes campaign_start")
+    start, end = _phase_window(fixture, phase)
+    if not start <= prediction_at <= end:
+        raise ForwardCampaignError("real prediction is outside capture window")
 
 
 def _digest(value: str, field: str) -> None:
@@ -232,6 +284,7 @@ def _validate_campaign(campaign: ForwardEvidenceCampaign) -> None:
     manifest = _canonical_manifest(campaign.fixture_manifest)
     if manifest != campaign.fixture_manifest:
         raise ForwardCampaignError("fixture manifest is not canonical")
+    _validate_manifest_eligibility(campaign)
     _digest(campaign.fixture_manifest_digest, "fixture_manifest_digest")
     _digest(campaign.evaluation_contract_digest, "evaluation_contract_digest")
     if sha256_json(campaign.contract_payload()) != campaign.evaluation_contract_digest:
@@ -285,6 +338,9 @@ def validate_forward_campaign(artifact: ForwardCampaignArtifact) -> None:
     settlement_ids: set[str] = set()
     settled_prediction_ids: set[str] = set()
     fixture_ids = {row["fixture_id"] for row in artifact.campaign.fixture_manifest}
+    fixture_by_id = {
+        row["fixture_id"]: row for row in artifact.campaign.fixture_manifest
+    }
     for record in artifact.records:
         evidence_class = record.get("evidence_class")
         if evidence_class not in EVIDENCE_CLASSES:
@@ -304,6 +360,8 @@ def validate_forward_campaign(artifact: ForwardCampaignArtifact) -> None:
                 raise ForwardCampaignError(
                     "prediction fixture is outside campaign manifest"
                 )
+            if evidence_class == EVIDENCE_REAL:
+                _real_prediction_window_check(artifact.campaign, record, fixture_by_id)
             identity = (record["fixture_id"], record["phase"])
             if record["record_id"] in prediction_ids or identity in phases:
                 raise ForwardCampaignError("campaign predictions are append-only")
@@ -483,12 +541,39 @@ def _criteria_state(
     return state
 
 
+def _phase_state(
+    campaign: ForwardEvidenceCampaign,
+    row: Mapping[str, Any],
+    phase: str,
+    as_of: datetime,
+    captured: set[str],
+) -> str:
+    if row.get("exception") in _EXCEPTIONS:
+        return "EXCEPTION"
+    if not row[f"{phase}_eligible"]:
+        return "NOT_ELIGIBLE"
+    if row["fixture_id"] in captured:
+        return "CAPTURED"
+    start, end = _phase_window(row, phase)
+    if as_of < start:
+        return "PENDING"
+    if as_of <= end:
+        return "DUE"
+    return "MISSED"
+
+
 def build_forward_evidence_summary(
     artifact: ForwardCampaignArtifact,
     *,
     criteria_evaluation: Mapping[str, Any] | None = None,
+    as_of: str | None = None,
 ) -> dict[str, Any]:
-    """Build deterministic completeness and real-only forward metrics."""
+    """Build deterministic, time-aware completeness and real-only metrics.
+
+    Real evidence requires an explicit UTC ``as_of``.  Synthetic-only callers
+    may omit it; the explicit campaign start is then used as a deterministic
+    test clock rather than the filesystem or wall clock.
+    """
 
     validate_forward_campaign(artifact)
     predictions = [
@@ -499,6 +584,13 @@ def build_forward_evidence_summary(
     real_predictions = [
         row for row in predictions if row["evidence_class"] == EVIDENCE_REAL
     ]
+    if real_predictions and as_of is None:
+        raise ForwardCampaignError("real campaign summary requires explicit as_of")
+    clock = (
+        _utc(as_of, "as_of")
+        if as_of is not None
+        else _utc(artifact.campaign.campaign_start, "campaign_start")
+    )
     real_records = [
         row for row in artifact.records if row["evidence_class"] == EVIDENCE_REAL
     ]
@@ -508,38 +600,81 @@ def build_forward_evidence_summary(
         if row.get("record_type") == "settlement"
     }
     manifest = artifact.campaign.fixture_manifest
-    eligible = [
-        row
-        for row in manifest
-        if row.get("exception") is None
-        and (row["initial_eligible"] or row["refinement_eligible"])
-    ]
-    initial_eligible = [row for row in eligible if row["initial_eligible"]]
-    refinement_eligible = [row for row in eligible if row["refinement_eligible"]]
     captured_initial = {
         row["fixture_id"] for row in real_predictions if row["phase"] == "initial"
     }
     captured_refinement = {
         row["fixture_id"] for row in real_predictions if row["phase"] == "refinement"
     }
+    lifecycle_states = []
+    phase_counts = {}
+    for phase, captured in (
+        ("initial", captured_initial),
+        ("refinement", captured_refinement),
+    ):
+        counts = {
+            "eligible": 0,
+            "captured": 0,
+            "pending": 0,
+            "due": 0,
+            "missed": 0,
+        }
+        phase_counts[phase] = counts
+    for row in manifest:
+        states = {
+            phase: _phase_state(
+                artifact.campaign,
+                row,
+                phase,
+                clock,
+                captured,
+            )
+            for phase, captured in (
+                ("initial", captured_initial),
+                ("refinement", captured_refinement),
+            )
+        }
+        lifecycle_states.append(
+            {
+                "fixture_id": row["fixture_id"],
+                "initial": states["initial"],
+                "refinement": states["refinement"],
+            }
+        )
+        for phase, state in states.items():
+            if state in {"CAPTURED", "PENDING", "DUE", "MISSED"}:
+                phase_counts[phase][state.lower()] += 1
+                phase_counts[phase]["eligible"] += 1
     metrics = calculate_forward_metrics(real_records)
     stage_metrics = metrics.get("lifecycle_stage_breakdown", {})
     summary_body: dict[str, Any] = {
         "schema_version": FORWARD_SUMMARY_SCHEMA_VERSION,
+        "as_of": clock.isoformat().replace("+00:00", "Z"),
         "campaign": artifact.campaign.to_payload(),
+        "lifecycle_states": lifecycle_states,
         "evidence_state": _criteria_state(
             real_prediction_count=len(real_predictions),
             promotion_criteria_digest=artifact.campaign.promotion_criteria_digest,
             criteria_evaluation=criteria_evaluation,
         ),
         "completeness": {
-            "eligible_fixtures": len(eligible),
-            "initial_eligible": len(initial_eligible),
-            "initial_captured": len(captured_initial),
-            "initial_missed": len(initial_eligible) - len(captured_initial),
-            "refinement_eligible": len(refinement_eligible),
-            "refinement_captured": len(captured_refinement),
-            "refinement_missed": len(refinement_eligible) - len(captured_refinement),
+            "eligible_fixtures": len(
+                {
+                    row["fixture_id"]
+                    for row in manifest
+                    if row["initial_eligible"] or row["refinement_eligible"]
+                }
+            ),
+            "initial_eligible": phase_counts["initial"]["eligible"],
+            "initial_captured": phase_counts["initial"]["captured"],
+            "initial_pending": phase_counts["initial"]["pending"],
+            "initial_due": phase_counts["initial"]["due"],
+            "initial_missed": phase_counts["initial"]["missed"],
+            "refinement_eligible": phase_counts["refinement"]["eligible"],
+            "refinement_captured": phase_counts["refinement"]["captured"],
+            "refinement_pending": phase_counts["refinement"]["pending"],
+            "refinement_due": phase_counts["refinement"]["due"],
+            "refinement_missed": phase_counts["refinement"]["missed"],
             "settled": len(settlements),
             "unsettled": len(real_predictions) - len(settlements),
             "administrative_exceptions": sum(
