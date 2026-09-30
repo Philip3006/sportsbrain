@@ -172,6 +172,18 @@ def validate_public_nations_league(
     max_age: timedelta = MAX_PUBLIC_SHADOW_AGE,
 ) -> dict[str, Any]:
     """Validate the already-projected public bundle without private fields."""
+    if isinstance(value, Mapping) and value.get("schema") == "nations-league-live-public-v1":
+        # The live adapter has its own strict allowlist and deliberately does
+        # not loosen the historical iSports shadow artifact contract below.
+        from src.notifications.nations_league_live_public import (
+            NationsLeagueLivePublicError,
+            validate_live_public_nations_league,
+        )
+
+        try:
+            return validate_live_public_nations_league(value)
+        except NationsLeagueLivePublicError as exc:
+            raise NationsLeaguePublicError(str(exc)) from exc
     if not isinstance(value, Mapping):
         raise NationsLeaguePublicError("public Nations League bundle is not an object")
     payload = dict(value)

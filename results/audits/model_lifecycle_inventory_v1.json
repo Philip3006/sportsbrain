@@ -1,0 +1,60 @@
+{
+  "schema": "sportsbrain-model-lifecycle-inventory-v1",
+  "generated_at": "2026-09-30T20:01:24Z",
+  "inventory_scope": "repository contracts; no scheduler or runtime state was changed",
+  "families": [
+    {
+      "model_family": "nations_league_v1_1",
+      "algorithm_version": "nations_league_v1_1",
+      "algorithm_source": "src/analysis/nations_league_v1_1.py",
+      "state_source": "results/research/nations_league_v1_1_input_state_20260930T200124Z.json",
+      "result_source": "official UEFA post-base result extension",
+      "trigger": "RESULT_WATERMARK_ADVANCED",
+      "cadence": "manual/result-driven only",
+      "loader": "src/analysis/nations_league_live_release.py",
+      "artifact_pointer": "caller-owned FileActiveModelPointer; no default production path",
+      "status": "first generic live-release implementation",
+      "scheduler": "disabled / none"
+    },
+    {
+      "model_family": "tennis_lgbm",
+      "algorithm_source": "scripts/tennis_train.py",
+      "state_source": "models/tennis_lgbm/",
+      "result_source": "tennis-data.co.uk plus settled-signal recalibration",
+      "trigger": "scheduled daily workflow",
+      "cadence": "05:00 UTC",
+      "workflow": ".github/workflows/tennis_lgbm_retrain.yml",
+      "artifact_pointer": "existing model files; generic release pointer not yet adopted",
+      "status": "existing production workflow preserved unchanged"
+    },
+    {
+      "model_family": "bundesliga2_elo_dc",
+      "algorithm_source": "scripts/train_elo_bundesliga2.py; scripts/train_dc_bundesliga2.py",
+      "state_source": "models/dc_bundesliga2/ and data/cache/elo_ratings_bl2.json",
+      "result_source": "D2 universe/current squad refresh",
+      "trigger": "scheduled daily workflow",
+      "cadence": "05:00 UTC",
+      "workflow": ".github/workflows/bundesliga2_retrain.yml",
+      "artifact_pointer": "existing artifact files; generic release pointer not yet adopted",
+      "status": "existing production workflow preserved unchanged"
+    },
+    {
+      "model_family": "top5_football",
+      "algorithm_source": "Top-5 governed runtime contracts",
+      "state_source": "provider-authority and controlled-shadow gates",
+      "trigger": "no generic retrain trigger",
+      "cadence": "not enabled",
+      "artifact_pointer": "governed activation contracts, not a generic pointer",
+      "status": "separate authority domain; intentionally not changed"
+    },
+    {
+      "model_family": "wm_legacy_dc_lgbm_stacker",
+      "algorithm_source": "scripts/auto_retrain.py",
+      "state_source": "models/",
+      "trigger": "disabled workflow",
+      "workflow": ".github/workflows/auto_retrain.yml.disabled",
+      "artifact_pointer": "legacy lifecycle files",
+      "status": "legacy and disabled; not re-enabled"
+    }
+  ]
+}
