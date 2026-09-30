@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Build the offline 20-fixture public-web-odds pilot artifacts."""
 
 from __future__ import annotations
