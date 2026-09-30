@@ -629,7 +629,17 @@ function _setSportFilter(sport, patch) {
 }
 
 // ── Navigation ───────────────────────────────────────────────
+function _captureAnalytics(eventName, properties, options) {
+  try { globalThis.sbAnalytics?.capture?.(eventName, properties, options); } catch (_) {}
+}
+function _analyticsFixtureKey(home, away, kickoff) {
+  const part = (value) => String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  const base = `${part(home)} vs ${part(away)}`;
+  return kickoff ? `${base} @ ${String(kickoff).trim()}` : base;
+}
 function navTo(tab) {
+  const previousTab = _prevView;
+  const nextTab = tab?.dataset?.view || '';
   document.querySelectorAll('.nav-tab').forEach(t => {
     t.classList.remove('active');
     t.setAttribute('aria-selected', 'false');
@@ -637,11 +647,14 @@ function navTo(tab) {
   tab.classList.add('active');
   tab.setAttribute('aria-selected', 'true');
   _prevView = tab.dataset.view;
+  _captureAnalytics('tab_opened', { tab: nextTab, previous_tab: previousTab });
   showView(tab.dataset.view);
 }
 function showView(id) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.getElementById('view-' + id).classList.add('active');
+  const view = document.getElementById('view-' + id);
+  view.classList.add('active');
+  if (document.body) document.body.dataset.activeView = id;
   if (id === 'forecast') renderForecast();
 }
 function closeDetail() { showView(_prevView); }
@@ -713,6 +726,24 @@ function openNationsLeagueMatch(displayKey) {
       payload.publication_enabled !== false) return;
 
   const kickoff = fixture.kickoff || '';
+  const fixtureKey = _analyticsFixtureKey(dh, da, kickoff);
+  const analyticsFields = {
+    sport: 'football',
+    competition: 'UEFA Nations League',
+    fixture_id: fixture.provider_event_id,
+    fixture_key: fixtureKey,
+    lifecycle_stage: 'SHADOW_ONLY',
+    source_view: 'home',
+  };
+  _captureAnalytics('match_opened', analyticsFields);
+  _captureAnalytics('nl_match_opened', {
+    fixture_id: fixture.provider_event_id,
+    fixture_key: fixtureKey,
+    lifecycle_stage: 'SHADOW_ONLY',
+    publication_state: 'disabled',
+    shadow_state: 'SHADOW_ONLY',
+    source_view: 'home',
+  });
   const probabilities = fixture.model?.probabilities || {};
   const odds = fixture.market?.odds_decimal || {};
   const outcomes = [
@@ -758,6 +789,11 @@ function openNationsLeagueMatch(displayKey) {
       </div>
     </div>`;
   showView('detail');
+  _captureAnalytics('prediction_viewed', {
+    ...analyticsFields,
+    model_version: fixture.model?.model_version || fixture.model?.model_identity,
+    source_view: 'home',
+  });
 }
 
 function openMatch(displayKey) {
@@ -773,6 +809,15 @@ function openMatch(displayKey) {
   const sport = s0?.sport || sched?.sport || 'football';
   const kickoff = s0?.kickoff || sched?.kickoff || '';
   const tour = s0?.tour || sched?.tour || '';
+  const sourceView = document.body?.dataset?.activeView || _prevView || 'home';
+  _captureAnalytics('match_opened', {
+    sport,
+    competition: s0?.competition || s0?.tour || s0?.league || tour,
+    fixture_id: s0?.fixture_id,
+    fixture_key: s0?.fixture_key || _analyticsFixtureKey(dh, da, kickoff),
+    lifecycle_stage: s0?.lifecycle?.lifecycle_stage,
+    source_view: sourceView,
+  });
   const sportIcon = sport === 'football' ? '⚽' : '🎾';
   const metaStr = kickoff ? fmtKickoffCompact(kickoff) : '';
   const cdHtml = kickoff ? `<span class="match-countdown" data-kickoff="${esc(kickoff)}" data-sport="${esc(sport)}" style="margin-top:0;font-size:10px;padding:2px 7px">⏱ …</span>` : '';
@@ -885,6 +930,18 @@ function openMatch(displayKey) {
 
   document.getElementById('detail-cards').innerHTML = cards;
   showView('detail');
+  if (tip) {
+    _captureAnalytics('prediction_viewed', {
+      sport,
+      competition: s0?.competition || s0?.tour || s0?.league || tour,
+      fixture_id: s0?.fixture_id,
+      fixture_key: s0?.fixture_key || _analyticsFixtureKey(dh, da, kickoff),
+      lifecycle_stage: s0?.lifecycle?.lifecycle_stage,
+      model_version: tip.model_version || tip.model_identity,
+      confidence: s0?.confidence || tip.confidence,
+      source_view: sourceView,
+    });
+  }
 }
 
 // ── Helpers ──────────────────────────────────────────────────

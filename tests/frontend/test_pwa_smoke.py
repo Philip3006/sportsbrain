@@ -160,6 +160,7 @@ def _inject_signals(page: Page, payload: dict) -> None:
     """
     b64 = base64.b64encode(json.dumps(payload).encode()).decode()
     page.add_init_script(f"""
+        window.SB_ANALYTICS_DISABLED = true;
         if ('serviceWorker' in navigator) {{
             navigator.serviceWorker.register = () =>
                 Promise.reject(new Error('SW disabled in tests'));
@@ -253,6 +254,34 @@ def test_home_integrates_read_only_nations_league_shadow_games(page: Page, serve
     expect(detail).to_contain_text("2.00")
     expect(detail.locator("button")).to_have_count(0)
     expect(page.locator("#bet-modal-bd")).not_to_be_visible()
+
+
+def test_analytics_hook_and_mobile_navigation(page: Page, server_url: str) -> None:
+    """The centralized analytics hook is fail-open and semantic on mobile."""
+    _inject_signals(page, _FRESH)
+    page.set_viewport_size({"width": 390, "height": 844})
+    page.goto(server_url, wait_until="domcontentloaded")
+
+    expect(page.locator("nav.bottom-nav")).to_be_visible(timeout=10_000)
+    page.locator("[data-view='football']").click()
+    expect(page.locator("#view-football")).to_have_class("view active")
+
+    events = page.evaluate("window.sbAnalytics && window.sbAnalytics.__test.events()")
+    assert any(event["event"] == "pwa_opened" for event in events)
+    assert any(
+        event["event"] == "tab_opened" and
+        event["properties"].get("tab") == "football" and
+        event["properties"].get("previous_tab") == "home"
+        for event in events
+    )
+
+    card = page.locator(".sig-card").first
+    expect(card).to_be_visible(timeout=10_000)
+    card.click()
+    events = page.evaluate("window.sbAnalytics.__test.events()")
+    assert any(event["event"] == "signal_opened" for event in events)
+    assert any(event["event"] == "match_opened" for event in events)
+    assert not any("stake" in event["properties"] or "bankroll" in event["properties"] for event in events)
 
 
 # ── P0-A focused tests ────────────────────────────────────────────────────────
