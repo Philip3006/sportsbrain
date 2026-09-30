@@ -1,7 +1,7 @@
 """Offline UEFA Nations League future-fixture intake.
 
 This module contains only public schedule material and deterministic validation
-for the frozen ``nations_league_v1`` forward-shadow runner.  It deliberately
+for the frozen ``nations_league_v1_1`` forward-shadow runner.  It deliberately
 does not call providers, read credentials, or produce predictions.
 """
 
@@ -13,12 +13,15 @@ import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo
+
+from src.analysis.nations_league_v1_1 import MODEL_VERSION, model_digest
 
 COMPETITION = "UEFA Nations League"
 EDITION = "2026/27"
 EVALUATION_BLOCK = "NL_2026_27"
 STAGE = "league_phase"
-SOURCE_TIMEZONE = "CET (UTC+01:00)"
+SOURCE_TIMEZONE = "Europe/Vienna (date-aware UEFA local time)"
 OBSERVED_AT_UTC = "2026-09-30T15:31:41Z"
 OFFICIAL_FIXTURES_URL = (
     "https://www.uefa.com/uefanationsleague/news/"
@@ -29,7 +32,7 @@ OFFICIAL_FIXTURE_PDF_URL = (
     "a8a8727f0805-1000/unl_2627_-_league_phase_fixture_list_per_matchday_28_april_2026.pdf"
 )
 UTC = timezone.utc
-CET = timezone(timedelta(hours=1), name="CET")
+UEFA_LOCAL_TIMEZONE = ZoneInfo("Europe/Vienna")
 STATUS_VALUES = frozenset(
     {"VERIFIED", "UNRESOLVED", "STARTED", "CANCELLED", "POSTPONED"}
 )
@@ -171,7 +174,7 @@ def kickoff_to_utc(date_value: str, time_value: str) -> str:
     try:
         parsed = datetime.strptime(
             f"{date_value} {time_value}", "%Y-%m-%d %H:%M"
-        ).replace(tzinfo=CET)
+        ).replace(tzinfo=UEFA_LOCAL_TIMEZONE)
     except ValueError as exc:
         raise ValueError("source kickoff must be YYYY-MM-DD HH:MM") from exc
     return parsed.astimezone(UTC).isoformat().replace("+00:00", "Z")
@@ -307,7 +310,8 @@ def build_manifest(observed_at_utc: str = OBSERVED_AT_UTC) -> dict[str, Any]:
         "observed_at_utc": observed_at_utc,
         "source_timezone": SOURCE_TIMEZONE,
         "source_urls": [OFFICIAL_FIXTURES_URL, OFFICIAL_FIXTURE_PDF_URL],
-        "forward_shadow_model": "nations_league_v1",
+        "forward_shadow_model": MODEL_VERSION,
+        "forward_shadow_model_digest": model_digest(),
         "provider_ids_used": [],
         "predictions": [],
         "fixtures": fixtures,
@@ -318,6 +322,10 @@ def build_manifest(observed_at_utc: str = OBSERVED_AT_UTC) -> dict[str, Any]:
 
 
 def validate_manifest(manifest: dict[str, Any]) -> None:
+    if manifest.get("forward_shadow_model") != MODEL_VERSION:
+        raise ValueError("future manifest must bind Nations League v1.1")
+    if manifest.get("forward_shadow_model_digest") != model_digest():
+        raise ValueError("future manifest model digest mismatch")
     fixtures = manifest.get("fixtures")
     if not isinstance(fixtures, list):
         raise TypeError("fixtures must be a list")
