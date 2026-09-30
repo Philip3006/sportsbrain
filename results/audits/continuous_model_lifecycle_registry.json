@@ -1,0 +1,82 @@
+{
+  "health": [
+    {
+      "active_release_id": "78161c4097c06e596efa95721aa62db0ed72a057a3fd664cbecd32f0c0be29bb",
+      "active_training_cutoff": "2026-09-30T20:01:24.572945+00:00",
+      "last_failure_reason": null,
+      "last_result_watermark": "2026-09-30T17:04:37.634354+00:00",
+      "last_retrain_outcome": "CREATED",
+      "last_successful_retrain": "2026-09-30T20:01:24.572945Z",
+      "model_family": "nations_league_v1_1",
+      "status": "ACTIVE",
+      "training_row_count": 566,
+      "updated_at": "2026-09-30T20:01:24.572945Z"
+    }
+  ],
+  "inventory_digest": "ec12c428ccb6363856f58283a276b892691713d4f22c26f33ed7250e6777411c",
+  "lifecycle": {
+    "active_pointers": [
+      {
+        "activated_at": "2026-09-30T20:01:24.572945Z",
+        "model_family": "nations_league_v1_1",
+        "previous_release_id": null,
+        "release_id": "78161c4097c06e596efa95721aa62db0ed72a057a3fd664cbecd32f0c0be29bb",
+        "revision": 1
+      }
+    ],
+    "receipts": [
+      {
+        "created_at": "2026-09-30T20:01:24.572945Z",
+        "model_family": "nations_league_v1_1",
+        "outcome": "CREATED",
+        "reason": null,
+        "receipt_id": "19ba67a451574bea541093d2d1d0c92443ae2e74fff46adfc835022137d008e8",
+        "release_id": "78161c4097c06e596efa95721aa62db0ed72a057a3fd664cbecd32f0c0be29bb",
+        "training_snapshot_digest": "f15722bd9c491d3d61e48a73aea222c8e104b86c20099d288d12e73ea199d4e9"
+      },
+      {
+        "action": "ACTIVATE",
+        "activated_at": "2026-09-30T20:01:24.572945Z",
+        "model_family": "nations_league_v1_1",
+        "pointer_digest": "25e8017abb7ac45d46933ef7287d85c5363106e0c39c7e50e60a929cba22854d",
+        "previous_release_id": null,
+        "receipt_id": "7246898c898aa111d07b2995c97f595aefe26b42c324c85121ed5f336ff2c146",
+        "release_id": "78161c4097c06e596efa95721aa62db0ed72a057a3fd664cbecd32f0c0be29bb"
+      }
+    ],
+    "releases": [
+      {
+        "algorithm_digest": "50fc0f9120009b86eda1ebf016c14e93c9bd72c256b849577d5f55217d77f626",
+        "algorithm_version": "nations_league_v1_1",
+        "model_family": "nations_league_v1_1",
+        "parameter_digest": "0dd92a8ce274e2929c748785be74db0c65de133da96f051b3937b20cc22d93d8",
+        "parent_release_id": null,
+        "rejection_reason": null,
+        "release_id": "78161c4097c06e596efa95721aa62db0ed72a057a3fd664cbecd32f0c0be29bb",
+        "status": "ACTIVE",
+        "training_snapshot": {
+          "algorithm_digest": "50fc0f9120009b86eda1ebf016c14e93c9bd72c256b849577d5f55217d77f626",
+          "algorithm_version": "nations_league_v1_1",
+          "captured_at": "2026-09-30T20:01:24.572945Z",
+          "feature_schema_digest": "83efc6791b58e65a68f1c4bb5c63185c3e133e5472cb83a4187855b63429f6d9",
+          "model_family": "nations_league_v1_1",
+          "result_safe_watermark": "2026-09-30T17:04:37.634354+00:00",
+          "scope": "UEFA Nations League",
+          "snapshot_digest": "f15722bd9c491d3d61e48a73aea222c8e104b86c20099d288d12e73ea199d4e9",
+          "source_release_sha": "267a5df80ee326cfe41ee6ddc27d3e8c547ab222",
+          "sport": "football",
+          "trained_state_digest": "7ccaed2c2fc237307c9f74a9adf7755bb6182fed085dffcd11cb4b56a39d47fc",
+          "training_cutoff": "2026-09-30T20:01:24.572945+00:00",
+          "training_data_digest": "0775611b969cb44cce94c650ecf03da437c40e8c28114c7065a9c3dc1745b6a7",
+          "training_row_count": 566
+        },
+        "validation_digest": "fd4890334a362cfb8162cd02ac7a539252fe93eedbf375df49b8edb6cb3a888f"
+      }
+    ],
+    "schema": "continuous-model-lifecycle-state-v1"
+  },
+  "nations_league_live_evidence_binding_digest": "6f3cca76f598862d0595616416cecd73b2cdd8213d4b1aecd493eb03261a12a8",
+  "registry_digest": "7c5ebb6cb3dd6c8db9b8101311d509df1ce425d1daf97965cb6891585e0f647b",
+  "schema": "continuous-model-lifecycle-registry-v1",
+  "source_release_sha": "267a5df80ee326cfe41ee6ddc27d3e8c547ab222"
+}

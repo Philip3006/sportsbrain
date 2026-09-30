@@ -1,0 +1,174 @@
+{
+  "families": [
+    {
+      "algorithm": "causal_elo",
+      "continuous_retraining_state": "READY_RESULT_DRIVEN",
+      "current_activation": "continuous-model-lifecycle-registry-v1 active pointer",
+      "current_artifact": "results/research/nations_league_v1_1_input_state_20260930T200124Z.json",
+      "evidence": [
+        "src/analysis/nations_league_v1_1.py",
+        "src/analysis/nations_league_forward_input.py"
+      ],
+      "model_family": "nations_league_v1_1",
+      "publication_consumer": "nations-league-live-public-v1 adapter",
+      "result_source": "result_safe_available_at in sealed extension",
+      "retrain_cadence": "result-driven; no scheduler",
+      "rollback": "generic previous active pointer",
+      "scope": "UEFA Nations League",
+      "settlement_cadence": "manual/offline forward-shadow settlement",
+      "sport": "football",
+      "status": "ACTIVE",
+      "training_script": "src.analysis.nations_league_forward_input.build_input_state",
+      "training_source": "canonical timeline + sealed result extension"
+    },
+    {
+      "algorithm": "LightGBM + calibrator",
+      "continuous_retraining_state": "MAPPING_READY_POINTER_MIGRATION_REQUIRED",
+      "current_activation": "legacy file-path consumer; no atomic pointer",
+      "current_artifact": "models/tennis_lgbm/{model.pkl,calibrator.pkl,metadata.json}",
+      "evidence": [
+        ".github/workflows/tennis_lgbm_retrain.yml",
+        "scripts/tennis_train.py"
+      ],
+      "model_family": "tennis_lgbm",
+      "publication_consumer": "src/tennis/ensemble.py",
+      "result_source": "tennis settlement workflow / ledger outcomes",
+      "retrain_cadence": "daily 05:00 UTC (.github/workflows/tennis_lgbm_retrain.yml)",
+      "rollback": "NOT_IMPLEMENTED",
+      "scope": "tennis-data full tour",
+      "settlement_cadence": "Cloudflare dispatch plus slow GitHub cron fallback",
+      "sport": "tennis",
+      "status": "LEGACY",
+      "training_script": "scripts/tennis_train.py",
+      "training_source": "tennis-data.co.uk XLSX via fetch_full_tour_odds"
+    },
+    {
+      "algorithm": "signal recalibrator",
+      "continuous_retraining_state": "MAPPING_READY_POINTER_MIGRATION_REQUIRED",
+      "current_activation": "legacy artifact consumer; no atomic pointer",
+      "current_artifact": "models/tennis_calibrators/{hard.pkl,recalibrate_meta.json}",
+      "evidence": [
+        ".github/workflows/tennis_recalibrate.yml",
+        "scripts/tennis_recalibrate.py"
+      ],
+      "model_family": "tennis_calibration",
+      "publication_consumer": "UNKNOWN",
+      "result_source": "tennis settlement workflow",
+      "retrain_cadence": "weekly Sunday 05:00 UTC (.github/workflows/tennis_recalibrate.yml)",
+      "rollback": "NOT_IMPLEMENTED",
+      "scope": "tennis signals",
+      "settlement_cadence": "Cloudflare dispatch plus slow GitHub cron fallback",
+      "sport": "tennis",
+      "status": "LEGACY",
+      "training_script": "scripts/tennis_recalibrate.py",
+      "training_source": "settled signal/ledger history"
+    },
+    {
+      "algorithm": "Elo",
+      "continuous_retraining_state": "MAPPING_READY_POINTER_MISSING",
+      "current_activation": "legacy shared cache overwrite; no atomic pointer",
+      "current_artifact": "data/cache/elo_ratings_bl2.json",
+      "evidence": [
+        ".github/workflows/bundesliga2_retrain.yml",
+        "scripts/train_elo_bundesliga2.py"
+      ],
+      "model_family": "bundesliga2_elo",
+      "publication_consumer": "scripts/bundesliga2_scan.py",
+      "result_source": "bundesliga2 settlement/cache workflow",
+      "retrain_cadence": "daily 05:00 UTC (.github/workflows/bundesliga2_retrain.yml)",
+      "rollback": "NOT_IMPLEMENTED",
+      "scope": "2. Bundesliga",
+      "settlement_cadence": "scheduled bundesliga2_settle workflow",
+      "sport": "football",
+      "status": "LEGACY",
+      "training_script": "scripts/train_elo_bundesliga2.py",
+      "training_source": "data/cache/bundesliga2_matches.pkl"
+    },
+    {
+      "algorithm": "Dixon-Coles",
+      "continuous_retraining_state": "MAPPING_READY_POINTER_MISSING",
+      "current_activation": "params_latest file/symlink; no atomic pointer",
+      "current_artifact": "models/dc_bundesliga2/params_latest.pkl",
+      "evidence": [
+        ".github/workflows/bundesliga2_retrain.yml",
+        "scripts/train_dc_bundesliga2.py"
+      ],
+      "model_family": "bundesliga2_dixon_coles",
+      "publication_consumer": "scripts/bundesliga2_scan.py",
+      "result_source": "bundesliga2 settlement/cache workflow",
+      "retrain_cadence": "daily 05:00 UTC (.github/workflows/bundesliga2_retrain.yml)",
+      "rollback": "NOT_IMPLEMENTED",
+      "scope": "2. Bundesliga",
+      "settlement_cadence": "scheduled bundesliga2_settle workflow",
+      "sport": "football",
+      "status": "LEGACY",
+      "training_script": "scripts/train_dc_bundesliga2.py",
+      "training_source": "data/cache/bundesliga2_matches.pkl (last five seasons)"
+    },
+    {
+      "algorithm": "LightGBM",
+      "continuous_retraining_state": "MAPPING_REQUIRED",
+      "current_activation": "legacy file-path consumer; no atomic pointer",
+      "current_artifact": "models/lgbm_bundesliga2/{model.pkl,gate.json}",
+      "evidence": [
+        "scripts/train_lgbm_bundesliga2.py",
+        "models/lgbm_bundesliga2/gate.json"
+      ],
+      "model_family": "bundesliga2_lgbm",
+      "publication_consumer": "UNKNOWN",
+      "result_source": "bundesliga2 settlement/cache workflow",
+      "retrain_cadence": "NOT_VERIFIED_IN_ACTIVE_WORKFLOW",
+      "rollback": "NOT_IMPLEMENTED",
+      "scope": "2. Bundesliga",
+      "settlement_cadence": "scheduled bundesliga2_settle workflow",
+      "sport": "football",
+      "status": "LEGACY",
+      "training_script": "scripts/train_lgbm_bundesliga2.py",
+      "training_source": "bundesliga2 cached match universe"
+    },
+    {
+      "algorithm": "Dixon-Coles + LightGBM + stacker",
+      "continuous_retraining_state": "DISABLED_DO_NOT_REENABLE",
+      "current_activation": "legacy artifacts; auto activation is disabled",
+      "current_artifact": "models/{dixon_coles,lgbm}",
+      "evidence": [
+        ".github/workflows/auto_retrain.yml.disabled",
+        "scripts/auto_retrain.py"
+      ],
+      "model_family": "world_cup_global_dc_lgbm_stacker",
+      "publication_consumer": "UNKNOWN",
+      "result_source": "international result history",
+      "retrain_cadence": "disabled (.github/workflows/auto_retrain.yml.disabled)",
+      "rollback": "legacy snapshots only; no generic pointer",
+      "scope": "World Cup / legacy international",
+      "settlement_cadence": "UNKNOWN",
+      "sport": "football",
+      "status": "DISABLED",
+      "training_script": "scripts/auto_retrain.py",
+      "training_source": "international result history"
+    },
+    {
+      "algorithm": "M5 governed Top-5 model",
+      "continuous_retraining_state": "BLOCKED_BY_GOVERNED_EVIDENCE_AND_AUTHORITY",
+      "current_activation": "explicit authorization only",
+      "current_artifact": "provider-neutral acceptance artifacts",
+      "evidence": [
+        "src/football/top5_final_acceptance.py"
+      ],
+      "model_family": "top5_football",
+      "publication_consumer": "B1/B3 prepublication contracts",
+      "result_source": "governed B4 reconciliation/qualification",
+      "retrain_cadence": "NOT_APPROVED",
+      "rollback": "governed activation seam",
+      "scope": "EPL/BL1/LL/SA/L1",
+      "settlement_cadence": "NOT_APPROVED",
+      "sport": "football",
+      "status": "CANDIDATE",
+      "training_script": "NOT_APPLICABLE_UNTIL_B4_ACCEPTANCE",
+      "training_source": "governed B4 evidence"
+    }
+  ],
+  "inventory_digest": "ec12c428ccb6363856f58283a276b892691713d4f22c26f33ed7250e6777411c",
+  "schema": "continuous-model-lifecycle-inventory-v1",
+  "source_release_sha": "267a5df80ee326cfe41ee6ddc27d3e8c547ab222"
+}

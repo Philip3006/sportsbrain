@@ -1,0 +1,79 @@
+{
+  "active_model_release": {
+    "algorithm_digest": "50fc0f9120009b86eda1ebf016c14e93c9bd72c256b849577d5f55217d77f626",
+    "binding_digest": "cee6e402ed6ba84f27d4fbd19ff502760f4cd427d6a471e41aeae903cf92917f",
+    "model_family": "nations_league_v1_1",
+    "model_version": "nations_league_v1_1",
+    "release_id": "78161c4097c06e596efa95721aa62db0ed72a057a3fd664cbecd32f0c0be29bb",
+    "trained_state_digest": "7ccaed2c2fc237307c9f74a9adf7755bb6182fed085dffcd11cb4b56a39d47fc",
+    "training_cutoff": "2026-09-30T20:01:24.572945+00:00",
+    "training_data_digest": "0775611b969cb44cce94c650ecf03da437c40e8c28114c7065a9c3dc1745b6a7"
+  },
+  "binding_digest": "6f3cca76f598862d0595616416cecd73b2cdd8213d4b1aecd493eb03261a12a8",
+  "schema": "nations-league-live-evidence-binding-v1",
+  "source_records": [
+    {
+      "algorithm_digest": "50fc0f9120009b86eda1ebf016c14e93c9bd72c256b849577d5f55217d77f626",
+      "fixture_id": "uefa-nl:future-596f9e31eff328f0e49a77b5",
+      "input_snapshot_digest": "73be697577cafdd05572f4c9f7b1f4e7b1b1aa1f482cb3b57bf98cbdabf25567",
+      "phase": "initial",
+      "source_prediction_record_id": "102e452a5be15d4d2ab87fbd322dbc9c253fffa980048feecfec8ad5b6517a9a",
+      "trained_state_digest": "7ccaed2c2fc237307c9f74a9adf7755bb6182fed085dffcd11cb4b56a39d47fc",
+      "training_data_digest": "0775611b969cb44cce94c650ecf03da437c40e8c28114c7065a9c3dc1745b6a7"
+    },
+    {
+      "algorithm_digest": "50fc0f9120009b86eda1ebf016c14e93c9bd72c256b849577d5f55217d77f626",
+      "fixture_id": "uefa-nl:future-392e2f375b6ddb9ac9b6cb14",
+      "input_snapshot_digest": "f00cdd4d58794c83154a03d7b79c0b8fd14aeb2bb4d875149a9971d79d921d8c",
+      "phase": "initial",
+      "source_prediction_record_id": "22e95a1051519ea54ac657c557f84f28eee630618051602c5ed063e563a996b9",
+      "trained_state_digest": "7ccaed2c2fc237307c9f74a9adf7755bb6182fed085dffcd11cb4b56a39d47fc",
+      "training_data_digest": "0775611b969cb44cce94c650ecf03da437c40e8c28114c7065a9c3dc1745b6a7"
+    },
+    {
+      "algorithm_digest": "50fc0f9120009b86eda1ebf016c14e93c9bd72c256b849577d5f55217d77f626",
+      "fixture_id": "uefa-nl:future-24e02c77e0dae6970194e816",
+      "input_snapshot_digest": "f00cdd4d58794c83154a03d7b79c0b8fd14aeb2bb4d875149a9971d79d921d8c",
+      "phase": "initial",
+      "source_prediction_record_id": "288431fa7d2fe5505a1652713076dde381e2c1daaca91fcd1c7bf532b47cb50f",
+      "trained_state_digest": "7ccaed2c2fc237307c9f74a9adf7755bb6182fed085dffcd11cb4b56a39d47fc",
+      "training_data_digest": "0775611b969cb44cce94c650ecf03da437c40e8c28114c7065a9c3dc1745b6a7"
+    },
+    {
+      "algorithm_digest": "50fc0f9120009b86eda1ebf016c14e93c9bd72c256b849577d5f55217d77f626",
+      "fixture_id": "uefa-nl:future-0f2bd8c1791c064f46230190",
+      "input_snapshot_digest": "f00cdd4d58794c83154a03d7b79c0b8fd14aeb2bb4d875149a9971d79d921d8c",
+      "phase": "initial",
+      "source_prediction_record_id": "29bd6d5baf1fad641f45a5511f4f8da027b3e96d335a6e490dc7e118286ce4ec",
+      "trained_state_digest": "7ccaed2c2fc237307c9f74a9adf7755bb6182fed085dffcd11cb4b56a39d47fc",
+      "training_data_digest": "0775611b969cb44cce94c650ecf03da437c40e8c28114c7065a9c3dc1745b6a7"
+    },
+    {
+      "algorithm_digest": "50fc0f9120009b86eda1ebf016c14e93c9bd72c256b849577d5f55217d77f626",
+      "fixture_id": "uefa-nl:future-3fe70ff0ba848e39b50908d6",
+      "input_snapshot_digest": "08e675bd7725730a22048e005db1918dbbf696e07db57970e514d1f99c562599",
+      "phase": "initial",
+      "source_prediction_record_id": "2fab2e3afb12d51f554f883d786720e3c4306ef14ff66b329f26c608c19f676e",
+      "trained_state_digest": "7ccaed2c2fc237307c9f74a9adf7755bb6182fed085dffcd11cb4b56a39d47fc",
+      "training_data_digest": "0775611b969cb44cce94c650ecf03da437c40e8c28114c7065a9c3dc1745b6a7"
+    },
+    {
+      "algorithm_digest": "50fc0f9120009b86eda1ebf016c14e93c9bd72c256b849577d5f55217d77f626",
+      "fixture_id": "uefa-nl:future-41e14a9086638f2d4bd278d8",
+      "input_snapshot_digest": "f00cdd4d58794c83154a03d7b79c0b8fd14aeb2bb4d875149a9971d79d921d8c",
+      "phase": "initial",
+      "source_prediction_record_id": "88ac4b489e5d402ec405f694781625da87acd666ca3cac3d8f7e72c5eb975961",
+      "trained_state_digest": "7ccaed2c2fc237307c9f74a9adf7755bb6182fed085dffcd11cb4b56a39d47fc",
+      "training_data_digest": "0775611b969cb44cce94c650ecf03da437c40e8c28114c7065a9c3dc1745b6a7"
+    },
+    {
+      "algorithm_digest": "50fc0f9120009b86eda1ebf016c14e93c9bd72c256b849577d5f55217d77f626",
+      "fixture_id": "uefa-nl:future-3515b2e85084a8451012773f",
+      "input_snapshot_digest": "f00cdd4d58794c83154a03d7b79c0b8fd14aeb2bb4d875149a9971d79d921d8c",
+      "phase": "initial",
+      "source_prediction_record_id": "a202d272871ec3fe9502bd4f7c487cd9f26285aa70232fb8842ebc85c0997262",
+      "trained_state_digest": "7ccaed2c2fc237307c9f74a9adf7755bb6182fed085dffcd11cb4b56a39d47fc",
+      "training_data_digest": "0775611b969cb44cce94c650ecf03da437c40e8c28114c7065a9c3dc1745b6a7"
+    }
+  ]
+}
