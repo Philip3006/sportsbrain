@@ -28,14 +28,14 @@ from src.utils.atomic_io import atomic_write_json
 def _json(path: Path) -> dict:
     value = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(value, dict):
-        raise ValueError(f"JSON object required: {path}")
+        raise TypeError(f"JSON object required: {path}")
     return value
 
 
 def _campaign_records(path: Path) -> list[dict]:
     value = _json(path).get("records")
     if not isinstance(value, list) or not value:
-        raise ValueError("campaign contains no immutable prediction records")
+        raise TypeError("campaign contains no immutable prediction records")
     return value
 
 

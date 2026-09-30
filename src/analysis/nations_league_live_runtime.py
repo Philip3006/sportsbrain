@@ -11,17 +11,17 @@ from __future__ import annotations
 
 import hashlib
 import json
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from src.analysis.nations_league_forward_input import predict_from_input_state
 from src.analysis.nations_league_model_lifecycle import (
     NationsLeagueLifecycleError,
     active_release_from_registry,
 )
-from src.analysis.nations_league_v1_1 import MODEL_VERSION, model_digest
+from src.analysis.nations_league_v1_1 import MODEL_VERSION
 from src.models.lifecycle import ACTIVE, ModelRelease
 from src.utils.atomic_io import atomic_write_json
 

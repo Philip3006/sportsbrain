@@ -27,7 +27,7 @@ from src.utils.atomic_io import atomic_write_text
 def _read(path: Path) -> dict:
     value = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(value, dict):
-        raise ValueError(f"JSON object required: {path}")
+        raise TypeError(f"JSON object required: {path}")
     return value
 
 
@@ -39,7 +39,7 @@ def _read_store(path: Path) -> list[dict]:
         if line.strip():
             value = json.loads(line)
             if not isinstance(value, dict):
-                raise ValueError("live store row is not an object")
+                raise TypeError("live store row is not an object")
             rows.append(value)
     return rows
 
