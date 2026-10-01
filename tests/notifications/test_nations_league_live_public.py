@@ -9,6 +9,7 @@ import pytest
 from src.analysis.nations_league_live_runtime import (
     build_fresh_input_state,
 )
+from src.analysis.nations_league_live_edge import build_edge_analysis, build_market_snapshot
 from src.analysis.nations_league_model_lifecycle import establish_initial_active_release
 from src.notifications.nations_league_live_public import (
     NationsLeagueLivePublicError,
@@ -59,7 +60,50 @@ def test_seven_immutable_real_records_are_live_serializable_without_sample_gate(
         item for item in output["fixtures"] if item["fixture_id"] == source["fixture_id"]
     )
     assert projected["probabilities"] == source["probabilities"]
+    assert projected["edge_analysis"]["edge_status"] == "NO_MARKET_SNAPSHOT"
     assert validate_live_public_nations_league(output) == output
+
+
+def test_public_live_edge_exposes_approved_market_measurements_without_financial_state():
+    records = _records()
+    release = _active_release()
+    source = records[0]
+    snapshot = build_market_snapshot(
+        {
+            "provider": "isports_api",
+            "bookmaker": "Research bookmaker median",
+            "captured_at": "2026-09-30T18:30:00Z",
+            "fixture_id": source["fixture_id"],
+            "odds_decimal": {"home": 2.0, "draw": 3.5, "away": 4.0},
+        }
+    )
+    source["edge_analysis"] = build_edge_analysis(
+        source["probabilities"],
+        fixture_id=source["fixture_id"],
+        phase=source["phase"],
+        model_release_id=release.release_id,
+        prediction_record_id=source["record_id"],
+        prediction_timestamp=source["prediction_timestamp"],
+        market_snapshots=[snapshot],
+    )
+    output = build_live_public_nations_league(
+        records, active_release=release, evidence_binding=_binding(),
+        as_of="2026-09-30T20:01:24Z"
+    )
+    edge = next(row for row in output["fixtures"] if row["fixture_id"] == source["fixture_id"])["edge_analysis"]
+    assert edge["market_snapshot"]["provider"] == "isports_api"
+    assert edge["outcomes"]["home"]["ev"] == pytest.approx(
+        source["probabilities"]["home"] * 2.0 - 1.0, abs=1e-6
+    )
+    assert {"stake", "bankroll", "kelly"}.isdisjoint(edge)
+    assert validate_live_public_nations_league(output) == output
+
+    source["edge_analysis"]["stake"] = 1
+    with pytest.raises(NationsLeagueLivePublicError, match="private financial"):
+        build_live_public_nations_league(
+            records, active_release=release, evidence_binding=_binding(),
+            as_of="2026-09-30T20:01:24Z"
+        )
 
 
 def test_source_and_canonical_team_identity_are_both_preserved_for_alias_binding():

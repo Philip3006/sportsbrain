@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from src.analysis.nations_league_live_edge import build_market_snapshot
 from src.analysis.nations_league_live_runtime import (
     NationsLeagueLiveRuntimeError,
     append_live_store,
@@ -235,6 +236,17 @@ def test_live_prediction_uses_sealed_source_and_canonical_identity_for_ireland()
             ROOT / "results/audits/continuous_model_lifecycle_registry.json"
         ),
         captured_at="2026-10-01T17:15:00Z",
+        market_snapshots=[
+            build_market_snapshot(
+                {
+                    "provider": "isports_api",
+                    "bookmaker": "Research bookmaker median",
+                    "captured_at": "2026-10-01T17:14:00Z",
+                    "fixture_id": fixture["fixture_id"],
+                    "odds_decimal": {"home": 2.0, "draw": 3.5, "away": 4.0},
+                }
+            )
+        ],
     )
     assert record["source_identity"] == {
         "home_team": "Republic of Ireland",
@@ -244,6 +256,11 @@ def test_live_prediction_uses_sealed_source_and_canonical_identity_for_ireland()
         "home_team": "Ireland",
         "away_team": "Austria",
     }
+    assert record["edge_analysis"]["edge_status"] == "EDGE_MEASURED"
+    assert record["edge_analysis"]["market_snapshot"]["provider"] == "isports_api"
+    assert record["no_bet"] is True
+    assert record["betting_enabled"] is False
+    assert record["ledger_mutation"] is False
 
 
 def test_append_live_store_rejects_substitution_and_is_idempotent(tmp_path):
