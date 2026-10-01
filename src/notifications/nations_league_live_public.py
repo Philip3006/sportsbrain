@@ -141,19 +141,15 @@ def _public_canonical(value: Any) -> str:
     if isinstance(value, str):
         return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
     if isinstance(value, int):
-        return str(value)
+        try:
+            number = float(value)
+        except OverflowError as exc:
+            raise NationsLeagueLivePublicError(
+                "public bundle contains a number outside binary64"
+            ) from exc
+        return _ecmascript_number(number)
     if isinstance(value, float):
-        if not math.isfinite(value):
-            raise NationsLeagueLivePublicError("public bundle contains a non-finite number")
-        if value == 0:
-            return "0"
-        if value.is_integer():
-            return str(int(value))
-        return (
-            json.dumps(value, ensure_ascii=False, separators=(",", ":"))
-            .replace("e-0", "e-")
-            .replace("e+0", "e+")
-        )
+        return _ecmascript_number(value)
     if isinstance(value, Mapping):
         return "{" + ",".join(
             f"{_public_canonical(str(key))}:{_public_canonical(item)}"
@@ -162,6 +158,55 @@ def _public_canonical(value: Any) -> str:
     if isinstance(value, (list, tuple)):
         return "[" + ",".join(_public_canonical(item) for item in value) + "]"
     raise NationsLeagueLivePublicError("public bundle contains an unsupported value")
+
+
+def _ecmascript_number(value: float) -> str:
+    """Serialize one finite binary64 value using ECMAScript thresholds.
+
+    Python and ECMAScript both use the shortest round-tripping decimal for a
+    binary64 value.  Their presentation thresholds differ: ECMAScript uses
+    fixed notation for ``1e-6 <= abs(value) < 1e21`` and scientific notation
+    outside that interval.  Reformatting Python's shortest representation at
+    those boundaries also normalizes signed zero and exponent spelling to the
+    native JSON.stringify form.
+    """
+
+    if not math.isfinite(value):
+        raise NationsLeagueLivePublicError("public bundle contains a non-finite number")
+    if value == 0:
+        return "0"
+
+    text = repr(float(value))
+    sign = ""
+    if text.startswith("-"):
+        sign, text = "-", text[1:]
+    mantissa, _, exponent_text = text.partition("e")
+    exponent = int(exponent_text) if exponent_text else 0
+    whole, _, fraction = mantissa.partition(".")
+    digits = whole + fraction
+    decimal_index = len(whole) + exponent
+    digits = digits.rstrip("0")
+    absolute = abs(value)
+
+    if 1e-6 <= absolute < 1e21:
+        if decimal_index <= 0:
+            body = "0." + ("0" * -decimal_index) + digits
+        elif decimal_index >= len(digits):
+            body = digits + ("0" * (decimal_index - len(digits)))
+        else:
+            body = digits[:decimal_index] + "." + digits[decimal_index:]
+        return sign + body
+
+    scientific_exponent = decimal_index - 1
+    coefficient = digits[0]
+    if len(digits) > 1:
+        coefficient += "." + digits[1:]
+    exponent_marker = (
+        f"e+{scientific_exponent}"
+        if scientific_exponent >= 0
+        else f"e{scientific_exponent}"
+    )
+    return sign + coefficient + exponent_marker
 
 
 def _public_digest(value: Any) -> str:
