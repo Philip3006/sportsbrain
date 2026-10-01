@@ -2,15 +2,21 @@ name: Nations League Bet Quote Launch
 
 on:
   workflow_dispatch:
-  repository_dispatch:
-    types: [sportsbrain_nations_league_bet_quote_launch]
+  schedule:
+    # FUNCTIONALITY-RECOVERY 2026-10-02 only.
+    # Canonical fixture clusters from the live SportsBrain manifest:
+    # 14:00Z, 16:00Z, 18:45Z -> T-30 at 13:30Z, 15:30Z, 18:15Z.
+    # The guard below makes these annual cron expressions inert after 2026-10-02.
+    - cron: '30 13 2 10 *'
+    - cron: '30 15 2 10 *'
+    - cron: '15 18 2 10 *'
 
 permissions:
   contents: read
 
 concurrency:
-  group: nations-league-bet-quote-launch-${{ github.event.client_payload.idempotency_key || 'manual' }}
-  cancel-in-progress: true
+  group: nations-league-bet-quote-launch
+  cancel-in-progress: false
 
 jobs:
   launch:
@@ -19,15 +25,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Gate bounded recovery schedule
+        id: recovery_guard
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "$(date -u +%F)" = "2026-10-02" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "Recovery schedule expired; no provider or publication work will run."
+          fi
+
       - uses: actions/setup-python@v5
+        if: steps.recovery_guard.outputs.run == 'true'
         with:
           python-version: '3.12'
           cache: 'pip'
 
       - name: Install dependencies
+        if: steps.recovery_guard.outputs.run == 'true'
         run: pip install -r requirements.txt
 
       - name: Build exact scoped authorization
+        if: steps.recovery_guard.outputs.run == 'true'
         run: |
           python3 - <<'PY'
           import json
@@ -72,6 +92,7 @@ jobs:
           PY
 
       - name: Zero-network preflight
+        if: steps.recovery_guard.outputs.run == 'true'
         run: |
           python3 scripts/capture_nations_league_bet_quote.py \
             --input docs/data/signals.json \
@@ -79,6 +100,7 @@ jobs:
             --output /tmp/nl-actionable-value-signals.json
 
       - name: Capture fresh iSports quote
+        if: steps.recovery_guard.outputs.run == 'true'
         env:
           ISPORTS_API_KEY: ${{ secrets.ISPORTS_API_KEY }}
         run: |
@@ -90,6 +112,7 @@ jobs:
             --execute-network | tee /tmp/nl-bet-quote-result.json
 
       - name: Publish NL value projection only
+        if: steps.recovery_guard.outputs.run == 'true'
         env:
           SIGNALS_API_TOKEN: ${{ secrets.SIGNALS_API_TOKEN }}
         run: |
@@ -115,6 +138,7 @@ jobs:
             | tee /tmp/nl-worker-merge-result.json
 
       - name: Verify public Worker projection
+        if: steps.recovery_guard.outputs.run == 'true'
         run: |
           curl -fsS \
             'https://sportsbrain-signals.sportsbrain-philip.workers.dev/signals.json' \
