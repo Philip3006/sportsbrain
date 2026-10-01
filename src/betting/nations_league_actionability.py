@@ -505,9 +505,14 @@ def validate_nations_league_actionable_projection(
             )
         _utc(signal.get("odds_ts"), "signal.odds_ts")
         _utc(signal.get("quote_captured_at"), "signal.quote_captured_at")
+        _text(signal.get("fixture_key"), "signal.fixture_key")
         _sha(signal.get("quote_snapshot_digest"), "signal.quote_snapshot_digest")
         _sha(signal.get("prediction_record_id"), "signal.prediction_record_id")
         _sha(signal.get("model_release_id"), "signal.model_release_id")
+    signal_counts: dict[str, int] = {}
+    for signal in signals:
+        fixture_id = _text(signal.get("fixture_key"), "signal.fixture_key")
+        signal_counts[fixture_id] = signal_counts.get(fixture_id, 0) + 1
     quote_evidence = candidate.get("quote_evidence")
     if not isinstance(quote_evidence, list) or not quote_evidence:
         raise NationsLeagueActionabilityError("fresh quote evidence is missing")
@@ -534,6 +539,10 @@ def validate_nations_league_actionable_projection(
         if isinstance(count, bool) or not isinstance(count, int) or count < 0:
             raise NationsLeagueActionabilityError(
                 "fresh quote actionable count is invalid"
+            )
+        if count != signal_counts.get(fixture_id, 0):
+            raise NationsLeagueActionabilityError(
+                "fresh quote actionable count does not match canonical signals"
             )
         if (count == 0) != (
             evidence["no_bet_reason"] == "NO_CANONICAL_ACTIONABLE_OUTCOME"

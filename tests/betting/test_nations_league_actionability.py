@@ -169,6 +169,28 @@ def test_digest_mutation_and_unsupported_provenance_fail_closed():
         )
 
 
+def test_quote_evidence_signal_count_is_bound_to_canonical_signals():
+    now = _now()
+    projection = build_nations_league_actionable_projection(
+        PUBLIC, _snapshots(now), now=now, request_provenance=_provenance()
+    )
+    mutated = copy.deepcopy(projection)
+    evidence = mutated["quote_evidence"][0]
+    fixture_id = evidence["fixture_id"]
+    evidence["actionable_signal_count"] = (
+        sum(signal["fixture_key"] == fixture_id for signal in mutated["signals"]) + 1
+    )
+    evidence["no_bet_reason"] = "ACTIONABLE_SIGNAL_AVAILABLE"
+    mutated["artifact_digest"] = actionability._digest(
+        actionability._projection_body(mutated)
+    )
+    with pytest.raises(
+        NationsLeagueActionabilityError,
+        match="does not match canonical signals",
+    ):
+        validate_nations_league_actionable_projection(mutated)
+
+
 def test_preflight_is_zero_network_and_binds_current_refinement_scope(
     tmp_path, monkeypatch
 ):

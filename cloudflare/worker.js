@@ -866,8 +866,7 @@ function _validateNationsLeagueActionableSignals(value) {
       value.ledger_mutation !== false ||
       value.phase !== 'refinement' ||
       value.request_count !== 2 || value.retry_count !== 0 ||
-      !Array.isArray(value.signals) || !Array.isArray(value.quote_evidence) ||
-      value.quote_evidence.length === 0 || typeof value.artifact_digest !== 'string' ||
+      !Array.isArray(value.signals) || typeof value.artifact_digest !== 'string' ||
       !/^[0-9a-f]{64}$/.test(value.artifact_digest)) fail('top-level binding');
   const seen = new Set();
   for (const signal of value.signals) {
@@ -886,33 +885,6 @@ function _validateNationsLeagueActionableSignals(value) {
         typeof signal.quote_snapshot_digest !== 'string' || !/^[0-9a-f]{64}$/.test(signal.quote_snapshot_digest) ||
         typeof signal.prediction_record_id !== 'string' || !/^[0-9a-f]{64}$/.test(signal.prediction_record_id) ||
         typeof signal.model_release_id !== 'string' || !/^[0-9a-f]{64}$/.test(signal.model_release_id)) fail('signal safety fields');
-  }
-  const evidenceSeen = new Set();
-  for (const evidence of value.quote_evidence) {
-    if (!evidence || typeof evidence !== 'object' || Array.isArray(evidence) ||
-        typeof evidence.fixture_id !== 'string' || !evidence.fixture_id ||
-        evidenceSeen.has(evidence.fixture_id) || evidence.phase !== 'refinement' ||
-        evidence.no_bet !== true ||
-        !['ACTIONABLE_SIGNAL_AVAILABLE', 'NO_CANONICAL_ACTIONABLE_OUTCOME'].includes(evidence.no_bet_reason) ||
-        !Number.isInteger(evidence.actionable_signal_count) || evidence.actionable_signal_count < 0 ||
-        (evidence.actionable_signal_count === 0) !==
-          (evidence.no_bet_reason === 'NO_CANONICAL_ACTIONABLE_OUTCOME') ||
-        typeof evidence.provider_event_id !== 'string' || !evidence.provider_event_id ||
-        typeof evidence.bookmaker !== 'string' || !evidence.bookmaker ||
-        !/^[0-9a-f]{64}$/.test(evidence.quote_snapshot_digest || '') ||
-        !Number.isFinite(Date.parse(evidence.quote_captured_at || '')) ||
-        !evidence.edge_analysis || typeof evidence.edge_analysis !== 'object' ||
-        evidence.edge_analysis.fixture_id !== evidence.fixture_id ||
-        evidence.edge_analysis.prediction_record_id !== evidence.prediction_record_id ||
-        evidence.edge_analysis.no_bet !== true ||
-        evidence.edge_analysis.betting_enabled !== false ||
-        evidence.edge_analysis.ledger_mutation !== false ||
-        !evidence.edge_analysis.market_snapshot ||
-        evidence.edge_analysis.market_snapshot.provider !== 'isports_api' ||
-        evidence.edge_analysis.market_snapshot.snapshot_digest !== evidence.quote_snapshot_digest) {
-      fail('fresh quote evidence');
-    }
-    evidenceSeen.add(evidence.fixture_id);
   }
 }
 

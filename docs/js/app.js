@@ -311,6 +311,10 @@ async function _validNationsLeagueActionablePayload(value, nowMs = Date.now()) {
     const captured = Date.parse(signal.odds_ts);
     return captured <= nowMs && nowMs - captured <= 30 * 60 * 1000;
   })) return false;
+  const signalCounts = new Map();
+  for (const signal of value.signals) {
+    signalCounts.set(signal.fixture_key, (signalCounts.get(signal.fixture_key) || 0) + 1);
+  }
   const evidenceSeen = new Set();
   return value.quote_evidence.every((evidence) => {
     if (!evidence || typeof evidence !== 'object' || Array.isArray(evidence) ||
@@ -319,6 +323,7 @@ async function _validNationsLeagueActionablePayload(value, nowMs = Date.now()) {
         evidence.no_bet !== true ||
         !['ACTIONABLE_SIGNAL_AVAILABLE', 'NO_CANONICAL_ACTIONABLE_OUTCOME'].includes(evidence.no_bet_reason) ||
         !Number.isInteger(evidence.actionable_signal_count) || evidence.actionable_signal_count < 0 ||
+        evidence.actionable_signal_count !== (signalCounts.get(evidence.fixture_id) || 0) ||
         (evidence.actionable_signal_count === 0) !==
           (evidence.no_bet_reason === 'NO_CANONICAL_ACTIONABLE_OUTCOME') ||
         typeof evidence.provider_event_id !== 'string' || !evidence.provider_event_id ||
@@ -913,6 +918,10 @@ function openNationsLeagueMatch(displayKey) {
   const quoteEvidence = isLive
     ? _nationsLeagueQuoteEvidence(valueProjection, fixture.fixture_id)
     : null;
+  const canonicalSignals = isLive && Array.isArray(valueProjection?.signals)
+    ? valueProjection.signals.filter((signal) =>
+        signal?.is_nations_league_value === true && signal.fixture_key === fixture.fixture_id)
+    : [];
   if (isLive) {
     if (payload.competition !== 'UEFA Nations League' || payload.status !== 'LIVE' ||
         payload.publication_enabled !== true || payload.no_bet !== true ||
@@ -985,8 +994,40 @@ function openNationsLeagueMatch(displayKey) {
         return `<div class="nl-shadow-detail-outcome"><span>${label} Markt ${market}% · Δ ${edge}pp · EV ${ev}%</span><b>Quote ${Number(row.decimal_odds).toFixed(2)}</b></div>`;
       }).join('')
       : '';
+    const actionButtons = canonicalSignals.map((signal) => {
+      const currentOdds = Number(signal.current_odds);
+      const currentEv = Number(signal.current_ev_pct);
+      const attrs = [
+        'type="button"',
+        'class="place-bet-btn b365-btn-click"',
+        `data-match="${esc(signal.match)}"`,
+        `data-market="${esc(signal.market)}"`,
+        `data-odds="${currentOdds}"`,
+        'data-stake="10"',
+        `data-ev="${currentEv}"`,
+        `data-model-prob="${Number(signal.model_prob)}"`,
+        `data-confidence="${esc(signal.confidence || '')}"`,
+        `data-kickoff="${esc(kickoff)}"`,
+        'data-sport="football"',
+        `data-signal-id="${esc(signal.signal_id)}"`,
+        `data-signal-status="${esc(signal.signal_status)}"`,
+        `data-fixture-key="${esc(signal.fixture_key)}"`,
+        `data-league="${esc(signal.league || '')}"`,
+        `data-odds-ts="${esc(signal.odds_ts)}"`,
+        `data-event-status="${esc(signal.event_status)}"`,
+        `data-current-odds="${currentOdds}"`,
+        `data-current-ev="${currentEv}"`,
+        'data-source="value"',
+        'onclick="event.stopPropagation();_openBetModalFromBtn(this)"',
+        `aria-label="Wette platzieren · ${esc(signal.market)} @ ${currentOdds.toFixed(2)}"`,
+      ].join(' ');
+      return `<button ${attrs}>Wette platzieren · ${currentOdds.toFixed(2)}</button>`;
+    }).join('');
+    const actionState = canonicalSignals.length > 0
+      ? 'WERTSIGNAL · Wettoption verfügbar'
+      : 'NO BET · Keine kanonische Aktionierbarkeit';
     const quoteHtml = quoteEvidence
-      ? `<div class="nl-live-edge"><small>Frische iSports-Quote · ${esc(quoteEvidence.bookmaker)} · NO BET · ${esc(quoteEvidence.no_bet_reason)}</small>${quoteRows}</div>`
+      ? `<div class="nl-live-edge"><small>Frische iSports-Quote · ${esc(quoteEvidence.bookmaker)} · ${esc(actionState)}</small>${quoteRows}${actionButtons ? `<div class="nl-live-action-buttons">${actionButtons}</div>` : ''}</div>`
       : '';
     const cdHtml = kickoff
       ? `<span class="match-countdown" data-kickoff="${esc(kickoff)}" data-sport="football" style="margin-top:0;font-size:10px;padding:2px 7px">⏱ …</span>`
@@ -1002,11 +1043,14 @@ function openNationsLeagueMatch(displayKey) {
     document.getElementById('detail-cards').innerHTML = `
       <div class="pred-card nl-shadow-detail-card">
         <div class="pred-title">🏆 UEFA Nations League · Modell</div>
-        <div class="nl-shadow-detail-safety">${esc(phaseLabel.detail)} · NO BET · NUR INFORMATION</div>
+        <div class="nl-shadow-detail-safety">${esc(phaseLabel.detail)} · ${esc(actionState)}${canonicalSignals.length ? '' : ' · NUR INFORMATION'}</div>
         <div class="nl-shadow-detail-grid">${outcomeHtml}</div>${quoteHtml}
         <div class="nl-shadow-detail-meta">
           Modell: ${esc(modelVersion)}${esc(releaseId)} · Datenstand: ${esc(updatedLabel)}<br>
-          ${quoteEvidence ? 'Frische Quote und Wertberechnung sind sichtbar; die kanonische Aktionierbarkeit bleibt separat und erzeugt hier keine Wettfunktion.' : 'Keine Marktquote vorhanden. Keine Wettfunktion und keine Aktion möglich.'}
+          ${quoteEvidence ? (canonicalSignals.length
+            ? 'Frische Quote und Wertberechnung sind sichtbar; die Wettaktion verwendet ausschließlich das kanonische Value-Signal.'
+            : 'Frische Quote und Wertberechnung sind sichtbar; kein kanonisches Value-Signal erfüllt die Aktionsbedingungen.')
+            : 'Keine Marktquote vorhanden. Keine Wettfunktion und keine Aktion möglich.'}
         </div>
       </div>`;
     showView('detail');
