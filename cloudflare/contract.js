@@ -163,8 +163,10 @@ export function resolveCanonicalSignal(signalsJson, signalId) {
   if (!signalsJson || !signalId) return null;
   const tennis   = Array.isArray(signalsJson.tennis)   ? signalsJson.tennis   : [];
   const football = Array.isArray(signalsJson.football) ? signalsJson.football : [];
+  const nationsLeague = Array.isArray(signalsJson.nations_league_value_signals?.signals)
+    ? signalsJson.nations_league_value_signals.signals : [];
   const id = String(signalId);
-  for (const sig of [...tennis, ...football]) {
+  for (const sig of [...tennis, ...football, ...nationsLeague]) {
     if (sig && String(sig.signal_id || '') === id) return sig;
   }
   return null;

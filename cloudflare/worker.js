@@ -376,7 +376,7 @@ function _signalsKey(user) {
 // is structurally excluded. Applied to every GET /signals.json response.
 const _PUBLIC_TOP_LEVEL_KEYS = new Set([
   'updated', 'build_info', 'schedule', 'all_odds', 'model_tips', 'model_evals',
-  'football', 'nations_league', 'tennis', 'top_elo', 'wm_results', 'odds_history', 'health',
+  'football', 'nations_league', 'nations_league_value_signals', 'tennis', 'top_elo', 'wm_results', 'odds_history', 'health',
   'top5_release',
 ]);
 
@@ -608,6 +608,9 @@ export function serializePublicProduct(snapshot) {
   }
   if ('football' in pub) pub.football = _canonicalizeTop5PublicRecords(pub.football);
   if ('nations_league' in pub) _validatePublicNationsLeague(pub.nations_league);
+  if ('nations_league_value_signals' in pub) {
+    _validateNationsLeagueActionableSignals(pub.nations_league_value_signals);
+  }
   if ('top5_release' in pub) pub.top5_release = _publicTop5Release(pub.top5_release);
   _validateTop5PublicRecords(pub.football, pub.top5_release);
   if ('meta' in snapshot) pub.meta = _publicMeta(snapshot.meta);
@@ -847,6 +850,44 @@ function _canonicalJsonForDigest(value) {
   return JSON.stringify(value);
 }
 
+function _validateNationsLeagueActionableSignals(value) {
+  const fail = (reason) => { throw new Error(`invalid Nations League actionable signals: ${reason}`); };
+  if (!value || typeof value !== 'object' || Array.isArray(value) ||
+      value.schema !== 'nations-league-actionable-value-signals-v1' ||
+      value.competition !== 'UEFA Nations League' ||
+      value.provider_authority !== 'the_odds_api' ||
+      value.evidence_provider !== 'isports_api' ||
+      value.candidate_provider !== 'isports_api' ||
+      value.evidence_status !== 'DERIVED_ACTIONABILITY_ONLY' ||
+      value.source_evidence_no_bet !== true ||
+      value.actionability_enabled !== true ||
+      value.publication_enabled !== false ||
+      value.production_activation !== false ||
+      value.ledger_mutation !== false ||
+      value.phase !== 'refinement' ||
+      value.request_count !== 2 || value.retry_count !== 0 ||
+      !Array.isArray(value.signals) || typeof value.artifact_digest !== 'string' ||
+      !/^[0-9a-f]{64}$/.test(value.artifact_digest)) fail('top-level binding');
+  const seen = new Set();
+  for (const signal of value.signals) {
+    if (!signal || typeof signal !== 'object' || Array.isArray(signal)) fail('signal malformed');
+    if (typeof signal.signal_id !== 'string' || !signal.signal_id.startsWith('nl:value:') || seen.has(signal.signal_id)) fail('signal identity');
+    seen.add(signal.signal_id);
+    if (signal.signal_status !== 'ACTIVE' || signal.shadow !== false || signal.is_shadow !== false ||
+        signal.unsupported !== false || signal.edge_lost !== false || signal.stale !== false ||
+        signal.no_bet_flag !== false || signal.is_nations_league_value !== true ||
+        signal.source !== 'nations_league_bet_time_quote' || signal.phase !== 'refinement' ||
+        signal.sport !== 'football' || typeof signal.match !== 'string' || !signal.match.includes(' vs ') ||
+        !['home', 'draw', 'away'].includes(signal.market) || typeof signal.fixture_key !== 'string' ||
+        signal.fixture_key !== signal.fixture_key.trim() || !signal.fixture_key ||
+        typeof signal.odds_ts !== 'string' || !Number.isFinite(Date.parse(signal.odds_ts)) ||
+        typeof signal.quote_captured_at !== 'string' || !Number.isFinite(Date.parse(signal.quote_captured_at)) ||
+        typeof signal.quote_snapshot_digest !== 'string' || !/^[0-9a-f]{64}$/.test(signal.quote_snapshot_digest) ||
+        typeof signal.prediction_record_id !== 'string' || !/^[0-9a-f]{64}$/.test(signal.prediction_record_id) ||
+        typeof signal.model_release_id !== 'string' || !/^[0-9a-f]{64}$/.test(signal.model_release_id)) fail('signal safety fields');
+  }
+}
+
 export async function validatePublicNationsLeagueDigest(value) {
   _validatePublicNationsLeague(value);
   if (!globalThis.crypto?.subtle || typeof TextEncoder === 'undefined') {
@@ -858,6 +899,20 @@ export async function validatePublicNationsLeagueDigest(value) {
   const digest = await globalThis.crypto.subtle.digest('SHA-256', bytes);
   const actual = [...new Uint8Array(digest)].map((item) => item.toString(16).padStart(2, '0')).join('');
   if (actual !== value.public_digest) throw new Error('Nations League public bundle digest mismatch');
+  return true;
+}
+
+export async function validateNationsLeagueActionableDigest(value) {
+  _validateNationsLeagueActionableSignals(value);
+  if (!globalThis.crypto?.subtle || typeof TextEncoder === 'undefined') {
+    throw new Error('Nations League actionable digest verification is unavailable');
+  }
+  const body = { ...value };
+  delete body.artifact_digest;
+  const bytes = new TextEncoder().encode(_canonicalJsonForDigest(body));
+  const digest = await globalThis.crypto.subtle.digest('SHA-256', bytes);
+  const actual = [...new Uint8Array(digest)].map((item) => item.toString(16).padStart(2, '0')).join('');
+  if (actual !== value.artifact_digest) throw new Error('Nations League actionable projection digest mismatch');
   return true;
 }
 
@@ -1321,6 +1376,9 @@ export default {
         if (publicPayload.nations_league) {
           await validatePublicNationsLeagueDigest(publicPayload.nations_league);
         }
+        if (publicPayload.nations_league_value_signals) {
+          await validateNationsLeagueActionableDigest(publicPayload.nations_league_value_signals);
+        }
       } catch {
         // Fail-closed: nested private key found in an approved container.
         return jr({ error: 'privacy_boundary_violation' }, 500);
@@ -1374,6 +1432,39 @@ export default {
         const merged = { ...current, nations_league: incoming.nations_league };
         await env.SIGNALS.put(_signalsKey(user), JSON.stringify(merged));
         return jsonResponse({ ok: true, nations_league_digest: incoming.nations_league.public_digest }, 200, ch);
+      }
+
+      // NL-ACTIONABILITY-001: explicit, master-only merge for the separately
+      // derived fresh quote projection. The immutable no-bet NL evidence is
+      // never rewritten and no other public/private field can be selected.
+      if (url.searchParams.get('merge_nations_league_value_signals') === '1') {
+        if (!auth.viaMaster) {
+          return new Response('Nations League value projection requires master authority', { status: 403, headers: ch });
+        }
+        const body = await request.text();
+        let incoming;
+        try { incoming = JSON.parse(body); } catch { return new Response('Invalid JSON', { status: 400, headers: ch }); }
+        if (!incoming || typeof incoming !== 'object' || Array.isArray(incoming) ||
+            Object.keys(incoming).length !== 1 ||
+            !Object.prototype.hasOwnProperty.call(incoming, 'nations_league_value_signals')) {
+          return new Response('Nations League value merge accepts only nations_league_value_signals', { status: 400, headers: ch });
+        }
+        try {
+          await validateNationsLeagueActionableDigest(incoming.nations_league_value_signals);
+        } catch {
+          return new Response('Invalid Nations League value projection', { status: 400, headers: ch });
+        }
+        const currentRaw = await env.SIGNALS.get(_signalsKey(user));
+        let current;
+        try { current = JSON.parse(currentRaw || ''); } catch {
+          return new Response('Existing signals snapshot is unavailable', { status: 409, headers: ch });
+        }
+        if (!current || typeof current !== 'object' || Array.isArray(current)) {
+          return new Response('Existing signals snapshot is invalid', { status: 409, headers: ch });
+        }
+        const merged = { ...current, nations_league_value_signals: incoming.nations_league_value_signals };
+        await env.SIGNALS.put(_signalsKey(user), JSON.stringify(merged));
+        return jsonResponse({ ok: true, artifact_digest: incoming.nations_league_value_signals.artifact_digest }, 200, ch);
       }
 
       // P0C-001: ?merge_health=1 — merge only the health key into the existing

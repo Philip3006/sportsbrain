@@ -76,6 +76,91 @@ function validSignalsJson(sig = validSig()) {
   return { tennis: [sig], football: [] };
 }
 
+function validNlValueSignal(overrides = {}) {
+  return {
+    signal_id: 'nl:value:signal_001',
+    signal_status: 'ACTIVE',
+    shadow: false,
+    is_shadow: false,
+    unsupported: false,
+    edge_lost: false,
+    stale: false,
+    no_bet_flag: false,
+    current_odds: 2.1,
+    current_ev_pct: 12.5,
+    odds_ts: FRESH_TS,
+    quote_captured_at: FRESH_TS,
+    event_status: 'PREMATCH',
+    sport: 'football',
+    match: 'Austria vs Ireland',
+    market: 'home',
+    fixture_key: 'uefa-nl:future-test',
+    league: 'unl',
+    prediction_record_id: 'a'.repeat(64),
+    model_release_id: 'b'.repeat(64),
+    quote_snapshot_digest: 'c'.repeat(64),
+    source: 'nations_league_bet_time_quote',
+    phase: 'refinement',
+    is_nations_league_value: true,
+    ...overrides,
+  };
+}
+
+function validNlProjection(signal = validNlValueSignal(), overrides = {}) {
+  return {
+    schema: 'nations-league-actionable-value-signals-v1',
+    competition: 'UEFA Nations League',
+    provider_authority: 'the_odds_api',
+    evidence_provider: 'isports_api',
+    candidate_provider: 'isports_api',
+    evidence_status: 'DERIVED_ACTIONABILITY_ONLY',
+    source_evidence_no_bet: true,
+    actionability_enabled: true,
+    publication_enabled: false,
+    production_activation: false,
+    ledger_mutation: false,
+    phase: 'refinement',
+    quote_captured_at: FRESH_TS,
+    quote_count: 1,
+    request_count: 2,
+    retry_count: 0,
+    quote_snapshot_digests: ['c'.repeat(64)],
+    request_provenance: { provider: 'isports_api' },
+    signals: [signal],
+    artifact_digest: 'd'.repeat(64),
+    ...overrides,
+  };
+}
+
+describe('Nations League actionable projection', () => {
+  test('resolves only the trusted candidate projection signal', () => {
+    const signal = validNlValueSignal();
+    const resolved = resolveCanonicalSignal({
+      football: [],
+      tennis: [],
+      nations_league_value_signals: validNlProjection(signal),
+    }, signal.signal_id);
+    assert.equal(resolved, signal);
+  });
+
+  test('public serialization preserves candidate-only safety boundary', () => {
+    const projection = validNlProjection();
+    const serialized = serializePublicProduct({ nations_league_value_signals: projection });
+    assert.equal(serialized.nations_league_value_signals.provider_authority, 'the_odds_api');
+    assert.equal(serialized.nations_league_value_signals.evidence_provider, 'isports_api');
+    assert.equal(serialized.nations_league_value_signals.publication_enabled, false);
+    assert.equal(serialized.nations_league_value_signals.production_activation, false);
+  });
+
+  test('candidate projection with production authority is rejected', () => {
+    assert.throws(() => serializePublicProduct({
+      nations_league_value_signals: validNlProjection(validNlValueSignal(), {
+        provider_authority: 'isports_api',
+      }),
+    }), /invalid Nations League actionable signals/);
+  });
+});
+
 // ── 1. validateBetBodyBasic ───────────────────────────────────────────────────
 
 describe('validateBetBodyBasic', () => {
@@ -611,6 +696,16 @@ describe('Worker orchestration — orchestratePendingBetPost (production code)',
     };
   }
 
+  function makeNlSignalsJson(sig, publishedAt = FRESH_PUB) {
+    return {
+      football: [],
+      tennis: [],
+      nations_league_value_signals: { signals: [sig] },
+      bankroll_state: { free: 90, staked: 10, published_at: publishedAt },
+      open_bets: [],
+    };
+  }
+
   test('valid canonical value request (UPCOMING Tennis) → 200 + entry stored', () => {
     const sig = validSig({ event_status: 'UPCOMING', model_prob: 52.0 });
     const body = {
@@ -644,6 +739,22 @@ describe('Worker orchestration — orchestratePendingBetPost (production code)',
       signalsJson: makeSignalsJson(sig), pendingArr: [], nowMs: NOW,
     });
     assert.equal(r.status, 200, JSON.stringify(r.json));
+  });
+
+  test('fresh Nations League value projection resolves through /pending_bets', () => {
+    const sig = validNlValueSignal({ model_prob: 52.0 });
+    const body = {
+      source: 'value', signal_id: sig.signal_id,
+      stake_eur: 5, odds: sig.current_odds,
+      match: sig.match, market: sig.market, sport: sig.sport,
+    };
+    const r = orchestratePendingBetPost(body, {
+      signalsJson: makeNlSignalsJson(sig), pendingArr: [], nowMs: NOW,
+      genId: () => 'nl-entry-001',
+    });
+    assert.equal(r.status, 200, JSON.stringify(r.json));
+    assert.equal(r.entry.signal_id, sig.signal_id);
+    assert.equal(r.entry.source, 'value');
   });
 
   test('fake signal_id → 400 rejected', () => {
