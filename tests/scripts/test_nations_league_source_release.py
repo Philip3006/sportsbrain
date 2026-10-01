@@ -63,6 +63,56 @@ def test_live_workflow_checkout_has_full_history_for_ancestor_validation():
     assert "fetch-depth: 1" not in checkout
 
 
+def test_live_workflow_installs_dependencies_before_lifecycle():
+    workflow = (ROOT / ".github/workflows/nations_league_live_cycle.yml").read_text(
+        encoding="utf-8"
+    )
+    setup_python_start = workflow.index("      - uses: actions/setup-python@v5")
+    execute_start = workflow.index("      - name: Execute current LIVE lifecycle")
+    setup_and_install = workflow[setup_python_start:execute_start]
+
+    assert "cache: 'pip'" in setup_and_install
+    assert "pip install -r requirements.txt" in setup_and_install
+
+
+def test_live_workflow_propagates_lifecycle_failure_through_tee():
+    workflow = (ROOT / ".github/workflows/nations_league_live_cycle.yml").read_text(
+        encoding="utf-8"
+    )
+    execute_start = workflow.index("      - name: Execute current LIVE lifecycle")
+    bundle_start = workflow.index("      - name: Rebuild canonical LIVE public bundle")
+    publication_start = workflow.index(
+        "      - name: Publish through the canonical Worker path when configured"
+    )
+    lifecycle = workflow[execute_start:bundle_start]
+    bundle = workflow[bundle_start:publication_start]
+
+    assert "set -o pipefail" in lifecycle
+    assert lifecycle.index("set -o pipefail") < lifecycle.index(
+        "python3 scripts/nations_league_live_cycle.py"
+    )
+    assert "| tee /tmp/nations-league-live-cycle.json" in lifecycle
+    assert "if:" not in bundle
+
+
+def test_live_workflow_adds_no_provider_or_financial_action():
+    workflow = (
+        (ROOT / ".github/workflows/nations_league_live_cycle.yml")
+        .read_text(encoding="utf-8")
+        .casefold()
+    )
+
+    for forbidden in (
+        "the_odds_api",
+        "therundown",
+        "isports",
+        "ledger",
+        "bankroll",
+        "betting",
+    ):
+        assert forbidden not in workflow
+
+
 def test_live_workflow_guards_optional_publication_inside_shell():
     workflow = (ROOT / ".github/workflows/nations_league_live_cycle.yml").read_text(
         encoding="utf-8"
