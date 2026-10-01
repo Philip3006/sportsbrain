@@ -1,0 +1,152 @@
+name: Nations League Bet Quote Launch
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nations-league-bet-quote-launch
+  cancel-in-progress: false
+
+jobs:
+  launch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Build exact scoped authorization
+        run: |
+          python3 - <<'PY'
+          import json
+          from datetime import datetime, timezone, timedelta
+          from pathlib import Path
+          from src.football.top5_b4_provider_neutral_evidence import canonical_evidence_digest
+
+          now = datetime.now(timezone.utc)
+          data = json.loads(Path("docs/data/signals.json").read_text())
+          fixtures = data["nations_league"]["fixtures"]
+
+          scope = sorted(
+              f["fixture_id"]
+              for f in fixtures
+              if f.get("phase") == "refinement"
+              and datetime.fromisoformat(f["kickoff_utc"].replace("Z", "+00:00")) > now
+          )
+          if not scope:
+              raise SystemExit("no current refinement fixtures available")
+
+          p = {
+              "schema_version": "nations-league-bet-time-quote-authorization-v1",
+              "authorization_id": "nl-bet-quote-" + now.strftime("%Y%m%dT%H%M%SZ"),
+              "provider": "isports_api",
+              "fixture_scope": scope,
+              "phase": "refinement",
+              "issued_at": now.isoformat().replace("+00:00", "Z"),
+              "expires_at": (now + timedelta(minutes=10)).isoformat().replace("+00:00", "Z"),
+              "maximum_request_count": 2,
+              "retry_count": 0,
+              "no_bet": True,
+              "publication": False,
+              "production_activation": False,
+              "betting": False,
+          }
+          p["authorization_digest"] = canonical_evidence_digest(p)
+
+          path = Path("/tmp/nl-quote-authorization.json")
+          path.write_text(json.dumps(p, indent=2))
+          path.chmod(0o600)
+          print(json.dumps({"fixture_count": len(scope), "fixture_scope": scope}, sort_keys=True))
+          PY
+
+      - name: Zero-network preflight
+        run: |
+          python3 scripts/capture_nations_league_bet_quote.py \
+            --input docs/data/signals.json \
+            --authorization-file /tmp/nl-quote-authorization.json \
+            --output /tmp/nl-actionable-value-signals.json
+
+      - name: Capture fresh iSports quote
+        env:
+          ISPORTS_API_KEY: ${{ secrets.ISPORTS_API_KEY }}
+        run: |
+          set -o pipefail
+          python3 scripts/capture_nations_league_bet_quote.py \
+            --input docs/data/signals.json \
+            --authorization-file /tmp/nl-quote-authorization.json \
+            --output /tmp/nl-actionable-value-signals.json \
+            --execute-network | tee /tmp/nl-bet-quote-result.json
+
+      - name: Publish NL value projection only
+        env:
+          SIGNALS_API_TOKEN: ${{ secrets.SIGNALS_API_TOKEN }}
+        run: |
+          python3 - <<'PY'
+          import json
+          p = json.load(open("/tmp/nl-actionable-value-signals.json"))
+          json.dump(
+              {"nations_league_value_signals": p},
+              open("/tmp/nl-value-worker-body.json", "w"),
+          )
+          print(json.dumps({
+              "signal_count": len(p["signals"]),
+              "artifact_digest": p["artifact_digest"],
+              "quote_captured_at": p["quote_captured_at"],
+          }, sort_keys=True))
+          PY
+
+          curl -fsS -X POST \
+            'https://sportsbrain-signals.sportsbrain-philip.workers.dev/signals?merge_nations_league_value_signals=1' \
+            -H "Authorization: Bearer $SIGNALS_API_TOKEN" \
+            -H 'Content-Type: application/json' \
+            --data-binary @/tmp/nl-value-worker-body.json \
+            | tee /tmp/nl-worker-merge-result.json
+
+      - name: Verify public Worker projection
+        run: |
+          curl -fsS \
+            'https://sportsbrain-signals.sportsbrain-philip.workers.dev/signals.json' \
+            > /tmp/worker-signals.json
+
+          python3 - <<'PY'
+          import json
+          from datetime import datetime, timezone
+
+          expected = json.load(open("/tmp/nl-actionable-value-signals.json"))
+          worker = json.load(open("/tmp/worker-signals.json"))
+          actual = worker.get("nations_league_value_signals")
+          if not isinstance(actual, dict):
+              raise SystemExit("Worker is missing nations_league_value_signals")
+          if actual.get("artifact_digest") != expected.get("artifact_digest"):
+              raise SystemExit("Worker artifact digest mismatch")
+          if len(actual.get("signals", [])) != len(expected.get("signals", [])):
+              raise SystemExit("Worker signal_count mismatch")
+
+          print(json.dumps({
+              "status": "NL_ACTIONABLE_BETTING_PROD_VERIFIED",
+              "artifact_digest": actual["artifact_digest"],
+              "quote_captured_at": actual["quote_captured_at"],
+              "signal_count": len(actual["signals"]),
+              "signals": [
+                  {
+                      "signal_id": s["signal_id"],
+                      "match": s["match"],
+                      "market": s["market"],
+                      "current_odds": s["current_odds"],
+                      "current_ev_pct": s["current_ev_pct"],
+                  }
+                  for s in actual["signals"]
+              ],
+              "verified_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+          }, sort_keys=True))
+          PY
