@@ -34,7 +34,11 @@ const {
 
 // Blocker-5: import ACTUAL production orchestration function from worker.js
 const workerModule = await import(WORKER);
-const { orchestratePendingBetPost, serializePublicProduct } = workerModule;
+const {
+  orchestratePendingBetPost,
+  serializePublicProduct,
+  validateNationsLeagueActionableDigest,
+} = workerModule;
 const workerDefault = workerModule.default; // used by Suite 12 cancel KV tests
 const { serializePrivateState } = workerModule; // P0C-002
 
@@ -150,6 +154,33 @@ describe('Nations League actionable projection', () => {
     assert.equal(serialized.nations_league_value_signals.evidence_provider, 'isports_api');
     assert.equal(serialized.nations_league_value_signals.publication_enabled, false);
     assert.equal(serialized.nations_league_value_signals.production_activation, false);
+  });
+
+  test('unmodified Worker preserves additive quote evidence and its existing digest', async () => {
+    const projection = validNlProjection();
+    projection.quote_evidence = [{
+      fixture_id: 'uefa-nl:future-test',
+      actionable_signal_count: 1,
+      no_bet: true,
+      no_bet_reason: 'ACTIONABLE_SIGNAL_AVAILABLE',
+      bookmaker: 'iSports European median',
+      quote_snapshot_digest: 'c'.repeat(64),
+      quote_captured_at: FRESH_TS,
+      edge_analysis: {
+        fixture_id: 'uefa-nl:future-test',
+        prediction_record_id: 'a'.repeat(64),
+        no_bet: true,
+        betting_enabled: false,
+        ledger_mutation: false,
+        market_snapshot: { provider: 'isports_api', snapshot_digest: 'c'.repeat(64) },
+      },
+    }];
+    const body = { ...projection };
+    delete body.artifact_digest;
+    projection.artifact_digest = await digestWorkerJson(body);
+    await validateNationsLeagueActionableDigest(projection);
+    const serialized = serializePublicProduct({ nations_league_value_signals: projection });
+    assert.deepEqual(serialized.nations_league_value_signals.quote_evidence, projection.quote_evidence);
   });
 
   test('candidate projection with production authority is rejected', () => {

@@ -67,6 +67,76 @@ function livePayload() {
   };
 }
 
+function liveQuoteProjection(fixtureId, actionable) {
+  const signal = {
+    signal_id: 'nl:value:canonical-test',
+    signal_status: 'ACTIVE',
+    is_nations_league_value: true,
+    fixture_key: fixtureId,
+    market: 'home',
+    match: 'Denmark vs Portugal',
+    current_odds: 2.1,
+    current_ev_pct: 12.5,
+    model_prob: 52,
+    fair_prob: 40,
+    odds_ts: '2026-10-01T11:59:00Z',
+    quote_captured_at: '2026-10-01T11:59:00Z',
+    event_status: 'PREMATCH',
+    league: 'unl',
+    confidence: 'MEDIUM',
+  };
+  const outcomes = {
+    home: { model_probability: 0.52, decimal_odds: 2.1, market_probability: 0.40, probability_edge: 0.12, ev: 0.092 },
+    draw: { model_probability: 0.25, decimal_odds: 4.0, market_probability: 0.25, probability_edge: 0, ev: 0 },
+    away: { model_probability: 0.23, decimal_odds: 3.0, market_probability: 0.35, probability_edge: -0.12, ev: -0.31 },
+  };
+  return {
+    signals: actionable ? [signal] : [],
+    quote_evidence: [{
+      fixture_id: fixtureId,
+      actionable_signal_count: actionable ? 1 : 0,
+      no_bet: true,
+      no_bet_reason: actionable ? 'ACTIONABLE_SIGNAL_AVAILABLE' : 'NO_CANONICAL_ACTIONABLE_OUTCOME',
+      bookmaker: 'iSports European median',
+      edge_analysis: { outcomes },
+    }],
+  };
+}
+
+function openLiveDetailWithProjection(projection) {
+  const live = livePayload();
+  const header = { innerHTML: '' };
+  const cards = { innerHTML: '' };
+  const context = {
+    Date,
+    Number,
+    Math,
+    String,
+    Array,
+    _nationsLeague: live,
+    _nationsLeagueValueProjection: projection,
+    matchKey,
+    _analyticsFixtureKey: () => 'fixture-key',
+    _captureAnalytics: () => {},
+    _tickCountdowns: () => {},
+    fmtKickoffCompact: () => '01.10 · 18:00',
+    esc: (value) => String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;'),
+    showView: (view) => { context.lastView = view; },
+    document: {
+      getElementById: (id) => id === 'detail-header' ? header : id === 'detail-cards' ? cards : null,
+    },
+  };
+  vm.createContext(context);
+  const start = appSource.indexOf('function openNationsLeagueMatch(');
+  const end = appSource.indexOf('\nfunction openMatch(', start);
+  const phaseStart = viewsSource.indexOf('function _nationsLeaguePhaseLabel(');
+  const phaseEnd = viewsSource.indexOf('\nfunction _nationsLeagueHomeGames', phaseStart);
+  vm.runInContext(`${viewsSource.slice(phaseStart, phaseEnd)}${appSource.slice(start, end)}\n` +
+    'globalThis.openNl = openNationsLeagueMatch;', context);
+  context.openNl('Denmark vs Portugal');
+  return { context, header, cards };
+}
+
 test('Home tennis curation maps 178 schedules to exactly 7 unique signal matches', () => {
   const schedule = Array.from({ length: 178 }, (_, index) => ({
     sport: 'tennis',
@@ -184,4 +254,24 @@ test('LIVE detail renders model probabilities and NO BET without market prices',
   assert.match(cards.innerHTML, /NO BET/);
   assert.match(cards.innerHTML, /Keine Marktquote/);
   assert.doesNotMatch(cards.innerHTML, /Wette platzieren|place-bet-btn/);
+});
+
+test('fresh zero-actionable quote renders value evidence, justified NO BET, and no CTA', () => {
+  const { cards } = openLiveDetailWithProjection(liveQuoteProjection('fixture-0', false));
+  assert.match(cards.innerHTML, /Quote 2\.10/);
+  assert.match(cards.innerHTML, /Markt 40\.0%/);
+  assert.match(cards.innerHTML, /Δ 12\.0pp/);
+  assert.match(cards.innerHTML, /EV 9\.2%/);
+  assert.match(cards.innerHTML, /NO BET · Keine kanonische Aktionierbarkeit/);
+  assert.doesNotMatch(cards.innerHTML, /Wette platzieren|data-signal-id=/);
+});
+
+test('fresh actionable quote renders canonical signal CTA without NO BET downgrade', () => {
+  const { cards } = openLiveDetailWithProjection(liveQuoteProjection('fixture-0', true));
+  assert.match(cards.innerHTML, /Quote 2\.10/);
+  assert.match(cards.innerHTML, /Markt 40\.0%/);
+  assert.match(cards.innerHTML, /WERTSIGNAL · Wettoption verfügbar/);
+  assert.match(cards.innerHTML, /Wette platzieren · 2\.10/);
+  assert.match(cards.innerHTML, /data-signal-id="nl:value:canonical-test"/);
+  assert.doesNotMatch(cards.innerHTML, /NO BET/);
 });
