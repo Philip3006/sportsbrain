@@ -28,12 +28,14 @@ function homeHelpers(signals, schedule) {
     matchKey,
   };
   vm.createContext(context);
+  const phaseStart = viewsSource.indexOf('function _nationsLeaguePhaseLabel(');
   const start = viewsSource.indexOf('function _nationsLeagueHomeGames(');
   const end = viewsSource.indexOf('\nfunction renderHome', start);
+  assert.notEqual(phaseStart, -1);
   assert.notEqual(start, -1);
   assert.notEqual(end, -1);
-  vm.runInContext(`${viewsSource.slice(start, end)}\n` +
-    'globalThis.homeHelpers = { nl: _nationsLeagueHomeGames, tennis: _tennisHomeGames, dedupe: _dedupeHomeGames };', context);
+  vm.runInContext(`${viewsSource.slice(phaseStart, start)}${viewsSource.slice(start, end)}\n` +
+    'globalThis.homeHelpers = { phase: _nationsLeaguePhaseLabel, nl: _nationsLeagueHomeGames, tennis: _tennisHomeGames, dedupe: _dedupeHomeGames };', context);
   return context.homeHelpers;
 }
 
@@ -47,6 +49,7 @@ function livePayload() {
     competition: 'UEFA Nations League',
     canonical_identity: { home_team: home, away_team: away },
     kickoff_utc: new Date(NOW + 6 * 60 * 60 * 1000).toISOString(),
+    prediction_cutoff: new Date(NOW + 5 * 60 * 60 * 1000).toISOString(),
     phase: 'initial',
     probabilities: { home: 0.35, draw: 0.25, away: 0.40 },
     model_release: { model_version: 'nations_league_v1_1', release_id: 'r'.repeat(64) },
@@ -104,6 +107,23 @@ test('LIVE Nations League maps all seven canonical fixtures without odds', () =>
   assert.ok(games.every((game) => !('odds_home' in game) && !('odds_draw' in game) && !('odds_away' in game)));
 });
 
+test('phase presentation translates without mutating internal lifecycle values', () => {
+  const helpers = homeHelpers([], []);
+  const live = livePayload();
+  assert.equal(live.fixtures[0].phase, 'initial');
+  assert.equal(helpers.phase('initial').compact, 'VORAB');
+  assert.equal(helpers.phase('initial').detail, 'Vorab-Prognose · Modell');
+  assert.equal(live.fixtures[0].phase, 'initial');
+  const refinement = helpers.phase(
+    'refinement', '2026-10-01T16:45:00Z', '2026-10-01T18:00:00Z',
+  );
+  assert.equal(refinement.compact, 'AKTUALISIERT');
+  assert.equal(refinement.detail, 'Aktualisierte Prognose · 75 Min. vor Anpfiff');
+  const fallback = helpers.phase('refinement', 'not-a-time', '');
+  assert.equal(fallback.compact, 'AKTUALISIERT');
+  assert.equal(fallback.detail, 'Aktualisierte Prognose · Modell');
+});
+
 test('invalid LIVE payload is fail-closed and schedule/NL duplicates prefer LIVE identity', () => {
   const helpers = homeHelpers([], []);
   const payload = livePayload();
@@ -143,14 +163,21 @@ test('LIVE detail renders model probabilities and NO BET without market prices',
   vm.createContext(context);
   const start = appSource.indexOf('function openNationsLeagueMatch(');
   const end = appSource.indexOf('\nfunction openMatch(', start);
+  const phaseStart = viewsSource.indexOf('function _nationsLeaguePhaseLabel(');
+  const phaseEnd = viewsSource.indexOf('\nfunction _nationsLeagueHomeGames', phaseStart);
   assert.notEqual(start, -1);
   assert.notEqual(end, -1);
-  vm.runInContext(`${appSource.slice(start, end)}\nglobalThis.openNl = openNationsLeagueMatch;`, context);
+  assert.notEqual(phaseStart, -1);
+  assert.notEqual(phaseEnd, -1);
+  vm.runInContext(`${viewsSource.slice(phaseStart, phaseEnd)}${appSource.slice(start, end)}\n` +
+    'globalThis.openNl = openNationsLeagueMatch;', context);
   context.openNl('Denmark vs Portugal');
 
   assert.equal(context.lastView, 'detail');
   assert.match(header.innerHTML, /Denmark vs Portugal/);
-  assert.match(cards.innerHTML, /UEFA Nations League · LIVE Modell/);
+  assert.match(cards.innerHTML, /UEFA Nations League · Modell/);
+  assert.match(cards.innerHTML, /Vorab-Prognose · Modell/);
+  assert.doesNotMatch(cards.innerHTML, /\bINITIAL\b|\bREFINEMENT\b|\bLIVE ·/);
   assert.match(cards.innerHTML, /35\.0% Modell/);
   assert.match(cards.innerHTML, /25\.0% Modell/);
   assert.match(cards.innerHTML, /40\.0% Modell/);

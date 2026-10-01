@@ -130,9 +130,14 @@ function renderLive(payload) {
   vm.createContext(context);
   const start = viewsSource.indexOf('function renderNationsLeagueLive(');
   const end = viewsSource.indexOf('\nfunction renderNationsLeagueShadow', start);
+  const phaseStart = viewsSource.indexOf('function _nationsLeaguePhaseLabel(');
+  const phaseEnd = viewsSource.indexOf('\nfunction _nationsLeagueHomeGames', phaseStart);
   assert.notEqual(start, -1);
   assert.notEqual(end, -1);
-  vm.runInContext(viewsSource.slice(start, end) + '\nglobalThis.renderNl = renderNationsLeagueLive;', context);
+  assert.notEqual(phaseStart, -1);
+  assert.notEqual(phaseEnd, -1);
+  vm.runInContext(viewsSource.slice(phaseStart, phaseEnd) + viewsSource.slice(start, end) +
+    '\nglobalThis.renderNl = renderNationsLeagueLive;', context);
   context.renderNl(payload);
   return element;
 }
@@ -163,13 +168,17 @@ test('Worker public allowlist preserves the validated Nations League shadow enve
 test('LIVE Nations League projection passes the serializer boundary without betting semantics', async () => {
   const live = JSON.parse(readFileSync(resolve(__dir, '../../docs/data/signals.json'), 'utf8')).nations_league;
   assert.equal(live.status, 'LIVE');
-  assert.equal(live.fixture_count, 7);
+  assert.equal(live.fixture_count, live.fixtures.length);
+  assert.ok(live.fixture_count >= 7);
   assert.equal(live.no_bet, true);
   assert.equal(live.betting_enabled, false);
   assert.equal(live.ledger_mutation, false);
   assert.equal(await validatePublicNationsLeagueDigest(live), true);
   assert.deepEqual(serializePublicProduct({ nations_league: live }).nations_league, live);
   assert.equal(await appNlHelpers().valid(live), true);
+  const rendered = renderLive(live);
+  assert.match(rendered.innerHTML, /Vorab-Prognose · Modell/);
+  assert.doesNotMatch(rendered.innerHTML, /\bINITIAL\b|\bREFINEMENT\b|LIVE · (initial|refinement)/i);
 });
 
 test('LIVE edge analysis is public-safe, causal, and remains read-only', async () => {
@@ -253,7 +262,8 @@ test('PWA renders future LIVE fixtures only and never exposes a bet action', () 
   const rendered = renderLive(payload);
   assert.equal(rendered.hidden, false);
   assert.match(rendered.innerHTML, /UEFA Nations League/);
-  assert.match(rendered.innerHTML, />LIVE</);
+  assert.match(rendered.innerHTML, /MODELL/);
+  assert.doesNotMatch(rendered.innerHTML, />LIVE</);
   assert.match(rendered.innerHTML, /NO BET/);
   assert.match(rendered.innerHTML, /Germany|Greece|Denmark|Wales/);
   assert.doesNotMatch(rendered.innerHTML, /place-bet|data-stake|wette abgeben/i);
