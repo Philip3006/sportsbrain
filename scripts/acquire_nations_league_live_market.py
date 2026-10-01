@@ -33,11 +33,24 @@ def _read(path: Path) -> dict:
     return value
 
 
+def _campaign_records(path: Path) -> list[dict]:
+    value = _read(path)
+    records = value.get("records")
+    if not isinstance(records, list) or any(not isinstance(row, dict) for row in records):
+        raise NationsLeagueLiveMarketError("forward campaign records are invalid")
+    return records
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--as-of", required=True)
     parser.add_argument("--store", type=Path, required=True)
+    parser.add_argument(
+        "--campaign",
+        type=Path,
+        help="immutable forward-campaign records used for phase idempotency",
+    )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument(
         "--preflight",
@@ -48,6 +61,8 @@ def main(argv: list[str] | None = None) -> int:
     try:
         manifest = _read(args.manifest)
         existing_records = load_live_store(args.store)
+        if args.campaign is not None:
+            existing_records.extend(_campaign_records(args.campaign))
         if args.preflight:
             batch = prepare_market_preflight(
                 manifest,
@@ -61,7 +76,7 @@ def main(argv: list[str] | None = None) -> int:
                 existing_records=existing_records,
             )
         write_market_snapshot_batch(args.output, batch)
-    except (OSError, NationsLeagueLiveMarketError, NationsLeagueLiveRuntimeError) as exc:
+    except (OSError, TypeError, NationsLeagueLiveMarketError, NationsLeagueLiveRuntimeError) as exc:
         print(f"Nations League LIVE market capture blocked: {exc}", file=sys.stderr)
         return 2
     print(json.dumps(batch, ensure_ascii=False, sort_keys=True, indent=2))

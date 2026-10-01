@@ -129,6 +129,45 @@ def _digest(value: Any) -> str:
     return hashlib.sha256(_canonical_json(value)).hexdigest()
 
 
+def _public_canonical(value: Any) -> str:
+    """Match JSON.stringify number spelling for Worker/PWA digest parity."""
+
+    if value is None:
+        return "null"
+    if value is True:
+        return "true"
+    if value is False:
+        return "false"
+    if isinstance(value, str):
+        return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, float):
+        if not math.isfinite(value):
+            raise NationsLeagueLivePublicError("public bundle contains a non-finite number")
+        if value == 0:
+            return "0"
+        if value.is_integer():
+            return str(int(value))
+        return (
+            json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+            .replace("e-0", "e-")
+            .replace("e+0", "e+")
+        )
+    if isinstance(value, Mapping):
+        return "{" + ",".join(
+            f"{_public_canonical(str(key))}:{_public_canonical(item)}"
+            for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))
+        ) + "}"
+    if isinstance(value, (list, tuple)):
+        return "[" + ",".join(_public_canonical(item) for item in value) + "]"
+    raise NationsLeagueLivePublicError("public bundle contains an unsupported value")
+
+
+def _public_digest(value: Any) -> str:
+    return hashlib.sha256(_public_canonical(value).encode("utf-8")).hexdigest()
+
+
 def _required_text(value: object, field: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise NationsLeagueLivePublicError(f"{field} is required")
@@ -444,7 +483,7 @@ def build_live_public_nations_league(
         if fixtures
         else _zero_view_updated_at(selected, release)
     )
-    payload["public_digest"] = _digest(payload)
+    payload["public_digest"] = _public_digest(payload)
     return payload
 
 
@@ -457,7 +496,7 @@ def validate_live_public_nations_league(value: Mapping[str, Any]) -> dict[str, A
     if set(payload) != _PUBLIC_KEYS:
         raise NationsLeagueLivePublicError("LIVE public fields are not allowlisted")
     digest = payload.pop("public_digest", None)
-    if not isinstance(digest, str) or digest != _digest(payload):
+    if not isinstance(digest, str) or digest != _public_digest(payload):
         raise NationsLeagueLivePublicError("LIVE public digest mismatch")
     if (
         payload.get("schema") != SCHEMA

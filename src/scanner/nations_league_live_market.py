@@ -84,7 +84,10 @@ def _captured_phases(
         phase = _text(record.get("phase"), "stored phase")
         if phase not in {"initial", "refinement"}:
             raise NationsLeagueLiveMarketError("LIVE prediction store phase is invalid")
-        captured.add((fixture_id, phase))
+        key = (fixture_id, phase)
+        if key in captured:
+            raise NationsLeagueLiveMarketError("duplicate captured fixture phase")
+        captured.add(key)
     return captured
 
 

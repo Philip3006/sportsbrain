@@ -35,6 +35,7 @@ jobs:
           python3 scripts/acquire_nations_league_live_market.py \
             --manifest results/audits/nations_league_forward_fixture_manifest.json \
             --store results/research/nations_league_v1_1_live_prediction_store.jsonl \
+            --campaign results/research/nations_league_v1_1_forward_campaign_20260930T200124Z.json \
             --as-of "$MARKET_SELECTION_AS_OF" \
             --output "$MARKET_SNAPSHOT_PATH" \
             --preflight \
@@ -56,6 +57,7 @@ jobs:
           python3 scripts/acquire_nations_league_live_market.py \
             --manifest results/audits/nations_league_forward_fixture_manifest.json \
             --store results/research/nations_league_v1_1_live_prediction_store.jsonl \
+            --campaign results/research/nations_league_v1_1_forward_campaign_20260930T200124Z.json \
             --as-of "${{ steps.market_preflight.outputs.selection_as_of }}" \
             --output "$MARKET_SNAPSHOT_PATH" \
             | tee /tmp/nations-league-live-market-capture.json
@@ -98,6 +100,36 @@ jobs:
             --input docs/data/signals_philip.json \
             --as-of "$CYCLE_AS_OF" \
             --output docs/data/signals_philip.json
+
+      - name: Summarize canonical LIVE market-edge evidence
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          capture = json.loads(Path("/tmp/nations-league-live-market-snapshots.json").read_text())
+          public = json.loads(Path("docs/data/signals.json").read_text())["nations_league"]
+          print(json.dumps({
+              "needs_provider": capture["needs_provider"],
+              "due_fixtures": capture["due_fixtures"],
+              "request_count": capture["request_count"],
+              "retry_count": capture["retry_count"],
+              "provider": capture["provider"],
+              "acquisition_status": capture["status"],
+              "failure_reasons": capture["failure_reasons"],
+              "snapshot_count": len(capture["snapshots"]),
+              "captured_at": capture["captured_at"],
+              "public_digest": public["public_digest"],
+              "edge_statuses": [
+                  {
+                      "fixture_id": fixture["fixture_id"],
+                      "phase": fixture["phase"],
+                      "edge_status": fixture["edge_analysis"]["edge_status"],
+                  }
+                  for fixture in public["fixtures"]
+              ],
+          }, sort_keys=True))
+          PY
 
       - name: Publish through the canonical Worker path when configured
         continue-on-error: true

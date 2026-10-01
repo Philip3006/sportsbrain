@@ -155,7 +155,7 @@ def test_materialized_live_bundle_uses_serializer_and_live_dispatch():
     signals = _json("docs/data/signals.json")
     live = signals["nations_league"]
     assert live["status"] == "LIVE"
-    assert live["fixture_count"] == 7
+    assert live["fixture_count"] == 8
     assert validate_public_nations_league(live)["public_digest"] == live["public_digest"]
     assert select_freshest_valid_public_nations_league([live]) == live
     assert serialize_public_product(signals)["nations_league"] == live
