@@ -93,14 +93,16 @@ def _sched_entry(sport: str, kickoff: str) -> dict:
 # ── 1. Tennis kickoff passed → NOT LIVE ──────────────────────────────────────
 
 def test_tennis_kickoff_passed_no_live_evidence_not_live(page: Page, server_url: str):
-    """W2-1: Tennis with kickoff just passed (30 min ago) must NOT show LIVE badge."""
+    """W2-1: Schedule-only Tennis is hidden from Home, not inferred as LIVE."""
     schedule = [_sched_entry("tennis", _ko_past(0.5))]
     payload = {**_BASE, "schedule": schedule}
     _home(page, server_url, payload)
-    # No LIVE badge must appear
+    # Home is now signal-only for Tennis; schedule-only rows are absent.
     expect(page.locator(".today-live-badge")).to_have_count(0, timeout=5_000)
-    # Truthful neutral state should appear instead
-    expect(page.locator("text=Status unbekannt")).to_be_visible(timeout=3_000)
+    expect(page.locator("#home-container .today-row")).to_have_count(0, timeout=3_000)
+    # The dedicated Tennis tab keeps its schedule-only visibility.
+    page.locator("[data-view='tennis']").click()
+    expect(page.locator("#tennis-container")).to_contain_text("Player A")
 
 
 # ── 2. Tennis kickoff 90 min ago → NOT LIVE ──────────────────────────────────
@@ -143,13 +145,14 @@ def test_football_kickoff_passed_shows_live_badge(page: Page, server_url: str):
 # ── 5. Tennis future kickoff → normal countdown, no live badge ───────────────
 
 def test_tennis_future_kickoff_no_live_badge(page: Page, server_url: str):
-    """W2-5: Tennis match starting in 2h must show countdown, not LIVE."""
+    """W2-5: Schedule-only Tennis is absent from Home, not falsely LIVE."""
     schedule = [_sched_entry("tennis", _ko_future(2.0))]
     payload = {**_BASE, "schedule": schedule}
     _home(page, server_url, payload)
     expect(page.locator(".today-live-badge")).to_have_count(0, timeout=5_000)
-    # Should show an "in Xh Ymin" countdown
-    expect(page.locator(".today-countdown")).to_be_visible(timeout=3_000)
+    expect(page.locator("#home-container .today-row")).to_have_count(0, timeout=3_000)
+    page.locator("[data-view='tennis']").click()
+    expect(page.locator("#tennis-container")).to_contain_text("Player A")
 
 
 # ── 6. Today section window: past kickoff > 1h excluded entirely ─────────────

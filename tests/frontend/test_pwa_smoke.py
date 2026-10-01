@@ -138,6 +138,90 @@ def _nations_league_shadow_payload() -> dict:
     return {**payload, "public_digest": hashlib.sha256(canonical.encode()).hexdigest()}
 
 
+def _nations_league_live_payload() -> dict:
+    """Use the current public LIVE envelope without synthesizing model data."""
+    source = json.loads((DOCS_DIR / "data" / "signals.json").read_text(encoding="utf-8"))
+    return source["nations_league"]
+
+
+def _home_curation_payload() -> dict:
+    schedules = []
+    signals = []
+    for index in range(178):
+        home = f"Schedule Tennis Home {index}"
+        away = f"Schedule Tennis Away {index}"
+        kickoff = (_NOW + timedelta(hours=2, minutes=index)).isoformat()
+        schedules.append({
+            "sport": "tennis",
+            "home": home,
+            "away": away,
+            "kickoff": kickoff,
+            "tour": "Synthetic Tour",
+            "odds_home": 1.9,
+            "odds_away": 2.1,
+        })
+        if index < 6:
+            signals.append({
+                "sport": "tennis",
+                "match": f"{home} vs {away}",
+                "home": home,
+                "away": away,
+                "kickoff": kickoff,
+                "tour": "Synthetic Tour",
+            "market": "home",
+            "odds": 1.9,
+            "current_odds": 1.9,
+            "current_ev_pct": 8.0,
+            "ev_pct": 8.0,
+            "model_prob": 0.56,
+            "fair_prob": 0.52,
+            "stake_eur": 5.0,
+            "stake_pct": 1.0,
+            "confidence": "HIGH",
+            "n_models_agree": 2,
+            "signal_status": "ACTIVE",
+            "odds_ts": (_NOW - timedelta(minutes=5)).isoformat(),
+            "event_status": "PREMATCH",
+        })
+    signals.append({
+        "sport": "tennis",
+        "match": "Signal Only Home vs Signal Only Away",
+        "home": "Signal Only Home",
+        "away": "Signal Only Away",
+        "kickoff": (_NOW + timedelta(hours=3)).isoformat(),
+        "tour": "Synthetic Tour",
+        "market": "home",
+        "odds": 2.2,
+        "current_odds": 2.2,
+        "current_ev_pct": 8.0,
+        "ev_pct": 8.0,
+        "model_prob": 0.56,
+        "fair_prob": 0.52,
+        "stake_eur": 5.0,
+        "stake_pct": 1.0,
+        "confidence": "HIGH",
+        "n_models_agree": 2,
+        "signal_status": "ACTIVE",
+        "odds_ts": (_NOW - timedelta(minutes=5)).isoformat(),
+        "event_status": "PREMATCH",
+    })
+    # Multiple markets for one match must collapse to one Home identity.
+    signals.append({**signals[0], "market": "away", "odds": 2.4})
+    schedules.append({
+        "sport": "football",
+        "home": "Football Home",
+        "away": "Football Away",
+        "kickoff": (_NOW + timedelta(hours=4)).isoformat(),
+        "league": "ucl",
+    })
+    return {
+        **_BASE,
+        "schedule": schedules,
+        "tennis": signals,
+        "football": [],
+    }
+
+
 @pytest.fixture(scope="module")
 def server_url():
     """Serve docs/ via local HTTP server on a free port."""
@@ -232,16 +316,16 @@ def test_home_integrates_read_only_nations_league_shadow_games(page: Page, serve
 
     today_rows = page.locator(".today-row.nl-shadow-row")
     expect(today_rows).to_have_count(3, timeout=10_000)
-    expect(today_rows).to_contain_text("Armenia")
-    expect(today_rows).to_contain_text("Montenegro")
-    expect(today_rows).to_contain_text("Georgia")
-    expect(today_rows).to_contain_text("NO BET")
-    expect(today_rows).not_to_contain_text("Finland")
+    expect(page.locator("#home-container")).to_contain_text("Armenia")
+    expect(page.locator("#home-container")).to_contain_text("Montenegro")
+    expect(page.locator("#home-container")).to_contain_text("Georgia")
+    expect(page.locator("#home-container")).to_contain_text("NO BET")
+    assert all("Finland" not in text for text in today_rows.all_text_contents())
     expect(today_rows.locator(".nl-shadow-display-odd")).to_have_count(9)
     expect(today_rows.locator("button")).to_have_count(0)
     expect(today_rows.first).to_have_attribute("role", "button")
     expect(today_rows.first).to_have_attribute("tabindex", "0")
-    expect(page.locator(".comp-name", has_text="UEFA Nations League · Shadow")).to_be_visible()
+    expect(page.locator(".comp-name", has_text="UEFA Nations League · Shadow").first).to_be_visible()
     expect(page.locator(".nl-home-preview")).to_have_count(0)
 
     today_rows.first.click()
@@ -252,6 +336,61 @@ def test_home_integrates_read_only_nations_league_shadow_games(page: Page, serve
     expect(detail).to_contain_text("SHADOW · NO BET")
     expect(detail.locator(".nl-shadow-detail-outcome")).to_have_count(3)
     expect(detail).to_contain_text("2.00")
+    expect(detail.locator("button")).to_have_count(0)
+    expect(page.locator("#bet-modal-bd")).not_to_be_visible()
+
+
+def test_home_curates_tennis_to_unique_public_signals_and_keeps_football_schedule(
+    page: Page, server_url: str
+) -> None:
+    """Home hides schedule-only tennis while retaining non-tennis schedules."""
+    _inject_signals(page, _home_curation_payload())
+    page.goto(server_url, wait_until="domcontentloaded")
+
+    rows = page.locator("#home-container .b365-row")
+    keys = page.locator("#home-container .b365-row[data-match-key]").evaluate_all(
+        "nodes => [...new Set(nodes.map(node => node.dataset.matchKey))]"
+    )
+    assert len(keys) == 8  # 7 unique tennis signal matches + 1 football schedule
+    assert rows.filter(has_text="Schedule Tennis Home 177").count() == 0
+    assert page.locator("#home-container").get_by_text("Signal Only Home", exact=False).count() > 0
+    assert page.locator("#home-container").get_by_text("Football Home", exact=False).count() > 0
+
+    page.locator("[data-view='tennis']").click()
+    expect(page.locator("#view-tennis")).to_have_class("view active")
+    expect(page.locator("#tennis-container")).to_contain_text("Schedule Tennis Home 177")
+
+
+def test_home_renders_all_current_live_nations_league_fixtures_read_only(
+    page: Page, server_url: str
+) -> None:
+    """All current LIVE NL fixtures are clickable information rows without odds/bets."""
+    payload = {**_BASE, "nations_league": _nations_league_live_payload()}
+    _inject_signals(page, payload)
+    page.goto(server_url, wait_until="domcontentloaded")
+
+    rows = page.locator("#home-container .today-row.nl-shadow-row")
+    expect(rows).to_have_count(7, timeout=10_000)
+    expect(page.locator("#home-container")).to_contain_text("LIVE")
+    expect(page.locator("#home-container")).to_contain_text("INITIAL")
+    expect(page.locator("#home-container")).to_contain_text("NO BET")
+    expect(rows.locator("button")).to_have_count(0)
+    expect(rows.locator(".nl-live-model-inline")).to_have_count(7)
+    expect(rows.first).to_contain_text("Denmark")
+    expect(rows.first).to_contain_text("Portugal")
+
+    rows.first.click()
+    expect(page.locator("#view-detail")).to_be_visible()
+    detail = page.locator(".nl-shadow-detail-card")
+    expect(detail).to_be_visible()
+    expect(detail).to_contain_text("UEFA Nations League")
+    expect(detail).to_contain_text("LIVE")
+    expect(detail).to_contain_text("INITIAL")
+    expect(detail).to_contain_text("NO BET")
+    expect(detail).to_contain_text("35.2% Modell")
+    expect(detail).to_contain_text("23.4% Modell")
+    expect(detail).to_contain_text("41.4% Modell")
+    expect(detail).to_contain_text("Keine Marktquote")
     expect(detail.locator("button")).to_have_count(0)
     expect(page.locator("#bet-modal-bd")).not_to_be_visible()
 
