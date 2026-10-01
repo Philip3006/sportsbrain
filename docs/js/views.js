@@ -697,22 +697,20 @@ function sigCard(s, showMatch) {
     ? `<div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:6px"><span>⚽</span><span>${esc(sh)}</span><span style="color:var(--muted)">vs</span><span>${esc(sa)}</span></div>`
     : '';
   const compatMeta = _footballCompatMetaHtml(s);
-  // P0-A: determine if this signal has a canonical identity for value-bet placement
+  // P0-A: Detail cards use the SAME canonical actionability contract as Home.
+  // This keeps the explicit WM-style CTA in lock-step with the clickable quote:
+  // if one is actionable, both are; if actionability fails, both fail closed.
   const _hasCanonicalId = !!(s.signal_id && s.signal_status === 'ACTIVE');
   const _isLegacySignal = !_hasCanonicalId;
-  // P0-A (item B): current_odds and current_ev_pct must be actual current values.
-  // Scan-time fallbacks are NEVER passed as current values — doing so would destroy
-  // fail-closed semantics. For DISPLAY the scan value may still be shown informally.
-  const _hasCurrentOdds = s.current_odds != null && Number.isFinite(s.current_odds) && s.current_odds > 1;
-  const _hasCurrentEv = s.current_ev_pct != null && Number.isFinite(s.current_ev_pct) && s.current_ev_pct > 0;
-  // VALUE actionability requires BOTH canonical identity AND actual current market data.
-  const _isNationsLeagueValue = s.is_nations_league_value === true;
-  const _canonicalActionability = _isNationsLeagueValue && typeof isActionableValueSignal === 'function'
+  const _currentOddsNum = Number(s.current_odds);
+  const _currentEvNum = Number(s.current_ev_pct);
+  // Scan-time fallbacks are display-only. Bet actions require actual refreshed values.
+  const _hasCurrentOdds = s.current_odds != null && Number.isFinite(_currentOddsNum) && _currentOddsNum > 1;
+  const _hasCurrentEv = s.current_ev_pct != null && Number.isFinite(_currentEvNum) && _currentEvNum > 0;
+  const _canonicalActionability = typeof isActionableValueSignal === 'function'
     ? isActionableValueSignal(s, _currentBankroll(), (_openBets || []).length)
     : null;
-  const _isValueActionable = _isNationsLeagueValue
-    ? _canonicalActionability?.ok === true
-    : _hasCanonicalId && _hasCurrentOdds && _hasCurrentEv;
+  const _isValueActionable = _canonicalActionability?.ok === true;
   const btnAttrs = [
     `data-match="${esc(s.match)}"`,
     `data-market="${esc(s.market)}"`,
@@ -737,8 +735,13 @@ function sigCard(s, showMatch) {
     `data-league="${esc(s.league||'')}"`,
     `data-odds-ts="${esc(s.odds_ts||'')}"`,
     `data-event-status="${esc(s.event_status||'')}"`,
-    // P0-A (item B): source=value only when BOTH canonical identity AND current market data present.
-    // Missing current_odds or current_ev_pct → force manual, never fabricate current from scan data.
+    `data-shadow="${s.shadow === true ? 'true' : 'false'}"`,
+    `data-is-shadow="${s.is_shadow === true ? 'true' : 'false'}"`,
+    `data-unsupported="${s.unsupported === true ? 'true' : 'false'}"`,
+    `data-edge-lost="${s.edge_lost === true ? 'true' : 'false'}"`,
+    `data-stale="${s.stale === true ? 'true' : 'false'}"`,
+    `data-no-bet-flag="${s.no_bet_flag === true ? 'true' : 'false'}"`,
+    // Bet actions are canonical only when the shared actionability contract passes.
     `data-source="${_isValueActionable ? 'value' : 'manual'}"`,
   ].join(' ');
   // Prob-Bars: visueller Vergleich Markt vs Modell (nur wenn fair_prob vorhanden)
