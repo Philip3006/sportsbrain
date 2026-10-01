@@ -278,7 +278,8 @@ async function _validNationsLeagueActionablePayload(value, nowMs = Date.now()) {
       value.actionability_enabled !== true || value.publication_enabled !== false ||
       value.production_activation !== false || value.ledger_mutation !== false ||
       value.phase !== 'refinement' || value.request_count !== 2 || value.retry_count !== 0 ||
-      !Array.isArray(value.signals) || !/^[0-9a-f]{64}$/.test(value.artifact_digest || '') ||
+      !Array.isArray(value.signals) || !Array.isArray(value.quote_evidence) ||
+      value.quote_evidence.length === 0 || !/^[0-9a-f]{64}$/.test(value.artifact_digest || '') ||
       !globalThis.crypto?.subtle || typeof TextEncoder === 'undefined') return false;
   const body = { ...value };
   delete body.artifact_digest;
@@ -289,7 +290,7 @@ async function _validNationsLeagueActionablePayload(value, nowMs = Date.now()) {
     if (actual !== value.artifact_digest) return false;
   } catch { return false; }
   const seen = new Set();
-  return value.signals.every((signal) => {
+  if (!value.signals.every((signal) => {
     if (!signal || typeof signal !== 'object' || Array.isArray(signal) ||
         typeof signal.signal_id !== 'string' || !signal.signal_id.startsWith('nl:value:') ||
         seen.has(signal.signal_id) || signal.signal_status !== 'ACTIVE' ||
@@ -308,6 +309,33 @@ async function _validNationsLeagueActionablePayload(value, nowMs = Date.now()) {
         !/^[0-9a-f]{64}$/.test(signal.model_release_id || '')) return false;
     seen.add(signal.signal_id);
     const captured = Date.parse(signal.odds_ts);
+    return captured <= nowMs && nowMs - captured <= 30 * 60 * 1000;
+  })) return false;
+  const evidenceSeen = new Set();
+  return value.quote_evidence.every((evidence) => {
+    if (!evidence || typeof evidence !== 'object' || Array.isArray(evidence) ||
+        typeof evidence.fixture_id !== 'string' || !evidence.fixture_id ||
+        evidenceSeen.has(evidence.fixture_id) || evidence.phase !== 'refinement' ||
+        evidence.no_bet !== true ||
+        !['ACTIONABLE_SIGNAL_AVAILABLE', 'NO_CANONICAL_ACTIONABLE_OUTCOME'].includes(evidence.no_bet_reason) ||
+        !Number.isInteger(evidence.actionable_signal_count) || evidence.actionable_signal_count < 0 ||
+        (evidence.actionable_signal_count === 0) !==
+          (evidence.no_bet_reason === 'NO_CANONICAL_ACTIONABLE_OUTCOME') ||
+        typeof evidence.provider_event_id !== 'string' || !evidence.provider_event_id ||
+        typeof evidence.bookmaker !== 'string' || !evidence.bookmaker ||
+        !/^[0-9a-f]{64}$/.test(evidence.quote_snapshot_digest || '') ||
+        !Number.isFinite(Date.parse(evidence.quote_captured_at || '')) ||
+        !evidence.edge_analysis || typeof evidence.edge_analysis !== 'object' ||
+        evidence.edge_analysis.fixture_id !== evidence.fixture_id ||
+        evidence.edge_analysis.prediction_record_id !== evidence.prediction_record_id ||
+        evidence.edge_analysis.no_bet !== true ||
+        evidence.edge_analysis.betting_enabled !== false ||
+        evidence.edge_analysis.ledger_mutation !== false ||
+        !evidence.edge_analysis.market_snapshot ||
+        evidence.edge_analysis.market_snapshot.provider !== 'isports_api' ||
+        evidence.edge_analysis.market_snapshot.snapshot_digest !== evidence.quote_snapshot_digest) return false;
+    evidenceSeen.add(evidence.fixture_id);
+    const captured = Date.parse(evidence.quote_captured_at);
     return captured <= nowMs && nowMs - captured <= 30 * 60 * 1000;
   });
 }
@@ -735,6 +763,7 @@ let _modelEvals = {};
 // Nations League stays outside the actionable football/signal collections.
 // Home may render a read-only shadow preview from this separately validated payload.
 let _nationsLeague = null;
+let _nationsLeagueValueProjection = null;
 let _openBets = [];
 let _settledBets = [];
 let _activeBetTab = 'open';
@@ -878,6 +907,12 @@ function openNationsLeagueMatch(displayKey) {
   // Re-check the immutable public safety boundary at interaction time. A
   // clickable row opens information only; it can never become a bet action.
   if (!fixture) return;
+  const valueProjection = typeof _nationsLeagueValueProjection === 'undefined'
+    ? null
+    : _nationsLeagueValueProjection;
+  const quoteEvidence = isLive
+    ? _nationsLeagueQuoteEvidence(valueProjection, fixture.fixture_id)
+    : null;
   if (isLive) {
     if (payload.competition !== 'UEFA Nations League' || payload.status !== 'LIVE' ||
         payload.publication_enabled !== true || payload.no_bet !== true ||
@@ -911,7 +946,9 @@ function openNationsLeagueMatch(displayKey) {
     source_view: 'home',
   });
   const probabilities = isLive ? fixture.probabilities || {} : fixture.model?.probabilities || {};
-  const odds = fixture.market?.odds_decimal || {};
+  const odds = quoteEvidence?.edge_analysis?.outcomes
+    ? Object.fromEntries(Object.entries(quoteEvidence.edge_analysis.outcomes).map(([key, row]) => [key, row.decimal_odds]))
+    : fixture.market?.odds_decimal || {};
   const outcomes = [
     ['1', home, probabilities.home, odds.home],
     ['X', 'Unentschieden', probabilities.draw, odds.draw],
@@ -939,6 +976,18 @@ function openNationsLeagueMatch(displayKey) {
         <strong>${esc(name)}</strong>
         <span>${(probability * 100).toFixed(1)}% Modell</span>
       </div>`).join('');
+    const quoteRows = quoteEvidence?.edge_analysis?.outcomes
+      ? Object.entries(quoteEvidence.edge_analysis.outcomes).map(([key, row]) => {
+        const label = key === 'home' ? '1' : key === 'draw' ? 'X' : '2';
+        const market = (row.market_probability * 100).toFixed(1);
+        const edge = (row.probability_edge * 100).toFixed(1);
+        const ev = (row.ev * 100).toFixed(1);
+        return `<div class="nl-shadow-detail-outcome"><span>${label} Markt ${market}% · Δ ${edge}pp · EV ${ev}%</span><b>Quote ${Number(row.decimal_odds).toFixed(2)}</b></div>`;
+      }).join('')
+      : '';
+    const quoteHtml = quoteEvidence
+      ? `<div class="nl-live-edge"><small>Frische iSports-Quote · ${esc(quoteEvidence.bookmaker)} · NO BET · ${esc(quoteEvidence.no_bet_reason)}</small>${quoteRows}</div>`
+      : '';
     const cdHtml = kickoff
       ? `<span class="match-countdown" data-kickoff="${esc(kickoff)}" data-sport="football" style="margin-top:0;font-size:10px;padding:2px 7px">⏱ …</span>`
       : '';
@@ -954,10 +1003,10 @@ function openNationsLeagueMatch(displayKey) {
       <div class="pred-card nl-shadow-detail-card">
         <div class="pred-title">🏆 UEFA Nations League · Modell</div>
         <div class="nl-shadow-detail-safety">${esc(phaseLabel.detail)} · NO BET · NUR INFORMATION</div>
-        <div class="nl-shadow-detail-grid">${outcomeHtml}</div>
+        <div class="nl-shadow-detail-grid">${outcomeHtml}</div>${quoteHtml}
         <div class="nl-shadow-detail-meta">
           Modell: ${esc(modelVersion)}${esc(releaseId)} · Datenstand: ${esc(updatedLabel)}<br>
-          Keine Marktquote vorhanden. Keine Wettfunktion und keine Aktion möglich.
+          ${quoteEvidence ? 'Frische Quote und Wertberechnung sind sichtbar; die kanonische Aktionierbarkeit bleibt separat und erzeugt hier keine Wettfunktion.' : 'Keine Marktquote vorhanden. Keine Wettfunktion und keine Aktion möglich.'}
         </div>
       </div>`;
     showView('detail');
@@ -1660,7 +1709,7 @@ async function _load() {
   // projection enters the canonical signal collection.
   if (d.nations_league?.schema === 'nations-league-live-public-v1' &&
       typeof renderNationsLeagueLive === 'function') {
-    renderNationsLeagueLive(d.nations_league || null);
+    renderNationsLeagueLive(d.nations_league || null, d.nations_league_value_signals || null);
   } else if (typeof renderNationsLeagueShadow === 'function') {
     renderNationsLeagueShadow(d.nations_league || null);
   }
@@ -1670,6 +1719,7 @@ async function _load() {
   _modelTips = d.model_tips || {};
   _modelEvals = d.model_evals || {};
   _nationsLeague = d.nations_league || null;
+  _nationsLeagueValueProjection = d.nations_league_value_signals || null;
   // P0C-002: private financial/identity state (open_bets, settled_bets,
   // bankroll_state, history, wm_stats) is NOT read from the public channel.
   // It is loaded exclusively from GET /me below via _fetchPrivateState().

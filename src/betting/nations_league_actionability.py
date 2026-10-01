@@ -18,6 +18,8 @@ from typing import Any
 
 from src.analysis.nations_league_live_edge import (
     NationsLeagueLiveEdgeError,
+    build_edge_analysis,
+    validate_edge_analysis,
     validate_market_snapshot,
 )
 from src.betting.gates import gate_for
@@ -269,6 +271,73 @@ def _build_signal(
     return signal
 
 
+def _build_quote_evidence(
+    fixture: Mapping[str, Any],
+    snapshot: Mapping[str, Any],
+    *,
+    actionable_signal_count: int,
+) -> dict[str, Any]:
+    """Keep fresh quote/value measurements even when no signal is actionable.
+
+    This is display-only evidence.  It deliberately remains separate from
+    ``signals`` so a no-bet evaluation cannot become a betting authority.
+    """
+
+    fixture_id = _text(fixture.get("fixture_id"), "fixture.fixture_id")
+    record_id = _sha(
+        fixture.get("source_prediction_record_id"), "source_prediction_record_id"
+    )
+    release = fixture.get("model_release")
+    if not isinstance(release, Mapping):
+        raise NationsLeagueActionabilityError("fixture model release is missing")
+    release_id = _sha(release.get("release_id"), "model_release.release_id")
+    model_probabilities = fixture.get("probabilities")
+    if not isinstance(model_probabilities, Mapping):
+        raise NationsLeagueActionabilityError("fixture probabilities are incomplete")
+    try:
+        edge = build_edge_analysis(
+            model_probabilities,
+            fixture_id=fixture_id,
+            phase=PHASE,
+            model_release_id=release_id,
+            prediction_record_id=record_id,
+            prediction_timestamp=snapshot["captured_at"],
+            market_snapshots=[snapshot],
+        )
+        validate_edge_analysis(
+            edge, fixture_id=fixture_id, prediction_record_id=record_id
+        )
+    except (NationsLeagueLiveEdgeError, TypeError, ValueError) as exc:
+        raise NationsLeagueActionabilityError(
+            "fresh quote value evidence is not canonical"
+        ) from exc
+    return {
+        "fixture_id": fixture_id,
+        "phase": PHASE,
+        "match": f"{_text(fixture['canonical_identity']['home_team'], 'home_team')}"
+        f" vs {_text(fixture['canonical_identity']['away_team'], 'away_team')}",
+        "kickoff": _text(fixture.get("kickoff_utc"), "fixture.kickoff_utc"),
+        "prediction_record_id": record_id,
+        "model_release_id": release_id,
+        "provider_event_id": _text(
+            snapshot.get("provider_match_id"), "snapshot.provider_match_id"
+        ),
+        "bookmaker": _text(snapshot.get("bookmaker"), "snapshot.bookmaker"),
+        "quote_snapshot_digest": _sha(
+            snapshot.get("snapshot_digest"), "snapshot.snapshot_digest"
+        ),
+        "quote_captured_at": _text(snapshot.get("captured_at"), "snapshot.captured_at"),
+        "actionable_signal_count": actionable_signal_count,
+        "no_bet": True,
+        "no_bet_reason": (
+            "ACTIONABLE_SIGNAL_AVAILABLE"
+            if actionable_signal_count
+            else "NO_CANONICAL_ACTIONABLE_OUTCOME"
+        ),
+        "edge_analysis": edge,
+    }
+
+
 def build_nations_league_actionable_projection(
     nations_league: Mapping[str, Any],
     snapshots: Iterable[Mapping[str, Any]],
@@ -302,6 +371,7 @@ def build_nations_league_actionable_projection(
             raise NationsLeagueActionabilityError("duplicate bet-time quote fixture")
         snapshots_by_fixture[fixture_id] = raw
     signals: list[dict[str, Any]] = []
+    quote_evidence: list[dict[str, Any]] = []
     quote_digests: list[str] = []
     for fixture in sorted(fixture_rows, key=lambda item: item["fixture_id"]):
         fixture_id = fixture["fixture_id"]
@@ -312,6 +382,7 @@ def build_nations_league_actionable_projection(
             )
         snapshot = _validate_snapshot(snapshot_raw, now=current, fixture_id=fixture_id)
         quote_digests.append(snapshot["snapshot_digest"])
+        fixture_signal_count = 0
         for outcome in OUTCOMES:
             try:
                 signal = _build_signal(fixture, snapshot, outcome)
@@ -327,6 +398,14 @@ def build_nations_league_actionable_projection(
                     f"derived signal is not canonical-actionable: {reason}"
                 )
             signals.append(signal)
+            fixture_signal_count += 1
+        quote_evidence.append(
+            _build_quote_evidence(
+                fixture,
+                snapshot,
+                actionable_signal_count=fixture_signal_count,
+            )
+        )
     provenance = _safe_request_provenance(request_provenance)
     provenance["request_count"] = 2
     provenance["retry_count"] = 0
@@ -357,6 +436,7 @@ def build_nations_league_actionable_projection(
         "retry_count": retry_count,
         "quote_snapshot_digests": sorted(set(quote_digests)),
         "request_provenance": provenance,
+        "quote_evidence": quote_evidence,
         "signals": sorted(signals, key=lambda item: item["signal_id"]),
     }
     body["artifact_digest"] = _digest(body)
@@ -428,4 +508,70 @@ def validate_nations_league_actionable_projection(
         _sha(signal.get("quote_snapshot_digest"), "signal.quote_snapshot_digest")
         _sha(signal.get("prediction_record_id"), "signal.prediction_record_id")
         _sha(signal.get("model_release_id"), "signal.model_release_id")
+    quote_evidence = candidate.get("quote_evidence")
+    if not isinstance(quote_evidence, list) or not quote_evidence:
+        raise NationsLeagueActionabilityError("fresh quote evidence is missing")
+    evidence_ids: set[str] = set()
+    for evidence in quote_evidence:
+        if not isinstance(evidence, Mapping):
+            raise NationsLeagueActionabilityError("fresh quote evidence is malformed")
+        fixture_id = _text(evidence.get("fixture_id"), "quote_evidence.fixture_id")
+        if fixture_id in evidence_ids:
+            raise NationsLeagueActionabilityError("duplicate fresh quote evidence")
+        evidence_ids.add(fixture_id)
+        if evidence.get("phase") != PHASE or evidence.get("no_bet") is not True:
+            raise NationsLeagueActionabilityError(
+                "fresh quote evidence safety binding is invalid"
+            )
+        if evidence.get("no_bet_reason") not in {
+            "ACTIONABLE_SIGNAL_AVAILABLE",
+            "NO_CANONICAL_ACTIONABLE_OUTCOME",
+        }:
+            raise NationsLeagueActionabilityError(
+                "fresh quote no-bet reason is invalid"
+            )
+        count = evidence.get("actionable_signal_count")
+        if isinstance(count, bool) or not isinstance(count, int) or count < 0:
+            raise NationsLeagueActionabilityError(
+                "fresh quote actionable count is invalid"
+            )
+        if (count == 0) != (
+            evidence["no_bet_reason"] == "NO_CANONICAL_ACTIONABLE_OUTCOME"
+        ):
+            raise NationsLeagueActionabilityError(
+                "fresh quote no-bet reason does not match count"
+            )
+        record_id = _sha(
+            evidence.get("prediction_record_id"), "quote_evidence.prediction_record_id"
+        )
+        _sha(evidence.get("model_release_id"), "quote_evidence.model_release_id")
+        _text(evidence.get("provider_event_id"), "quote_evidence.provider_event_id")
+        _text(evidence.get("bookmaker"), "quote_evidence.bookmaker")
+        _sha(
+            evidence.get("quote_snapshot_digest"),
+            "quote_evidence.quote_snapshot_digest",
+        )
+        _utc(evidence.get("quote_captured_at"), "quote_evidence.quote_captured_at")
+        try:
+            edge = validate_edge_analysis(
+                evidence.get("edge_analysis"),
+                fixture_id=fixture_id,
+                prediction_record_id=record_id,
+            )
+        except (NationsLeagueLiveEdgeError, TypeError, ValueError) as exc:
+            raise NationsLeagueActionabilityError(
+                "fresh quote edge evidence is invalid"
+            ) from exc
+        snapshot = edge.get("market_snapshot")
+        if (
+            not isinstance(snapshot, Mapping)
+            or snapshot.get("snapshot_digest") != evidence["quote_snapshot_digest"]
+        ):
+            raise NationsLeagueActionabilityError(
+                "fresh quote snapshot binding is invalid"
+            )
+        if snapshot.get("provider") != EVIDENCE_PROVIDER:
+            raise NationsLeagueActionabilityError(
+                "fresh quote evidence provider is invalid"
+            )
     return dict(value)

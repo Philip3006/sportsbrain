@@ -550,7 +550,12 @@ function _nationsLeaguePhaseLabel(phase, predictionCutoff, kickoffUtc) {
   return { compact: 'MODELL', detail: 'Modell' };
 }
 
-function renderNationsLeagueLive(payload) {
+function _nationsLeagueQuoteEvidence(projection, fixtureId) {
+  if (!projection || !Array.isArray(projection.quote_evidence) || !fixtureId) return null;
+  return projection.quote_evidence.find((item) => item?.fixture_id === fixtureId) || null;
+}
+
+function renderNationsLeagueLive(payload, quoteProjection = null) {
   const container = document.getElementById('nations-league-live');
   if (!container) return;
   const now = Date.now();
@@ -574,13 +579,15 @@ function renderNationsLeagueLive(payload) {
     const kickoff = new Date(fixture.kickoff_utc).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
     const rows = [['1', teams.home_team, probabilities.home], ['X', 'Remis', probabilities.draw], ['2', teams.away_team, probabilities.away]].map(([label, team, value]) =>
       `<div class="nl-shadow-outcome"><span>${esc(label)} · ${esc(team)}</span><b>${pct(value)}</b></div>`).join('');
-    const edge = fixture.edge_analysis;
+    const quoteEvidence = _nationsLeagueQuoteEvidence(quoteProjection, fixture.fixture_id);
+    const edge = quoteEvidence?.edge_analysis || fixture.edge_analysis;
     let edgeHtml = '';
     if (edge && edge.edge_status === 'EDGE_MEASURED' && edge.market_snapshot && edge.outcomes) {
       const market = edge.market_snapshot;
       const edgeRows = [['1', teams.home_team, edge.outcomes.home], ['X', 'Remis', edge.outcomes.draw], ['2', teams.away_team, edge.outcomes.away]].map(([label, team, item]) =>
         `<div class="nl-shadow-outcome"><span>${esc(label)} · ${esc(team)} · Quote ${Number(item.decimal_odds).toFixed(2)} · Markt ${pct(item.market_probability)} · Δ ${pct(item.probability_edge)}</span><b>EV ${pct(item.ev)}</b></div>`).join('');
-      edgeHtml = `<div class="nl-live-edge"><small>Research edge · ${esc(market.provider)} · ${esc(market.bookmaker)} · NO BET</small>${edgeRows}</div>`;
+      const noBetReason = quoteEvidence?.no_bet_reason || 'NO_BET';
+      edgeHtml = `<div class="nl-live-edge"><small>Frische iSports-Quote · ${esc(market.provider)} · ${esc(market.bookmaker)} · NO BET · ${esc(noBetReason)}</small>${edgeRows}</div>`;
     } else if (edge && typeof edge.edge_status === 'string') {
       edgeHtml = `<div class="nl-live-edge"><small>Research edge · ${esc(edge.edge_status)} · NO BET</small></div>`;
     }
@@ -1015,7 +1022,7 @@ function _topRecs24hHtml(signals, nowMs) {
   </div>`;
 }
 
-function _nationsLeagueHomeGames(payload, nowMs = Date.now()) {
+function _nationsLeagueHomeGames(payload, nowMs = Date.now(), quoteProjection = null) {
   // These records join the regular Home schedule, but remain marked so neither
   // the bet modal nor the actionable signal collection can consume them.
   if (!payload || !Array.isArray(payload.fixtures)) return [];
@@ -1040,6 +1047,7 @@ function _nationsLeagueHomeGames(payload, nowMs = Date.now()) {
       })
       .map((fixture) => {
         const teams = fixture.canonical_identity;
+        const quoteEvidence = _nationsLeagueQuoteEvidence(quoteProjection, fixture.fixture_id);
         return {
           sport: 'football',
           league: 'nations_league_live',
@@ -1054,6 +1062,7 @@ function _nationsLeagueHomeGames(payload, nowMs = Date.now()) {
           prediction_cutoff: fixture.prediction_cutoff,
           is_nations_league_live: true,
           no_bet: true,
+          quote_evidence: quoteEvidence,
         };
       });
   }
@@ -1138,7 +1147,10 @@ function renderHome() {
   let games = scheduledNonTennis.length || tennisSignalGames.length
     ? [...scheduledNonTennis, ...tennisSignalGames]
     : nonTennisSignalGames;
-  games = _dedupeHomeGames([...games, ..._nationsLeagueHomeGames(_nationsLeague, Date.now())]);
+  games = _dedupeHomeGames([
+    ...games,
+    ..._nationsLeagueHomeGames(_nationsLeague, Date.now(), _nationsLeagueValueProjection),
+  ]);
 
   // Suchfilter (Team-Name, normalisiert)
   const q = (_homeSearch || '').trim().toLowerCase();
@@ -1286,6 +1298,20 @@ function renderHome() {
       <span>1 ${pct('home')}</span><span>X ${pct('draw')}</span><span>2 ${pct('away')}</span>
     </div>`;
   };
+  const liveQuoteSummary = (game) => {
+    const evidence = game.quote_evidence;
+    const outcomes = evidence?.edge_analysis?.outcomes;
+    if (!outcomes) return liveModelSummary(game);
+    const rows = ['home', 'draw', 'away'].map((key) => {
+      const row = outcomes[key];
+      const label = key === 'home' ? '1' : key === 'draw' ? 'X' : '2';
+      return `<span>${label} Modell ${(row.model_probability * 100).toFixed(1)}% · Quote ${Number(row.decimal_odds).toFixed(2)} · Markt ${(row.market_probability * 100).toFixed(1)}% · Δ ${(row.probability_edge * 100).toFixed(1)}pp · EV ${(row.ev * 100).toFixed(1)}%</span>`;
+    }).join('');
+    const reason = evidence.no_bet_reason === 'NO_CANONICAL_ACTIONABLE_OUTCOME'
+      ? 'NO BET · Keine kanonische Aktionierbarkeit'
+      : `NO BET · ${evidence.no_bet_reason}`;
+    return `<div class="nl-live-model-inline" aria-label="Frische Quote, Wertberechnung, NO BET">${rows}<small>${esc(reason)}</small></div>`;
+  };
   const livePhaseBadge = (game) => {
     const phaseLabel = _nationsLeaguePhaseLabel(
       game.phase, game.prediction_cutoff, game.kickoff,
@@ -1354,7 +1380,7 @@ function renderHome() {
 
       // Odds buttons
       const isFootball = g.sport === 'football';
-      const odds = _isNlLive ? liveModelSummary(g) : _isNlShadow ? shadowOdds(g) : isFootball
+      const odds = _isNlLive ? liveQuoteSummary(g) : _isNlShadow ? shadowOdds(g) : isFootball
         ? oddsBtn(nk,'home',g) + oddsBtn(nk,'draw',g) + oddsBtn(nk,'away',g)
         : oddsBtn(nk,'home',g) + oddsBtn(nk,'away',g);
 
@@ -1447,7 +1473,7 @@ function renderHome() {
             : result.away_score > result.home_score ? 'result-away' : 'result-draw';
           rightCol = `<div class="score-box ${resultClass}">${result.home_score}–${result.away_score}</div>`;
         } else {
-          rightCol = isNlLive ? liveModelSummary(g) : isNlShadow ? shadowOdds(g) : isFootball
+          rightCol = isNlLive ? liveQuoteSummary(g) : isNlShadow ? shadowOdds(g) : isFootball
             ? oddsBtn(nk,'home',g) + oddsBtn(nk,'draw',g) + oddsBtn(nk,'away',g)
             : oddsBtn(nk,'home',g) + oddsBtn(nk,'away',g);
         }

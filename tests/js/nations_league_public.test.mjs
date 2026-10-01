@@ -357,7 +357,7 @@ test('PWA labels several-hours-old snapshots stale and hides snapshots over 24 h
   assert.equal(render(expired).hidden, true);
   const partial = render(publicBundle({ fixture_count: 2 }));
   assert.equal(partial.hidden, true);
-  assert.match(appSource, /_signals\s*=\s*\[\.\.\.\(d\.football\|\|\[\]\),\s*\.\.\.\(d\.tennis\|\|\[\]\)\]/);
+  assert.match(appSource, /_signals\s*=\s*\[\.\.\.\(d\.football\|\|\[\]\),\s*\.\.\.\(d\.nations_league_value_signals\?\.signals\s*\|\|\s*\[\]\),\s*\.\.\.\(d\.tennis\|\|\[\]\)\]/);
   assert.match(appSource, /renderNationsLeagueShadow\(d\.nations_league\s*\|\|\s*null\)/);
 });
 

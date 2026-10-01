@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+import src.betting.nations_league_actionability as actionability
 from scripts.capture_nations_league_bet_quote import preflight
 from src.analysis.nations_league_live_edge import build_market_snapshot
 from src.betting.nations_league_actionability import (
@@ -15,16 +16,39 @@ from src.betting.nations_league_actionability import (
     validate_nations_league_actionable_projection,
 )
 from src.football.top5_b4_provider_neutral_evidence import canonical_evidence_digest
+from src.notifications.nations_league_live_public import _public_digest
 from src.notifications.public_serializer import serialize_public_product
 
 ROOT = Path(__file__).resolve().parents[2]
-PUBLIC = json.loads((ROOT / "docs/data/signals.json").read_text(encoding="utf-8"))[
-    "nations_league"
-]
+_SOURCE_PUBLIC = json.loads(
+    (ROOT / "docs/data/signals.json").read_text(encoding="utf-8")
+)["nations_league"]
 
 
 def _now() -> datetime:
     return datetime.now(timezone.utc).replace(microsecond=0)
+
+
+def _future_public() -> dict:
+    """Keep the projection tests deterministic as the checked-in snapshot ages."""
+
+    now = _now()
+    public = copy.deepcopy(_SOURCE_PUBLIC)
+    for fixture in public["fixtures"]:
+        if fixture["phase"] == "refinement":
+            fixture["kickoff_utc"] = (
+                (now + timedelta(hours=1)).isoformat().replace("+00:00", "Z")
+            )
+            fixture["prediction_cutoff"] = now.isoformat().replace("+00:00", "Z")
+            fixture["updated_at"] = now.isoformat().replace("+00:00", "Z")
+    public["updated_at"] = max(fixture["updated_at"] for fixture in public["fixtures"])
+    public["public_digest"] = _public_digest(
+        {key: value for key, value in public.items() if key != "public_digest"}
+    )
+    return public
+
+
+PUBLIC = _future_public()
 
 
 def _snapshots(now: datetime, *, provider: str = "isports_api") -> list[dict]:
@@ -64,6 +88,10 @@ def test_fresh_isports_projection_is_actionable_but_preserves_no_bet_source():
     assert projection["provider_authority"] == "the_odds_api"
     assert projection["evidence_provider"] == "isports_api"
     assert projection["signals"]
+    assert projection["quote_evidence"]
+    assert any(
+        item["actionable_signal_count"] > 0 for item in projection["quote_evidence"]
+    )
     assert all(signal["phase"] == "refinement" for signal in projection["signals"])
     assert validate_nations_league_actionable_projection(projection) == projection
     assert (
@@ -71,6 +99,29 @@ def test_fresh_isports_projection_is_actionable_but_preserves_no_bet_source():
             "nations_league_value_signals"
         ]
         == projection
+    )
+
+
+def test_fresh_quote_without_actionable_outcome_remains_displayable_no_bet(monkeypatch):
+    now = _now()
+    monkeypatch.setattr(actionability, "detect_value", lambda *args, **kwargs: [])
+    projection = build_nations_league_actionable_projection(
+        PUBLIC, _snapshots(now), now=now, request_provenance=_provenance()
+    )
+    assert projection["signals"] == []
+    assert projection["quote_evidence"]
+    for evidence in projection["quote_evidence"]:
+        assert evidence["no_bet"] is True
+        assert evidence["no_bet_reason"] == "NO_CANONICAL_ACTIONABLE_OUTCOME"
+        edge = evidence["edge_analysis"]
+        assert set(edge["outcomes"]) == {"home", "draw", "away"}
+        assert edge["market_snapshot"]["provider"] == "isports_api"
+    assert validate_nations_league_actionable_projection(projection) == projection
+    assert (
+        serialize_public_product({"nations_league_value_signals": projection})[
+            "nations_league_value_signals"
+        ]["signals"]
+        == []
     )
 
 
