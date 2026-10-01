@@ -95,21 +95,37 @@ def test_live_workflow_propagates_lifecycle_failure_through_tee():
     assert "if:" not in bundle
 
 
-def test_live_workflow_adds_no_provider_or_financial_action():
+def test_live_workflow_wires_market_enrichment_only_to_supported_steps():
+    workflow = (ROOT / ".github/workflows/nations_league_live_cycle.yml").read_text(
+        encoding="utf-8"
+    )
+    preflight_start = workflow.index("      - name: Prepare due market preflight")
+    execute_start = workflow.index("      - name: Execute current LIVE lifecycle")
+    bundle_start = workflow.index("      - name: Rebuild canonical LIVE public bundle")
+    persistence_start = workflow.index(
+        "      - name: Persist changed LIVE state without creating a PR"
+    )
+    acquisition = workflow[preflight_start:execute_start]
+    lifecycle = workflow[execute_start:bundle_start]
+    bundle = workflow[bundle_start:persistence_start]
+
+    assert acquisition.count("--enrichment-store") == 2
+    assert "python3 scripts/nations_league_live_cycle.py" in lifecycle
+    assert (
+        "--market-snapshots /tmp/nations-league-live-market-snapshots.json" in lifecycle
+    )
+    assert "--market-enrichment-store" not in lifecycle
+    assert bundle.count("--market-enrichment-store") == 2
+
+
+def test_live_workflow_adds_no_financial_action():
     workflow = (
         (ROOT / ".github/workflows/nations_league_live_cycle.yml")
         .read_text(encoding="utf-8")
         .casefold()
     )
 
-    for forbidden in (
-        "the_odds_api",
-        "therundown",
-        "isports",
-        "ledger",
-        "bankroll",
-        "betting",
-    ):
+    for forbidden in ("ledger", "bankroll", "betting"):
         assert forbidden not in workflow
 
 
