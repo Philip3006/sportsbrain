@@ -691,7 +691,10 @@ function _footballCompatMetaHtml(s) {
 function sigCard(s, showMatch) {
   const isWithdrawn = String(s.lifecycle?.lifecycle_stage || '').toUpperCase() === 'WITHDRAWN';
   const cls = s.confidence === 'HIGH' ? 'high' : 'medium';
-  const evCls = s.ev_pct >= 10 ? 'ev-h' : 'ev-m';
+  const _displayEvNum = Number.isFinite(Number(s.current_ev_pct))
+    ? Number(s.current_ev_pct)
+    : Number(s.ev_pct || 0);
+  const evCls = _displayEvNum >= 10 ? 'ev-h' : 'ev-m';
   const [sh, sa] = s.match.split(' vs ').map(x => x.trim());
   const matchLine = showMatch
     ? `<div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:6px"><span>⚽</span><span>${esc(sh)}</span><span style="color:var(--muted)">vs</span><span>${esc(sa)}</span></div>`
@@ -711,6 +714,25 @@ function sigCard(s, showMatch) {
     ? isActionableValueSignal(s, _currentBankroll(), (_openBets || []).length)
     : null;
   const _isValueActionable = _canonicalActionability?.ok === true;
+  const _status = String(s.signal_status || '').toUpperCase();
+  const _canonicalSignalPresent = !!(s.signal_id || '').toString().trim();
+  let _noBetLabel = '';
+  if (_canonicalSignalPresent && !_isValueActionable) {
+    if (_status === 'EDGE_LOST') _noBetLabel = 'NO BET · Edge verloren';
+    else if (_status === 'STALE_ODDS') _noBetLabel = 'NO BET · Quote veraltet';
+    else if (_status === 'STARTED') _noBetLabel = 'NO BET · Spiel gestartet';
+    else if (_status === 'EXPIRED') _noBetLabel = 'NO BET · Signal abgelaufen';
+    else if (_status === 'UNREFRESHABLE') _noBetLabel = 'NO BET · Quote nicht aktualisierbar';
+    else if ((_canonicalActionability?.reason || '').includes('max active bets')) _noBetLabel = 'NO BET · Limit offener Wetten erreicht';
+    else if ((_canonicalActionability?.reason || '').includes('bankroll')) _noBetLabel = 'NO BET · Bankroll nicht verfügbar';
+    else _noBetLabel = 'NO BET · aktuell nicht platzierbar';
+  }
+  const _currentEvText = Number.isFinite(_currentEvNum)
+    ? `${_currentEvNum >= 0 ? '+' : ''}${_currentEvNum.toFixed(1)}% EV`
+    : '';
+  const _noBetHtml = _noBetLabel
+    ? `<div class="no-bet-status" role="status">⛔ ${_noBetLabel}${_currentEvText ? ` · ${_currentEvText}` : ''}</div>`
+    : '';
   const btnAttrs = [
     `data-match="${esc(s.match)}"`,
     `data-market="${esc(s.market)}"`,
@@ -770,9 +792,12 @@ function sigCard(s, showMatch) {
   const corrBadge = s.correlation_note
     ? ` <span class="corr-badge" title="${s.correlation_note}" style="background:#ff8c00;color:#fff;padding:1px 6px;border-radius:8px;font-size:0.7em;font-weight:600;">↓ Korr</span>`
     : '';
-  const stakeLabel = s.stake_pct > 0
+  const _activeStakeLabel = s.stake_pct > 0
     ? `€${s.stake_eur.toFixed(0)}${corrBadge} <span class="stake-pct">(${s.stake_pct.toFixed(1)}%)</span>`
     : `€${s.stake_eur.toFixed(0)}${corrBadge}`;
+  const stakeLabel = _noBetLabel
+    ? '<span class="no-bet-stake">Kein Einsatz</span>'
+    : _activeStakeLabel;
   const dotsHtml = s.n_models_agree > 0
     ? `<span class="models-dots" title="${s.n_models_agree}/3 Modelle einig">${_modelDots(s.n_models_agree)}</span>`
     : '';
@@ -788,18 +813,27 @@ function sigCard(s, showMatch) {
     const edgePp = _edge.toFixed(1);
     const edgeSign = _edge >= 0 ? '+' : '';
     const valCls = _edge >= 0 ? 'pos' : 'neg';
-    const profitEur = (s.ev_pct/100*s.stake_eur).toFixed(2);
+    const _displayEvForText = Number.isFinite(_currentEvNum) ? _currentEvNum : Number(s.ev_pct || 0);
+    const profitEur = (_displayEvForText/100*s.stake_eur).toFixed(2);
     let plain;
-    if (_edge >= 0) {
+    if (_noBetLabel && _status === 'EDGE_LOST') {
+      const _quoteMove = _hasCurrentOdds && Number.isFinite(Number(s.odds))
+        ? `Die Quote ist von <b>${Number(s.odds).toFixed(2)}</b> auf <b>${_currentOddsNum.toFixed(2)}</b> gefallen. `
+        : '';
+      plain = `Das Modell sieht weiterhin ${mpct}% gegenüber ${fpct}% Markt-Wahrscheinlichkeit. ${_quoteMove}Der aktuelle EV liegt aber nur noch bei <b>${_displayEvForText >= 0 ? '+' : ''}${_displayEvForText.toFixed(1)}%</b>. Das frühere Signal hat seinen Value verloren — <b>NO BET</b>.`;
+    } else if (_noBetLabel) {
+      plain = `Das Signal ist aktuell nicht platzierbar. Grund: <b>${esc(_noBetLabel.replace('NO BET · ', ''))}</b>. Aktueller EV: <b>${_displayEvForText >= 0 ? '+' : ''}${_displayEvForText.toFixed(1)}%</b>.`;
+    } else if (_edge >= 0) {
       plain = `Unsere KI schätzt die Chance auf <b>${mpct}%</b>, der Markt nur auf <b>${fpct}%</b>. Das sind <b>${edgeSign}${edgePp} Prozentpunkte</b> mehr als die Buchmacher. <i>Wenn</i> die KI im Schnitt recht hat, wäre der erwartete Gewinn bei €${s.stake_eur.toFixed(0)} Einsatz <b>~€${profitEur} pro Wette</b> — keine Garantie, einzelne Wetten können verlieren.`;
     } else {
       plain = `Modell ${mpct}% vs Markt ${fpct}% — kein klarer Edge. Trotzdem im Scanner, weil andere Indikatoren (Form/Modell-Konsens) das ausgleichen.`;
     }
-    const openAttr = s.confidence === 'HIGH' ? ' open' : '';
+    const openAttr = (s.confidence === 'HIGH' || _noBetLabel) ? ' open' : '';
+    const whySummary = _noBetLabel ? '⛔ Warum kein Bet?' : '💡 Warum diese Wette?';
     const _diagnosticFixtureKey = s.fixture_key || s.match || '';
     const _diagnosticModelVersion = s.model_version || s.model_identity || '';
-    whyInline = `<details class="why-inline" data-analytics-diagnostics="true" data-sport="${esc(s.sport || '')}" data-competition="${esc(s.competition || s.league || s.tour || '')}" data-fixture-key="${esc(_diagnosticFixtureKey)}" data-lifecycle-stage="${esc(s.lifecycle?.lifecycle_stage || '')}" data-model-version="${esc(_diagnosticModelVersion)}"${openAttr}>
-      <summary>💡 Warum diese Wette?</summary>
+    whyInline = `<details class="why-inline${_noBetLabel ? ' no-bet-why' : ''}" data-analytics-diagnostics="true" data-sport="${esc(s.sport || '')}" data-competition="${esc(s.competition || s.league || s.tour || '')}" data-fixture-key="${esc(_diagnosticFixtureKey)}" data-lifecycle-stage="${esc(s.lifecycle?.lifecycle_stage || '')}" data-model-version="${esc(_diagnosticModelVersion)}"${openAttr}>
+      <summary>${whySummary}</summary>
       <div class="why-inline-body">
         <div class="why-inline-row"><span class="wir-label">KI sagt</span><span class="wir-val">${mpct}%</span></div>
         <div class="why-inline-row"><span class="wir-label">Markt (fair)</span><span class="wir-val">${fpct}%</span></div>
@@ -812,10 +846,11 @@ function sigCard(s, showMatch) {
   }
   const _escA = s => s.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
   const lifecycleMeta = _top5LifecycleMetaHtml(s);
-  return `<div class="sig-card ${cls}${isWithdrawn ? ' top5-lifecycle-card-withdrawn' : ''}" style="cursor:pointer" data-match-home="${_escA(sh)}" data-match-away="${_escA(sa)}" data-lifecycle-id="${esc(s.lifecycle?.lifecycle_id || '')}" onclick="if(!event.target.closest('.place-bet-btn,.why-inline,button,a'))_openMatchDetailFromSignal(this.dataset.matchHome,this.dataset.matchAway)">
+  return `<div class="sig-card ${cls}${_noBetLabel ? ' no-bet' : ''}${isWithdrawn ? ' top5-lifecycle-card-withdrawn' : ''}" style="cursor:pointer" data-match-home="${_escA(sh)}" data-match-away="${_escA(sa)}" data-lifecycle-id="${esc(s.lifecycle?.lifecycle_id || '')}" onclick="if(!event.target.closest('.place-bet-btn,.why-inline,button,a'))_openMatchDetailFromSignal(this.dataset.matchHome,this.dataset.matchAway)">
     ${matchLine}
     ${compatMeta}
     ${lifecycleMeta}
+    ${_noBetHtml}
     <div class="card-market" ${['ah-1.5_a','ah+1.5_b'].includes(s.market)||s.market.match(/^ah[+-]/) ? 'title="Satz-Handicap (SET handicap) — beim Buchmacher \'Sätze-Handicap\' wählen, NICHT \'Games-Handicap\'!"' : ''}>${marketLabel(s.market, s.match)}</div>
     ${_signalAgeHtml(s)}
     ${isWithdrawn ? '<div class="top5-lifecycle-withdrawn-note">Keine aktive Empfehlung — Signal wurde zurückgezogen.</div>' : `<div class="card-footer">
