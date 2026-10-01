@@ -1248,175 +1248,6 @@ async function _ghRepositoryDispatchWithPayload(token, eventType, payload, repo 
   throw new Error(`GH dispatch ${eventType} failed: HTTP ${lastStatus}`);
 }
 
-// NL-MATCHDAY-001: the five-minute Worker heartbeat is the only scheduler for
-// the existing Nations League workflows.  The Worker never predicts, calls a
-// provider, or publishes data; it only dispatches an already-reviewed GitHub
-// workflow after validating the trusted KV snapshot.
-const _NL_LIVE_WORKFLOW = 'nations_league_live_cycle.yml';
-const _NL_QUOTE_EVENT = 'sportsbrain_nations_league_bet_quote_launch';
-const _NL_MARKER_PREFIX = 'nations_league_matchday_dispatch:v1:';
-const _NL_MARKER_TTL_SECONDS = 7 * 24 * 60 * 60;
-const _NL_PENDING_MARKER_TTL_SECONDS = 15 * 60;
-
-function _nlIsoAndMillis(scheduledTime) {
-  const millis = typeof scheduledTime === 'number'
-    ? scheduledTime
-    : Date.parse(scheduledTime || '');
-  if (!Number.isFinite(millis)) throw new Error('Nations League cron time is invalid');
-  return { millis, iso: new Date(millis).toISOString() };
-}
-
-function _nlMarkerKey(stage, fixtureId) {
-  return `${_NL_MARKER_PREFIX}${stage}:${fixtureId}`;
-}
-
-async function _readNlDispatchMarker(env, key, nowMs) {
-  const raw = await env.SIGNALS.get(key);
-  if (!raw) return null;
-  let marker;
-  try {
-    marker = JSON.parse(raw);
-  } catch {
-    throw new Error(`Nations League dispatch marker is malformed: ${key}`);
-  }
-  if (!marker || marker.schema !== 'nations-league-dispatch-marker-v1' ||
-      !['pending', 'dispatched'].includes(marker.status)) {
-    throw new Error(`Nations League dispatch marker is invalid: ${key}`);
-  }
-  if (marker.status === 'dispatched') return marker;
-  const leaseUntil = Date.parse(marker.lease_expires_at || '');
-  if (!Number.isFinite(leaseUntil)) {
-    throw new Error(`Nations League dispatch marker lease is invalid: ${key}`);
-  }
-  if (leaseUntil > nowMs) return marker;
-  await env.SIGNALS.delete(key);
-  return null;
-}
-
-async function _claimNlDispatch(env, candidate, scheduledAt, nowMs) {
-  const key = _nlMarkerKey(candidate.stage, candidate.fixture_id);
-  const existing = await _readNlDispatchMarker(env, key, nowMs);
-  if (existing) return { key, skipped: true, marker: existing };
-  const marker = {
-    schema: 'nations-league-dispatch-marker-v1',
-    status: 'pending',
-    stage: candidate.stage,
-    fixture_id: candidate.fixture_id,
-    kickoff_utc: candidate.kickoff_utc,
-    scheduled_at: scheduledAt,
-    lease_expires_at: new Date(nowMs + _NL_PENDING_MARKER_TTL_SECONDS * 1000).toISOString(),
-  };
-  await env.SIGNALS.put(key, JSON.stringify(marker), {
-    expirationTtl: _NL_PENDING_MARKER_TTL_SECONDS,
-  });
-  return { key, skipped: false, marker };
-}
-
-async function _completeNlDispatch(env, claim, scheduledAt) {
-  const marker = {
-    ...claim.marker,
-    status: 'dispatched',
-    dispatched_at: scheduledAt,
-  };
-  await env.SIGNALS.put(claim.key, JSON.stringify(marker), {
-    expirationTtl: _NL_MARKER_TTL_SECONDS,
-  });
-}
-
-function _nlDueCandidates(bundle, nowMs) {
-  const candidates = [];
-  for (const fixture of bundle.fixtures) {
-    const kickoffMs = Date.parse(fixture.kickoff_utc || '');
-    const minutes = (kickoffMs - nowMs) / 60_000;
-    if (!Number.isFinite(minutes) || minutes <= 0) {
-      throw new Error(`Nations League fixture kickoff is not future: ${fixture.fixture_id}`);
-    }
-    if (fixture.phase === 'initial' && minutes >= 60 && minutes <= 120) {
-      candidates.push({ stage: 'initial', fixture_id: fixture.fixture_id, kickoff_utc: fixture.kickoff_utc });
-    } else if (fixture.phase === 'refinement' && minutes >= 58 && minutes <= 62) {
-      candidates.push({ stage: 'quote_t60', fixture_id: fixture.fixture_id, kickoff_utc: fixture.kickoff_utc });
-    } else if (fixture.phase === 'refinement' && minutes >= 28 && minutes <= 32) {
-      candidates.push({ stage: 'quote_t30', fixture_id: fixture.fixture_id, kickoff_utc: fixture.kickoff_utc });
-    }
-  }
-  return candidates.sort((a, b) =>
-    a.kickoff_utc.localeCompare(b.kickoff_utc) ||
-    a.fixture_id.localeCompare(b.fixture_id) ||
-    a.stage.localeCompare(b.stage));
-}
-
-async function _readTrustedNationsLeagueForDispatch(env, nowMs) {
-  const snapshot = await readSignalsJson(env);
-  const bundle = snapshot && snapshot.nations_league;
-  if (!bundle || typeof bundle !== 'object') {
-    throw new Error('trusted Nations League state is missing from KV');
-  }
-  await validatePublicNationsLeagueDigest(bundle);
-  const updatedMs = Date.parse(bundle.updated_at || '');
-  if (!Number.isFinite(updatedMs) || updatedMs > nowMs || nowMs - updatedMs > MAX_PUBLIC_NATIONS_LEAGUE_AGE_MS) {
-    throw new Error('trusted Nations League state is stale or future-dated');
-  }
-  if (bundle.no_bet !== true || bundle.betting_enabled !== false || bundle.ledger_mutation !== false ||
-      bundle.publication_enabled !== true || bundle.status !== 'LIVE' || bundle.experimental !== true) {
-    throw new Error('trusted Nations League state has unsafe lifecycle flags');
-  }
-  return bundle;
-}
-
-async function _dispatchNationsLeagueCandidate(env, candidate, scheduledAt, dispatchers) {
-  const token = env.GH_TOKEN;
-  if (!token) throw new Error('GH_TOKEN not configured: Nations League dispatch impossible');
-  const repo = env.GH_REPO || _GH_REPO_DEFAULT;
-  if (candidate.stage === 'initial') {
-    const response = await dispatchers.workflow(token, _NL_LIVE_WORKFLOW, repo);
-    if (!response || response.ok !== true) {
-      throw new Error(`Nations League LIVE workflow dispatch failed: HTTP ${response?.status || 0}`);
-    }
-    return;
-  }
-  await dispatchers.repository(token, _NL_QUOTE_EVENT, {
-    scheduled_at: scheduledAt,
-    scheduler: 'cloudflare_cron',
-    idempotency_key: `${candidate.stage}/${candidate.fixture_id}`,
-    fixture_id: candidate.fixture_id,
-    phase: 'refinement',
-    window: candidate.stage === 'quote_t60' ? 'T_MINUS_60' : 'T_MINUS_30',
-    no_bet: true,
-    publication: false,
-    production_activation: false,
-    betting: false,
-  }, repo);
-}
-
-export async function orchestrateNationsLeagueMatchday(env, scheduledTime, options = {}) {
-  const { millis: nowMs, iso: scheduledAt } = _nlIsoAndMillis(scheduledTime);
-  const bundle = await _readTrustedNationsLeagueForDispatch(env, nowMs);
-  const candidates = _nlDueCandidates(bundle, nowMs);
-  const dispatchers = {
-    workflow: options.workflowDispatch || _ghWorkflowDispatch,
-    repository: options.repositoryDispatch || _ghRepositoryDispatchWithPayload,
-  };
-  const result = { candidates: candidates.length, dispatched: [], skipped: [] };
-  for (const candidate of candidates) {
-    const claim = await _claimNlDispatch(env, candidate, scheduledAt, nowMs);
-    if (claim.skipped) {
-      result.skipped.push(candidate);
-      continue;
-    }
-    try {
-      await _dispatchNationsLeagueCandidate(env, candidate, scheduledAt, dispatchers);
-      await _completeNlDispatch(env, claim, scheduledAt);
-      result.dispatched.push(candidate);
-    } catch (error) {
-      // A failed dispatch must remain retryable on the next */5 slot.  Do not
-      // leave a pending marker that could suppress recovery.
-      await env.SIGNALS.delete(claim.key);
-      throw error;
-    }
-  }
-  return result;
-}
-
 // STAB-SCHED-AUTH-001: BL2 live-push scheduler authority.
 // Fires every 2 min during BL2 match windows (Fri/Sat/Sun).
 // Dispatches repository_dispatch so the GitHub runner executes the Python push script.
@@ -2035,7 +1866,7 @@ export default {
   // Requires GH_TOKEN Worker secret: wrangler secret put GH_TOKEN
   //
   // Cron routing:
-  //   */5          → consume check (F5-C) + Nations League matchday dispatch
+  //   */5          → consume check (F5-C)
   //   */30         → healer + consume heartbeat (F5-D) + tennis_closing_odds dispatch
   //   */2 11-22 SAT,SUN → BL2 live-push dispatch (STAB-SCHED-AUTH-001)
   //   */2 18-22 FRI     → BL2 live-push dispatch (STAB-SCHED-AUTH-001)
@@ -2045,7 +1876,6 @@ export default {
     const scheduledTime = event.scheduledTime; // ms epoch from Cloudflare
     if (cron === '*/5 * * * *') {
       await _cronConsumeCheck(env);
-      await orchestrateNationsLeagueMatchday(env, scheduledTime);
     } else if (cron === '*/30 * * * *') {
       await _cronHealerCheck(env);
       // Blocker-4: unconditional risk-state heartbeat every 30 min.
