@@ -45,6 +45,7 @@ class SettlementState(StrEnum):
 class RetrainDecision(StrEnum):
     NO_OP = "NO_OP"
     RETRAIN_REQUIRED = "RETRAIN_REQUIRED"
+    RETRAIN_BLOCKED_BY_GOVERNANCE = "RETRAIN_BLOCKED_BY_GOVERNANCE"
 
 
 def _canonical_json(value: Any) -> bytes:
