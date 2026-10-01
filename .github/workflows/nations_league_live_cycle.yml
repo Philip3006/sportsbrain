@@ -81,7 +81,6 @@ jobs:
             --registry results/audits/continuous_model_lifecycle_registry.json \
             --campaign results/research/nations_league_v1_1_forward_campaign_20260930T200124Z.json \
             --store results/research/nations_league_v1_1_live_prediction_store.jsonl \
-            --market-enrichment-store results/research/nations_league_v1_1_live_market_enrichment.jsonl \
             --input-state-output /tmp/nations-league-live-input-state.json \
             --source-release-sha "$SOURCE_RELEASE_SHA" \
             --as-of "$CYCLE_AS_OF" \
