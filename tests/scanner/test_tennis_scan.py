@@ -34,3 +34,28 @@ def test_scanner_mock_tournament_helper_returns_wimbledon():
     for m in matches:
         assert m["odds_a"] > 1.0
         assert m["odds_b"] > 1.0
+
+
+def test_committed_elo_snapshot_is_real_and_preserves_history_gate():
+    from scripts.tennis_scan import _load_committed_elo_snapshot
+
+    ratings = _load_committed_elo_snapshot()
+    assert ratings is not None
+    assert ratings.get_overall_count("Sinner J.") >= 5
+    assert not ratings.is_known("not-a-real-player")
+
+
+def test_committed_elo_snapshot_fails_closed_without_provenance(tmp_path, monkeypatch):
+    import json
+
+    from scripts import tennis_scan
+
+    metadata_dir = tmp_path / "models" / "tennis"
+    metadata_dir.mkdir(parents=True)
+    (metadata_dir / "elo_meta.json").write_text(
+        json.dumps({"generated_at": "", "n_matches": 67256}),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(tennis_scan, "ROOT", tmp_path)
+
+    assert tennis_scan._load_committed_elo_snapshot() is None

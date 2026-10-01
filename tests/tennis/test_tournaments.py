@@ -7,6 +7,7 @@ from src.tennis.tournaments import (
     Tournament,
     all_sport_keys,
     get_tournament,
+    get_tournament_by_te,
     tournaments_by_category,
     tournaments_for_month,
     unknown_sport_key,
@@ -88,6 +89,12 @@ def test_get_tournament_by_sport_key():
 
 def test_get_tournament_unknown_returns_none():
     assert get_tournament("not_a_real_slug") is None
+
+
+def test_current_te_main_tour_aliases_resolve_explicitly():
+    assert get_tournament_by_te("beijing_atp", "atp").slug == "beijing_atp"
+    assert get_tournament_by_te("tokyo-japan-open_atp", "atp").slug == "tokyo_atp"
+    assert get_tournament_by_te("china-open", "wta").slug == "china_open_wta"
 
 
 def test_tournaments_for_month_wimbledon_july():

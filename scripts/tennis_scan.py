@@ -19,7 +19,9 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import json
 import os
+import pickle
 import sys
 from datetime import datetime, date
 from pathlib import Path
@@ -39,7 +41,12 @@ from src.config import (
     TENNIS_CATEGORY_SURFACE_MODE,
     TENNIS_MIN_EDGE_BY_CATEGORY,
 )
-from src.models.tennis_elo import compute_tennis_elo, predict_winner, top_players
+from src.models.tennis_elo import (
+    TennisEloRatings,
+    compute_tennis_elo,
+    predict_winner,
+    top_players,
+)
 from src.tennis.ensemble import predict_winner_ensemble
 from src.tennis.elo_source import load_match_history
 from src.betting.tennis_detector import (
@@ -121,6 +128,42 @@ def _fetch_both_tours():
     elif source == "empty":
         print("  [elo] WARNING: weder Sackmann noch XLSX verfügbar — Default-Elo")
     return df
+
+
+def _load_committed_elo_snapshot() -> TennisEloRatings | None:
+    """Load the last validated real Elo snapshot when live history is empty.
+
+    This is an offline model fallback only: it never invents player history,
+    never enables rolling/LGBM features, and still leaves ``is_known``'s
+    minimum-history gate intact. Invalid or incomplete provenance fails closed
+    to the existing empty-rating behavior.
+    """
+    snapshot_path = ROOT / "models" / "tennis" / "elo_snapshot.pkl"
+    metadata_path = ROOT / "models" / "tennis" / "elo_meta.json"
+    try:
+        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+        if (
+            not isinstance(metadata, dict)
+            or not metadata.get("generated_at")
+            or int(metadata.get("n_matches", 0)) <= 0
+        ):
+            return None
+        with snapshot_path.open("rb") as handle:
+            snapshot = pickle.load(handle)
+    except (
+        OSError,
+        EOFError,
+        AttributeError,
+        ImportError,
+        TypeError,
+        ValueError,
+        pickle.UnpicklingError,
+        json.JSONDecodeError,
+    ):
+        return None
+    if not isinstance(snapshot, TennisEloRatings):
+        return None
+    return snapshot
 
 
 # ---------------------------------------------------------------------------
@@ -722,10 +765,14 @@ def main() -> None:
     print("Loading ATP+WTA match data...")
     all_matches = _fetch_both_tours()
     if all_matches is None or all_matches.empty:
-        print("WARNING: Keine Match-Daten — Default-Elo verwendet.")
-        from src.models.tennis_elo import TennisEloRatings
-        ratings = TennisEloRatings()
-        top_grass = []
+        ratings = _load_committed_elo_snapshot()
+        if ratings is None:
+            print("WARNING: Keine Match-Daten — Default-Elo verwendet.")
+            ratings = TennisEloRatings()
+            top_grass = []
+        else:
+            print("  [elo] live history empty — validated committed snapshot fallback")
+            top_grass = top_players(ratings, surface="grass", n=10)
         live_state = None  # No history → LGBM bypassed (fail-safe)
     else:
         print(f"  {len(all_matches)} matches loaded; computing Elo...")

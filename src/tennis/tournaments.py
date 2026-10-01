@@ -285,6 +285,15 @@ UNSUPPORTED_CATEGORIES: frozenset[str] = frozenset({
 # Registry-Slug. Nur echte Tour-Events; Challenger/ITF/UTR-Exhibitions bleiben
 # unmapped (bekommen keine category/surface, kein Signal-Detection).
 TE_SLUG_MAP: dict[tuple[str, str], str] = {
+    # Current TE main-tour slugs. Keep these explicit: qualifiers and other
+    # competitions must not be promoted by fuzzy matching.
+    ("beijing_atp", "atp"):          "beijing_atp",
+    ("beijing", "atp"):              "beijing_atp",
+    ("tokyo-japan-open_atp", "atp"): "tokyo_atp",
+    ("tokyo-japan-open", "atp"):     "tokyo_atp",
+    ("japan-open", "atp"):           "tokyo_atp",
+    ("beijing", "wta"):              "china_open_wta",
+    ("china-open", "wta"):           "china_open_wta",
     ("washington", "atp"):       "washington_atp",
     ("los-cabos", "atp"):        "los_cabos_atp",
     ("kitzbuhel", "atp"):        "kitzbuhel_atp",
