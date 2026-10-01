@@ -45,6 +45,7 @@ REFINEMENT = "refinement"
 LIVE = "LIVE"
 INITIAL_WINDOW = (timedelta(hours=22), timedelta(hours=26))
 REFINEMENT_WINDOW = (timedelta(minutes=60), timedelta(minutes=120))
+DUE_PHASES = {"INITIAL_DUE": INITIAL, "REFINEMENT_DUE": REFINEMENT}
 
 
 class NationsLeagueLiveRuntimeError(ValueError):
@@ -84,6 +85,13 @@ def due_state(kickoff_utc: str, as_of: str) -> str:
     if lead >= timedelta(minutes=60):
         return "REFINEMENT_DUE"
     return "TOO_LATE"
+
+
+def due_phase(kickoff_utc: str, as_of: str) -> tuple[str | None, str]:
+    """Return the canonical immutable lifecycle phase for one capture clock."""
+
+    state = due_state(kickoff_utc, as_of)
+    return DUE_PHASES.get(state), state
 
 
 def phase_window(kickoff_utc: str, phase: str) -> tuple[datetime, datetime]:
@@ -418,8 +426,7 @@ def run_live_cycle(
     for fixture in manifest.get("fixtures", []):
         if not isinstance(fixture, Mapping) or fixture.get("status") != "VERIFIED":
             continue
-        state = due_state(str(fixture["kickoff_utc"]), _stamp(clock))
-        phase = {"INITIAL_DUE": INITIAL, "REFINEMENT_DUE": REFINEMENT}.get(state)
+        phase, state = due_phase(str(fixture["kickoff_utc"]), _stamp(clock))
         row = {
             "fixture_id": fixture["fixture_id"],
             "phase": phase,

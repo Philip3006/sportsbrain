@@ -26,16 +26,37 @@ jobs:
           cache: 'pip'
       - name: Install dependencies
         run: pip install -r requirements.txt
-      - name: Acquire due current 1X2 market snapshots
-        env:
-          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+      - name: Prepare due market preflight
+        id: market_preflight
         run: |
           set -o pipefail
           MARKET_SELECTION_AS_OF="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           MARKET_SNAPSHOT_PATH="/tmp/nations-league-live-market-snapshots.json"
           python3 scripts/acquire_nations_league_live_market.py \
             --manifest results/audits/nations_league_forward_fixture_manifest.json \
+            --store results/research/nations_league_v1_1_live_prediction_store.jsonl \
             --as-of "$MARKET_SELECTION_AS_OF" \
+            --output "$MARKET_SNAPSHOT_PATH" \
+            --preflight \
+            | tee /tmp/nations-league-live-market-capture.json
+          NEEDS_PROVIDER="$(python3 -c 'import json, sys; print(str(json.load(open(sys.argv[1]))["needs_provider"]).lower())' "$MARKET_SNAPSHOT_PATH")"
+          echo "needs_provider=$NEEDS_PROVIDER" >> "$GITHUB_OUTPUT"
+          echo "selection_as_of=$MARKET_SELECTION_AS_OF" >> "$GITHUB_OUTPUT"
+          if [ "$NEEDS_PROVIDER" = "false" ]; then
+            CYCLE_AS_OF="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["captured_at"])' "$MARKET_SNAPSHOT_PATH")"
+            echo "CYCLE_AS_OF=$CYCLE_AS_OF" >> "$GITHUB_ENV"
+          fi
+      - name: Acquire due current 1X2 market snapshots
+        if: ${{ steps.market_preflight.outputs.needs_provider == 'true' }}
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+        run: |
+          set -o pipefail
+          MARKET_SNAPSHOT_PATH="/tmp/nations-league-live-market-snapshots.json"
+          python3 scripts/acquire_nations_league_live_market.py \
+            --manifest results/audits/nations_league_forward_fixture_manifest.json \
+            --store results/research/nations_league_v1_1_live_prediction_store.jsonl \
+            --as-of "${{ steps.market_preflight.outputs.selection_as_of }}" \
             --output "$MARKET_SNAPSHOT_PATH" \
             | tee /tmp/nations-league-live-market-capture.json
           CYCLE_AS_OF="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["captured_at"])' "$MARKET_SNAPSHOT_PATH")"

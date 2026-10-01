@@ -11,9 +11,14 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from src.analysis.nations_league_live_runtime import (
+    NationsLeagueLiveRuntimeError,
+    load_live_store,
+)
 from src.scanner.nations_league_live_market import (
     NationsLeagueLiveMarketError,
     acquire_live_market_snapshots,
+    prepare_market_preflight,
     write_market_snapshot_batch,
 )
 
@@ -32,15 +37,31 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--as-of", required=True)
+    parser.add_argument("--store", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--preflight",
+        action="store_true",
+        help="perform only the provider-free due/idempotency decision",
+    )
     args = parser.parse_args(argv)
     try:
-        batch = acquire_live_market_snapshots(
-            _read(args.manifest),
-            as_of=args.as_of,
-        )
+        manifest = _read(args.manifest)
+        existing_records = load_live_store(args.store)
+        if args.preflight:
+            batch = prepare_market_preflight(
+                manifest,
+                as_of=args.as_of,
+                existing_records=existing_records,
+            )
+        else:
+            batch = acquire_live_market_snapshots(
+                manifest,
+                as_of=args.as_of,
+                existing_records=existing_records,
+            )
         write_market_snapshot_batch(args.output, batch)
-    except (OSError, NationsLeagueLiveMarketError) as exc:
+    except (OSError, NationsLeagueLiveMarketError, NationsLeagueLiveRuntimeError) as exc:
         print(f"Nations League LIVE market capture blocked: {exc}", file=sys.stderr)
         return 2
     print(json.dumps(batch, ensure_ascii=False, sort_keys=True, indent=2))

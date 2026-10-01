@@ -20,7 +20,7 @@ from src.analysis.nations_league_live_edge import (
     NationsLeagueLiveEdgeError,
     build_market_snapshot,
 )
-from src.analysis.nations_league_live_runtime import due_state
+from src.analysis.nations_league_live_runtime import due_phase
 from src.config import canonical_name
 from src.scanner.nations_league_shadow import (
     NationsLeagueShadowError,
@@ -33,7 +33,6 @@ PROVIDER = "the_odds_api"
 SPORT_KEY = "soccer_uefa_nations_league"
 MAX_PROVIDER_REQUESTS = 1
 MAX_RETRIES = 0
-PHASES = {"INITIAL_DUE": "initial", "REFINEMENT_DUE": "refinement"}
 
 
 class NationsLeagueLiveMarketError(ValueError):
@@ -74,8 +73,26 @@ def _text(value: object, field: str) -> str:
     return value.strip()
 
 
+def _captured_phases(
+    existing_records: Iterable[Mapping[str, Any]],
+) -> set[tuple[str, str]]:
+    captured: set[tuple[str, str]] = set()
+    for record in existing_records:
+        if not isinstance(record, Mapping):
+            raise NationsLeagueLiveMarketError("LIVE prediction store row is malformed")
+        fixture_id = _text(record.get("fixture_id"), "stored fixture_id")
+        phase = _text(record.get("phase"), "stored phase")
+        if phase not in {"initial", "refinement"}:
+            raise NationsLeagueLiveMarketError("LIVE prediction store phase is invalid")
+        captured.add((fixture_id, phase))
+    return captured
+
+
 def _manifest_targets(
-    manifest: Mapping[str, Any], *, as_of: datetime
+    manifest: Mapping[str, Any],
+    *,
+    as_of: datetime,
+    existing_records: Iterable[Mapping[str, Any]] = (),
 ) -> list[dict[str, Any]]:
     if manifest.get("competition") != "UEFA Nations League":
         raise NationsLeagueLiveMarketError("wrong future fixture manifest")
@@ -90,6 +107,7 @@ def _manifest_targets(
 
     seen_ids: set[str] = set()
     seen_identities: set[tuple[str, str, str]] = set()
+    captured_phases = _captured_phases(existing_records)
     due: list[dict[str, Any]] = []
     for raw in fixtures:
         if not isinstance(raw, Mapping):
@@ -107,15 +125,15 @@ def _manifest_targets(
         if home == away or identity in seen_identities:
             raise NationsLeagueLiveMarketError("ambiguous future fixture identity")
         seen_identities.add(identity)
-        state = due_state(_stamp(kickoff), _stamp(as_of))
-        if state in PHASES:
+        phase, state = due_phase(_stamp(kickoff), _stamp(as_of))
+        if phase is not None and (fixture_id, phase) not in captured_phases:
             due.append(
                 {
                     "fixture_id": fixture_id,
                     "home_team": home,
                     "away_team": away,
                     "kickoff_utc": _stamp(kickoff),
-                    "phase": PHASES[state],
+                    "phase": phase,
                     "due_state": state,
                 }
             )
@@ -162,6 +180,7 @@ def _batch(
     request: Mapping[str, Any] | None,
     request_count: int,
     retry_count: int,
+    needs_provider: bool,
 ) -> dict[str, Any]:
     body: dict[str, Any] = {
         "schema": SNAPSHOT_BATCH_SCHEMA,
@@ -183,6 +202,7 @@ def _batch(
         "request": dict(request) if request is not None else None,
         "request_count": request_count,
         "retry_count": retry_count,
+        "needs_provider": needs_provider,
         "no_bet": True,
         "betting_enabled": False,
         "ledger_mutation": False,
@@ -191,11 +211,41 @@ def _batch(
     return body
 
 
+def prepare_market_preflight(
+    manifest: Mapping[str, Any],
+    *,
+    as_of: str,
+    existing_records: Iterable[Mapping[str, Any]] = (),
+) -> dict[str, Any]:
+    """Build a zero-network provider-need decision and empty batch."""
+
+    selection_clock = _utc(as_of, "as_of")
+    due_targets = _manifest_targets(
+        manifest,
+        as_of=selection_clock,
+        existing_records=existing_records,
+    )
+    needs_provider = bool(due_targets)
+    return _batch(
+        selection_as_of=_stamp(selection_clock),
+        captured_at=_stamp(selection_clock),
+        due_targets=due_targets,
+        snapshots=[],
+        status="PROVIDER_REQUIRED" if needs_provider else "NO_MARKET_SNAPSHOT",
+        failure_reasons={},
+        request=None,
+        request_count=0,
+        retry_count=0,
+        needs_provider=needs_provider,
+    )
+
+
 def acquire_live_market_snapshots(
     manifest: Mapping[str, Any],
     *,
     as_of: str,
-    fetcher: Callable[[], tuple[list[dict[str, Any]], int, int, dict[str, Any]]] = fetch_provider_events,
+    existing_records: Iterable[Mapping[str, Any]] = (),
+    fetcher: Callable[[], tuple[list[dict[str, Any]], int, int, dict[str, Any]]] | None = None,
     now: datetime | None = None,
 ) -> dict[str, Any]:
     """Capture due current 1X2 markets, or return a safe empty batch.
@@ -206,7 +256,11 @@ def acquire_live_market_snapshots(
     """
 
     selection_clock = _utc(as_of, "as_of")
-    due_targets = _manifest_targets(manifest, as_of=selection_clock)
+    due_targets = _manifest_targets(
+        manifest,
+        as_of=selection_clock,
+        existing_records=existing_records,
+    )
     selection_stamp = _stamp(selection_clock)
 
     if not due_targets:
@@ -221,10 +275,12 @@ def acquire_live_market_snapshots(
             request=None,
             request_count=0,
             retry_count=0,
+            needs_provider=False,
         )
 
+    provider_fetcher = fetcher or fetch_provider_events
     try:
-        events, request_count, retry_count, request = fetcher()
+        events, request_count, retry_count, request = provider_fetcher()
     except (NationsLeagueShadowError, OSError, RuntimeError, ValueError) as exc:
         capture_clock = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
         safe_reason = f"provider_error:{type(exc).__name__}"
@@ -238,6 +294,7 @@ def acquire_live_market_snapshots(
             request=None,
             request_count=0,
             retry_count=0,
+            needs_provider=True,
         )
 
     capture_clock = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
@@ -257,6 +314,7 @@ def acquire_live_market_snapshots(
             request=None,
             request_count=0,
             retry_count=0,
+            needs_provider=True,
         )
 
     snapshots: list[dict[str, Any]] = []
@@ -280,6 +338,12 @@ def acquire_live_market_snapshots(
             kickoff = _utc(str(event.get("commence_time", "")), "provider kickoff")
             if kickoff <= capture_clock:
                 failures[fixture_id] = "provider_fixture_started"
+                continue
+            capture_phase, _ = due_phase(
+                target["kickoff_utc"], _stamp(capture_clock)
+            )
+            if capture_phase != target["phase"]:
+                failures[fixture_id] = "capture_window_changed"
                 continue
             snapshots.append(
                 build_market_snapshot(
@@ -319,6 +383,7 @@ def acquire_live_market_snapshots(
         request=request,
         request_count=request_count,
         retry_count=retry_count,
+        needs_provider=True,
     )
 
 
