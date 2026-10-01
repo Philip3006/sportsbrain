@@ -85,9 +85,23 @@ def _current_refinement_targets(
         kickoff = _utc(fixture.get("kickoff_utc"), "fixture.kickoff_utc")
         if kickoff <= now:
             continue
+        identity = fixture.get("canonical_identity")
+        if not isinstance(identity, Mapping):
+            raise BetQuoteOperatorError("fixture canonical identity is missing")
+        home_team = identity.get("home_team")
+        away_team = identity.get("away_team")
+        if (
+            not isinstance(home_team, str)
+            or not home_team.strip()
+            or not isinstance(away_team, str)
+            or not away_team.strip()
+        ):
+            raise BetQuoteOperatorError("fixture canonical team identity is invalid")
         targets.append(
             {
                 "fixture_id": str(fixture["fixture_id"]),
+                "home_team": home_team.strip(),
+                "away_team": away_team.strip(),
                 "kickoff_utc": _stamp(kickoff),
                 "phase": PHASE,
             }
