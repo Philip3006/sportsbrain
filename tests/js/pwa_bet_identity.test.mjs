@@ -8,6 +8,8 @@ import vm from 'node:vm';
 const __dir = fileURLToPath(new URL('.', import.meta.url));
 const betsSource = readFileSync(resolve(__dir, '../../docs/js/bets.js'), 'utf8');
 const viewsSource = readFileSync(resolve(__dir, '../../docs/js/views.js'), 'utf8');
+const appSource = readFileSync(resolve(__dir, '../../docs/js/app.js'), 'utf8');
+const cssSource = readFileSync(resolve(__dir, '../../docs/css/app.css'), 'utf8');
 const indexSource = readFileSync(resolve(__dir, '../../docs/index.html'), 'utf8');
 const deepLinkStart = betsSource.indexOf('function _openBetModalForBetId(');
 const deepLinkEnd = betsSource.indexOf('\n// ── Render open bets tab ──', deepLinkStart);
@@ -117,11 +119,23 @@ test('deep-link path does not manufacture identity for a missing signal_id', () 
 
 
 test('core betting frontend assets use the same cache-bust release', () => {
-  const release = '20261002-detail-bet-cta';
+  const release = '20261002-no-bet-state';
   for (const asset of ['app', 'views', 'bets']) {
     assert.ok(
       indexSource.includes(`src="js/${asset}.js?v=${release}"`),
       `missing cache-bust release for ${asset}.js`,
     );
   }
+});
+
+
+test('non-actionable canonical detail signals render an explicit no-bet state', () => {
+  assert.match(viewsSource, /NO BET · Edge verloren/);
+  assert.match(viewsSource, /class="no-bet-status"/);
+  assert.match(viewsSource, /Warum kein Bet\?/);
+  assert.match(viewsSource, /Das frühere Signal hat seinen Value verloren/);
+  assert.match(viewsSource, /Kein Einsatz/);
+  assert.match(appSource, /Aktuell kein platzierbarer Value Bet/);
+  assert.match(cssSource, /\.sig-card\.no-bet/);
+  assert.match(cssSource, /\.no-bet-status/);
 });

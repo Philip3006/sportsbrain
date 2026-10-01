@@ -1135,7 +1135,14 @@ function openMatch(displayKey) {
       cards += `<div class="empty"><div class="icon">${_noEvalIcon}</div><div>Keine Modellbewertung für dieses Spiel verfügbar.${_noEvalDetail ? `<br><small>${_noEvalDetail}</small>` : ''}</div></div>`;
     }
   } else if (sigs.length) {
-    cards += `<div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;padding:14px 16px 6px">💡 Vorgeschlagene Value Bets</div>`;
+    const _hasActionableSignal = sigs.some(s =>
+      typeof isActionableValueSignal === 'function' &&
+      isActionableValueSignal(s, _currentBankroll(), (_openBets || []).length)?.ok === true
+    );
+    const _detailSignalHeading = _hasActionableSignal
+      ? '💡 Vorgeschlagene Value Bets'
+      : '⛔ Aktuell kein platzierbarer Value Bet';
+    cards += `<div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;padding:14px 16px 6px">${_detailSignalHeading}</div>`;
     cards += otherSigs.map(s => sigCard(s, false)).join('');
     if (ouSigs.length) cards += buildOuAccordion(ouSigs, otherSigs.length === 0 || ouSigs.some(s => s.confidence === 'HIGH'));
   }
