@@ -510,6 +510,7 @@ const _FOOTBALL_LEAGUE_LABELS = {
   champions_league: '🏆 Champions League',
   uefa_champs_league: '🏆 Champions League',
   soccer_uefa_champs_league: '🏆 Champions League',
+  nations_league_live: '🏆 UEFA Nations League · LIVE',
   nations_league_shadow: '🏆 UEFA Nations League · Shadow',
 };
 const _FOOTBALL_CL_KEYS = new Set([
@@ -986,10 +987,49 @@ function _topRecs24hHtml(signals, nowMs) {
 function _nationsLeagueHomeGames(payload, nowMs = Date.now()) {
   // These records join the regular Home schedule, but remain marked so neither
   // the bet modal nor the actionable signal collection can consume them.
-  if (!payload || payload.schema !== 'nations-league-public-v1' ||
+  if (!payload || !Array.isArray(payload.fixtures)) return [];
+
+  if (payload.schema === 'nations-league-live-public-v1') {
+    if (payload.competition !== 'UEFA Nations League' || payload.status !== 'LIVE' ||
+        payload.publication_enabled !== true || payload.no_bet !== true ||
+        payload.betting_enabled !== false || payload.ledger_mutation !== false ||
+        !Number.isInteger(payload.fixture_count) || payload.fixture_count < 1 ||
+        payload.fixtures.length !== payload.fixture_count) return [];
+    return payload.fixtures
+      .filter((fixture) => {
+        const teams = fixture?.canonical_identity;
+        const probabilities = fixture?.probabilities;
+        return fixture && typeof fixture.fixture_id === 'string' && fixture.fixture_id &&
+          teams && typeof teams.home_team === 'string' && teams.home_team &&
+          typeof teams.away_team === 'string' && teams.away_team &&
+          Number.isFinite(Date.parse(fixture.kickoff_utc || '')) &&
+          Date.parse(fixture.kickoff_utc) >= nowMs - 2.5 * 60 * 60 * 1000 &&
+          probabilities && ['home', 'draw', 'away'].every((key) =>
+            Number.isFinite(probabilities[key]) && probabilities[key] >= 0 && probabilities[key] <= 1);
+      })
+      .map((fixture) => {
+        const teams = fixture.canonical_identity;
+        return {
+          sport: 'football',
+          league: 'nations_league_live',
+          competition: 'UEFA Nations League',
+          home: teams.home_team,
+          away: teams.away_team,
+          kickoff: fixture.kickoff_utc,
+          fixture_id: fixture.fixture_id,
+          phase: fixture.phase,
+          probabilities: fixture.probabilities,
+          model_release: fixture.model_release,
+          is_nations_league_live: true,
+          no_bet: true,
+        };
+      });
+  }
+
+  if (payload.schema !== 'nations-league-public-v1' ||
       payload.evidence_status !== 'WEAK_EVIDENCE_SHADOW_ONLY' ||
       payload.lifecycle !== 'SHADOW_ONLY' || payload.no_bet !== true ||
-      payload.publication_enabled !== false || !Array.isArray(payload.fixtures)) return [];
+      payload.publication_enabled !== false) return [];
 
   const in24h = nowMs + 24 * 60 * 60 * 1000;
   return payload.fixtures
@@ -1009,15 +1049,64 @@ function _nationsLeagueHomeGames(payload, nowMs = Date.now()) {
     }));
 }
 
+function _tennisHomeGames() {
+  const byMatch = new Map();
+  for (const signal of (_signals || []).filter((item) => item?.sport === 'tennis')) {
+    const parts = typeof signal.match === 'string' ? signal.match.split(' vs ') : [];
+    const home = signal.home || parts[0]?.trim();
+    const away = signal.away || parts[1]?.trim();
+    if (!home || !away) continue;
+    const key = matchKey(home, away);
+    if (!byMatch.has(key)) byMatch.set(key, { signal, home, away });
+  }
+  return [...byMatch.values()].map(({ signal, home, away }) => {
+    const schedule = (_schedule || []).find((item) => item?.sport === 'tennis' &&
+      matchKey(item.home, item.away) === matchKey(home, away));
+    return {
+      ...(schedule || {}),
+      sport: 'tennis',
+      home: schedule?.home || home,
+      away: schedule?.away || away,
+      kickoff: schedule?.scheduled_start_current || schedule?.kickoff ||
+        signal.scheduled_start_current || signal.kickoff || '',
+      tour: schedule?.tour || signal.tour || '',
+    };
+  });
+}
+
+function _dedupeHomeGames(games) {
+  const byMatch = new Map();
+  for (const game of games) {
+    if (!game?.home || !game?.away) continue;
+    const key = matchKey(game.home, game.away);
+    const existing = byMatch.get(key);
+    // A validated NL live record is the authoritative Home representation for
+    // the fixture, even if a generic football schedule also contains it.
+    if (!existing || game.is_nations_league_live || game.is_nations_league_shadow) {
+      byMatch.set(key, existing && game.is_nations_league_live
+        ? { ...existing, ...game }
+        : game);
+    }
+  }
+  return [...byMatch.values()];
+}
+
 function renderHome() {
   const c = document.getElementById('home-container');
 
-
-  let games = _schedule.length ? _schedule : _signals.map(s => ({
-    sport: s.sport, home: s.match.split(' vs ')[0].trim(),
-    away: s.match.split(' vs ')[1].trim(), kickoff: s.kickoff||'', tour: s.tour||'',
-  })).filter((g,i,a) => a.findIndex(x=>x.home===g.home&&x.away===g.away)===i);
-  games = [...games, ..._nationsLeagueHomeGames(_nationsLeague, Date.now())];
+  const scheduledNonTennis = (_schedule || []).filter((game) => game?.sport !== 'tennis');
+  const tennisSignalGames = _tennisHomeGames();
+  const nonTennisSignalGames = (_signals || []).filter((signal) => signal?.sport !== 'tennis').map(s => {
+    const parts = typeof s.match === 'string' ? s.match.split(' vs ') : [];
+    return {
+      sport: s.sport, home: s.home || parts[0]?.trim(), away: s.away || parts[1]?.trim(),
+      kickoff: s.kickoff || '', tour: s.tour || '',
+    };
+  }).filter((game) => game.home && game.away);
+  let games = scheduledNonTennis.length || tennisSignalGames.length
+    ? [...scheduledNonTennis, ...tennisSignalGames]
+    : nonTennisSignalGames;
+  games = _dedupeHomeGames([...games, ..._nationsLeagueHomeGames(_nationsLeague, Date.now())]);
 
   // Suchfilter (Team-Name, normalisiert)
   const q = (_homeSearch || '').trim().toLowerCase();
@@ -1137,6 +1226,16 @@ function renderHome() {
     return `<div class="b365-btn nl-shadow-display-odd" aria-label="Nur Anzeige · keine Wette">${label}</div>`;
   }).join('');
 
+  const liveModelSummary = (game) => {
+    const probabilities = game.probabilities || {};
+    const pct = (key) => Number.isFinite(probabilities[key])
+      ? `${(probabilities[key] * 100).toFixed(1)}%`
+      : '—';
+    return `<div class="nl-live-model-inline" aria-label="LIVE Modellwahrscheinlichkeiten · keine Wette">
+      <span>1 ${pct('home')}</span><span>X ${pct('draw')}</span><span>2 ${pct('away')}</span>
+    </div>`;
+  };
+
   // ── Heute-Sektion (nächste 24h) ──────────────────────────────
   const in24h = now + 24 * 36e5;
   const todayGames = sorted.filter(g => {
@@ -1168,6 +1267,7 @@ function renderHome() {
       const minsLeft = Math.round((kickoffTs - now) / 60000);
       const _evStatus = g.event_status || '';
       const _isNlShadow = g.is_nations_league_shadow === true;
+      const _isNlLive = g.is_nations_league_live === true;
       // W2: tennis LIVE must not be inferred from elapsed time alone — requires authoritative live evidence
       const _isTennis = g.sport === 'tennis';
       const isLive = !_isTennis && minsLeft < 0 && minsLeft > -110;
@@ -1197,20 +1297,20 @@ function renderHome() {
 
       // Odds buttons
       const isFootball = g.sport === 'football';
-      const odds = _isNlShadow ? shadowOdds(g) : isFootball
+      const odds = _isNlLive ? liveModelSummary(g) : _isNlShadow ? shadowOdds(g) : isFootball
         ? oddsBtn(nk,'home',g) + oddsBtn(nk,'draw',g) + oddsBtn(nk,'away',g)
         : oddsBtn(nk,'home',g) + oddsBtn(nk,'away',g);
 
       const _mkAttr = mk.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
-      const rowAttrs = _isNlShadow
-        ? `class="b365-row today-row nl-shadow-row" role="button" tabindex="0" aria-label="${esc(g.home)} gegen ${esc(g.away)} · Details öffnen · Shadow · keine Wette" data-match-key="${_mkAttr}" onclick="openNationsLeagueMatch(this.dataset.matchKey)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openNationsLeagueMatch(this.dataset.matchKey);}"`
+      const rowAttrs = (_isNlShadow || _isNlLive)
+        ? `class="b365-row today-row nl-shadow-row" role="button" tabindex="0" aria-label="${esc(g.home)} gegen ${esc(g.away)} · Details öffnen · ${_isNlLive ? 'LIVE Modell' : 'Shadow'} · keine Wette" data-match-key="${_mkAttr}" onclick="openNationsLeagueMatch(this.dataset.matchKey)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openNationsLeagueMatch(this.dataset.matchKey);}"`
         : `class="b365-row today-row" role="button" tabindex="0" aria-label="${esc(g.home)} gegen ${esc(g.away)}" data-match-key="${_mkAttr}" onclick="openMatch(this.dataset.matchKey)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openMatch(this.dataset.matchKey);}"`;
       todayHtml += `<div ${rowAttrs}>
         <div class="b365-left">
           <div class="b365-time">
             ${timeStr}
             ${countdown}
-            ${_isNlShadow ? '<span class="nl-shadow-list-badge">SHADOW · NO BET</span>' : ''}
+            ${_isNlLive ? `<span class="nl-shadow-list-badge">LIVE · ${esc(String(g.phase || '').toUpperCase() || 'MODELL')} · NO BET</span>` : _isNlShadow ? '<span class="nl-shadow-list-badge">SHADOW · NO BET</span>' : ''}
             ${lastCallBadge}
             ${n > 0 && !hasLastCall ? `<span class="b365-val-tag">${n} Value</span>` : ''}
           </div>
@@ -1280,6 +1380,7 @@ function renderHome() {
         const timeStr = _gKo2 ? fmtTime(_gKo2) : '—';
         const isFootball = sport === 'football';
         const isNlShadow = g.is_nations_league_shadow === true;
+        const isNlLive = g.is_nations_league_live === true;
         const result = _wmResults[nk];
         const isCompleted = result && result.home_score != null && result.away_score != null;
 
@@ -1289,18 +1390,18 @@ function renderHome() {
             : result.away_score > result.home_score ? 'result-away' : 'result-draw';
           rightCol = `<div class="score-box ${resultClass}">${result.home_score}–${result.away_score}</div>`;
         } else {
-          rightCol = isNlShadow ? shadowOdds(g) : isFootball
+          rightCol = isNlLive ? liveModelSummary(g) : isNlShadow ? shadowOdds(g) : isFootball
             ? oddsBtn(nk,'home',g) + oddsBtn(nk,'draw',g) + oddsBtn(nk,'away',g)
             : oddsBtn(nk,'home',g) + oddsBtn(nk,'away',g);
         }
 
         const _mkAttr2 = mk.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
-        const rowAttrs = isNlShadow
-          ? `class="b365-row nl-shadow-row" role="button" tabindex="0" aria-label="${esc(g.home)} gegen ${esc(g.away)} · Details öffnen · Shadow · keine Wette" data-match-key="${_mkAttr2}" onclick="openNationsLeagueMatch(this.dataset.matchKey)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openNationsLeagueMatch(this.dataset.matchKey);}"`
+        const rowAttrs = (isNlShadow || isNlLive)
+          ? `class="b365-row nl-shadow-row" role="button" tabindex="0" aria-label="${esc(g.home)} gegen ${esc(g.away)} · Details öffnen · ${isNlLive ? 'LIVE Modell' : 'Shadow'} · keine Wette" data-match-key="${_mkAttr2}" onclick="openNationsLeagueMatch(this.dataset.matchKey)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openNationsLeagueMatch(this.dataset.matchKey);}"`
           : `class="b365-row" role="button" tabindex="0" aria-label="${esc(g.home)} gegen ${esc(g.away)}" data-match-key="${_mkAttr2}" onclick="openMatch(this.dataset.matchKey)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openMatch(this.dataset.matchKey);}"`;
         h += `<div ${rowAttrs}>
           <div class="b365-left">
-            <div class="b365-time">${timeStr}${isCompleted?` <span style="font-size:10px;color:var(--muted);font-weight:700">FT</span>`:''} ${isNlShadow ? '<span class="nl-shadow-list-badge">SHADOW · NO BET</span>' : ''} ${n>0&&!isCompleted?` <span class="b365-val-tag">${n} Value</span>`:''}</div>
+          <div class="b365-time">${timeStr}${isCompleted?` <span style="font-size:10px;color:var(--muted);font-weight:700">FT</span>`:''} ${isNlLive ? `<span class="nl-shadow-list-badge">LIVE · ${esc(String(g.phase || '').toUpperCase() || 'MODELL')} · NO BET</span>` : isNlShadow ? '<span class="nl-shadow-list-badge">SHADOW · NO BET</span>' : ''} ${n>0&&!isCompleted?` <span class="b365-val-tag">${n} Value</span>`:''}</div>
             <div class="b365-teams">
               <span class="b365-team">${esc(g.home)} ${teamFlag(g.home)}</span>
               <span class="b365-team">${esc(g.away)} ${teamFlag(g.away)}</span>

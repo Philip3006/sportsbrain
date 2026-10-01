@@ -826,45 +826,103 @@ function openNationsLeagueMatch(displayKey) {
   const [dh, da] = displayKey.split(' vs ').map(x => x.trim());
   const nk = matchKey(dh, da);
   const payload = _nationsLeague;
-  const fixture = payload?.fixtures?.find((item) =>
-    item && matchKey(item.home, item.away) === nk
-  );
+  const isLive = payload?.schema === 'nations-league-live-public-v1';
+  const fixture = payload?.fixtures?.find((item) => {
+    if (!item) return false;
+    const teams = isLive ? item.canonical_identity : item;
+    return teams && matchKey(teams.home_team || teams.home, teams.away_team || teams.away) === nk;
+  });
   // Re-check the immutable public safety boundary at interaction time. A
   // clickable row opens information only; it can never become a bet action.
-  if (!fixture || payload.schema !== 'nations-league-public-v1' ||
+  if (!fixture) return;
+  if (isLive) {
+    if (payload.competition !== 'UEFA Nations League' || payload.status !== 'LIVE' ||
+        payload.publication_enabled !== true || payload.no_bet !== true ||
+        payload.betting_enabled !== false || payload.ledger_mutation !== false ||
+        typeof fixture.fixture_id !== 'string' || !fixture.fixture_id) return;
+  } else if (payload.schema !== 'nations-league-public-v1' ||
       payload.evidence_status !== 'WEAK_EVIDENCE_SHADOW_ONLY' ||
       payload.lifecycle !== 'SHADOW_ONLY' || payload.no_bet !== true ||
       payload.publication_enabled !== false) return;
 
-  const kickoff = fixture.kickoff || '';
+  const liveTeams = fixture.canonical_identity || {};
+  const home = isLive ? liveTeams.home_team : fixture.home;
+  const away = isLive ? liveTeams.away_team : fixture.away;
+  const kickoff = isLive ? fixture.kickoff_utc || '' : fixture.kickoff || '';
   const fixtureKey = _analyticsFixtureKey(dh, da, kickoff);
   const analyticsFields = {
     sport: 'football',
     competition: 'UEFA Nations League',
-    fixture_id: fixture.provider_event_id,
+    fixture_id: isLive ? fixture.fixture_id : fixture.provider_event_id,
     fixture_key: fixtureKey,
-    lifecycle_stage: 'SHADOW_ONLY',
+    lifecycle_stage: isLive ? 'LIVE' : 'SHADOW_ONLY',
     source_view: 'home',
   };
   _captureAnalytics('match_opened', analyticsFields);
   _captureAnalytics('nl_match_opened', {
-    fixture_id: fixture.provider_event_id,
+    fixture_id: isLive ? fixture.fixture_id : fixture.provider_event_id,
     fixture_key: fixtureKey,
-    lifecycle_stage: 'SHADOW_ONLY',
-    publication_state: 'disabled',
-    shadow_state: 'SHADOW_ONLY',
+    lifecycle_stage: isLive ? 'LIVE' : 'SHADOW_ONLY',
+    publication_state: isLive ? 'public_read_only' : 'disabled',
+    shadow_state: isLive ? 'LIVE_NO_BET' : 'SHADOW_ONLY',
     source_view: 'home',
   });
-  const probabilities = fixture.model?.probabilities || {};
+  const probabilities = isLive ? fixture.probabilities || {} : fixture.model?.probabilities || {};
   const odds = fixture.market?.odds_decimal || {};
   const outcomes = [
-    ['1', dh, probabilities.home, odds.home],
+    ['1', home, probabilities.home, odds.home],
     ['X', 'Unentschieden', probabilities.draw, odds.draw],
-    ['2', da, probabilities.away, odds.away],
+    ['2', away, probabilities.away, odds.away],
   ];
-  if (outcomes.some(([, , probability, price]) =>
-    !Number.isFinite(probability) || probability < 0 || probability > 1 ||
-    !Number.isFinite(price) || price <= 1)) return;
+  if (!home || !away || outcomes.some(([, , probability]) =>
+    !Number.isFinite(probability) || probability < 0 || probability > 1)) return;
+  if (!isLive && outcomes.some(([, , , price]) => !Number.isFinite(price) || price <= 1)) return;
+
+  if (isLive) {
+    const metaStr = kickoff ? fmtKickoffCompact(kickoff) : '';
+    const phase = String(fixture.phase || '').toUpperCase();
+    const release = fixture.model_release || payload.model_release || {};
+    const modelVersion = release.model_version || release.model_family || '—';
+    const releaseId = release.release_id ? ` · Release ${String(release.release_id).slice(0, 12)}` : '';
+    const updatedAt = fixture.updated_at || payload.updated_at || '';
+    const updatedLabel = updatedAt
+      ? new Date(updatedAt).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })
+      : '—';
+    const outcomeHtml = outcomes.map(([label, name, probability]) => `
+      <div class="nl-shadow-detail-outcome">
+        <span class="nl-shadow-detail-market">${label}</span>
+        <strong>${esc(name)}</strong>
+        <span>${(probability * 100).toFixed(1)}% Modell</span>
+      </div>`).join('');
+    const cdHtml = kickoff
+      ? `<span class="match-countdown" data-kickoff="${esc(kickoff)}" data-sport="football" style="margin-top:0;font-size:10px;padding:2px 7px">⏱ …</span>`
+      : '';
+    document.getElementById('detail-header').innerHTML = `
+      <div class="match-header">
+        <span class="match-sport-icon">🏆</span>
+        <span class="match-teams">${esc(`${home} vs ${away}`)}</span>
+        ${metaStr ? `<span class="match-meta">${metaStr}</span>` : ''}
+        ${cdHtml}
+      </div>`;
+    _tickCountdowns();
+    document.getElementById('detail-cards').innerHTML = `
+      <div class="pred-card nl-shadow-detail-card">
+        <div class="pred-title">🏆 UEFA Nations League · LIVE Modell</div>
+        <div class="nl-shadow-detail-safety">LIVE · ${esc(phase || '—')} · NO BET · NUR INFORMATION</div>
+        <div class="nl-shadow-detail-grid">${outcomeHtml}</div>
+        <div class="nl-shadow-detail-meta">
+          Modell: ${esc(modelVersion)}${esc(releaseId)} · Datenstand: ${esc(updatedLabel)}<br>
+          Keine Marktquote vorhanden. Keine Wettfunktion und keine Aktion möglich.
+        </div>
+      </div>`;
+    showView('detail');
+    _captureAnalytics('prediction_viewed', {
+      ...analyticsFields,
+      model_version: modelVersion,
+      source_view: 'home',
+    });
+    return;
+  }
 
   const metaStr = kickoff ? fmtKickoffCompact(kickoff) : '';
   const cdHtml = kickoff
