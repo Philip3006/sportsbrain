@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from src.analysis.nations_league_live_edge import normalize_market_snapshot_input
 from src.analysis.nations_league_live_runtime import (
     NationsLeagueLiveRuntimeError,
     append_live_store,
@@ -35,6 +36,10 @@ def _read(path: Path) -> dict:
     return value
 
 
+def _read_json(path: Path) -> object:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
 def run_cycle(
     *,
     manifest: Path,
@@ -48,6 +53,7 @@ def run_cycle(
     source_release_sha: str = "",
     input_state_output: Path | None = None,
     campaign: Path | None = None,
+    market_snapshots: Path | None = None,
 ) -> dict:
     manifest_value = _read(manifest)
     registry_value = _read(registry)
@@ -85,6 +91,11 @@ def run_cycle(
             raise ValueError("input-state is required when fresh artifacts are absent")
         state = _read(input_state)
         active = load_active_release(registry)
+    normalized_markets = None
+    if market_snapshots is not None:
+        normalized_markets = normalize_market_snapshot_input(
+            _read_json(market_snapshots), fixtures=state.get("fixtures", [])
+        )
     existing = load_live_store(store)
     idempotency_records = list(existing)
     if campaign is not None:
@@ -99,6 +110,7 @@ def run_cycle(
         as_of=as_of,
         existing_records=idempotency_records,
         execute=execute_offline,
+        market_snapshots=normalized_markets,
     )
     if execute_offline and result["appended_records"]:
         append_live_store(store, existing, result["appended_records"])
@@ -120,6 +132,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--source-release-sha")
     parser.add_argument("--input-state-output", type=Path)
     parser.add_argument("--campaign", type=Path)
+    parser.add_argument(
+        "--market-snapshots",
+        type=Path,
+        help="optional local canonical market snapshot batch; no provider access is performed",
+    )
     parser.add_argument("--registry", type=Path, required=True)
     parser.add_argument("--store", type=Path, required=True)
     parser.add_argument("--as-of", required=True)
@@ -138,6 +155,7 @@ def main(argv: list[str] | None = None) -> int:
             source_release_sha=args.source_release_sha or "",
             input_state_output=args.input_state_output,
             campaign=args.campaign,
+            market_snapshots=args.market_snapshots,
         )
     except (OSError, ValueError, KeyError, TypeError, NationsLeagueLiveRuntimeError) as exc:
         print(f"Nations League LIVE cycle blocked: {exc}", file=sys.stderr)

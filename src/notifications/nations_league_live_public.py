@@ -16,6 +16,11 @@ from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+from src.analysis.nations_league_live_edge import (
+    NationsLeagueLiveEdgeError,
+    build_edge_analysis,
+    validate_edge_analysis,
+)
 from src.analysis.nations_league_model_lifecycle import (
     FROZEN_ALGORITHM_DIGEST,
     MODEL_FAMILY,
@@ -60,6 +65,7 @@ _PUBLIC_FIXTURE_KEYS = frozenset(
         "model_release",
     }
 )
+_PUBLIC_FIXTURE_OPTIONAL_KEYS = frozenset({"edge_analysis"})
 _RELEASE_KEYS = frozenset(
     {
         "model_family",
@@ -259,6 +265,26 @@ def _source_fixture(record: Mapping[str, Any], binding: Mapping[str, Any]) -> di
         if canonical_identity is None:
             canonical_home = _required_text(identity.get("home_team"), "canonical home_team")
             canonical_away = _required_text(identity.get("away_team"), "canonical away_team")
+    prediction_timestamp = _required_text(record.get("prediction_timestamp"), "prediction_timestamp")
+    edge = record.get("edge_analysis")
+    if edge is None:
+        edge_release_id = record.get("model_release_id") or binding.get("model_release", {}).get("release_id")
+        edge = build_edge_analysis(
+            probabilities,
+            fixture_id=_required_text(record.get("fixture_id"), "fixture_id"),
+            phase=_required_text(record.get("phase"), "phase"),
+            model_release_id=_required_text(edge_release_id, "model_release_id"),
+            prediction_record_id=record_id,
+            prediction_timestamp=prediction_timestamp,
+        )
+    try:
+        edge = validate_edge_analysis(
+            edge,
+            fixture_id=_required_text(record.get("fixture_id"), "fixture_id"),
+            prediction_record_id=record_id,
+        )
+    except NationsLeagueLiveEdgeError as exc:
+        raise NationsLeagueLivePublicError(str(exc)) from exc
     return {
         "fixture_id": _required_text(record.get("fixture_id"), "fixture_id"),
         "competition": COMPETITION,
@@ -268,11 +294,10 @@ def _source_fixture(record: Mapping[str, Any], binding: Mapping[str, Any]) -> di
         "kickoff_utc": _required_text(record.get("kickoff_utc"), "kickoff_utc"),
         "phase": record.get("phase"),
         "probabilities": probabilities,
-        "prediction_cutoff": _required_text(
-            record.get("prediction_timestamp"), "prediction_timestamp"
-        ),
-        "updated_at": _required_text(record.get("prediction_timestamp"), "prediction_timestamp"),
+        "prediction_cutoff": prediction_timestamp,
+        "updated_at": prediction_timestamp,
         "model_release": dict(binding.get("model_release", {})),
+        "edge_analysis": edge,
     }
 
 
@@ -476,7 +501,10 @@ def validate_live_public_nations_league(value: Mapping[str, Any]) -> dict[str, A
         raise NationsLeagueLivePublicError("LIVE public fixture coverage is incomplete")
     identities: set[str] = set()
     for fixture in fixtures:
-        if not isinstance(fixture, Mapping) or set(fixture) != _PUBLIC_FIXTURE_KEYS:
+        if not isinstance(fixture, Mapping) or set(fixture) not in {
+            _PUBLIC_FIXTURE_KEYS,
+            _PUBLIC_FIXTURE_KEYS | _PUBLIC_FIXTURE_OPTIONAL_KEYS,
+        }:
             raise NationsLeagueLivePublicError("LIVE fixture fields are not allowlisted")
         fixture_id = _required_text(fixture.get("fixture_id"), "fixture_id")
         if fixture_id in identities:
@@ -497,6 +525,15 @@ def validate_live_public_nations_league(value: Mapping[str, Any]) -> dict[str, A
                 raise NationsLeagueLivePublicError(f"LIVE {identity} is missing")
             _required_text(item.get("home_team"), f"{identity}.home_team")
             _required_text(item.get("away_team"), f"{identity}.away_team")
+        if "edge_analysis" in fixture:
+            try:
+                validate_edge_analysis(
+                    fixture["edge_analysis"],
+                    fixture_id=fixture_id,
+                    prediction_record_id=fixture["source_prediction_record_id"],
+                )
+            except NationsLeagueLiveEdgeError as exc:
+                raise NationsLeagueLivePublicError(str(exc)) from exc
     if updated_at != max(fixture["updated_at"] for fixture in fixtures):
         raise NationsLeagueLivePublicError("LIVE updated_at is not deterministic")
     return dict(value)

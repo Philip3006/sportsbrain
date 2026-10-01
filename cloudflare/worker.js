@@ -669,13 +669,71 @@ function _validatePublicNationsLeague(value) {
     const probabilities = (item) => item && ['home', 'draw', 'away'].every((key) =>
       typeof item[key] === 'number' && Number.isFinite(item[key]) && item[key] >= 0 && item[key] <= 1) &&
       Math.abs(item.home + item.draw + item.away - 1) <= 1e-9;
+    const marketProbabilities = (item) => item && ['home', 'draw', 'away'].every((key) =>
+      typeof item[key] === 'number' && Number.isFinite(item[key]) && item[key] >= 0 && item[key] <= 1) &&
+      Math.abs(item.home + item.draw + item.away - 1) <= 1e-6 &&
+      Object.values(item).every((number) => _hasPublicNationsLeaguePrecision(number));
+    const edgeMeasurement = (item) => item && hasExactKeys(item, [
+      'decimal_odds', 'model_probability', 'market_probability', 'probability_edge', 'ev',
+    ]) && Object.values(item).every((number) => typeof number === 'number' && Number.isFinite(number));
+    const edgeSnapshot = (snapshot, fixtureId, evaluatedAt) => {
+      if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot)) return false;
+      const snapshotKeys = [
+        'schema', 'provider', 'bookmaker', 'captured_at', 'fixture_id', 'odds_decimal',
+        'overround', 'margin_free_probabilities', 'snapshot_digest',
+      ];
+      if (Object.prototype.hasOwnProperty.call(snapshot, 'provider_match_id')) snapshotKeys.push('provider_match_id');
+      return hasExactKeys(snapshot, snapshotKeys) &&
+        snapshot.schema === 'nations-league-live-market-snapshot-v1' &&
+        typeof snapshot.provider === 'string' && snapshot.provider &&
+        typeof snapshot.bookmaker === 'string' && snapshot.bookmaker &&
+        typeof snapshot.fixture_id === 'string' && snapshot.fixture_id === fixtureId &&
+        /^[0-9a-f]{64}$/.test(snapshot.snapshot_digest || '') &&
+        typeof snapshot.captured_at === 'string' && Number.isFinite(Date.parse(snapshot.captured_at)) &&
+        Date.parse(snapshot.captured_at) <= Date.parse(evaluatedAt) &&
+        hasExactKeys(snapshot.odds_decimal, ['home', 'draw', 'away']) &&
+        Object.values(snapshot.odds_decimal).every((number) =>
+          typeof number === 'number' && Number.isFinite(number) && number > 1 && _hasPublicNationsLeaguePrecision(number)) &&
+        typeof snapshot.overround === 'number' && Number.isFinite(snapshot.overround) &&
+        _hasPublicNationsLeaguePrecision(snapshot.overround) &&
+        hasExactKeys(snapshot.margin_free_probabilities, ['home', 'draw', 'away']) &&
+        marketProbabilities(snapshot.margin_free_probabilities) &&
+        Object.values(snapshot.margin_free_probabilities).every((number) => _hasPublicNationsLeaguePrecision(number));
+    };
+    const edgeAnalysis = (edge, fixtureId, recordId) => {
+      if (!edge || typeof edge !== 'object' || Array.isArray(edge) || !hasExactKeys(edge, [
+        'schema', 'fixture_id', 'phase', 'model_release_id', 'prediction_record_id',
+        'evaluated_at', 'market_snapshot', 'outcomes', 'candidate_outcomes',
+        'highest_edge_outcome', 'edge_status', 'no_bet', 'betting_enabled',
+        'ledger_mutation', 'edge_digest',
+      ])) return false;
+      if (edge.schema !== 'nations-league-live-edge-v1' || edge.fixture_id !== fixtureId ||
+          typeof edge.phase !== 'string' || !['initial', 'refinement'].includes(edge.phase) ||
+          typeof edge.model_release_id !== 'string' || !edge.model_release_id ||
+          edge.prediction_record_id !== recordId || typeof edge.evaluated_at !== 'string' ||
+          !Number.isFinite(Date.parse(edge.evaluated_at)) ||
+          !['EDGE_MEASURED', 'NO_EDGE', 'NO_MARKET_SNAPSHOT', 'MARKET_STALE', 'MARKET_INVALID'].includes(edge.edge_status) ||
+          edge.no_bet !== true || edge.betting_enabled !== false || edge.ledger_mutation !== false ||
+          !/^[0-9a-f]{64}$/.test(edge.edge_digest || '') || !Array.isArray(edge.candidate_outcomes) ||
+          edge.candidate_outcomes.some((outcome) => !['home', 'draw', 'away'].includes(outcome)) ||
+          (edge.highest_edge_outcome !== null && !['home', 'draw', 'away'].includes(edge.highest_edge_outcome))) return false;
+      if (!edge.outcomes || typeof edge.outcomes !== 'object' || Array.isArray(edge.outcomes)) return false;
+      if (edge.market_snapshot === null) return Object.keys(edge.outcomes).length === 0;
+      return edgeSnapshot(edge.market_snapshot, fixtureId, edge.evaluated_at) &&
+        hasExactKeys(edge.outcomes, ['home', 'draw', 'away']) &&
+        ['home', 'draw', 'away'].every((outcome) => edgeMeasurement(edge.outcomes[outcome]));
+    };
     const ids = new Set();
     for (const fixture of value.fixtures) {
-      if (!hasExactKeys(fixture, [
+      if ((!hasExactKeys(fixture, [
         'fixture_id', 'competition', 'source_prediction_record_id', 'source_identity',
         'canonical_identity', 'kickoff_utc', 'phase', 'probabilities',
         'prediction_cutoff', 'updated_at', 'model_release',
-      ]) || typeof fixture.fixture_id !== 'string' || !fixture.fixture_id ||
+      ]) && !hasExactKeys(fixture, [
+        'fixture_id', 'competition', 'source_prediction_record_id', 'source_identity',
+        'canonical_identity', 'kickoff_utc', 'phase', 'probabilities',
+        'prediction_cutoff', 'updated_at', 'model_release', 'edge_analysis',
+      ])) || typeof fixture.fixture_id !== 'string' || !fixture.fixture_id ||
           ids.has(fixture.fixture_id) || fixture.competition !== value.competition ||
           !['initial', 'refinement'].includes(fixture.phase) ||
           !probabilities(fixture.probabilities) ||
@@ -700,6 +758,10 @@ function _validatePublicNationsLeague(value) {
           !/^[0-9a-f]{64}$/.test(fixture.model_release.binding_digest || '') ||
           typeof fixture.model_release.training_cutoff !== 'string') {
         fail('malformed LIVE fixture');
+      }
+      if (Object.prototype.hasOwnProperty.call(fixture, 'edge_analysis') &&
+          !edgeAnalysis(fixture.edge_analysis, fixture.fixture_id, fixture.source_prediction_record_id)) {
+        fail('malformed LIVE edge analysis');
       }
       ids.add(fixture.fixture_id);
     }
