@@ -11,6 +11,11 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from src.analysis.nations_league_live_market_enrichment import (
+    NationsLeagueLiveMarketEnrichmentError,
+    append_market_enrichments,
+    load_market_enrichments,
+)
 from src.analysis.nations_league_live_runtime import (
     NationsLeagueLiveRuntimeError,
     load_live_store,
@@ -27,7 +32,9 @@ def _read(path: Path) -> dict:
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        raise NationsLeagueLiveMarketError("future fixture manifest is unreadable") from exc
+        raise NationsLeagueLiveMarketError(
+            "future fixture manifest is unreadable"
+        ) from exc
     if not isinstance(value, dict):
         raise NationsLeagueLiveMarketError("future fixture manifest must be an object")
     return value
@@ -36,7 +43,9 @@ def _read(path: Path) -> dict:
 def _campaign_records(path: Path) -> list[dict]:
     value = _read(path)
     records = value.get("records")
-    if not isinstance(records, list) or any(not isinstance(row, dict) for row in records):
+    if not isinstance(records, list) or any(
+        not isinstance(row, dict) for row in records
+    ):
         raise NationsLeagueLiveMarketError("forward campaign records are invalid")
     return records
 
@@ -53,6 +62,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument(
+        "--enrichment-store",
+        type=Path,
+        help="append-only store for post-prediction market edge enrichments",
+    )
+    parser.add_argument(
         "--preflight",
         action="store_true",
         help="perform only the provider-free due/idempotency decision",
@@ -63,20 +77,39 @@ def main(argv: list[str] | None = None) -> int:
         existing_records = load_live_store(args.store)
         if args.campaign is not None:
             existing_records.extend(_campaign_records(args.campaign))
+        existing_enrichments = (
+            load_market_enrichments(args.enrichment_store)
+            if args.enrichment_store is not None
+            else []
+        )
         if args.preflight:
             batch = prepare_market_preflight(
                 manifest,
                 as_of=args.as_of,
                 existing_records=existing_records,
+                existing_enrichments=existing_enrichments,
             )
         else:
             batch = acquire_live_market_snapshots(
                 manifest,
                 as_of=args.as_of,
                 existing_records=existing_records,
+                existing_enrichments=existing_enrichments,
             )
+            if args.enrichment_store is not None:
+                append_market_enrichments(
+                    args.enrichment_store,
+                    existing_enrichments,
+                    batch.get("market_enrichments", []),
+                )
         write_market_snapshot_batch(args.output, batch)
-    except (OSError, TypeError, NationsLeagueLiveMarketError, NationsLeagueLiveRuntimeError) as exc:
+    except (
+        OSError,
+        TypeError,
+        NationsLeagueLiveMarketError,
+        NationsLeagueLiveMarketEnrichmentError,
+        NationsLeagueLiveRuntimeError,
+    ) as exc:
         print(f"Nations League LIVE market capture blocked: {exc}", file=sys.stderr)
         return 2
     print(json.dumps(batch, ensure_ascii=False, sort_keys=True, indent=2))

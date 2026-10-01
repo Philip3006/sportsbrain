@@ -32,10 +32,12 @@ jobs:
           set -o pipefail
           MARKET_SELECTION_AS_OF="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           MARKET_SNAPSHOT_PATH="/tmp/nations-league-live-market-snapshots.json"
+          MARKET_ENRICHMENT_STORE="results/research/nations_league_v1_1_live_market_enrichment.jsonl"
           python3 scripts/acquire_nations_league_live_market.py \
             --manifest results/audits/nations_league_forward_fixture_manifest.json \
             --store results/research/nations_league_v1_1_live_prediction_store.jsonl \
             --campaign results/research/nations_league_v1_1_forward_campaign_20260930T200124Z.json \
+            --enrichment-store "$MARKET_ENRICHMENT_STORE" \
             --as-of "$MARKET_SELECTION_AS_OF" \
             --output "$MARKET_SNAPSHOT_PATH" \
             --preflight \
@@ -55,10 +57,12 @@ jobs:
         run: |
           set -o pipefail
           MARKET_SNAPSHOT_PATH="/tmp/nations-league-live-market-snapshots.json"
+          MARKET_ENRICHMENT_STORE="results/research/nations_league_v1_1_live_market_enrichment.jsonl"
           python3 scripts/acquire_nations_league_live_market.py \
             --manifest results/audits/nations_league_forward_fixture_manifest.json \
             --store results/research/nations_league_v1_1_live_prediction_store.jsonl \
             --campaign results/research/nations_league_v1_1_forward_campaign_20260930T200124Z.json \
+            --enrichment-store "$MARKET_ENRICHMENT_STORE" \
             --as-of "${{ steps.market_preflight.outputs.selection_as_of }}" \
             --output "$MARKET_SNAPSHOT_PATH" \
             | tee /tmp/nations-league-live-market-capture.json
@@ -77,6 +81,7 @@ jobs:
             --registry results/audits/continuous_model_lifecycle_registry.json \
             --campaign results/research/nations_league_v1_1_forward_campaign_20260930T200124Z.json \
             --store results/research/nations_league_v1_1_live_prediction_store.jsonl \
+            --market-enrichment-store results/research/nations_league_v1_1_live_market_enrichment.jsonl \
             --input-state-output /tmp/nations-league-live-input-state.json \
             --source-release-sha "$SOURCE_RELEASE_SHA" \
             --as-of "$CYCLE_AS_OF" \
@@ -90,6 +95,7 @@ jobs:
             --registry results/audits/continuous_model_lifecycle_registry.json \
             --binding results/audits/nations_league_v1_1_live_evidence_binding.json \
             --store results/research/nations_league_v1_1_live_prediction_store.jsonl \
+            --market-enrichment-store results/research/nations_league_v1_1_live_market_enrichment.jsonl \
             --input docs/data/signals.json \
             --as-of "$CYCLE_AS_OF" \
             --output docs/data/signals.json
@@ -98,6 +104,7 @@ jobs:
             --registry results/audits/continuous_model_lifecycle_registry.json \
             --binding results/audits/nations_league_v1_1_live_evidence_binding.json \
             --store results/research/nations_league_v1_1_live_prediction_store.jsonl \
+            --market-enrichment-store results/research/nations_league_v1_1_live_market_enrichment.jsonl \
             --input docs/data/signals_philip.json \
             --as-of "$CYCLE_AS_OF" \
             --output docs/data/signals_philip.json
@@ -154,5 +161,8 @@ jobs:
             docs/data/signals_philip.json
           if [ -f results/research/nations_league_v1_1_live_prediction_store.jsonl ]; then
             git add results/research/nations_league_v1_1_live_prediction_store.jsonl
+          fi
+          if [ -f results/research/nations_league_v1_1_live_market_enrichment.jsonl ]; then
+            git add results/research/nations_league_v1_1_live_market_enrichment.jsonl
           fi
           bash scripts/_bot_commit_push.sh "auto: Nations League LIVE lifecycle cycle"

@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from src.analysis.nations_league_live_market_enrichment import load_market_enrichments
 from src.analysis.nations_league_live_runtime import load_live_store
 from src.analysis.nations_league_model_lifecycle import active_release_from_registry
 from src.notifications.nations_league_live_public import (
@@ -51,16 +52,23 @@ def materialize(
     store: Path | None,
     output: Path,
     as_of: str,
+    market_enrichment_store: Path | None = None,
 ) -> dict:
     release = active_release_from_registry(_json(registry))
     records = _campaign_records(campaign)
     if store is not None:
         records.extend(load_live_store(store))
+    enrichments = (
+        load_market_enrichments(market_enrichment_store)
+        if market_enrichment_store is not None
+        else []
+    )
     bundle = build_live_public_nations_league(
         records,
         active_release=release,
         evidence_binding=_json(binding),
         as_of=as_of,
+        market_enrichments=enrichments,
     )
     snapshots = [_json(path) for path in inputs]
     if not snapshots:
@@ -80,6 +88,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--binding", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--store", type=Path)
+    parser.add_argument("--market-enrichment-store", type=Path)
     parser.add_argument("--input", dest="inputs", action="append", type=Path)
     parser.add_argument("--as-of", required=True)
     args = parser.parse_args(argv)
@@ -90,6 +99,7 @@ def main(argv: list[str] | None = None) -> int:
             binding=args.binding,
             inputs=args.inputs or [],
             store=args.store,
+            market_enrichment_store=args.market_enrichment_store,
             output=args.output,
             as_of=args.as_of,
         )

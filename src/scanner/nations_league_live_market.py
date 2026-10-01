@@ -22,6 +22,12 @@ from src.analysis.nations_league_live_edge import (
     NationsLeagueLiveEdgeError,
     build_market_snapshot,
 )
+from src.analysis.nations_league_live_market_enrichment import (
+    NationsLeagueLiveMarketEnrichmentError,
+    build_market_enrichment,
+    record_has_valid_market_edge,
+    validate_market_enrichment,
+)
 from src.analysis.nations_league_live_runtime import due_phase
 from src.config import canonical_name
 from src.data.isports_api import (
@@ -177,6 +183,7 @@ def _manifest_targets(
     *,
     as_of: datetime,
     existing_records: Iterable[Mapping[str, Any]] = (),
+    existing_enrichments: Iterable[Mapping[str, Any]] = (),
 ) -> list[dict[str, Any]]:
     if manifest.get("competition") != "UEFA Nations League":
         raise NationsLeagueLiveMarketError("wrong future fixture manifest")
@@ -193,7 +200,37 @@ def _manifest_targets(
 
     seen_ids: set[str] = set()
     seen_identities: set[tuple[str, str, str]] = set()
-    captured_phases = _captured_phases(existing_records)
+    existing_list = list(existing_records)
+    captured_phases = _captured_phases(existing_list)
+    live_by_record_id = {
+        record.get("record_id"): record
+        for record in existing_list
+        if record.get("status") == "LIVE"
+    }
+    market_ready: set[tuple[str, str]] = set()
+    for enrichment in existing_enrichments:
+        record = live_by_record_id.get(enrichment.get("prediction_record_id"))
+        if record is None:
+            raise NationsLeagueLiveMarketError(
+                "market enrichment has no stored LIVE prediction"
+            )
+        try:
+            validated_enrichment = validate_market_enrichment(enrichment, record=record)
+        except NationsLeagueLiveMarketEnrichmentError as exc:
+            raise NationsLeagueLiveMarketError(str(exc)) from exc
+        market_ready.add(
+            (validated_enrichment["fixture_id"], validated_enrichment["phase"])
+        )
+    live_keys = {
+        (record.get("fixture_id"), record.get("phase"))
+        for record in existing_list
+        if record.get("status") == "LIVE"
+    }
+    market_ready.update(
+        (record.get("fixture_id"), record.get("phase"))
+        for record in existing_list
+        if record.get("status") == "LIVE" and record_has_valid_market_edge(record)
+    )
     due: list[dict[str, Any]] = []
     for raw in fixtures:
         if not isinstance(raw, Mapping):
@@ -214,7 +251,13 @@ def _manifest_targets(
             raise NationsLeagueLiveMarketError("ambiguous future fixture identity")
         seen_identities.add(identity)
         phase, state = due_phase(_stamp(kickoff), _stamp(as_of))
-        if phase is not None and (fixture_id, phase) not in captured_phases:
+        if phase is not None and (
+            (fixture_id, phase) not in captured_phases
+            or (
+                (fixture_id, phase) in live_keys
+                and (fixture_id, phase) not in market_ready
+            )
+        ):
             due.append(
                 {
                     "fixture_id": fixture_id,
@@ -302,6 +345,46 @@ def _isports_error_reason(exc: BaseException) -> str:
     return f"isports_api_error:{type(exc).__name__}"
 
 
+def _market_enrichments_for_snapshots(
+    snapshots: Iterable[Mapping[str, Any]],
+    *,
+    existing_records: Iterable[Mapping[str, Any]],
+    existing_enrichments: Iterable[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    live_records = [
+        record for record in existing_records if record.get("status") == "LIVE"
+    ]
+    existing_record_ids = {
+        row.get("prediction_record_id") for row in existing_enrichments
+    }
+    enrichments: list[dict[str, Any]] = []
+    for snapshot in snapshots:
+        record = next(
+            (
+                candidate
+                for candidate in live_records
+                if candidate.get("fixture_id") == snapshot.get("fixture_id")
+                and due_phase(
+                    str(candidate.get("kickoff_utc")),
+                    str(snapshot.get("captured_at")),
+                )[0]
+                == candidate.get("phase")
+            ),
+            None,
+        )
+        if record is None or record_has_valid_market_edge(record):
+            continue
+        if record.get("record_id") in existing_record_ids:
+            continue
+        try:
+            enrichments.append(build_market_enrichment(record, snapshot))
+        except (NationsLeagueLiveMarketEnrichmentError, ValueError):
+            # Keep the valid snapshot available to the provider-free lifecycle;
+            # never bind it to a malformed or mismatched prediction record.
+            continue
+    return enrichments
+
+
 def _record_isports_error(exc: BaseException) -> None:
     from src.signals.provider_budget import record_error
 
@@ -374,7 +457,7 @@ def _fetch_isports_market_snapshots(
         else:
             target_fixtures.append(matches[0])
 
-    if failures or not target_fixtures:
+    if not target_fixtures:
         return (
             [],
             1,
@@ -418,6 +501,8 @@ def _fetch_isports_market_snapshots(
     quote_updated_at: dict[str, str] = {}
     for target in due_targets:
         fixture_id = target["fixture_id"]
+        if fixture_id in failures:
+            continue
         matches = _isports_target_matches(target_fixtures, target)
         if len(matches) != 1:
             failures[fixture_id] = "ambiguous_provider_fixture_identity"
@@ -496,6 +581,7 @@ def _batch(
     request_count: int,
     retry_count: int,
     needs_provider: bool,
+    market_enrichments: list[dict[str, Any]] | None = None,
     selected_provider: str | None = None,
     provider_trace: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
@@ -525,6 +611,7 @@ def _batch(
             for target in due_targets
         ],
         "snapshots": snapshots,
+        "market_enrichments": list(market_enrichments or []),
         "status": status,
         "failure_reasons": dict(sorted(failure_reasons.items())),
         "request": dict(request) if request is not None else None,
@@ -554,14 +641,18 @@ def prepare_market_preflight(
     *,
     as_of: str,
     existing_records: Iterable[Mapping[str, Any]] = (),
+    existing_enrichments: Iterable[Mapping[str, Any]] = (),
 ) -> dict[str, Any]:
     """Build a zero-network provider-need decision and empty batch."""
 
     selection_clock = _utc(as_of, "as_of")
+    existing_records = list(existing_records)
+    existing_enrichments = list(existing_enrichments)
     due_targets = _manifest_targets(
         manifest,
         as_of=selection_clock,
         existing_records=existing_records,
+        existing_enrichments=existing_enrichments,
     )
     needs_provider = bool(due_targets)
     primary_state = _primary_provider_state(now=selection_clock)
@@ -601,6 +692,7 @@ def acquire_live_market_snapshots(
     *,
     as_of: str,
     existing_records: Iterable[Mapping[str, Any]] = (),
+    existing_enrichments: Iterable[Mapping[str, Any]] = (),
     fetcher: Callable[[], tuple[list[dict[str, Any]], int, int, dict[str, Any]]]
     | None = None,
     isports_transport: Callable[..., Any] | None = None,
@@ -615,10 +707,13 @@ def acquire_live_market_snapshots(
     """
 
     selection_clock = _utc(as_of, "as_of")
+    existing_records = list(existing_records)
+    existing_enrichments = list(existing_enrichments)
     due_targets = _manifest_targets(
         manifest,
         as_of=selection_clock,
         existing_records=existing_records,
+        existing_enrichments=existing_enrichments,
     )
     selection_stamp = _stamp(selection_clock)
 
@@ -811,6 +906,11 @@ def acquire_live_market_snapshots(
                     due_targets=due_targets,
                     snapshots=snapshots,
                     status=status,
+                    market_enrichments=_market_enrichments_for_snapshots(
+                        snapshots,
+                        existing_records=existing_records,
+                        existing_enrichments=existing_enrichments,
+                    ),
                     failure_reasons=failures,
                     request=request,
                     request_count=sum(provider_request_counts.values()),
@@ -948,6 +1048,11 @@ def acquire_live_market_snapshots(
         due_targets=due_targets,
         snapshots=snapshots,
         status=status,
+        market_enrichments=_market_enrichments_for_snapshots(
+            snapshots,
+            existing_records=existing_records,
+            existing_enrichments=existing_enrichments,
+        ),
         failure_reasons=failures,
         request=request,
         request_count=request_count,
