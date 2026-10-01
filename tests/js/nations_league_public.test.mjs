@@ -172,6 +172,63 @@ test('LIVE Nations League projection passes the serializer boundary without bett
   assert.equal(await appNlHelpers().valid(live), true);
 });
 
+test('LIVE edge analysis is public-safe, causal, and remains read-only', async () => {
+  const live = JSON.parse(readFileSync(resolve(__dir, '../../docs/data/signals.json'), 'utf8')).nations_league;
+  const payload = structuredClone(live);
+  const fixture = payload.fixtures[0];
+  const evaluatedAt = fixture.prediction_cutoff;
+  const capturedAt = new Date(Date.parse(evaluatedAt) - 1000).toISOString();
+  const model = fixture.probabilities;
+  const snapshot = {
+    schema: 'nations-league-live-market-snapshot-v1',
+    provider: 'isports_api',
+    bookmaker: 'Research bookmaker median',
+    captured_at: capturedAt,
+    fixture_id: fixture.fixture_id,
+    odds_decimal: { home: 2, draw: 3.5, away: 4 },
+    overround: 0.035714,
+    margin_free_probabilities: { home: 0.482759, draw: 0.275862, away: 0.241379 },
+    snapshot_digest: 'd'.repeat(64),
+  };
+  fixture.edge_analysis = {
+    schema: 'nations-league-live-edge-v1',
+    fixture_id: fixture.fixture_id,
+    phase: fixture.phase,
+    model_release_id: payload.model_release.release_id,
+    prediction_record_id: fixture.source_prediction_record_id,
+    evaluated_at: evaluatedAt,
+    market_snapshot: snapshot,
+    outcomes: Object.fromEntries(['home', 'draw', 'away'].map((outcome) => [outcome, {
+      decimal_odds: snapshot.odds_decimal[outcome],
+      model_probability: model[outcome],
+      market_probability: snapshot.margin_free_probabilities[outcome],
+      probability_edge: model[outcome] - snapshot.margin_free_probabilities[outcome],
+      ev: model[outcome] * snapshot.odds_decimal[outcome] - 1,
+    }])),
+    candidate_outcomes: ['home'],
+    highest_edge_outcome: 'home',
+    edge_status: 'EDGE_MEASURED',
+    no_bet: true,
+    betting_enabled: false,
+    ledger_mutation: false,
+    edge_digest: 'e'.repeat(64),
+  };
+  bindPublicDigest(payload);
+  assert.equal(await validatePublicNationsLeagueDigest(payload), true);
+  assert.deepEqual(serializePublicProduct({ nations_league: payload }).nations_league, payload);
+  assert.equal(await appNlHelpers().valid(payload), true);
+  const rendered = renderLive(payload);
+  assert.match(rendered.innerHTML, /Research edge/);
+  assert.match(rendered.innerHTML, /isports_api/);
+  assert.match(rendered.innerHTML, /NO BET/);
+  assert.doesNotMatch(rendered.innerHTML, /stake|bankroll|place-bet/i);
+
+  const privatePayload = structuredClone(payload);
+  privatePayload.fixtures[0].edge_analysis.stake = 1;
+  bindPublicDigest(privatePayload);
+  assert.throws(() => serializePublicProduct({ nations_league: privatePayload }), /Nations League/);
+});
+
 test('expired LIVE projection accepts zero current fixtures and PWA hides the panel', async () => {
   const live = JSON.parse(readFileSync(resolve(__dir, '../../docs/data/signals.json'), 'utf8')).nations_league;
   const expired = structuredClone(live);

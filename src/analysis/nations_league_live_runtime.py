@@ -21,6 +21,10 @@ from src.analysis.nations_league_forward_input import (
     build_input_state,
     predict_from_input_state,
 )
+from src.analysis.nations_league_live_edge import (
+    build_edge_analysis,
+    validate_edge_analysis,
+)
 from src.analysis.nations_league_model_lifecycle import (
     FROZEN_ALGORITHM_DIGEST,
     NationsLeagueLifecycleError,
@@ -206,6 +210,7 @@ def build_live_prediction(
     phase: str,
     active_release: ModelRelease,
     captured_at: str,
+    market_snapshots: Iterable[Mapping[str, Any]] = (),
 ) -> dict[str, Any]:
     """Create one provider-free LIVE record from a READY #229 input-state.
 
@@ -246,15 +251,17 @@ def build_live_prediction(
         "home_team": home_binding["canonical_team"],
         "away_team": away_binding["canonical_team"],
     }
+    record_id = _digest(
+        {
+            "fixture_id": fixture_id,
+            "phase": phase,
+            "release_id": active_release.release_id,
+            "input_snapshot_digest": input_state["input_snapshot_digest"],
+        }
+    )
+    prediction_timestamp = _stamp(captured)
     return {
-        "record_id": _digest(
-            {
-                "fixture_id": fixture_id,
-                "phase": phase,
-                "release_id": active_release.release_id,
-                "input_snapshot_digest": input_state["input_snapshot_digest"],
-            }
-        ),
+        "record_id": record_id,
         "record_type": "prediction",
         "status": LIVE,
         "competition": COMPETITION,
@@ -269,8 +276,8 @@ def build_live_prediction(
         "canonical_identity": canonical_identity,
         "kickoff_utc": fixture["kickoff_utc"],
         "phase": phase,
-        "prediction_timestamp": _stamp(captured),
-        "updated_at": _stamp(captured),
+        "prediction_timestamp": prediction_timestamp,
+        "updated_at": prediction_timestamp,
         "probabilities": probabilities,
         "model_release_id": active_release.release_id,
         "model_version": MODEL_VERSION,
@@ -286,6 +293,15 @@ def build_live_prediction(
         "betting_enabled": False,
         "publication_enabled": True,
         "ledger_mutation": False,
+        "edge_analysis": build_edge_analysis(
+            probabilities,
+            fixture_id=fixture_id,
+            phase=phase,
+            model_release_id=active_release.release_id,
+            prediction_record_id=record_id,
+            prediction_timestamp=prediction_timestamp,
+            market_snapshots=market_snapshots,
+        ),
     }
 
 
@@ -372,6 +388,7 @@ def run_live_cycle(
     existing_records: Iterable[Mapping[str, Any]] = (),
     prediction_builder: Callable[..., dict[str, Any]] = build_live_prediction,
     execute: bool = False,
+    market_snapshots: Mapping[str, Iterable[Mapping[str, Any]]] | None = None,
 ) -> dict[str, Any]:
     """Plan or materialize due LIVE predictions without network side effects."""
 
@@ -421,12 +438,19 @@ def run_live_cycle(
             if key in existing or (fixture["fixture_id"], phase) in existing_phases:
                 row["status"] = "ALREADY_CAPTURED"
             elif execute:
+                builder_kwargs: dict[str, Any] = {
+                    "phase": phase,
+                    "active_release": active_release,
+                    "captured_at": _stamp(clock),
+                }
+                if market_snapshots is not None:
+                    builder_kwargs["market_snapshots"] = market_snapshots.get(
+                        fixture["fixture_id"], ()
+                    )
                 appended_record = prediction_builder(
                     input_state,
                     fixture["fixture_id"],
-                    phase=phase,
-                    active_release=active_release,
-                    captured_at=_stamp(clock),
+                    **builder_kwargs,
                 )
                 if appended_record.get("status") != LIVE or appended_record.get("no_bet") is not True:
                     raise NationsLeagueLiveRuntimeError("live prediction safety contract failed")
@@ -524,6 +548,15 @@ def _validate_live_store_record(row: Mapping[str, Any]) -> None:
     for field in ("prediction_timestamp", "kickoff_utc", "training_cutoff"):
         _utc(str(row.get(field, "")), field)
     _probabilities(row.get("probabilities"))
+    if "edge_analysis" in row:
+        try:
+            validate_edge_analysis(
+                row["edge_analysis"],
+                fixture_id=row["fixture_id"],
+                prediction_record_id=row["record_id"],
+            )
+        except ValueError as exc:
+            raise NationsLeagueLiveRuntimeError(str(exc)) from exc
     for field in ("source_identity", "canonical_identity"):
         identity = row.get(field)
         if (

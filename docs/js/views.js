@@ -552,7 +552,17 @@ function renderNationsLeagueLive(payload) {
     const kickoff = new Date(fixture.kickoff_utc).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
     const rows = [['1', teams.home_team, probabilities.home], ['X', 'Remis', probabilities.draw], ['2', teams.away_team, probabilities.away]].map(([label, team, value]) =>
       `<div class="nl-shadow-outcome"><span>${esc(label)} · ${esc(team)}</span><b>${pct(value)}</b></div>`).join('');
-    return `<article class="nl-shadow-fixture"><div class="nl-shadow-fixture-title"><b>${esc(teams.home_team)} vs ${esc(teams.away_team)}</b><span>${kickoff}</span></div>${rows}<small>LIVE · ${esc(fixture.phase)} · Modell ${esc(fixture.model_release_id || payload.model_release?.release_id || '—')} · NO BET</small></article>`;
+    const edge = fixture.edge_analysis;
+    let edgeHtml = '';
+    if (edge && edge.edge_status === 'EDGE_MEASURED' && edge.market_snapshot && edge.outcomes) {
+      const market = edge.market_snapshot;
+      const edgeRows = [['1', teams.home_team, edge.outcomes.home], ['X', 'Remis', edge.outcomes.draw], ['2', teams.away_team, edge.outcomes.away]].map(([label, team, item]) =>
+        `<div class="nl-shadow-outcome"><span>${esc(label)} · ${esc(team)} · Quote ${Number(item.decimal_odds).toFixed(2)} · Markt ${pct(item.market_probability)} · Δ ${pct(item.probability_edge)}</span><b>EV ${pct(item.ev)}</b></div>`).join('');
+      edgeHtml = `<div class="nl-live-edge"><small>Research edge · ${esc(market.provider)} · ${esc(market.bookmaker)} · NO BET</small>${edgeRows}</div>`;
+    } else if (edge && typeof edge.edge_status === 'string') {
+      edgeHtml = `<div class="nl-live-edge"><small>Research edge · ${esc(edge.edge_status)} · NO BET</small></div>`;
+    }
+    return `<article class="nl-shadow-fixture"><div class="nl-shadow-fixture-title"><b>${esc(teams.home_team)} vs ${esc(teams.away_team)}</b><span>${kickoff}</span></div>${rows}${edgeHtml}<small>LIVE · ${esc(fixture.phase)} · Modell ${esc(fixture.model_release_id || payload.model_release?.release_id || '—')} · NO BET</small></article>`;
   });
   if (!fixtures.length || fixtures.some((fixture) => fixture === null)) {
     container.replaceChildren();
