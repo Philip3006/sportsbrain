@@ -1,18 +1,16 @@
 """Safely republish canonical local SportsBrain state to the signals Worker.
 
-This recovery path deliberately performs no sports-provider requests. In the
-healthy case it reads the existing public/per-user snapshots and delegates
-reconstruction and upload to the canonical dashboard writer. If the public
-Worker read is already HTTP 500, it uses the authenticated, NL-only Worker
-merge gate so a valid committed LIVE bundle can repair only that field.
+This recovery path deliberately performs no sports-provider requests. It uses
+the authenticated, NL-only Worker merge gate whenever the public Worker is
+healthy but its Nations League digest is stale, and also when the public read
+is already HTTP 500 so a valid committed LIVE bundle can repair only that
+field.
 """
 
 from __future__ import annotations
 
 import argparse
-import contextlib
 import hashlib
-import io
 import json
 import os
 import re
@@ -155,6 +153,11 @@ def _validated_nl(value: object, expected_digest: str, now: datetime) -> dict:
     return public
 
 
+def _no_network_wm_scores(*_args, **_kwargs) -> list:
+    """Retained test seam; the healthy republish path no longer uses it."""
+    return []
+
+
 def _normal_team(value: object) -> str:
     if not isinstance(value, str):
         return ""
@@ -168,11 +171,6 @@ def _row_teams(row: Mapping) -> tuple[str, str]:
     if (not home or not away) and isinstance(match, str) and " vs " in match:
         home, away = match.split(" vs ", 1)
     return _normal_team(home), _normal_team(away)
-
-
-def _no_network_wm_scores(*_args, **_kwargs) -> list:
-    """Replacement for the writer's single embedded provider fetch."""
-    return []
 
 
 def _row_kickoff(row: Mapping) -> datetime | None:
@@ -422,6 +420,7 @@ def republish(
             return summary
 
         before = _response_document(before_response)
+        _assert_public_worker_document(before)
         _record_worker(summary, "before", before_response, before)
         before_updated = _timestamp(before.get("updated"))
         worker_football = _public_array(before, "football")
@@ -440,77 +439,30 @@ def republish(
         football_hash_before = _canonical_hash(worker_football)
         tennis_hash_before = _canonical_hash(worker_tennis)
 
-        # The writer's one embedded score-provider fetch is neutralized before
-        # the writer module is imported. Its deterministic empty response keeps
-        # existing wm_results intact and cannot perform network I/O.
-        from src.data import odds_api
-
-        original_fetch_wm_scores = odds_api.fetch_wm_scores
-        provider_fetch_invocations = 0
-
-        def no_network_wm_scores(*_args, **_kwargs):
-            nonlocal provider_fetch_invocations
-            provider_fetch_invocations += 1
-            return _no_network_wm_scores(*_args, **_kwargs)
-
-        odds_api.fetch_wm_scores = no_network_wm_scores
-        try:
-            from src.notifications import web_dashboard
-
-            original_root = web_dashboard.ROOT
-            original_uploader = web_dashboard.upload_signals_to_cloud
-            original_post = requests.post
-            web_dashboard.ROOT = root
-            upload_invocations = 0
-            post_invocations = 0
-
-            def guarded_uploader(*args, **kwargs):
-                nonlocal upload_invocations
-                payload = kwargs.get("payload")
-                if not isinstance(payload, dict):
+        before_nl_value = before.get("nations_league")
+        if before_nl_value is not None:
+            if not isinstance(before_nl_value, Mapping):
+                raise RepublishBlocked
+            before_digest = before_nl_value.get("public_digest")
+            if not isinstance(before_digest, str) or not _SHA256.fullmatch(
+                before_digest
+            ):
+                raise RepublishBlocked
+            _validated_nl(
+                before_nl_value,
+                before_digest,
+                current_time().astimezone(timezone.utc),
+            )
+            if before_digest == expected_nl_digest:
+                if before_nl_value.get("fixture_count") != public_nl["fixture_count"]:
                     raise RepublishBlocked
-                candidate_nl = _validated_nl(
-                    payload.get("nations_league"),
-                    expected_nl_digest,
-                    current_time().astimezone(timezone.utc),
-                )
-                football_payload = _public_array(payload, "football")
-                if _contains_nl_fixture(football_payload, candidate_nl):
-                    raise RepublishBlocked
-                upload_invocations += 1
-                return original_uploader(*args, **kwargs)
+                summary["cloud_upload_success"] = True
+                summary["status"] = READY
+                return summary
 
-            def single_no_redirect_post(*args, **kwargs):
-                nonlocal post_invocations
-                if post_invocations:
-                    raise RepublishBlocked
-                post_invocations += 1
-                kwargs["allow_redirects"] = False
-                return original_post(*args, **kwargs)
-
-            web_dashboard.upload_signals_to_cloud = guarded_uploader
-            requests.post = single_no_redirect_post
-            try:
-                # No football or tennis replacement arrays: preserve the
-                # canonical per-user sections and shared NL fallback.
-                with (
-                    contextlib.redirect_stdout(io.StringIO()),
-                    contextlib.redirect_stderr(io.StringIO()),
-                ):
-                    writer_ok = web_dashboard.write_signals_json()
-            finally:
-                web_dashboard.upload_signals_to_cloud = original_uploader
-                web_dashboard.ROOT = original_root
-                requests.post = original_post
-        finally:
-            odds_api.fetch_wm_scores = original_fetch_wm_scores
-
-        if (
-            writer_ok is not True
-            or upload_invocations != 1
-            or post_invocations != 1
-            or provider_fetch_invocations != 1
-        ):
+        recovery_response = _worker_recover_nl(url, token, public_nl)
+        summary["worker_recovery_status"] = recovery_response.status_code
+        if recovery_response.status_code != 200:
             raise RepublishBlocked
         summary["cloud_upload_success"] = True
 
