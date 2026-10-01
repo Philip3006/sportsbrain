@@ -65,10 +65,14 @@ test('standard Tennis signal-card path carries the canonical actionability field
     'data-signal-id', 'data-signal-status', 'data-current-odds',
     'data-current-ev', 'data-odds-ts', 'data-event-status',
     'data-fixture-key', 'data-league', 'data-source',
+    'data-shadow', 'data-is-shadow', 'data-unsupported',
+    'data-edge-lost', 'data-stale', 'data-no-bet-flag',
   ]) {
     assert.match(viewsSource, new RegExp(attr.replaceAll('-', '\\-')));
   }
   assert.match(viewsSource, /:\s*\(!_isValueActionable\)/);
+  assert.match(viewsSource, /isActionableValueSignal\(s, _currentBankroll\(\), \(_openBets \|\| \[\]\)\.length\)/);
+  assert.match(viewsSource, /class="place-bet-btn"/);
 });
 
 test('deep-link path preserves the same canonical Tennis identity and gates', () => {
@@ -113,7 +117,7 @@ test('deep-link path does not manufacture identity for a missing signal_id', () 
 
 
 test('core betting frontend assets use the same cache-bust release', () => {
-  const release = '20261002-pwa-bet-flow';
+  const release = '20261002-detail-bet-cta';
   for (const asset of ['app', 'views', 'bets']) {
     assert.match(indexSource, new RegExp(`src="js/\${asset}\\.js\\?v=\${release}"`));
   }
