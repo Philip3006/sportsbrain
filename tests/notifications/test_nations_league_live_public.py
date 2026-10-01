@@ -6,10 +6,14 @@ from pathlib import Path
 
 import pytest
 
+from src.analysis.nations_league_live_edge import (
+    build_edge_analysis,
+    build_market_snapshot,
+)
+from src.analysis.nations_league_live_market_enrichment import build_market_enrichment
 from src.analysis.nations_league_live_runtime import (
     build_fresh_input_state,
 )
-from src.analysis.nations_league_live_edge import build_edge_analysis, build_market_snapshot
 from src.analysis.nations_league_model_lifecycle import establish_initial_active_release
 from src.notifications.nations_league_live_public import (
     NationsLeagueLivePublicError,
@@ -45,8 +49,10 @@ def _binding() -> dict:
 
 def test_seven_immutable_real_records_are_live_serializable_without_sample_gate():
     output = build_live_public_nations_league(
-        _records(), active_release=_active_release(), evidence_binding=_binding(),
-        as_of="2026-09-30T20:01:24Z"
+        _records(),
+        active_release=_active_release(),
+        evidence_binding=_binding(),
+        as_of="2026-09-30T20:01:24Z",
     )
     assert output["status"] == "LIVE"
     assert output["publication_enabled"] is True
@@ -57,7 +63,9 @@ def test_seven_immutable_real_records_are_live_serializable_without_sample_gate(
     assert output["model_release"]["release_id"] == _active_release().release_id
     source = _records()[0]
     projected = next(
-        item for item in output["fixtures"] if item["fixture_id"] == source["fixture_id"]
+        item
+        for item in output["fixtures"]
+        if item["fixture_id"] == source["fixture_id"]
     )
     assert projected["probabilities"] == source["probabilities"]
     assert projected["edge_analysis"]["edge_status"] == "NO_MARKET_SNAPSHOT"
@@ -87,10 +95,14 @@ def test_public_live_edge_exposes_approved_market_measurements_without_financial
         market_snapshots=[snapshot],
     )
     output = build_live_public_nations_league(
-        records, active_release=release, evidence_binding=_binding(),
-        as_of="2026-09-30T20:01:24Z"
+        records,
+        active_release=release,
+        evidence_binding=_binding(),
+        as_of="2026-09-30T20:01:24Z",
     )
-    edge = next(row for row in output["fixtures"] if row["fixture_id"] == source["fixture_id"])["edge_analysis"]
+    edge = next(
+        row for row in output["fixtures"] if row["fixture_id"] == source["fixture_id"]
+    )["edge_analysis"]
     assert edge["market_snapshot"]["provider"] == "isports_api"
     assert edge["outcomes"]["home"]["ev"] == pytest.approx(
         source["probabilities"]["home"] * 2.0 - 1.0, abs=1e-6
@@ -101,15 +113,80 @@ def test_public_live_edge_exposes_approved_market_measurements_without_financial
     source["edge_analysis"]["stake"] = 1
     with pytest.raises(NationsLeagueLivePublicError, match="private financial"):
         build_live_public_nations_league(
-            records, active_release=release, evidence_binding=_binding(),
-            as_of="2026-09-30T20:01:24Z"
+            records,
+            active_release=release,
+            evidence_binding=_binding(),
+            as_of="2026-09-30T20:01:24Z",
         )
+
+
+def test_public_projection_uses_newest_market_enrichment_without_rewriting_record():
+    release = _active_release()
+    source = deepcopy(_records()[0])
+    original = deepcopy(source)
+    source.update(
+        {
+            "status": "LIVE",
+            "publication_enabled": True,
+            "betting_enabled": False,
+            "model_release_id": release.release_id,
+            "algorithm_digest": release.snapshot.algorithm_digest,
+            "model_digest": release.snapshot.algorithm_digest,
+            "training_data_digest": release.snapshot.training_data_digest,
+            "trained_state_digest": release.snapshot.trained_state_digest,
+            "training_cutoff": release.snapshot.training_cutoff,
+        }
+    )
+    snapshot = build_market_snapshot(
+        {
+            "provider": "isports_api",
+            "bookmaker": "Reviewed bookmaker median",
+            "captured_at": "2026-09-30T19:00:00Z",
+            "fixture_id": source["fixture_id"],
+            "provider_match_id": "recovery-match",
+            "odds_decimal": {"home": 2.2, "draw": 3.4, "away": 3.1},
+        }
+    )
+    enrichment = build_market_enrichment(source, snapshot)
+    output = build_live_public_nations_league(
+        [source, *_records()[1:]],
+        active_release=release,
+        evidence_binding=_binding(),
+        as_of="2026-09-30T19:01:00Z",
+        market_enrichments=[enrichment],
+    )
+
+    assert source == original | {
+        "status": "LIVE",
+        "publication_enabled": True,
+        "betting_enabled": False,
+        "model_release_id": release.release_id,
+        "algorithm_digest": release.snapshot.algorithm_digest,
+        "model_digest": release.snapshot.algorithm_digest,
+        "training_data_digest": release.snapshot.training_data_digest,
+        "trained_state_digest": release.snapshot.trained_state_digest,
+        "training_cutoff": release.snapshot.training_cutoff,
+    }
+    projected = next(
+        row for row in output["fixtures"] if row["fixture_id"] == source["fixture_id"]
+    )
+    assert projected["source_prediction_record_id"] == source["record_id"]
+    assert projected["prediction_cutoff"] == source["prediction_timestamp"]
+    assert (
+        projected["edge_analysis"]["market_snapshot"]["snapshot_digest"]
+        == snapshot["snapshot_digest"]
+    )
+    assert projected["edge_analysis"]["evaluated_at"] == "2026-09-30T19:00:00Z"
+    assert projected["edge_analysis"]["edge_status"] in {"EDGE_MEASURED", "NO_EDGE"}
+    assert validate_live_public_nations_league(output) == output
 
 
 def test_source_and_canonical_team_identity_are_both_preserved_for_alias_binding():
     output = build_live_public_nations_league(
-        _records(), active_release=_active_release(), evidence_binding=_binding(),
-        as_of="2026-09-30T20:01:24Z"
+        _records(),
+        active_release=_active_release(),
+        evidence_binding=_binding(),
+        as_of="2026-09-30T20:01:24Z",
     )
     ireland = next(
         item
@@ -152,10 +229,10 @@ def test_zero_fixture_view_transitions_once_and_is_stable_after_expiry():
     assert validate_live_public_nations_league(first) == first
     assert all(bundle == first for bundle in later)
     assert all(bundle["public_digest"] == first["public_digest"] for bundle in later)
-    assert [
-        row["source_prediction_record_ids"]
-        for row in first["audit_history"]
-    ] == [[record["record_id"]] for record in sorted(records, key=lambda item: item["fixture_id"])]
+    assert [row["source_prediction_record_ids"] for row in first["audit_history"]] == [
+        [record["record_id"]]
+        for record in sorted(records, key=lambda item: item["fixture_id"])
+    ]
 
     changed = deepcopy(records)
     changed[0]["probabilities"]["home"] += 0.001
@@ -189,16 +266,35 @@ def test_refinement_replaces_initial_only_in_public_view_and_keeps_audit_history
     import hashlib
 
     binding["binding_digest"] = hashlib.sha256(
-        json.dumps(body, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
+        json.dumps(
+            body,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        ).encode("utf-8")
     ).hexdigest()
     output = build_live_public_nations_league(
-        [*records, refined], active_release=_active_release(), evidence_binding=binding,
-        as_of="2026-09-30T20:01:24Z"
+        [*records, refined],
+        active_release=_active_release(),
+        evidence_binding=binding,
+        as_of="2026-09-30T20:01:24Z",
     )
-    fixture = next(item for item in output["fixtures"] if item["fixture_id"] == refined["fixture_id"])
+    fixture = next(
+        item
+        for item in output["fixtures"]
+        if item["fixture_id"] == refined["fixture_id"]
+    )
     assert fixture["phase"] == "refinement"
-    audit = next(item for item in output["audit_history"] if item["fixture_id"] == refined["fixture_id"])
-    assert audit["source_prediction_record_ids"] == [records[0]["record_id"], refined["record_id"]]
+    audit = next(
+        item
+        for item in output["audit_history"]
+        if item["fixture_id"] == refined["fixture_id"]
+    )
+    assert audit["source_prediction_record_ids"] == [
+        records[0]["record_id"],
+        refined["record_id"],
+    ]
 
 
 def test_state_or_source_substitution_fails_closed():
@@ -206,8 +302,10 @@ def test_state_or_source_substitution_fails_closed():
     binding["source_records"][0]["trained_state_digest"] = "b" * 64
     with pytest.raises(NationsLeagueLivePublicError, match="binding digest"):
         build_live_public_nations_league(
-            _records(), active_release=_active_release(), evidence_binding=binding,
-            as_of="2026-09-30T20:01:24Z"
+            _records(),
+            active_release=_active_release(),
+            evidence_binding=binding,
+            as_of="2026-09-30T20:01:24Z",
         )
 
 
@@ -256,12 +354,16 @@ def test_future_live_refinement_carries_its_own_release_and_keeps_initial_audit(
         ).encode()
     ).hexdigest()
     output = build_live_public_nations_league(
-        [*_records(), refinement], active_release=release, evidence_binding=_binding(),
-        as_of="2026-09-30T20:01:24Z"
+        [*_records(), refinement],
+        active_release=release,
+        evidence_binding=_binding(),
+        as_of="2026-09-30T20:01:24Z",
     )
     fixture = next(row for row in output["fixtures"] if row["fixture_id"] == fixture_id)
     assert fixture["phase"] == "refinement"
     assert fixture["model_release"]["release_id"] == release.release_id
-    audit = next(row for row in output["audit_history"] if row["fixture_id"] == fixture_id)
+    audit = next(
+        row for row in output["audit_history"] if row["fixture_id"] == fixture_id
+    )
     assert len(audit["source_prediction_record_ids"]) == 2
     assert validate_live_public_nations_league(output) == output

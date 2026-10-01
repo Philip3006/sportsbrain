@@ -330,6 +330,138 @@ def test_two_due_fixtures_share_one_bounded_isports_schedule_and_odds_batch(
     assert calls[1][1] == {"matchId": "nl-1,nl-2"}
 
 
+def test_one_missing_isports_target_keeps_valid_targets_in_one_bulk_batch(monkeypatch):
+    rows = [
+        {
+            "fixture_id": f"uefa-nl:fixture-{index}",
+            "status": "VERIFIED",
+            "home_team": f"Home {index}",
+            "away_team": f"Away {index}",
+            "kickoff_utc": KICKOFF,
+        }
+        for index in range(8)
+    ]
+    schedule_rows = [
+        _schedule(f"nl-{index}", home=f"Home {index}", away=f"Away {index}")
+        for index in range(7)
+    ]
+    odds_rows = [
+        _odds(f"nl-{index}", home=f"Home {index}", away=f"Away {index}")
+        for index in range(7)
+    ]
+    _patch_budget(monkeypatch, remaining=0)
+    calls = _patch_isports(
+        monkeypatch, schedule_rows=schedule_rows, odds_rows=odds_rows
+    )
+    batch = acquire_live_market_snapshots(_manifest(rows), as_of=AS_OF, now=CAPTURE)
+
+    assert batch["status"] == "PARTIAL_MARKET"
+    assert len(batch["snapshots"]) == 7
+    assert batch["failure_reasons"] == {
+        "uefa-nl:fixture-7": "target_fixture_not_returned"
+    }
+    assert calls == [
+        ("schedule", {"leagueId": "146819"}),
+        ("odds", {"matchId": "nl-0,nl-1,nl-2,nl-3,nl-4,nl-5,nl-6"}),
+    ]
+    assert batch["request_count"] == 2
+
+
+def test_ambiguous_isports_target_does_not_block_other_valid_targets(monkeypatch):
+    rows = [
+        {
+            "fixture_id": "uefa-nl:ambiguous",
+            "status": "VERIFIED",
+            "home_team": "Denmark",
+            "away_team": "Portugal",
+            "kickoff_utc": KICKOFF,
+        },
+        {
+            "fixture_id": "uefa-nl:valid",
+            "status": "VERIFIED",
+            "home_team": "Spain",
+            "away_team": "Italy",
+            "kickoff_utc": KICKOFF,
+        },
+    ]
+    _patch_budget(monkeypatch, remaining=0)
+    calls = _patch_isports(
+        monkeypatch,
+        schedule_rows=[
+            _schedule("nl-a"),
+            _schedule("nl-a-duplicate"),
+            _schedule("nl-valid", home="Spain", away="Italy"),
+        ],
+        odds_rows=[_odds("nl-valid", home="Spain", away="Italy")],
+    )
+    batch = acquire_live_market_snapshots(_manifest(rows), as_of=AS_OF, now=CAPTURE)
+
+    assert batch["status"] == "PARTIAL_MARKET"
+    assert [row["fixture_id"] for row in batch["snapshots"]] == ["uefa-nl:valid"]
+    assert batch["failure_reasons"] == {
+        "uefa-nl:ambiguous": "ambiguous_provider_fixture_identity"
+    }
+    assert len(calls) == 2
+    assert calls[1][1] == {"matchId": "nl-valid"}
+
+
+@pytest.mark.parametrize(
+    ("odds_rows", "failed_fixture", "reason"),
+    [
+        (
+            [_odds("nl-2", home="Spain", away="Italy")],
+            "uefa-nl:one",
+            "incomplete_1x2_market",
+        ),
+        (
+            [
+                _odds(
+                    "nl-1",
+                    change_time="2026-10-01T17:00:00Z",
+                ),
+                _odds("nl-2", home="Spain", away="Italy"),
+            ],
+            "uefa-nl:one",
+            "stale_quote",
+        ),
+    ],
+)
+def test_incomplete_or_stale_isports_target_does_not_block_valid_target(
+    monkeypatch, odds_rows, failed_fixture, reason
+):
+    rows = [
+        {
+            "fixture_id": "uefa-nl:one",
+            "status": "VERIFIED",
+            "home_team": "Denmark",
+            "away_team": "Portugal",
+            "kickoff_utc": KICKOFF,
+        },
+        {
+            "fixture_id": "uefa-nl:two",
+            "status": "VERIFIED",
+            "home_team": "Spain",
+            "away_team": "Italy",
+            "kickoff_utc": KICKOFF,
+        },
+    ]
+    _patch_budget(monkeypatch, remaining=0)
+    calls = _patch_isports(
+        monkeypatch,
+        schedule_rows=[
+            _schedule("nl-1"),
+            _schedule("nl-2", home="Spain", away="Italy"),
+        ],
+        odds_rows=odds_rows,
+    )
+    batch = acquire_live_market_snapshots(_manifest(rows), as_of=AS_OF, now=CAPTURE)
+
+    assert batch["status"] == "PARTIAL_MARKET"
+    assert [row["fixture_id"] for row in batch["snapshots"]] == ["uefa-nl:two"]
+    assert batch["failure_reasons"] == {failed_fixture: reason}
+    assert len(calls) == 2
+
+
 def test_ambiguous_isports_identity_is_rejected_before_bulk_odds(monkeypatch):
     batch, calls = _run_fallback(
         monkeypatch,
@@ -342,6 +474,22 @@ def test_ambiguous_isports_identity_is_rejected_before_bulk_odds(monkeypatch):
     assert batch["failure_reasons"] == {
         "uefa-nl:future-test": "ambiguous_provider_fixture_identity"
     }
+    assert calls == [("schedule", {"leagueId": "146819"})]
+
+
+def test_zero_isports_matches_stops_after_schedule_without_odds(monkeypatch):
+    batch, calls = _run_fallback(
+        monkeypatch,
+        schedule_rows=[_schedule(home="France", away="Italy")],
+        odds_rows=[],
+    )
+
+    assert batch["status"] == "NO_MARKET_SNAPSHOT"
+    assert batch["snapshots"] == []
+    assert batch["failure_reasons"] == {
+        "uefa-nl:future-test": "target_fixture_not_returned"
+    }
+    assert batch["request_count"] == 1
     assert calls == [("schedule", {"leagueId": "146819"})]
 
 
@@ -430,3 +578,27 @@ def test_preflight_plans_isports_fallback_without_network(monkeypatch):
     assert batch["fallback_depth"] == 1
     assert batch["primary_provider_state"] == "QUOTA_EXHAUSTED"
     assert batch["total_network_request_count"] == 0
+
+
+def test_live_prediction_without_market_edge_remains_due_for_recovery(monkeypatch):
+    _patch_budget(monkeypatch, remaining=0)
+    batch = market_module.prepare_market_preflight(
+        _manifest(),
+        as_of="2026-10-02T16:45:00Z",
+        existing_records=[
+            {
+                "fixture_id": "uefa-nl:future-test",
+                "phase": "refinement",
+                "status": "LIVE",
+            }
+        ],
+    )
+
+    assert batch["needs_provider"] is True
+    assert batch["due_fixtures"] == [
+        {
+            "fixture_id": "uefa-nl:future-test",
+            "phase": "refinement",
+            "due_state": "REFINEMENT_DUE",
+        }
+    ]
