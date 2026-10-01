@@ -1,0 +1,15 @@
+{
+  "match_id": "1b26a19876c9aaf7be957f87c1e4e7a2",
+  "player_a": "Anastasia Zakharova",
+  "player_b": "Yushan Shao",
+  "tournament_slug": "china_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.731703+00:00",
+      "odds_a": 1.06,
+      "odds_b": 9.4,
+      "source": "coolbet"
+    }
+  ]
+}

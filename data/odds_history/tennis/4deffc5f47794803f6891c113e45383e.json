@@ -1,0 +1,15 @@
+{
+  "match_id": "4deffc5f47794803f6891c113e45383e",
+  "player_a": "Bu Yunchaokete",
+  "player_b": "Novak Djokovic",
+  "tournament_slug": "beijing_atp",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.530587+00:00",
+      "odds_a": 3.95,
+      "odds_b": 1.31,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}

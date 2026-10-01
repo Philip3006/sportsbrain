@@ -1,0 +1,15 @@
+{
+  "match_id": "15acf15b8d85ca13f4d7fc2da619fe2f",
+  "player_a": "Lanlana Tararudee",
+  "player_b": "Maria Camila Osorio Serrano",
+  "tournament_slug": "china_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.731924+00:00",
+      "odds_a": 1.85,
+      "odds_b": 1.94,
+      "source": "marathonbet"
+    }
+  ]
+}

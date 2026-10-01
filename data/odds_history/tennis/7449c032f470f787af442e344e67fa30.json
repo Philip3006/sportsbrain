@@ -1,0 +1,15 @@
+{
+  "match_id": "7449c032f470f787af442e344e67fa30",
+  "player_a": "Maddison Inglis",
+  "player_b": "Sara Bejlek",
+  "tournament_slug": "china_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.733984+00:00",
+      "odds_a": 3.47,
+      "odds_b": 1.31,
+      "source": "gtbets"
+    }
+  ]
+}

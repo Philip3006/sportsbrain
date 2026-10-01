@@ -1,0 +1,15 @@
+{
+  "match_id": "a4aa67d29f120efed0e3f1eab2c7a88c",
+  "player_a": "Daria Kasatkina",
+  "player_b": "Paula Badosa",
+  "tournament_slug": "china_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.731335+00:00",
+      "odds_a": 2.9,
+      "odds_b": 1.42,
+      "source": "betsson"
+    }
+  ]
+}

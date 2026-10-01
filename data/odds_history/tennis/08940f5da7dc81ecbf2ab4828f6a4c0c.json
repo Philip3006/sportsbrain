@@ -1,0 +1,15 @@
+{
+  "match_id": "08940f5da7dc81ecbf2ab4828f6a4c0c",
+  "player_a": "Alina Charaeva",
+  "player_b": "Yuliia Starodubtseva",
+  "tournament_slug": "china_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.730658+00:00",
+      "odds_a": 2.28,
+      "odds_b": 1.63,
+      "source": "leovegas_se"
+    }
+  ]
+}

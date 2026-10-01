@@ -1,0 +1,15 @@
+{
+  "match_id": "d66f1937da5272c6644a583eaa98d7ce",
+  "player_a": "Daniil Medvedev",
+  "player_b": "Pablo Carreno Busta",
+  "tournament_slug": "beijing_atp",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.530470+00:00",
+      "odds_a": 1.25,
+      "odds_b": 4.5,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}

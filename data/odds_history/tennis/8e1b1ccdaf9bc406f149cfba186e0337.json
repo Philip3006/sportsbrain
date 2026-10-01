@@ -1,0 +1,15 @@
+{
+  "match_id": "8e1b1ccdaf9bc406f149cfba186e0337",
+  "player_a": "Alexander Bublik",
+  "player_b": "Jakub Mensik",
+  "tournament_slug": "beijing_atp",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.530334+00:00",
+      "odds_a": 2.39,
+      "odds_b": 1.57,
+      "source": "marathonbet"
+    }
+  ]
+}

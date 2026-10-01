@@ -1,0 +1,15 @@
+{
+  "match_id": "1dbc787f80eec3ade10434e51f7e8ff5",
+  "player_a": "Aliaksandra Sasnovich",
+  "player_b": "Ekaterina Alexandrova",
+  "tournament_slug": "china_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.732641+00:00",
+      "odds_a": 2.04,
+      "odds_b": 1.65,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}

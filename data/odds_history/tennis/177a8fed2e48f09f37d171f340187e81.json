@@ -1,0 +1,15 @@
+{
+  "match_id": "177a8fed2e48f09f37d171f340187e81",
+  "player_a": "Diane Parry",
+  "player_b": "Taylah Preston",
+  "tournament_slug": "china_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.733525+00:00",
+      "odds_a": 1.65,
+      "odds_b": 2.28,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}

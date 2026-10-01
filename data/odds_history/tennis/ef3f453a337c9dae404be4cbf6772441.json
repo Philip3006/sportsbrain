@@ -1,0 +1,15 @@
+{
+  "match_id": "ef3f453a337c9dae404be4cbf6772441",
+  "player_a": "Andrey Rublev",
+  "player_b": "Tallon Griekspoor",
+  "tournament_slug": "beijing_atp",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.530097+00:00",
+      "odds_a": 1.54,
+      "odds_b": 2.48,
+      "source": "unibet_nl"
+    }
+  ]
+}

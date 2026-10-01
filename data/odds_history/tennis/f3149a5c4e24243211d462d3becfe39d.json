@@ -1,0 +1,15 @@
+{
+  "match_id": "f3149a5c4e24243211d462d3becfe39d",
+  "player_a": "Alex de Minaur",
+  "player_b": "Mariano Navone",
+  "tournament_slug": "beijing_atp",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.529289+00:00",
+      "odds_a": 1.22,
+      "odds_b": 4.25,
+      "source": "marathonbet"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "match_id": "c1bae50988ffee351524f95dacfa76f7",
+  "player_a": "Juncheng Shang",
+  "player_b": "Sebastian Baez",
+  "tournament_slug": "beijing_atp",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.529832+00:00",
+      "odds_a": 1.62,
+      "odds_b": 2.28,
+      "source": "marathonbet"
+    }
+  ]
+}

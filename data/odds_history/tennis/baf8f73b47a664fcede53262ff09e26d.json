@@ -1,0 +1,15 @@
+{
+  "match_id": "baf8f73b47a664fcede53262ff09e26d",
+  "player_a": "Alexander Zverev",
+  "player_b": "Cameron Norrie",
+  "tournament_slug": "beijing_atp",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.529959+00:00",
+      "odds_a": 1.11,
+      "odds_b": 6.55,
+      "source": "marathonbet"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "match_id": "8962aea3dd981eb3eb6cccc3b2fd3829",
+  "player_a": "Katerina Siniakova",
+  "player_b": "Magda Linette",
+  "tournament_slug": "china_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.731591+00:00",
+      "odds_a": 1.43,
+      "odds_b": 2.8,
+      "source": "marathonbet"
+    }
+  ]
+}

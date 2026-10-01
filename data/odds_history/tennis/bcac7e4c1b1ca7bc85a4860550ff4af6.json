@@ -1,0 +1,15 @@
+{
+  "match_id": "bcac7e4c1b1ca7bc85a4860550ff4af6",
+  "player_a": "Linda Fruhvirtova",
+  "player_b": "Liudmila Samsonova",
+  "tournament_slug": "china_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.733869+00:00",
+      "odds_a": 3.9,
+      "odds_b": 1.22,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "match_id": "c83a68420401e6b8f8010e3050bed2ea",
+  "player_a": "Alex Molcan",
+  "player_b": "Arthur Rinderknech",
+  "tournament_slug": "beijing_atp",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.529063+00:00",
+      "odds_a": 2.29,
+      "odds_b": 1.6,
+      "source": "nordicbet"
+    }
+  ]
+}

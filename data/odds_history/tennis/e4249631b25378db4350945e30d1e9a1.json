@@ -1,0 +1,15 @@
+{
+  "match_id": "e4249631b25378db4350945e30d1e9a1",
+  "player_a": "Mirra Andreeva",
+  "player_b": "Yue Yuan",
+  "tournament_slug": "china_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.734312+00:00",
+      "odds_a": 1.04,
+      "odds_b": 6.3,
+      "source": "unibet_fr"
+    }
+  ]
+}

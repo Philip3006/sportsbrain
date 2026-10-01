@@ -1,0 +1,15 @@
+{
+  "match_id": "3dde5244cfdab55db5832aaac7db3017",
+  "player_a": "Magdalena Frech",
+  "player_b": "Nikola Bartunkova",
+  "tournament_slug": "china_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.734094+00:00",
+      "odds_a": 2.34,
+      "odds_b": 1.64,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}

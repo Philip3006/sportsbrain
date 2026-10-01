@@ -1,0 +1,15 @@
+{
+  "match_id": "abf71bada16395da8f34ce3e4ea92668",
+  "player_a": "Qinwen Zheng",
+  "player_b": "Shi Han",
+  "tournament_slug": "china_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.731099+00:00",
+      "odds_a": 1.11,
+      "odds_b": 9.4,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "match_id": "d335a62e23f27b87cc79d2e6c6589617",
+  "player_a": "Harriet Dart",
+  "player_b": "Yihan Qu",
+  "tournament_slug": "china_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.732043+00:00",
+      "odds_a": 1.04,
+      "odds_b": 10.2,
+      "source": "gtbets"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "match_id": "726e426c5068e86e57b7f81891e0136e",
+  "player_a": "Hubert Hurkacz",
+  "player_b": "Learner Tien",
+  "tournament_slug": "beijing_atp",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.530218+00:00",
+      "odds_a": 2.46,
+      "odds_b": 1.54,
+      "source": "marathonbet"
+    }
+  ]
+}

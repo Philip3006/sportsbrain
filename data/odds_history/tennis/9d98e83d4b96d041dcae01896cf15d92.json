@@ -1,0 +1,15 @@
+{
+  "match_id": "9d98e83d4b96d041dcae01896cf15d92",
+  "player_a": "Panna Udvardy",
+  "player_b": "Xinyu Gao",
+  "tournament_slug": "china_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.732262+00:00",
+      "odds_a": 1.53,
+      "odds_b": 2.5,
+      "source": "leovegas_se"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "match_id": "0bc9f29150b8a51f3142b18376c56028",
+  "player_a": "Dayana Yastremska",
+  "player_b": "Maja Chwalinska",
+  "tournament_slug": "china_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.733201+00:00",
+      "odds_a": 2.38,
+      "odds_b": 1.32,
+      "source": "matchbook"
+    }
+  ]
+}

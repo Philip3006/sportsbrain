@@ -1,0 +1,15 @@
+{
+  "match_id": "742769b918276508629b9c2a4283d38b",
+  "player_a": "Kamilla Rakhimova",
+  "player_b": "Marina Bassols Ribera",
+  "tournament_slug": "china_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.732151+00:00",
+      "odds_a": 1.36,
+      "odds_b": 3.6,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}

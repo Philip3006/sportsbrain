@@ -1,0 +1,15 @@
+{
+  "match_id": "8e6bcabf08e118f69eedc8e1f8690acb",
+  "player_a": "Eva Lys",
+  "player_b": "Sun Xinran",
+  "tournament_slug": "china_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.732524+00:00",
+      "odds_a": 1.43,
+      "odds_b": 2.85,
+      "source": "coolbet"
+    }
+  ]
+}

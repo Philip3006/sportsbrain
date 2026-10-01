@@ -1,0 +1,15 @@
+{
+  "match_id": "c61cca87a103a35f8e1889747b27f171",
+  "player_a": "Aoi Ito",
+  "player_b": "Kimberly Birrell",
+  "tournament_slug": "china_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.731217+00:00",
+      "odds_a": 3.72,
+      "odds_b": 1.27,
+      "source": "marathonbet"
+    }
+  ]
+}

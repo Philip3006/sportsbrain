@@ -1,0 +1,15 @@
+{
+  "match_id": "ef4ff818626aa7b2551f510cb801c425",
+  "player_a": "Peyton Stearns",
+  "player_b": "Viktorija Golubic",
+  "tournament_slug": "china_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.734427+00:00",
+      "odds_a": 1.35,
+      "odds_b": 1.97,
+      "source": "matchbook"
+    }
+  ]
+}

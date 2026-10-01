@@ -1,0 +1,15 @@
+{
+  "match_id": "fb9eebaf5bf935bd7f96b48cea43933d",
+  "player_a": "Andrea Lazaro Garcia",
+  "player_b": "Sonay Kartal",
+  "tournament_slug": "china_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.731473+00:00",
+      "odds_a": 4.1,
+      "odds_b": 1.31,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}

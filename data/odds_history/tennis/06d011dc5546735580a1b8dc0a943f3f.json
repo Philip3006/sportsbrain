@@ -1,0 +1,15 @@
+{
+  "match_id": "06d011dc5546735580a1b8dc0a943f3f",
+  "player_a": "Daria Snigur",
+  "player_b": "Jasmine Paolini",
+  "tournament_slug": "china_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.733091+00:00",
+      "odds_a": 2.74,
+      "odds_b": 1.53,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}

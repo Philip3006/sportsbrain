@@ -1,0 +1,15 @@
+{
+  "match_id": "53f873d1a51975238b8a55de03609702",
+  "player_a": "Ashlyn Krueger",
+  "player_b": "Sofia Kenin",
+  "tournament_slug": "china_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.730852+00:00",
+      "odds_a": 1.55,
+      "odds_b": 2.43,
+      "source": "leovegas_se"
+    }
+  ]
+}

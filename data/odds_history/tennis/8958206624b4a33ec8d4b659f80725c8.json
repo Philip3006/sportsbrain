@@ -1,0 +1,15 @@
+{
+  "match_id": "8958206624b4a33ec8d4b659f80725c8",
+  "player_a": "Maria Timofeeva",
+  "player_b": "Naomi Osaka",
+  "tournament_slug": "china_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.734203+00:00",
+      "odds_a": 3.85,
+      "odds_b": 1.2,
+      "source": "matchbook"
+    }
+  ]
+}

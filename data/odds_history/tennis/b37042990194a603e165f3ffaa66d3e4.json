@@ -1,0 +1,15 @@
+{
+  "match_id": "b37042990194a603e165f3ffaa66d3e4",
+  "player_a": "Aryna Sabalenka",
+  "player_b": "Renata Zarazua",
+  "tournament_slug": "china_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.732869+00:00",
+      "odds_a": 1.02,
+      "odds_b": 15.0,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}

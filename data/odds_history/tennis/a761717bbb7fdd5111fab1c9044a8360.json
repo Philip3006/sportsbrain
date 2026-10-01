@@ -1,0 +1,15 @@
+{
+  "match_id": "a761717bbb7fdd5111fab1c9044a8360",
+  "player_a": "Diana Shnaider",
+  "player_b": "Janice Tjen",
+  "tournament_slug": "china_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.733317+00:00",
+      "odds_a": 1.33,
+      "odds_b": 3.28,
+      "source": "marathonbet"
+    }
+  ]
+}

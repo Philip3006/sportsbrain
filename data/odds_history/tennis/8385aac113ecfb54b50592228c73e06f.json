@@ -1,0 +1,15 @@
+{
+  "match_id": "8385aac113ecfb54b50592228c73e06f",
+  "player_a": "Flavio Cobolli",
+  "player_b": "Roman Safiullin",
+  "tournament_slug": "beijing_atp",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.529428+00:00",
+      "odds_a": 1.88,
+      "odds_b": 1.91,
+      "source": "unibet_nl"
+    }
+  ]
+}

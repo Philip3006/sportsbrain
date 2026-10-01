@@ -1,0 +1,15 @@
+{
+  "match_id": "c28011197ff658cb74359f160ce3a8c0",
+  "player_a": "Elena Gabriela Ruse",
+  "player_b": "Linda Noskova",
+  "tournament_slug": "china_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.733643+00:00",
+      "odds_a": 4.0,
+      "odds_b": 1.24,
+      "source": "marathonbet"
+    }
+  ]
+}

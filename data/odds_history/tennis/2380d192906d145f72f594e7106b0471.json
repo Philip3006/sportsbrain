@@ -1,0 +1,15 @@
+{
+  "match_id": "2380d192906d145f72f594e7106b0471",
+  "player_a": "Anastasia Potapova",
+  "player_b": "Sinja Kraus",
+  "tournament_slug": "china_open_wta",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.732757+00:00",
+      "odds_a": 1.31,
+      "odds_b": 3.42,
+      "source": "marathonbet"
+    }
+  ]
+}

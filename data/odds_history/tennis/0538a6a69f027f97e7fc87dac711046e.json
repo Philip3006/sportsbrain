@@ -1,0 +1,15 @@
+{
+  "match_id": "0538a6a69f027f97e7fc87dac711046e",
+  "player_a": "Botic van de Zandschulp",
+  "player_b": "Francisco Cerundolo",
+  "tournament_slug": "beijing_atp",
+  "snapshots": [
+    {
+      "label": "auto_20261001_00",
+      "ts_utc": "2026-10-01T00:33:52.529710+00:00",
+      "odds_a": 2.34,
+      "odds_b": 1.74,
+      "source": "betfair_ex_eu"
+    }
+  ]
+}
