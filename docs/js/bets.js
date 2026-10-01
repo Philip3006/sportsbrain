@@ -151,16 +151,34 @@ function _openBetModalForBetId(betId) {
   if (tab) navTo(tab);
   // Synthetic button carries all dataset attrs _openBetModalFromBtn expects
   const btn = document.createElement('button');
-  btn.dataset.match      = sig.match;
-  btn.dataset.market     = sig.market;
-  btn.dataset.odds       = sig.odds;
-  btn.dataset.stake      = sig.stake_eur;
-  btn.dataset.ev         = sig.ev_pct;
-  btn.dataset.modelProb  = sig.model_prob || 0;
-  btn.dataset.fairProb   = sig.fair_prob || 0;
-  btn.dataset.confidence = sig.confidence || '';
-  btn.dataset.kickoff    = sig.kickoff || '';
-  btn.dataset.sport      = sig.sport || '';
+  const copy = (key, value) => { btn.dataset[key] = value == null ? '' : String(value); };
+  copy('match', sig.match);
+  copy('market', sig.market);
+  copy('odds', sig.odds);
+  copy('stake', sig.stake_eur);
+  copy('ev', sig.ev_pct);
+  copy('modelProb', sig.model_prob || 0);
+  copy('fairProb', sig.fair_prob || 0);
+  copy('confidence', sig.confidence || '');
+  copy('kickoff', sig.kickoff || '');
+  copy('sport', sig.sport || '');
+  // Preserve the canonical value-signal contract for deep links. In
+  // particular, do not turn a missing or stale field into a manual bet.
+  copy('signalId', sig.signal_id);
+  copy('signalStatus', sig.signal_status);
+  copy('currentOdds', sig.current_odds);
+  copy('currentEv', sig.current_ev_pct);
+  copy('oddsTs', sig.odds_ts);
+  copy('eventStatus', sig.event_status);
+  copy('fixtureKey', sig.fixture_key);
+  copy('league', sig.league);
+  copy('shadow', sig.shadow === true ? 'true' : 'false');
+  copy('isShadow', sig.is_shadow === true ? 'true' : 'false');
+  copy('unsupported', sig.unsupported === true ? 'true' : 'false');
+  copy('edgeLost', sig.edge_lost === true ? 'true' : 'false');
+  copy('stale', sig.stale === true ? 'true' : 'false');
+  copy('noBetFlag', sig.no_bet_flag === true ? 'true' : 'false');
+  copy('source', 'value');
   _openBetModalFromBtn(btn);
 }
 
