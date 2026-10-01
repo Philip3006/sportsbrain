@@ -1188,6 +1188,15 @@ def test_t19_browser_sources_have_no_api_or_master_token_literals() -> None:
             f"T19: forbidden credential pattern '{needle}' in shipped browser JS"
         )
 
+    # Product-critical frontend files must move as one cache-busted release.
+    # Otherwise fresh Worker data can be rendered by stale betting UI code.
+    index = (DOCS_DIR / "index.html").read_text(encoding="utf-8")
+    release = "20261002-pwa-bet-flow"
+    for asset in ("app", "views", "bets"):
+        assert f'src="js/{asset}.js?v={release}"' in index, (
+            f"T19: stale/mismatched cache key for {asset}.js"
+        )
+
 
 def _read_browser_html() -> str:
     """Read all shipped HTML in docs/ for scanning user-visible strings."""

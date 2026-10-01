@@ -8,6 +8,7 @@ import vm from 'node:vm';
 const __dir = fileURLToPath(new URL('.', import.meta.url));
 const betsSource = readFileSync(resolve(__dir, '../../docs/js/bets.js'), 'utf8');
 const viewsSource = readFileSync(resolve(__dir, '../../docs/js/views.js'), 'utf8');
+const indexSource = readFileSync(resolve(__dir, '../../docs/index.html'), 'utf8');
 const deepLinkStart = betsSource.indexOf('function _openBetModalForBetId(');
 const deepLinkEnd = betsSource.indexOf('\n// ── Render open bets tab ──', deepLinkStart);
 assert.ok(deepLinkStart >= 0 && deepLinkEnd > deepLinkStart);
@@ -108,4 +109,12 @@ test('deep-link path does not manufacture identity for a missing signal_id', () 
   assert.equal(button.dataset.signalId, '');
   assert.equal(button.dataset.source, 'value');
   assert.match(betsSource, /signal_id missing or empty/);
+});
+
+
+test('core betting frontend assets use the same cache-bust release', () => {
+  const release = '20261002-pwa-bet-flow';
+  for (const asset of ['app', 'views', 'bets']) {
+    assert.match(indexSource, new RegExp(`src="js/\${asset}\\.js\\?v=\${release}"`));
+  }
 });
