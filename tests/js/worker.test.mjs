@@ -1417,6 +1417,7 @@ describe('Suite 15 — P0C-001 fail-closed nested private markers', () => {
       health: { overall: 'ok', jobs: [] },
       bankroll_state: { free: 123.45, private_marker: 'keep' },
       open_bets: [{ id: 'private-bet-keep' }],
+      custom_private_state: { marker: 'custom-keep', nested: [1, 2] },
       nations_league: { schema: 'nations-league-public-v1', stale: true },
     };
     await kv.put('signals_json', JSON.stringify(current));
@@ -1439,6 +1440,7 @@ describe('Suite 15 — P0C-001 fail-closed nested private markers', () => {
     assert.deepEqual(saved.health, current.health);
     assert.deepEqual(saved.bankroll_state, current.bankroll_state);
     assert.deepEqual(saved.open_bets, current.open_bets);
+    assert.deepEqual(saved.custom_private_state, current.custom_private_state);
     assert.deepEqual(saved.nations_league, live);
     const getAfter = await fwP0c(env, 'GET', '/signals.json');
     assert.equal(getAfter.status, 200);

@@ -295,14 +295,23 @@ def test_stale_worker_get_uses_nl_only_recovery_and_preserves_other_arrays(
     tmp_path, monkeypatch
 ):
     now = datetime.now(timezone.utc).replace(microsecond=0)
-    football = [{"signal_id": "football-keep"}]
-    tennis = [{"signal_id": "tennis-keep"}]
+    local_football = [{"signal_id": "local-football-A"}]
+    local_tennis = [{"signal_id": "local-tennis-A"}]
+    public_nl = _valid_public_nl(now)
+    worker_after = _worker_snapshot(
+        now - timedelta(seconds=5),
+        football=[{"signal_id": "worker-football-B"}],
+        tennis=[{"signal_id": "worker-tennis-B"}],
+        nl=public_nl,
+    )
     root, now, expected_digest, calls = _prepare_run(
         tmp_path,
         monkeypatch,
-        local_football=football,
-        local_tennis=tennis,
+        public_nl=public_nl,
+        local_football=local_football,
+        local_tennis=local_tennis,
         worker_before_status=500,
+        worker_after=worker_after,
         now=now,
     )
 

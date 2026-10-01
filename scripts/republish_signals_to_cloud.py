@@ -277,6 +277,36 @@ def _response_document(response) -> dict:
     return value
 
 
+def _assert_public_worker_document(document: Mapping) -> None:
+    """Reject private state if a Worker response ever exposes it."""
+    forbidden_top_level = {
+        "bankroll",
+        "bankroll_state",
+        "open_bets",
+        "pending_bets",
+        "settled_bets",
+        "history",
+        "portfolio",
+        "wm_stats",
+        "ledger",
+        "user",
+        "user_id",
+        "default_user",
+        "owner",
+        "auth_token",
+        "token",
+        "master_token",
+        "api_token",
+    }
+    if forbidden_top_level.intersection(document):
+        raise RepublishBlocked
+    meta = document.get("meta")
+    if isinstance(meta, Mapping) and {"user", "default_user", "owner"}.intersection(
+        meta
+    ):
+        raise RepublishBlocked
+
+
 def _record_worker(summary: dict, suffix: str, response, document: Mapping) -> None:
     summary[f"worker_http_status_{suffix}"] = response.status_code
     updated = document.get("updated")
@@ -378,19 +408,14 @@ def republish(
             after_response = _worker_get(url)
             summary["worker_http_status_after"] = after_response.status_code
             after = _response_document(after_response)
+            _assert_public_worker_document(after)
             _record_worker(summary, "after", after_response, after)
-            after_football = _public_array(after, "football")
-            after_tennis = _public_array(after, "tennis")
             after_nl = _validated_nl(
                 after.get("nations_league"),
                 expected_nl_digest,
                 current_time().astimezone(timezone.utc),
             )
-            if (
-                _canonical_hash(after_football) != _canonical_hash(shared_football)
-                or _canonical_hash(after_tennis) != _canonical_hash(shared_tennis)
-                or after_nl["public_digest"] != expected_nl_digest
-            ):
+            if after_nl["public_digest"] != expected_nl_digest:
                 raise RepublishBlocked
             summary["cloud_upload_success"] = True
             summary["status"] = READY
