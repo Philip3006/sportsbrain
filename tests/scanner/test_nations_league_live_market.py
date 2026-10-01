@@ -142,6 +142,53 @@ def test_captured_initial_phase_suppresses_provider_request():
     assert batch["retry_count"] == 0
 
 
+def test_campaign_record_suppresses_provider_request_before_runtime(tmp_path):
+    campaign = tmp_path / "campaign.json"
+    campaign.write_text(
+        json.dumps({"records": [{"fixture_id": "uefa-nl:future-test", "phase": "initial"}]}),
+        encoding="utf-8",
+    )
+    existing = json.loads(campaign.read_text(encoding="utf-8"))["records"]
+    called = False
+
+    def forbidden_fetcher():
+        nonlocal called
+        called = True
+        raise AssertionError("campaign-captured phase must not call provider")
+
+    batch = acquire_live_market_snapshots(
+        _manifest(),
+        as_of="2026-10-01T18:45:00Z",
+        existing_records=existing,
+        fetcher=forbidden_fetcher,
+    )
+
+    assert called is False
+    assert batch["needs_provider"] is False
+    assert batch["request_count"] == 0
+
+
+def test_duplicate_campaign_phase_fails_closed_before_provider_call():
+    called = False
+
+    def forbidden_fetcher():
+        nonlocal called
+        called = True
+        raise AssertionError("duplicate campaign state must block before provider")
+
+    with pytest.raises(ValueError, match="duplicate captured fixture phase"):
+        acquire_live_market_snapshots(
+            _manifest(),
+            as_of="2026-10-01T18:45:00Z",
+            existing_records=[
+                {"fixture_id": "uefa-nl:future-test", "phase": "initial"},
+                {"fixture_id": "uefa-nl:future-test", "phase": "initial"},
+            ],
+            fetcher=forbidden_fetcher,
+        )
+    assert called is False
+
+
 def test_uncaptured_refinement_phase_calls_provider_once():
     calls = 0
 
@@ -465,9 +512,14 @@ def test_workflow_materializes_snapshots_before_the_existing_cycle():
     assert "if: ${{ steps.market_preflight.outputs.needs_provider == 'true' }}" in provider_step
     assert provider_step.count("ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}") == 1
     assert "--store results/research/nations_league_v1_1_live_prediction_store.jsonl" in workflow
+    assert workflow.count(
+        "--campaign results/research/nations_league_v1_1_forward_campaign_20260930T200124Z.json"
+    ) == 5
     assert "--market-snapshots /tmp/nations-league-live-market-snapshots.json" in workflow
     assert "CYCLE_AS_OF=\"$(python3 -c" in workflow
     assert "--execute-offline" in workflow
     assert "scripts/resolve_nations_league_source_release.py" in workflow
     assert "if: ${{ secrets." not in workflow
     assert "scripts/_bot_commit_push.sh" in workflow
+    assert "Summarize canonical LIVE market-edge evidence" in workflow
+    assert '"edge_statuses"' in workflow

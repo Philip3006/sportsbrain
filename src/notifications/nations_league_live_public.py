@@ -129,6 +129,90 @@ def _digest(value: Any) -> str:
     return hashlib.sha256(_canonical_json(value)).hexdigest()
 
 
+def _public_canonical(value: Any) -> str:
+    """Match JSON.stringify number spelling for Worker/PWA digest parity."""
+
+    if value is None:
+        return "null"
+    if value is True:
+        return "true"
+    if value is False:
+        return "false"
+    if isinstance(value, str):
+        return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+    if isinstance(value, int):
+        try:
+            number = float(value)
+        except OverflowError as exc:
+            raise NationsLeagueLivePublicError(
+                "public bundle contains a number outside binary64"
+            ) from exc
+        return _ecmascript_number(number)
+    if isinstance(value, float):
+        return _ecmascript_number(value)
+    if isinstance(value, Mapping):
+        return "{" + ",".join(
+            f"{_public_canonical(str(key))}:{_public_canonical(item)}"
+            for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))
+        ) + "}"
+    if isinstance(value, (list, tuple)):
+        return "[" + ",".join(_public_canonical(item) for item in value) + "]"
+    raise NationsLeagueLivePublicError("public bundle contains an unsupported value")
+
+
+def _ecmascript_number(value: float) -> str:
+    """Serialize one finite binary64 value using ECMAScript thresholds.
+
+    Python and ECMAScript both use the shortest round-tripping decimal for a
+    binary64 value.  Their presentation thresholds differ: ECMAScript uses
+    fixed notation for ``1e-6 <= abs(value) < 1e21`` and scientific notation
+    outside that interval.  Reformatting Python's shortest representation at
+    those boundaries also normalizes signed zero and exponent spelling to the
+    native JSON.stringify form.
+    """
+
+    if not math.isfinite(value):
+        raise NationsLeagueLivePublicError("public bundle contains a non-finite number")
+    if value == 0:
+        return "0"
+
+    text = repr(float(value))
+    sign = ""
+    if text.startswith("-"):
+        sign, text = "-", text[1:]
+    mantissa, _, exponent_text = text.partition("e")
+    exponent = int(exponent_text) if exponent_text else 0
+    whole, _, fraction = mantissa.partition(".")
+    digits = whole + fraction
+    decimal_index = len(whole) + exponent
+    digits = digits.rstrip("0")
+    absolute = abs(value)
+
+    if 1e-6 <= absolute < 1e21:
+        if decimal_index <= 0:
+            body = "0." + ("0" * -decimal_index) + digits
+        elif decimal_index >= len(digits):
+            body = digits + ("0" * (decimal_index - len(digits)))
+        else:
+            body = digits[:decimal_index] + "." + digits[decimal_index:]
+        return sign + body
+
+    scientific_exponent = decimal_index - 1
+    coefficient = digits[0]
+    if len(digits) > 1:
+        coefficient += "." + digits[1:]
+    exponent_marker = (
+        f"e+{scientific_exponent}"
+        if scientific_exponent >= 0
+        else f"e{scientific_exponent}"
+    )
+    return sign + coefficient + exponent_marker
+
+
+def _public_digest(value: Any) -> str:
+    return hashlib.sha256(_public_canonical(value).encode("utf-8")).hexdigest()
+
+
 def _required_text(value: object, field: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise NationsLeagueLivePublicError(f"{field} is required")
@@ -444,7 +528,7 @@ def build_live_public_nations_league(
         if fixtures
         else _zero_view_updated_at(selected, release)
     )
-    payload["public_digest"] = _digest(payload)
+    payload["public_digest"] = _public_digest(payload)
     return payload
 
 
@@ -457,7 +541,7 @@ def validate_live_public_nations_league(value: Mapping[str, Any]) -> dict[str, A
     if set(payload) != _PUBLIC_KEYS:
         raise NationsLeagueLivePublicError("LIVE public fields are not allowlisted")
     digest = payload.pop("public_digest", None)
-    if not isinstance(digest, str) or digest != _digest(payload):
+    if not isinstance(digest, str) or digest != _public_digest(payload):
         raise NationsLeagueLivePublicError("LIVE public digest mismatch")
     if (
         payload.get("schema") != SCHEMA
