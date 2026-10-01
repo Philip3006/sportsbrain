@@ -20,7 +20,12 @@ from .adapters import (
     top5_prediction_from_record,
 )
 from .coverage import build_coverage_report
-from .migration import MigrationPreview, preview_jsonl, preview_sources
+from .migration import (
+    MigrationPreview,
+    preview_json_document,
+    preview_jsonl,
+    preview_sources,
+)
 from .outcome_contracts import (
     ATTACHMENT_SCHEMA,
     AUTHORITATIVE_RESULT_SCHEMA,
@@ -83,6 +88,7 @@ __all__ = [
     "legacy_signal_prediction_from_record",
     "nations_league_prediction_from_record",
     "prediction_from_record",
+    "preview_json_document",
     "preview_jsonl",
     "preview_sources",
     "resolve_prediction_outcome",

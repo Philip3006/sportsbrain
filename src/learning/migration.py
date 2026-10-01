@@ -148,6 +148,68 @@ def preview_jsonl(
     )
 
 
+def preview_json_document(
+    path: Path,
+    *,
+    source_system: str,
+    already_represented_ids: Iterable[str] = (),
+) -> MigrationPreview:
+    """Describe a JSON document source without pretending it is JSONL history."""
+
+    if not path.exists():
+        return preview_jsonl(
+            path,
+            source_system=source_system,
+            already_represented_ids=already_represented_ids,
+        )
+    try:
+        document = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        return MigrationPreview(
+            source_system=source_system,
+            path=str(path),
+            records_seen=0,
+            eligible_records=0,
+            convertible_records=0,
+            malformed_or_unconvertible=1,
+            already_represented=0,
+            duplicates=0,
+            conflicts=0,
+            reasons={"invalid_json_document": 1, "error": str(exc)},
+            prediction_ids=(),
+        )
+    records = document.get("signals", []) if isinstance(document, dict) else document
+    if not isinstance(records, list):
+        records = [records]
+    if not records:
+        return MigrationPreview(
+            source_system=source_system,
+            path=str(path),
+            records_seen=0,
+            eligible_records=0,
+            convertible_records=0,
+            malformed_or_unconvertible=0,
+            already_represented=0,
+            duplicates=0,
+            conflicts=0,
+            reasons={"no_historical_records": 1},
+            prediction_ids=(),
+        )
+    return MigrationPreview(
+        source_system=source_system,
+        path=str(path),
+        records_seen=len(records),
+        eligible_records=0,
+        convertible_records=0,
+        malformed_or_unconvertible=len(records),
+        already_represented=0,
+        duplicates=0,
+        conflicts=0,
+        reasons={"json_document_requires_explicit_adapter": len(records)},
+        prediction_ids=(),
+    )
+
+
 def preview_sources(
     sources: Iterable[tuple[str, Path]],
     *,

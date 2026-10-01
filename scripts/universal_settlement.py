@@ -19,7 +19,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.learning.adapters import prediction_from_record
-from src.learning.migration import preview_sources
+from src.learning.migration import preview_json_document, preview_sources
 from src.learning.outcome_contracts import (
     AuthoritativeResultV1,
     JsonlOutcomeStore,
@@ -100,11 +100,25 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def _migration_output() -> dict[str, Any]:
-    existing = tuple(item for item in DEFAULT_SOURCES if item[1].exists())
+    existing_jsonl = tuple(
+        item
+        for item in DEFAULT_SOURCES
+        if item[1].exists() and item[1].suffix == ".jsonl"
+    )
+    existing_json = tuple(
+        item
+        for item in DEFAULT_SOURCES
+        if item[1].exists() and item[1].suffix == ".json"
+    )
+    previews = list(preview_sources(existing_jsonl))
+    previews.extend(
+        preview_json_document(path, source_system=source_system)
+        for source_system, path in existing_json
+    )
     return {
         "mode": "migration_preview",
         "read_only": True,
-        "sources": [item.to_payload() for item in preview_sources(existing)],
+        "sources": [item.to_payload() for item in previews],
         "unavailable_sources": [
             str(path) for _, path in DEFAULT_SOURCES if not path.exists()
         ],
