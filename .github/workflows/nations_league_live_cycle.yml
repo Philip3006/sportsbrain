@@ -23,8 +23,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+          cache: 'pip'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
       - name: Execute current LIVE lifecycle
         run: |
+          set -o pipefail
           CYCLE_AS_OF="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           echo "CYCLE_AS_OF=$CYCLE_AS_OF" >> "$GITHUB_ENV"
           SOURCE_PROVENANCE_MARKER="docs/data/provenance_"
