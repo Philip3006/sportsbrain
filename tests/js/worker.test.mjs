@@ -1068,6 +1068,44 @@ const makeMockKV = makeP0cKV;
 const makeEnv = makeP0cEnv;
 const fw = fwP0c;
 
+async function digestWorkerJson(value) {
+  const canonical = (item) => {
+    if (Array.isArray(item)) return `[${item.map(canonical).join(',')}]`;
+    if (item && typeof item === 'object') {
+      return `{${Object.keys(item).sort().map((key) => `${JSON.stringify(key)}:${canonical(item[key])}`).join(',')}}`;
+    }
+    return JSON.stringify(item);
+  };
+  const bytes = new TextEncoder().encode(canonical(value));
+  const digest = await globalThis.crypto.subtle.digest('SHA-256', bytes);
+  return [...new Uint8Array(digest)].map((item) => item.toString(16).padStart(2, '0')).join('');
+}
+
+async function validLiveNationsLeague() {
+  const payload = {
+    schema: 'nations-league-live-public-v1',
+    competition: 'UEFA Nations League',
+    status: 'LIVE',
+    experimental: true,
+    publication_enabled: true,
+    no_bet: true,
+    betting_enabled: false,
+    ledger_mutation: false,
+    model_release: {
+      model_family: 'nations_league_v1_1', model_version: 'nations_league_v1_1',
+      algorithm_digest: 'a'.repeat(64), release_id: 'b'.repeat(64),
+      training_data_digest: 'c'.repeat(64), trained_state_digest: 'd'.repeat(64),
+      training_cutoff: '2026-10-01T08:00:00Z', binding_digest: 'e'.repeat(64),
+    },
+    fixture_count: 0,
+    fixtures: [],
+    audit_history: [{ event: 'validated', at: '2026-10-01T08:00:00Z' }],
+    updated_at: new Date().toISOString(),
+  };
+  payload.public_digest = await digestWorkerJson(payload);
+  return payload;
+}
+
 // ── Suite 13: P0C-001 — serializePublicProduct() ─────────────────────────
 // T6: Public Worker route returns only public-safe schema.
 // Private financial/identity fields must be structurally excluded.
@@ -1307,6 +1345,117 @@ describe('Suite 15 — P0C-001 fail-closed nested private markers', () => {
     const pub = await resp.json();
     assert.ok('tennis' in pub, 'tennis must be present in clean public GET response');
     assert.ok('schedule' in pub, 'schedule must be present in clean public GET response');
+  });
+
+  test('healthy LIVE Nations League bundle returns 200 with verified digest', async () => {
+    const kv = makeP0cKV();
+    const env = makeP0cEnv(kv);
+    const live = await validLiveNationsLeague();
+    await kv.put('signals_json', JSON.stringify({
+      updated: live.updated_at,
+      football: [{ signal_id: 'football-keep' }],
+      tennis: [{ signal_id: 'tennis-keep' }],
+      nations_league: live,
+      bankroll_state: { private_marker: 'must-stay-private' },
+      open_bets: [{ private_marker: 'must-stay-private' }],
+    }));
+    const resp = await fwP0c(env, 'GET', '/signals.json');
+    assert.equal(resp.status, 200);
+    const publicPayload = await resp.json();
+    assert.equal(publicPayload.nations_league.public_digest, live.public_digest);
+    assert.ok(!('bankroll_state' in publicPayload));
+    assert.ok(!('open_bets' in publicPayload));
+  });
+
+  test('tampered LIVE Nations League digest fails closed', async () => {
+    const kv = makeP0cKV();
+    const env = makeP0cEnv(kv);
+    const live = await validLiveNationsLeague();
+    live.public_digest = 'f'.repeat(64);
+    await kv.put('signals_json', JSON.stringify({ nations_league: live, football: [], tennis: [] }));
+    const resp = await fwP0c(env, 'GET', '/signals.json');
+    assert.equal(resp.status, 500);
+  });
+
+  test('stale legacy SHADOW Nations League state reproduces the public-read 500', async () => {
+    const kv = makeP0cKV();
+    const env = makeP0cEnv(kv);
+    const captured = new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString();
+    const probabilities = { home: 1 / 3, draw: 1 / 3, away: 1 / 3 };
+    const legacy = {
+      schema: 'nations-league-public-v1', competition: 'UEFA Nations League',
+      provider: 'isports_api', provider_league_id: 146819,
+      evidence_status: 'WEAK_EVIDENCE_SHADOW_ONLY', lifecycle: 'SHADOW_ONLY',
+      no_bet: true, publication_enabled: false, captured_at: captured,
+      source_sha: 'a'.repeat(40), artifact_digest: 'b'.repeat(64),
+      model_snapshot_digest: 'c'.repeat(64), fixture_count: 1,
+      fixtures: [{
+        provider_event_id: 'stale-event', competition: 'UEFA Nations League',
+        kickoff: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+        home: 'Home', away: 'Away', captured_at: captured,
+        model: { probabilities, components: {
+          raw_dixon_coles: probabilities, raw_gbt: probabilities, canonical_stacker: probabilities,
+        } },
+        market: { bookmaker: 'book', odds_decimal: { home: 2, draw: 2, away: 2 }, probabilities },
+        source_sha: 'a'.repeat(40), artifact_digest: 'b'.repeat(64),
+      }],
+      public_digest: 'd'.repeat(64),
+    };
+    await kv.put('signals_json', JSON.stringify({ football: [], tennis: [], nations_league: legacy }));
+    const resp = await fwP0c(env, 'GET', '/signals.json');
+    assert.equal(resp.status, 500);
+  });
+
+  test('NL recovery is authenticated, validates input and preserves unrelated KV fields', async () => {
+    const kv = makeP0cKV();
+    const env = makeP0cEnv(kv);
+    const live = await validLiveNationsLeague();
+    const current = {
+      updated: '2026-10-01T08:00:00Z',
+      football: [{ signal_id: 'football-keep' }],
+      tennis: [{ signal_id: 'tennis-keep' }],
+      health: { overall: 'ok', jobs: [] },
+      bankroll_state: { free: 123.45, private_marker: 'keep' },
+      open_bets: [{ id: 'private-bet-keep' }],
+      custom_private_state: { marker: 'custom-keep', nested: [1, 2] },
+      nations_league: { schema: 'nations-league-public-v1', stale: true },
+    };
+    await kv.put('signals_json', JSON.stringify(current));
+    const unauthenticated = await fwP0c(
+      env, 'POST', '/signals?merge_nations_league=1', { nations_league: live }, 'wrong-token'
+    );
+    assert.equal(unauthenticated.status, 401);
+    const invalid = await fwP0c(
+      env, 'POST', '/signals?merge_nations_league=1', { nations_league: { ...live, no_bet: false } }, MASTER_TOKEN
+    );
+    assert.equal(invalid.status, 400);
+    assert.deepEqual(JSON.parse(await kv.get('signals_json')), current);
+    const repaired = await fwP0c(
+      env, 'POST', '/signals?merge_nations_league=1', { nations_league: live }, MASTER_TOKEN
+    );
+    assert.equal(repaired.status, 200);
+    const saved = JSON.parse(await kv.get('signals_json'));
+    assert.deepEqual(saved.football, current.football);
+    assert.deepEqual(saved.tennis, current.tennis);
+    assert.deepEqual(saved.health, current.health);
+    assert.deepEqual(saved.bankroll_state, current.bankroll_state);
+    assert.deepEqual(saved.open_bets, current.open_bets);
+    assert.deepEqual(saved.custom_private_state, current.custom_private_state);
+    assert.deepEqual(saved.nations_league, live);
+    const getAfter = await fwP0c(env, 'GET', '/signals.json');
+    assert.equal(getAfter.status, 200);
+    assert.equal((await getAfter.json()).nations_league.public_digest, live.public_digest);
+  });
+
+  test('NL recovery rejects arbitrary top-level fields', async () => {
+    const kv = makeP0cKV();
+    const env = makeP0cEnv(kv);
+    const live = await validLiveNationsLeague();
+    await kv.put('signals_json', JSON.stringify({ football: [], tennis: [] }));
+    const resp = await fwP0c(
+      env, 'POST', '/signals?merge_nations_league=1', { nations_league: live, football: [] }, MASTER_TOKEN
+    );
+    assert.equal(resp.status, 400);
   });
 });
 

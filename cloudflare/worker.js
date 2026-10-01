@@ -1281,6 +1281,39 @@ export default {
       const qUser = _sanitizeUser(url.searchParams.get('user') || '');
       if (qUser && auth.viaMaster) user = qUser;
 
+      // NL-RECOVERY-001: narrowly repair only the Nations League public
+      // object when a stale/invalid NL value makes GET /signals.json fail
+      // closed. This is deliberately master-only and never accepts a full
+      // snapshot or an arbitrary field selector.
+      if (url.searchParams.get('merge_nations_league') === '1') {
+        if (!auth.viaMaster) {
+          return new Response('Nations League recovery requires master authority', { status: 403, headers: ch });
+        }
+        const body = await request.text();
+        let incoming;
+        try { incoming = JSON.parse(body); } catch { return new Response('Invalid JSON', { status: 400, headers: ch }); }
+        if (!incoming || typeof incoming !== 'object' || Array.isArray(incoming) ||
+            Object.keys(incoming).length !== 1 || !Object.prototype.hasOwnProperty.call(incoming, 'nations_league')) {
+          return new Response('Nations League recovery accepts only nations_league', { status: 400, headers: ch });
+        }
+        try {
+          await validatePublicNationsLeagueDigest(incoming.nations_league);
+        } catch {
+          return new Response('Invalid Nations League public bundle', { status: 400, headers: ch });
+        }
+        const currentRaw = await env.SIGNALS.get(_signalsKey(user));
+        let current;
+        try { current = JSON.parse(currentRaw || ''); } catch {
+          return new Response('Existing signals snapshot is unavailable', { status: 409, headers: ch });
+        }
+        if (!current || typeof current !== 'object' || Array.isArray(current)) {
+          return new Response('Existing signals snapshot is invalid', { status: 409, headers: ch });
+        }
+        const merged = { ...current, nations_league: incoming.nations_league };
+        await env.SIGNALS.put(_signalsKey(user), JSON.stringify(merged));
+        return jsonResponse({ ok: true, nations_league_digest: incoming.nations_league.public_digest }, 200, ch);
+      }
+
       // P0C-001: ?merge_health=1 — merge only the health key into the existing
       // KV object. Used by aggregate_health to inject health monitoring data
       // without fetching (and thus discarding private fields from) the full KV
