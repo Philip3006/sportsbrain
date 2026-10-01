@@ -76,6 +76,11 @@ jobs:
         with:
           node-version: '22'
 
+      # The Python public-digest serializer is checked against native
+      # JSON.stringify, including the committed Binary64 differential sample.
+      - name: Nations League JSON.stringify digest parity
+        run: python -m pytest -q tests/notifications/test_nations_league_live_public_digest_parity.py
+
       - name: Node Worker contract tests
         run: node --test tests/js/worker.test.mjs tests/js/top5_delivery.test.mjs
 

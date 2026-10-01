@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
+import random
+import struct
 import subprocess
+import sys
 from copy import deepcopy
 from pathlib import Path
 
@@ -23,6 +27,51 @@ from tests.notifications.test_nations_league_live_public import (
 )
 
 ROOT = Path(__file__).parents[2]
+
+
+def _finite_binary64_samples(count: int = 100_000) -> list[float]:
+    """Return a deterministic broad finite IEEE-754 binary64 sample."""
+
+    boundary_values = [
+        0.0,
+        -0.0,
+        1e-7,
+        math.nextafter(1e-6, 0.0),
+        1e-6,
+        math.nextafter(1e-6, math.inf),
+        1e-5,
+        -1e-7,
+        -math.nextafter(1e-6, 0.0),
+        -1e-6,
+        -math.nextafter(1e-6, math.inf),
+        -1e-5,
+        1e20,
+        math.nextafter(1e21, 0.0),
+        1e21,
+        math.nextafter(1e21, math.inf),
+        1e22,
+        -1e20,
+        -math.nextafter(1e21, 0.0),
+        -1e21,
+        -math.nextafter(1e21, math.inf),
+        -1e22,
+        math.ldexp(1.0, -1074),
+        -math.ldexp(1.0, -1074),
+        math.nextafter(sys.float_info.min, 0.0),
+        -math.nextafter(sys.float_info.min, 0.0),
+        sys.float_info.min,
+        -sys.float_info.min,
+        sys.float_info.max,
+        -sys.float_info.max,
+    ]
+    values = list(boundary_values)
+    rng = random.Random(0x4E4C5F323531)
+    while len(values) < count:
+        bits = rng.getrandbits(64)
+        value = struct.unpack(">d", bits.to_bytes(8, "big"))[0]
+        if math.isfinite(value):
+            values.append(value)
+    return values
 
 
 def _node_canonicalizes(path: Path) -> str:
@@ -175,6 +224,27 @@ def test_public_canonical_matches_native_json_stringify_for_numeric_matrix_and_e
     path = tmp_path / "canonical-input.json"
     path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
 
+    assert _public_canonical(payload) == _node_canonicalizes(path)
+
+
+def test_public_canonical_matches_native_json_stringify_for_100000_binary64_values(
+    tmp_path,
+):
+    values = _finite_binary64_samples()
+    assert len(values) == 100_000
+    assert any(value > 0 for value in values)
+    assert any(value < 0 for value in values)
+    assert any(0 < abs(value) < sys.float_info.min for value in values)
+    assert any(abs(value) > 1e300 for value in values)
+
+    payload = {"values": values}
+    path = tmp_path / "binary64-input.json"
+    path.write_text(
+        json.dumps(payload, ensure_ascii=False, allow_nan=False), encoding="utf-8"
+    )
+
+    # The Node helper sorts object keys only; every numeric token is emitted by
+    # native JSON.stringify, which remains the reference implementation.
     assert _public_canonical(payload) == _node_canonicalizes(path)
 
 
