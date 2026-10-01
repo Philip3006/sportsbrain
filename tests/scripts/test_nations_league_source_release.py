@@ -50,6 +50,19 @@ def test_live_workflow_uses_marker_release_and_one_shared_cutoff():
     assert workflow.count('--as-of "$CYCLE_AS_OF"') == 3
 
 
+def test_live_workflow_checkout_has_full_history_for_ancestor_validation():
+    workflow = (ROOT / ".github/workflows/nations_league_live_cycle.yml").read_text(
+        encoding="utf-8"
+    )
+    checkout_start = workflow.index("      - uses: actions/checkout@v4")
+    setup_python_start = workflow.index("      - uses: actions/setup-python@v5")
+    checkout = workflow[checkout_start:setup_python_start]
+
+    assert "actions/checkout@v4" in checkout
+    assert "fetch-depth: 0" in checkout
+    assert "fetch-depth: 1" not in checkout
+
+
 def test_live_workflow_guards_optional_publication_inside_shell():
     workflow = (ROOT / ".github/workflows/nations_league_live_cycle.yml").read_text(
         encoding="utf-8"
