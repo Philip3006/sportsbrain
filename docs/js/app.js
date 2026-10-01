@@ -879,8 +879,10 @@ function openNationsLeagueMatch(displayKey) {
   if (!isLive && outcomes.some(([, , , price]) => !Number.isFinite(price) || price <= 1)) return;
 
   if (isLive) {
+    const phaseLabel = _nationsLeaguePhaseLabel(
+      fixture.phase, fixture.prediction_cutoff, fixture.kickoff_utc,
+    );
     const metaStr = kickoff ? fmtKickoffCompact(kickoff) : '';
-    const phase = String(fixture.phase || '').toUpperCase();
     const release = fixture.model_release || payload.model_release || {};
     const modelVersion = release.model_version || release.model_family || '—';
     const releaseId = release.release_id ? ` · Release ${String(release.release_id).slice(0, 12)}` : '';
@@ -907,8 +909,8 @@ function openNationsLeagueMatch(displayKey) {
     _tickCountdowns();
     document.getElementById('detail-cards').innerHTML = `
       <div class="pred-card nl-shadow-detail-card">
-        <div class="pred-title">🏆 UEFA Nations League · LIVE Modell</div>
-        <div class="nl-shadow-detail-safety">LIVE · ${esc(phase || '—')} · NO BET · NUR INFORMATION</div>
+        <div class="pred-title">🏆 UEFA Nations League · Modell</div>
+        <div class="nl-shadow-detail-safety">${esc(phaseLabel.detail)} · NO BET · NUR INFORMATION</div>
         <div class="nl-shadow-detail-grid">${outcomeHtml}</div>
         <div class="nl-shadow-detail-meta">
           Modell: ${esc(modelVersion)}${esc(releaseId)} · Datenstand: ${esc(updatedLabel)}<br>

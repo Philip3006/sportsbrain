@@ -4,6 +4,7 @@ import hashlib
 import json
 import functools
 import threading
+from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
@@ -369,13 +370,21 @@ def test_home_renders_all_current_live_nations_league_fixtures_read_only(
     _inject_signals(page, payload)
     page.goto(server_url, wait_until="domcontentloaded")
 
+    now = datetime.now(timezone.utc)
+    expected_count = sum(
+        now - timedelta(hours=1) <= datetime.fromisoformat(
+            fixture["kickoff_utc"].replace("Z", "+00:00")
+        ) <= now + timedelta(hours=24)
+        for fixture in payload["nations_league"]["fixtures"]
+    )
     rows = page.locator("#home-container .today-row.nl-shadow-row")
-    expect(rows).to_have_count(7, timeout=10_000)
-    expect(page.locator("#home-container")).to_contain_text("LIVE")
-    expect(page.locator("#home-container")).to_contain_text("INITIAL")
+    expect(rows).to_have_count(expected_count, timeout=10_000)
+    expect(page.locator("#home-container")).to_contain_text("VORAB")
+    expect(page.locator("#home-container")).not_to_contain_text("INITIAL")
+    expect(page.locator("#home-container")).not_to_contain_text("REFINEMENT")
     expect(page.locator("#home-container")).to_contain_text("NO BET")
     expect(rows.locator("button")).to_have_count(0)
-    expect(rows.locator(".nl-live-model-inline")).to_have_count(7)
+    expect(rows.locator(".nl-live-model-inline")).to_have_count(expected_count)
     expect(rows.first).to_contain_text("Denmark")
     expect(rows.first).to_contain_text("Portugal")
 
@@ -384,8 +393,10 @@ def test_home_renders_all_current_live_nations_league_fixtures_read_only(
     detail = page.locator(".nl-shadow-detail-card")
     expect(detail).to_be_visible()
     expect(detail).to_contain_text("UEFA Nations League")
-    expect(detail).to_contain_text("LIVE")
-    expect(detail).to_contain_text("INITIAL")
+    expect(detail).to_contain_text("Modell")
+    expect(detail).to_contain_text("Vorab-Prognose · Modell")
+    expect(detail).not_to_contain_text("INITIAL")
+    expect(detail).not_to_contain_text("REFINEMENT")
     expect(detail).to_contain_text("NO BET")
     expect(detail).to_contain_text("35.2% Modell")
     expect(detail).to_contain_text("23.4% Modell")
@@ -393,6 +404,31 @@ def test_home_renders_all_current_live_nations_league_fixtures_read_only(
     expect(detail).to_contain_text("Keine Marktquote")
     expect(detail.locator("button")).to_have_count(0)
     expect(page.locator("#bet-modal-bd")).not_to_be_visible()
+
+
+def test_nations_league_refinement_copy_uses_actual_lead_time(
+    page: Page, server_url: str
+) -> None:
+    """Refinement copy is presentation-only and derives its lead time from data."""
+    payload = deepcopy(_nations_league_live_payload())
+    fixture = payload["fixtures"][0]
+    kickoff = datetime.fromisoformat(fixture["kickoff_utc"].replace("Z", "+00:00"))
+    fixture["phase"] = "refinement"
+    fixture["prediction_cutoff"] = (kickoff - timedelta(minutes=75)).isoformat()
+    unsigned = {key: value for key, value in payload.items() if key != "public_digest"}
+    payload["public_digest"] = hashlib.sha256(
+        json.dumps(unsigned, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    _inject_signals(page, {**_BASE, "nations_league": payload})
+    page.goto(server_url, wait_until="domcontentloaded")
+
+    row = page.locator("#home-container .today-row.nl-shadow-row").filter(has_text="Denmark").first
+    expect(row).to_contain_text("AKTUALISIERT")
+    expect(row).not_to_contain_text("REFINEMENT")
+    row.click()
+    detail = page.locator(".nl-shadow-detail-card")
+    expect(detail).to_contain_text("Aktualisierte Prognose · 75 Min. vor Anpfiff")
+    expect(detail).not_to_contain_text("REFINEMENT")
 
 
 def test_analytics_hook_and_mobile_navigation(page: Page, server_url: str) -> None:
