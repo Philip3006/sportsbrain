@@ -119,6 +119,12 @@
     .ou-accordion.open .ou-accordion-body { display: block; background: var(--surface); padding: 4px 0 0; }
     .sig-card.high { border-left-color: var(--green); }
     .sig-card.medium { border-left-color: var(--yellow); }
+    .sig-card.no-bet { border-left-color: var(--yellow) !important; }
+    .sig-card.no-bet .odds-btn { background: rgba(210,153,34,.08); border-color: var(--yellow); color: var(--yellow); }
+    .no-bet-status { margin: 0 0 10px; padding: 7px 9px; border-radius: var(--r-sm); background: rgba(210,153,34,.10); border: 1px solid rgba(210,153,34,.35); color: var(--yellow); font-size: 11px; font-weight: 900; letter-spacing: .2px; }
+    .no-bet-stake { color: var(--yellow); font-weight: 800; }
+    .why-inline.no-bet-why { border-color: rgba(210,153,34,.28); background: rgba(210,153,34,.05); }
+    .why-inline.no-bet-why > summary { color: var(--yellow); }
     .top5-lifecycle-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 7px; margin: -2px 0 8px; font-size: 9px; line-height: 1.4; color: var(--muted); }
     .top5-lifecycle-badge { display: inline-block; border: 1px solid var(--border); border-radius: 10px; padding: 1px 6px; font-weight: 800; color: var(--text); white-space: nowrap; }
     .top5-lifecycle-delta { color: var(--text); font-weight: 700; }
