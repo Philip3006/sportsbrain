@@ -16,11 +16,15 @@ from src.scanner.nations_league_live_market import (
 
 def _digest(value: object) -> str:
     return hashlib.sha256(
-        json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
+        json.dumps(
+            value, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+        ).encode()
     ).hexdigest()
 
 
-def _manifest(*, kickoff: str = "2026-10-02T18:45:00Z", rows: list[dict] | None = None) -> dict:
+def _manifest(
+    *, kickoff: str = "2026-10-02T18:45:00Z", rows: list[dict] | None = None
+) -> dict:
     fixtures = rows or [
         {
             "fixture_id": "uefa-nl:future-test",
@@ -94,11 +98,16 @@ def test_no_due_fixture_does_not_call_provider():
 
 def test_due_provider_response_becomes_canonical_snapshot_without_duplicate_devig():
     def fetcher():
-        return [_event()], 1, 0, {
-            "method": "GET",
-            "url": "https://api.the-odds-api.com/v4/sports/soccer_uefa_nations_league/odds",
-            "query": {"regions": "eu", "markets": "h2h", "oddsFormat": "decimal"},
-        }
+        return (
+            [_event()],
+            1,
+            0,
+            {
+                "method": "GET",
+                "url": "https://api.the-odds-api.com/v4/sports/soccer_uefa_nations_league/odds",
+                "query": {"regions": "eu", "markets": "h2h", "oddsFormat": "decimal"},
+            },
+        )
 
     batch = acquire_live_market_snapshots(
         _manifest(),
@@ -145,7 +154,9 @@ def test_captured_initial_phase_suppresses_provider_request():
 def test_campaign_record_suppresses_provider_request_before_runtime(tmp_path):
     campaign = tmp_path / "campaign.json"
     campaign.write_text(
-        json.dumps({"records": [{"fixture_id": "uefa-nl:future-test", "phase": "initial"}]}),
+        json.dumps(
+            {"records": [{"fixture_id": "uefa-nl:future-test", "phase": "initial"}]}
+        ),
         encoding="utf-8",
     )
     existing = json.loads(campaign.read_text(encoding="utf-8"))["records"]
@@ -277,14 +288,19 @@ def test_multiple_pending_fixtures_share_one_provider_request():
     def fetcher():
         nonlocal calls
         calls += 1
-        return [
-            _event(),
-            _event(
-                event_id="odds-event-2",
-                home="Greece",
-                away="Netherlands",
-            ),
-        ], 1, 0, {"method": "GET"}
+        return (
+            [
+                _event(),
+                _event(
+                    event_id="odds-event-2",
+                    home="Greece",
+                    away="Netherlands",
+                ),
+            ],
+            1,
+            0,
+            {"method": "GET"},
+        )
 
     batch = acquire_live_market_snapshots(
         _manifest(rows=rows),
@@ -336,7 +352,11 @@ def test_mixed_captured_and_pending_fixtures_only_materialize_pending():
         "uefa-nl:future-test-2"
     ]
     assert batch["due_fixtures"] == [
-        {"fixture_id": "uefa-nl:future-test-2", "phase": "initial", "due_state": "INITIAL_DUE"}
+        {
+            "fixture_id": "uefa-nl:future-test-2",
+            "phase": "initial",
+            "due_state": "INITIAL_DUE",
+        }
     ]
 
 
@@ -389,9 +409,7 @@ def test_capture_window_boundary_is_not_backdated_into_prediction():
     )
 
     assert batch["snapshots"] == []
-    assert batch["failure_reasons"] == {
-        "uefa-nl:future-test": "capture_window_changed"
-    }
+    assert batch["failure_reasons"] == {"uefa-nl:future-test": "capture_window_changed"}
     assert batch["captured_at"] == "2026-10-01T20:45:01Z"
     assert batch["captured_at"] != "2026-10-01T20:45:00Z"
 
@@ -449,7 +467,12 @@ def test_provider_failure_is_redacted_and_model_safe():
 
 def test_ambiguous_provider_identity_fails_closed_for_that_fixture():
     def fetcher():
-        return [_event(), _event(event_id="odds-event-duplicate")], 1, 0, {"method": "GET"}
+        return (
+            [_event(), _event(event_id="odds-event-duplicate")],
+            1,
+            0,
+            {"method": "GET"},
+        )
 
     batch = acquire_live_market_snapshots(
         _manifest(),
@@ -502,24 +525,41 @@ def test_workflow_materializes_snapshots_before_the_existing_cycle():
     assert "cron: '*/15 * * * *'" in workflow
     assert "scripts/acquire_nations_league_live_market.py" in workflow
     assert "ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}" in workflow
+    assert "ISPORTS_API_KEY: ${{ secrets.ISPORTS_API_KEY }}" in workflow
     preflight = workflow.split("- name: Prepare due market preflight", 1)[1].split(
         "- name: Acquire due current 1X2 market snapshots", 1
     )[0]
-    provider_step = workflow.split("- name: Acquire due current 1X2 market snapshots", 1)[1]
+    provider_step = workflow.split(
+        "- name: Acquire due current 1X2 market snapshots", 1
+    )[1]
     assert "ODDS_API_KEY" not in preflight
+    assert "ISPORTS_API_KEY" not in preflight
     assert "--preflight" in preflight
     assert "needs_provider" in preflight
-    assert "if: ${{ steps.market_preflight.outputs.needs_provider == 'true' }}" in provider_step
+    assert (
+        "if: ${{ steps.market_preflight.outputs.needs_provider == 'true' }}"
+        in provider_step
+    )
     assert provider_step.count("ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}") == 1
-    assert "--store results/research/nations_league_v1_1_live_prediction_store.jsonl" in workflow
-    assert workflow.count(
-        "--campaign results/research/nations_league_v1_1_forward_campaign_20260930T200124Z.json"
-    ) == 5
-    assert "--market-snapshots /tmp/nations-league-live-market-snapshots.json" in workflow
-    assert "CYCLE_AS_OF=\"$(python3 -c" in workflow
+    assert provider_step.count("ISPORTS_API_KEY: ${{ secrets.ISPORTS_API_KEY }}") == 1
+    assert (
+        "--store results/research/nations_league_v1_1_live_prediction_store.jsonl"
+        in workflow
+    )
+    assert (
+        workflow.count(
+            "--campaign results/research/nations_league_v1_1_forward_campaign_20260930T200124Z.json"
+        )
+        == 5
+    )
+    assert (
+        "--market-snapshots /tmp/nations-league-live-market-snapshots.json" in workflow
+    )
+    assert 'CYCLE_AS_OF="$(python3 -c' in workflow
     assert "--execute-offline" in workflow
     assert "scripts/resolve_nations_league_source_release.py" in workflow
     assert "if: ${{ secrets." not in workflow
+    assert "if: ${{ secrets.ISPORTS_API_KEY" not in workflow
     assert "scripts/_bot_commit_push.sh" in workflow
     assert "Summarize canonical LIVE market-edge evidence" in workflow
     assert '"edge_statuses"' in workflow

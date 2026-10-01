@@ -51,6 +51,7 @@ jobs:
         if: ${{ steps.market_preflight.outputs.needs_provider == 'true' }}
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          ISPORTS_API_KEY: ${{ secrets.ISPORTS_API_KEY }}
         run: |
           set -o pipefail
           MARKET_SNAPSHOT_PATH="/tmp/nations-league-live-market-snapshots.json"
