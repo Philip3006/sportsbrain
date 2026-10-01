@@ -450,12 +450,41 @@ def test_post_upload_missing_or_wrong_digest_nl_blocks(post_nl, tmp_path, monkey
     assert len(calls["post"]) == 1
 
 
-def test_post_upload_timestamp_must_be_fresh(tmp_path, monkeypatch):
+def test_post_upload_preserves_equal_old_global_timestamp(tmp_path, monkeypatch):
     now = datetime.now(timezone.utc).replace(microsecond=0)
     public = _valid_public_nl(now)
-    after = _worker_snapshot(now - timedelta(seconds=121), nl=public)
+    preserved = now - timedelta(days=2)
+    before = _worker_snapshot(preserved)
+    after = _worker_snapshot(preserved, nl=public)
     root, now, expected_digest, calls = _prepare_run(
-        tmp_path, monkeypatch, worker_after=after, public_nl=public, now=now
+        tmp_path,
+        monkeypatch,
+        worker_before=before,
+        worker_after=after,
+        public_nl=public,
+        now=now,
+    )
+
+    summary = _run(root, now, expected_digest)
+
+    assert summary["status"] == republish_script.READY
+    assert summary["cloud_upload_success"] is True
+    assert len(calls["post"]) == 1
+    assert len(calls["get"]) == 2
+
+
+def test_post_upload_timestamp_regression_blocks(tmp_path, monkeypatch):
+    now = datetime.now(timezone.utc).replace(microsecond=0)
+    public = _valid_public_nl(now)
+    before = _worker_snapshot(now - timedelta(minutes=5))
+    after = _worker_snapshot(now - timedelta(minutes=6), nl=public)
+    root, now, expected_digest, calls = _prepare_run(
+        tmp_path,
+        monkeypatch,
+        worker_before=before,
+        worker_after=after,
+        public_nl=public,
+        now=now,
     )
 
     summary = _run(root, now, expected_digest)
