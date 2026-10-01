@@ -6437,17 +6437,60 @@
         "competition": "UEFA Nations League",
         "edge_analysis": {
           "betting_enabled": false,
-          "candidate_outcomes": [],
-          "edge_digest": "30f5b9100996ac72498c47f137d374ec8f2c7f2bb044e786ca0cd77e7253ce3e",
-          "edge_status": "NO_MARKET_SNAPSHOT",
-          "evaluated_at": "2026-10-01T16:46:03.732310Z",
+          "candidate_outcomes": [
+            "home"
+          ],
+          "edge_digest": "1fa54e77ef6efbc4a90327390371bf8815f6d26b6a1f4fbbfe047cd74ed3c9a7",
+          "edge_status": "EDGE_MEASURED",
+          "evaluated_at": "2026-10-01T17:25:07.358884Z",
           "fixture_id": "uefa-nl:future-0f2bd8c1791c064f46230190",
-          "highest_edge_outcome": null,
+          "highest_edge_outcome": "home",
           "ledger_mutation": false,
-          "market_snapshot": null,
+          "market_snapshot": {
+            "bookmaker": "iSports European odds component-wise median",
+            "captured_at": "2026-10-01T17:25:07.358884Z",
+            "fixture_id": "uefa-nl:future-0f2bd8c1791c064f46230190",
+            "margin_free_probabilities": {
+              "away": 0.475398,
+              "draw": 0.260492,
+              "home": 0.26411
+            },
+            "odds_decimal": {
+              "away": 2.0,
+              "draw": 3.65,
+              "home": 3.6
+            },
+            "overround": 0.05175,
+            "provider": "isports_api",
+            "provider_match_id": "344418922",
+            "schema": "nations-league-live-market-snapshot-v1",
+            "snapshot_digest": "07289dab26c564aeb1f8d4dded6b70d25ac674580ac133e3150caf4687ba4807"
+          },
           "model_release_id": "78161c4097c06e596efa95721aa62db0ed72a057a3fd664cbecd32f0c0be29bb",
           "no_bet": true,
-          "outcomes": {},
+          "outcomes": {
+            "away": {
+              "decimal_odds": 2.0,
+              "ev": -0.171264,
+              "market_probability": 0.475398,
+              "model_probability": 0.414368,
+              "probability_edge": -0.06103
+            },
+            "draw": {
+              "decimal_odds": 3.65,
+              "ev": -0.145626,
+              "market_probability": 0.260492,
+              "model_probability": 0.234075,
+              "probability_edge": -0.026417
+            },
+            "home": {
+              "decimal_odds": 3.6,
+              "ev": 0.265605,
+              "market_probability": 0.26411,
+              "model_probability": 0.351557,
+              "probability_edge": 0.087447
+            }
+          },
           "phase": "refinement",
           "prediction_record_id": "753894cadf002f3c7d203433c733815dd4d2ddd9b0989c3b39c8b906e882c1f0",
           "schema": "nations-league-live-edge-v1"
@@ -6486,17 +6529,61 @@
         "competition": "UEFA Nations League",
         "edge_analysis": {
           "betting_enabled": false,
-          "candidate_outcomes": [],
-          "edge_digest": "ee0c567b940737e1f340ec973c1ff06c17873d1fa96fa043078e7e92a60bb472",
-          "edge_status": "NO_MARKET_SNAPSHOT",
-          "evaluated_at": "2026-10-01T16:46:03.732310Z",
+          "candidate_outcomes": [
+            "draw",
+            "away"
+          ],
+          "edge_digest": "8b3badc87cabb172eb726c4bf8f61469e9605bc744258a989edc063b0c9b4170",
+          "edge_status": "EDGE_MEASURED",
+          "evaluated_at": "2026-10-01T17:25:07.358884Z",
           "fixture_id": "uefa-nl:future-21f51ec9966eff58ebab642c",
-          "highest_edge_outcome": null,
+          "highest_edge_outcome": "away",
           "ledger_mutation": false,
-          "market_snapshot": null,
+          "market_snapshot": {
+            "bookmaker": "iSports European odds component-wise median",
+            "captured_at": "2026-10-01T17:25:07.358884Z",
+            "fixture_id": "uefa-nl:future-21f51ec9966eff58ebab642c",
+            "margin_free_probabilities": {
+              "away": 0.163858,
+              "draw": 0.224331,
+              "home": 0.611811
+            },
+            "odds_decimal": {
+              "away": 5.75,
+              "draw": 4.2,
+              "home": 1.54
+            },
+            "overround": 0.061359,
+            "provider": "isports_api",
+            "provider_match_id": "359418928",
+            "schema": "nations-league-live-market-snapshot-v1",
+            "snapshot_digest": "05579ecfe46b6b4c91bd66ea49875168967726565fd05fd589fd26a1966d7448"
+          },
           "model_release_id": "78161c4097c06e596efa95721aa62db0ed72a057a3fd664cbecd32f0c0be29bb",
           "no_bet": true,
-          "outcomes": {},
+          "outcomes": {
+            "away": {
+              "decimal_odds": 5.75,
+              "ev": 1.27577,
+              "market_probability": 0.163858,
+              "model_probability": 0.395786,
+              "probability_edge": 0.231928
+            },
+            "draw": {
+              "decimal_odds": 4.2,
+              "ev": 0.037379,
+              "market_probability": 0.224331,
+              "model_probability": 0.246995,
+              "probability_edge": 0.022664
+            },
+            "home": {
+              "decimal_odds": 1.54,
+              "ev": -0.449883,
+              "market_probability": 0.611811,
+              "model_probability": 0.357219,
+              "probability_edge": -0.254592
+            }
+          },
           "phase": "initial",
           "prediction_record_id": "822c022e39c64e71bd3d3591f9902397287eab61785525af39ab04409193f997",
           "schema": "nations-league-live-edge-v1"
@@ -6535,17 +6622,60 @@
         "competition": "UEFA Nations League",
         "edge_analysis": {
           "betting_enabled": false,
-          "candidate_outcomes": [],
-          "edge_digest": "1b5f15f455f1b9ef517ca30a94c2b3c133cbd53e2a6c4a43ea1b390edad2f16a",
-          "edge_status": "NO_MARKET_SNAPSHOT",
-          "evaluated_at": "2026-10-01T16:46:03.732310Z",
+          "candidate_outcomes": [
+            "home"
+          ],
+          "edge_digest": "06919046b58d43be7caa1b7e9b30781604a21fdfb1b31f7aafb59078f89d1e45",
+          "edge_status": "EDGE_MEASURED",
+          "evaluated_at": "2026-10-01T17:25:07.358884Z",
           "fixture_id": "uefa-nl:future-24e02c77e0dae6970194e816",
-          "highest_edge_outcome": null,
+          "highest_edge_outcome": "home",
           "ledger_mutation": false,
-          "market_snapshot": null,
+          "market_snapshot": {
+            "bookmaker": "iSports European odds component-wise median",
+            "captured_at": "2026-10-01T17:25:07.358884Z",
+            "fixture_id": "uefa-nl:future-24e02c77e0dae6970194e816",
+            "margin_free_probabilities": {
+              "away": 0.451679,
+              "draw": 0.263479,
+              "home": 0.284842
+            },
+            "odds_decimal": {
+              "away": 2.1,
+              "draw": 3.6,
+              "home": 3.33
+            },
+            "overround": 0.054269,
+            "provider": "isports_api",
+            "provider_match_id": "214418929",
+            "schema": "nations-league-live-market-snapshot-v1",
+            "snapshot_digest": "70f367efea21de8fa26a75804d0fb3f192d8322fdb78b87a961416426999d4b4"
+          },
           "model_release_id": "78161c4097c06e596efa95721aa62db0ed72a057a3fd664cbecd32f0c0be29bb",
           "no_bet": true,
-          "outcomes": {},
+          "outcomes": {
+            "away": {
+              "decimal_odds": 2.1,
+              "ev": -0.50389,
+              "market_probability": 0.451679,
+              "model_probability": 0.236243,
+              "probability_edge": -0.215436
+            },
+            "draw": {
+              "decimal_odds": 3.6,
+              "ev": -0.597524,
+              "market_probability": 0.263479,
+              "model_probability": 0.111799,
+              "probability_edge": -0.15168
+            },
+            "home": {
+              "decimal_odds": 3.33,
+              "ev": 1.17102,
+              "market_probability": 0.284842,
+              "model_probability": 0.651958,
+              "probability_edge": 0.367116
+            }
+          },
           "phase": "refinement",
           "prediction_record_id": "d8ca48c89eadbf5899b6194a4d2f003af6aa9427cb867007260a11c13496693b",
           "schema": "nations-league-live-edge-v1"
@@ -6633,17 +6763,61 @@
         "competition": "UEFA Nations League",
         "edge_analysis": {
           "betting_enabled": false,
-          "candidate_outcomes": [],
-          "edge_digest": "9f043f10ec4a091e4fde84bac73624cb4ce2ebb1d7fa1150a58b00addaf59405",
-          "edge_status": "NO_MARKET_SNAPSHOT",
-          "evaluated_at": "2026-10-01T16:46:03.732310Z",
+          "candidate_outcomes": [
+            "home",
+            "draw"
+          ],
+          "edge_digest": "992e87730b61a6d5bc90722e1c48e3d009f4877ccb98fcf54eac8d22668cb040",
+          "edge_status": "EDGE_MEASURED",
+          "evaluated_at": "2026-10-01T17:25:07.358884Z",
           "fixture_id": "uefa-nl:future-3515b2e85084a8451012773f",
-          "highest_edge_outcome": null,
+          "highest_edge_outcome": "home",
           "ledger_mutation": false,
-          "market_snapshot": null,
+          "market_snapshot": {
+            "bookmaker": "iSports European odds component-wise median",
+            "captured_at": "2026-10-01T17:25:07.358884Z",
+            "fixture_id": "uefa-nl:future-3515b2e85084a8451012773f",
+            "margin_free_probabilities": {
+              "away": 0.659395,
+              "draw": 0.197819,
+              "home": 0.142786
+            },
+            "odds_decimal": {
+              "away": 1.44,
+              "draw": 4.8,
+              "home": 6.65
+            },
+            "overround": 0.053154,
+            "provider": "isports_api",
+            "provider_match_id": "334418921",
+            "schema": "nations-league-live-market-snapshot-v1",
+            "snapshot_digest": "e695590392f73e58b96c1f79dd6045a6f779613dd8c6d2a57d2bdf2cc8a2b222"
+          },
           "model_release_id": "78161c4097c06e596efa95721aa62db0ed72a057a3fd664cbecd32f0c0be29bb",
           "no_bet": true,
-          "outcomes": {},
+          "outcomes": {
+            "away": {
+              "decimal_odds": 1.44,
+              "ev": -0.507069,
+              "market_probability": 0.659395,
+              "model_probability": 0.342313,
+              "probability_edge": -0.317082
+            },
+            "draw": {
+              "decimal_odds": 4.8,
+              "ev": 0.039987,
+              "market_probability": 0.197819,
+              "model_probability": 0.216664,
+              "probability_edge": 0.018845
+            },
+            "home": {
+              "decimal_odds": 6.65,
+              "ev": 1.932796,
+              "market_probability": 0.142786,
+              "model_probability": 0.441022,
+              "probability_edge": 0.298236
+            }
+          },
           "phase": "refinement",
           "prediction_record_id": "32997a7cd3dc68eba3879444723ba5df678a6651513ea453c4fbd352d0200b3a",
           "schema": "nations-league-live-edge-v1"
@@ -6682,17 +6856,60 @@
         "competition": "UEFA Nations League",
         "edge_analysis": {
           "betting_enabled": false,
-          "candidate_outcomes": [],
-          "edge_digest": "c5a2ea03250411354f91369600de657dca837b6c4144783f07bf2cf9dba0ac83",
-          "edge_status": "NO_MARKET_SNAPSHOT",
-          "evaluated_at": "2026-10-01T16:46:03.732310Z",
+          "candidate_outcomes": [
+            "home"
+          ],
+          "edge_digest": "b8d47aad2ab85a778c93b7fe4fe94f35be8d8faa035a6031c428af217d1207ef",
+          "edge_status": "EDGE_MEASURED",
+          "evaluated_at": "2026-10-01T17:25:07.358884Z",
           "fixture_id": "uefa-nl:future-38c12d3777715db13fa60a27",
-          "highest_edge_outcome": null,
+          "highest_edge_outcome": "home",
           "ledger_mutation": false,
-          "market_snapshot": null,
+          "market_snapshot": {
+            "bookmaker": "iSports European odds component-wise median",
+            "captured_at": "2026-10-01T17:25:07.358884Z",
+            "fixture_id": "uefa-nl:future-38c12d3777715db13fa60a27",
+            "margin_free_probabilities": {
+              "away": 0.584558,
+              "draw": 0.252782,
+              "home": 0.16266
+            },
+            "odds_decimal": {
+              "away": 1.6,
+              "draw": 3.7,
+              "home": 5.75
+            },
+            "overround": 0.069183,
+            "provider": "isports_api",
+            "provider_match_id": "324518921",
+            "schema": "nations-league-live-market-snapshot-v1",
+            "snapshot_digest": "f7eda02228a94d3d43b4deb4cdc06f6f985f8ddf40af4e453093f85aab00ea29"
+          },
           "model_release_id": "78161c4097c06e596efa95721aa62db0ed72a057a3fd664cbecd32f0c0be29bb",
           "no_bet": true,
-          "outcomes": {},
+          "outcomes": {
+            "away": {
+              "decimal_odds": 1.6,
+              "ev": -0.489878,
+              "market_probability": 0.584558,
+              "model_probability": 0.318826,
+              "probability_edge": -0.265732
+            },
+            "draw": {
+              "decimal_odds": 3.7,
+              "ev": -0.321623,
+              "market_probability": 0.252782,
+              "model_probability": 0.183345,
+              "probability_edge": -0.069437
+            },
+            "home": {
+              "decimal_odds": 5.75,
+              "ev": 1.862522,
+              "market_probability": 0.16266,
+              "model_probability": 0.49783,
+              "probability_edge": 0.33517
+            }
+          },
           "phase": "initial",
           "prediction_record_id": "5399137a4dff4a71121c5576f8e7022c4cf854c4556345e4eb67c0157ead4129",
           "schema": "nations-league-live-edge-v1"
@@ -6731,17 +6948,60 @@
         "competition": "UEFA Nations League",
         "edge_analysis": {
           "betting_enabled": false,
-          "candidate_outcomes": [],
-          "edge_digest": "ab9e6afa06a91e9c54f0d5571b626b944bd160489e27227ed9eadbaebde6929e",
-          "edge_status": "NO_MARKET_SNAPSHOT",
-          "evaluated_at": "2026-10-01T16:46:03.732310Z",
+          "candidate_outcomes": [
+            "away"
+          ],
+          "edge_digest": "13bbaf77b1635aebcac388527a4c4d497128e2e85fbf852e4fa1fd78f75637dd",
+          "edge_status": "EDGE_MEASURED",
+          "evaluated_at": "2026-10-01T17:25:07.358884Z",
           "fixture_id": "uefa-nl:future-392e2f375b6ddb9ac9b6cb14",
-          "highest_edge_outcome": null,
+          "highest_edge_outcome": "away",
           "ledger_mutation": false,
-          "market_snapshot": null,
+          "market_snapshot": {
+            "bookmaker": "iSports European odds component-wise median",
+            "captured_at": "2026-10-01T17:25:07.358884Z",
+            "fixture_id": "uefa-nl:future-392e2f375b6ddb9ac9b6cb14",
+            "margin_free_probabilities": {
+              "away": 0.078115,
+              "draw": 0.183798,
+              "home": 0.738087
+            },
+            "odds_decimal": {
+              "away": 12.0,
+              "draw": 5.1,
+              "home": 1.27
+            },
+            "overround": 0.066813,
+            "provider": "isports_api",
+            "provider_match_id": "367518928",
+            "schema": "nations-league-live-market-snapshot-v1",
+            "snapshot_digest": "40583175bf357b76a16e051fe51600dcbfe27fb20bbab2f85d5cdca262d9d860"
+          },
           "model_release_id": "78161c4097c06e596efa95721aa62db0ed72a057a3fd664cbecd32f0c0be29bb",
           "no_bet": true,
-          "outcomes": {},
+          "outcomes": {
+            "away": {
+              "decimal_odds": 12.0,
+              "ev": 1.32662,
+              "market_probability": 0.078115,
+              "model_probability": 0.193885,
+              "probability_edge": 0.11577
+            },
+            "draw": {
+              "decimal_odds": 5.1,
+              "ev": -0.559263,
+              "market_probability": 0.183798,
+              "model_probability": 0.086419,
+              "probability_edge": -0.097379
+            },
+            "home": {
+              "decimal_odds": 1.27,
+              "ev": -0.085986,
+              "market_probability": 0.738087,
+              "model_probability": 0.719696,
+              "probability_edge": -0.018391
+            }
+          },
           "phase": "refinement",
           "prediction_record_id": "8c4cc419079429f9674f7986b176986a828184b25964f21beacbc3101ed5651d",
           "schema": "nations-league-live-edge-v1"
@@ -6780,17 +7040,61 @@
         "competition": "UEFA Nations League",
         "edge_analysis": {
           "betting_enabled": false,
-          "candidate_outcomes": [],
-          "edge_digest": "5f0e640851c30203c114f03d23bb67f51e6417303dc82212180ee48f21edaa2a",
-          "edge_status": "NO_MARKET_SNAPSHOT",
-          "evaluated_at": "2026-10-01T16:46:03.732310Z",
+          "candidate_outcomes": [
+            "draw",
+            "away"
+          ],
+          "edge_digest": "84765881b0d98ffb27784c485502234b94f8f13970d0f6f2369b29ffb0888d70",
+          "edge_status": "EDGE_MEASURED",
+          "evaluated_at": "2026-10-01T17:25:07.358884Z",
           "fixture_id": "uefa-nl:future-3fe70ff0ba848e39b50908d6",
-          "highest_edge_outcome": null,
+          "highest_edge_outcome": "away",
           "ledger_mutation": false,
-          "market_snapshot": null,
+          "market_snapshot": {
+            "bookmaker": "iSports European odds component-wise median",
+            "captured_at": "2026-10-01T17:25:07.358884Z",
+            "fixture_id": "uefa-nl:future-3fe70ff0ba848e39b50908d6",
+            "margin_free_probabilities": {
+              "away": 0.073044,
+              "draw": 0.135652,
+              "home": 0.791304
+            },
+            "odds_decimal": {
+              "away": 13.0,
+              "draw": 7.0,
+              "home": 1.2
+            },
+            "overround": 0.053114,
+            "provider": "isports_api",
+            "provider_match_id": "324418920",
+            "schema": "nations-league-live-market-snapshot-v1",
+            "snapshot_digest": "e730ef88a560d4a74188108ad149c33fe709cedae38b3015ea6c58a5db7fa29c"
+          },
           "model_release_id": "78161c4097c06e596efa95721aa62db0ed72a057a3fd664cbecd32f0c0be29bb",
           "no_bet": true,
-          "outcomes": {},
+          "outcomes": {
+            "away": {
+              "decimal_odds": 13.0,
+              "ev": 2.659383,
+              "market_probability": 0.073044,
+              "model_probability": 0.281491,
+              "probability_edge": 0.208447
+            },
+            "draw": {
+              "decimal_odds": 7.0,
+              "ev": 0.019613,
+              "market_probability": 0.135652,
+              "model_probability": 0.145659,
+              "probability_edge": 0.010007
+            },
+            "home": {
+              "decimal_odds": 1.2,
+              "ev": -0.31258,
+              "market_probability": 0.791304,
+              "model_probability": 0.57285,
+              "probability_edge": -0.218454
+            }
+          },
           "phase": "refinement",
           "prediction_record_id": "ad3214676fe00341068e4e0d27d595dea16f2e8168bed0951190771f138673d2",
           "schema": "nations-league-live-edge-v1"
@@ -6829,17 +7133,61 @@
         "competition": "UEFA Nations League",
         "edge_analysis": {
           "betting_enabled": false,
-          "candidate_outcomes": [],
-          "edge_digest": "b80a3ab294595eaaeb547a76ec0c4c8ecf2ed2860aa2c9cf9e7f8d489ba6f1ea",
-          "edge_status": "NO_MARKET_SNAPSHOT",
-          "evaluated_at": "2026-10-01T16:46:03.732310Z",
+          "candidate_outcomes": [
+            "home",
+            "away"
+          ],
+          "edge_digest": "aaa15e16a77044ee6edcf84af635408ddf2e0ba5bc097d1af2d130b1bf15fa7a",
+          "edge_status": "EDGE_MEASURED",
+          "evaluated_at": "2026-10-01T17:25:07.358884Z",
           "fixture_id": "uefa-nl:future-41e14a9086638f2d4bd278d8",
-          "highest_edge_outcome": null,
+          "highest_edge_outcome": "home",
           "ledger_mutation": false,
-          "market_snapshot": null,
+          "market_snapshot": {
+            "bookmaker": "iSports European odds component-wise median",
+            "captured_at": "2026-10-01T17:25:07.358884Z",
+            "fixture_id": "uefa-nl:future-41e14a9086638f2d4bd278d8",
+            "margin_free_probabilities": {
+              "away": 0.395986,
+              "draw": 0.285229,
+              "home": 0.318785
+            },
+            "odds_decimal": {
+              "away": 2.395,
+              "draw": 3.325,
+              "home": 2.975
+            },
+            "overround": 0.054423,
+            "provider": "isports_api",
+            "provider_match_id": "319418924",
+            "schema": "nations-league-live-market-snapshot-v1",
+            "snapshot_digest": "1ae1a5f3765f731fb6bffcea57af1ab62ca5a57896fcaa7cab0aa7b47a8039c3"
+          },
           "model_release_id": "78161c4097c06e596efa95721aa62db0ed72a057a3fd664cbecd32f0c0be29bb",
           "no_bet": true,
-          "outcomes": {},
+          "outcomes": {
+            "away": {
+              "decimal_odds": 2.395,
+              "ev": 0.013535,
+              "market_probability": 0.395986,
+              "model_probability": 0.423188,
+              "probability_edge": 0.027202
+            },
+            "draw": {
+              "decimal_odds": 3.325,
+              "ev": -0.241325,
+              "market_probability": 0.285229,
+              "model_probability": 0.228173,
+              "probability_edge": -0.057056
+            },
+            "home": {
+              "decimal_odds": 2.975,
+              "ev": 0.037198,
+              "market_probability": 0.318785,
+              "model_probability": 0.348638,
+              "probability_edge": 0.029853
+            }
+          },
           "phase": "refinement",
           "prediction_record_id": "ac64fd3bcee834a69c9e3f586ec3b2486193710daa5f2b80bf2ee50a8e8dbfff",
           "schema": "nations-league-live-edge-v1"
@@ -6878,17 +7226,60 @@
         "competition": "UEFA Nations League",
         "edge_analysis": {
           "betting_enabled": false,
-          "candidate_outcomes": [],
-          "edge_digest": "ec31b043aab5fb4b59b3963a0c1dae6ab635aec8ce079a6b5b5a67841f9724ff",
-          "edge_status": "NO_MARKET_SNAPSHOT",
-          "evaluated_at": "2026-10-01T16:46:03.732310Z",
+          "candidate_outcomes": [
+            "home"
+          ],
+          "edge_digest": "aff3501c1c1de5d8ee8170b99e9972823874456bc3e9f07e6ee3a6c1dfe842c3",
+          "edge_status": "EDGE_MEASURED",
+          "evaluated_at": "2026-10-01T17:25:07.358884Z",
           "fixture_id": "uefa-nl:future-596f9e31eff328f0e49a77b5",
-          "highest_edge_outcome": null,
+          "highest_edge_outcome": "home",
           "ledger_mutation": false,
-          "market_snapshot": null,
+          "market_snapshot": {
+            "bookmaker": "iSports European odds component-wise median",
+            "captured_at": "2026-10-01T17:25:07.358884Z",
+            "fixture_id": "uefa-nl:future-596f9e31eff328f0e49a77b5",
+            "margin_free_probabilities": {
+              "away": 0.435233,
+              "draw": 0.301209,
+              "home": 0.263558
+            },
+            "odds_decimal": {
+              "away": 2.18,
+              "draw": 3.15,
+              "home": 3.6
+            },
+            "overround": 0.053954,
+            "provider": "isports_api",
+            "provider_match_id": "329418925",
+            "schema": "nations-league-live-market-snapshot-v1",
+            "snapshot_digest": "8072120c167d26ff81cb634b3fd8e4efcfbe9e993e2123ab9b5fd010471fb1ef"
+          },
           "model_release_id": "78161c4097c06e596efa95721aa62db0ed72a057a3fd664cbecd32f0c0be29bb",
           "no_bet": true,
-          "outcomes": {},
+          "outcomes": {
+            "away": {
+              "decimal_odds": 2.18,
+              "ev": -0.244222,
+              "market_probability": 0.435233,
+              "model_probability": 0.346687,
+              "probability_edge": -0.088546
+            },
+            "draw": {
+              "decimal_odds": 3.15,
+              "ev": -0.29297,
+              "market_probability": 0.301209,
+              "model_probability": 0.224454,
+              "probability_edge": -0.076755
+            },
+            "home": {
+              "decimal_odds": 3.6,
+              "ev": 0.543892,
+              "market_probability": 0.263558,
+              "model_probability": 0.428859,
+              "probability_edge": 0.165301
+            }
+          },
           "phase": "refinement",
           "prediction_record_id": "eddc48831b793142dbd7cd70cb10b9dd127e7b2241b940e66db9364eb92ceaad",
           "schema": "nations-league-live-edge-v1"
@@ -6927,17 +7318,60 @@
         "competition": "UEFA Nations League",
         "edge_analysis": {
           "betting_enabled": false,
-          "candidate_outcomes": [],
-          "edge_digest": "3f19a31ecceb5e200ae3627f7e3d63c53c8c26506b00818b2adf212b34b3d960",
-          "edge_status": "NO_MARKET_SNAPSHOT",
-          "evaluated_at": "2026-10-01T16:46:03.732310Z",
+          "candidate_outcomes": [
+            "away"
+          ],
+          "edge_digest": "cfc9bff0250aa6e4d9b05a8c83f13ec3567768d0c8d94ad320f9ac82ee920012",
+          "edge_status": "EDGE_MEASURED",
+          "evaluated_at": "2026-10-01T17:25:07.358884Z",
           "fixture_id": "uefa-nl:future-715d4075d4068cdabe6333da",
-          "highest_edge_outcome": null,
+          "highest_edge_outcome": "away",
           "ledger_mutation": false,
-          "market_snapshot": null,
+          "market_snapshot": {
+            "bookmaker": "iSports European odds component-wise median",
+            "captured_at": "2026-10-01T17:25:07.358884Z",
+            "fixture_id": "uefa-nl:future-715d4075d4068cdabe6333da",
+            "margin_free_probabilities": {
+              "away": 0.375762,
+              "draw": 0.268402,
+              "home": 0.355836
+            },
+            "odds_decimal": {
+              "away": 2.5,
+              "draw": 3.5,
+              "home": 2.64
+            },
+            "overround": 0.064502,
+            "provider": "isports_api",
+            "provider_match_id": "369418929",
+            "schema": "nations-league-live-market-snapshot-v1",
+            "snapshot_digest": "2007b10d2dcf4217fdb26224ead256972ee5904bfd599ab144001d90eec90a24"
+          },
           "model_release_id": "78161c4097c06e596efa95721aa62db0ed72a057a3fd664cbecd32f0c0be29bb",
           "no_bet": true,
-          "outcomes": {},
+          "outcomes": {
+            "away": {
+              "decimal_odds": 2.5,
+              "ev": 0.078852,
+              "market_probability": 0.375762,
+              "model_probability": 0.431541,
+              "probability_edge": 0.055779
+            },
+            "draw": {
+              "decimal_odds": 3.5,
+              "ev": -0.220501,
+              "market_probability": 0.268402,
+              "model_probability": 0.222714,
+              "probability_edge": -0.045688
+            },
+            "home": {
+              "decimal_odds": 2.64,
+              "ev": -0.087233,
+              "market_probability": 0.355836,
+              "model_probability": 0.345745,
+              "probability_edge": -0.010091
+            }
+          },
           "phase": "initial",
           "prediction_record_id": "ab300488e74f5813de29ab7b8611f60878232c14a0f3716672e69624a44252c2",
           "schema": "nations-league-live-edge-v1"
@@ -6976,17 +7410,60 @@
         "competition": "UEFA Nations League",
         "edge_analysis": {
           "betting_enabled": false,
-          "candidate_outcomes": [],
-          "edge_digest": "8e540ce5917861fe0222d389189ba4267fa5834feae98ed6546e15578db74792",
-          "edge_status": "NO_MARKET_SNAPSHOT",
-          "evaluated_at": "2026-10-01T16:46:03.732310Z",
+          "candidate_outcomes": [
+            "away"
+          ],
+          "edge_digest": "b669eab819b3f0c241479ef909dac29519306bdc9c781e317dd884077ec2ad44",
+          "edge_status": "EDGE_MEASURED",
+          "evaluated_at": "2026-10-01T17:25:07.358884Z",
           "fixture_id": "uefa-nl:future-abbf6be434ad7d26bc589f4c",
-          "highest_edge_outcome": null,
+          "highest_edge_outcome": "away",
           "ledger_mutation": false,
-          "market_snapshot": null,
+          "market_snapshot": {
+            "bookmaker": "iSports European odds component-wise median",
+            "captured_at": "2026-10-01T17:25:07.358884Z",
+            "fixture_id": "uefa-nl:future-abbf6be434ad7d26bc589f4c",
+            "margin_free_probabilities": {
+              "away": 0.149835,
+              "draw": 0.188043,
+              "home": 0.662122
+            },
+            "odds_decimal": {
+              "away": 6.275,
+              "draw": 5.0,
+              "home": 1.42
+            },
+            "overround": 0.063588,
+            "provider": "isports_api",
+            "provider_match_id": "354418923",
+            "schema": "nations-league-live-market-snapshot-v1",
+            "snapshot_digest": "b0ae0810e40e2d34bb873740e7dfa8b82e24d629393f504095d87da5e5962d65"
+          },
           "model_release_id": "78161c4097c06e596efa95721aa62db0ed72a057a3fd664cbecd32f0c0be29bb",
           "no_bet": true,
-          "outcomes": {},
+          "outcomes": {
+            "away": {
+              "decimal_odds": 6.275,
+              "ev": 0.404238,
+              "market_probability": 0.149835,
+              "model_probability": 0.223783,
+              "probability_edge": 0.073948
+            },
+            "draw": {
+              "decimal_odds": 5.0,
+              "ev": -0.4808,
+              "market_probability": 0.188043,
+              "model_probability": 0.10384,
+              "probability_edge": -0.084203
+            },
+            "home": {
+              "decimal_odds": 1.42,
+              "ev": -0.045225,
+              "market_probability": 0.662122,
+              "model_probability": 0.672377,
+              "probability_edge": 0.010255
+            }
+          },
           "phase": "initial",
           "prediction_record_id": "4bcb93b8dd3119d1dae6e3fdbf036aa901fb4f1c36201aaefcc86a0c973cb4ae",
           "schema": "nations-league-live-edge-v1"
@@ -7025,17 +7502,61 @@
         "competition": "UEFA Nations League",
         "edge_analysis": {
           "betting_enabled": false,
-          "candidate_outcomes": [],
-          "edge_digest": "2ea34536e446e0c085b5ba62ffa98cf398a83749cceb4cd7c2fbad87754971f2",
-          "edge_status": "NO_MARKET_SNAPSHOT",
-          "evaluated_at": "2026-10-01T16:46:03.732310Z",
+          "candidate_outcomes": [
+            "home",
+            "away"
+          ],
+          "edge_digest": "34d1e6f967627ae23533444f3f198a4ca66ff7931bdcb50502f1c957d55dc9ef",
+          "edge_status": "EDGE_MEASURED",
+          "evaluated_at": "2026-10-01T17:25:07.358884Z",
           "fixture_id": "uefa-nl:future-b2d4d0af319bcc279cd0f20e",
-          "highest_edge_outcome": null,
+          "highest_edge_outcome": "home",
           "ledger_mutation": false,
-          "market_snapshot": null,
+          "market_snapshot": {
+            "bookmaker": "iSports European odds component-wise median",
+            "captured_at": "2026-10-01T17:25:07.358884Z",
+            "fixture_id": "uefa-nl:future-b2d4d0af319bcc279cd0f20e",
+            "margin_free_probabilities": {
+              "away": 0.224013,
+              "draw": 0.283391,
+              "home": 0.492596
+            },
+            "odds_decimal": {
+              "away": 4.2,
+              "draw": 3.32,
+              "home": 1.91
+            },
+            "overround": 0.06286,
+            "provider": "isports_api",
+            "provider_match_id": "339418926",
+            "schema": "nations-league-live-market-snapshot-v1",
+            "snapshot_digest": "80f5760ef9196ab04510e1dba452996dd8ea96923e13e5a6f14af36104cf8508"
+          },
           "model_release_id": "78161c4097c06e596efa95721aa62db0ed72a057a3fd664cbecd32f0c0be29bb",
           "no_bet": true,
-          "outcomes": {},
+          "outcomes": {
+            "away": {
+              "decimal_odds": 4.2,
+              "ev": 0.103987,
+              "market_probability": 0.224013,
+              "model_probability": 0.262854,
+              "probability_edge": 0.038841
+            },
+            "draw": {
+              "decimal_odds": 3.32,
+              "ev": -0.566415,
+              "market_probability": 0.283391,
+              "model_probability": 0.130598,
+              "probability_edge": -0.152793
+            },
+            "home": {
+              "decimal_odds": 1.91,
+              "ev": 0.158507,
+              "market_probability": 0.492596,
+              "model_probability": 0.606548,
+              "probability_edge": 0.113952
+            }
+          },
           "phase": "initial",
           "prediction_record_id": "830e264aeb2d47438a6eca3f2db065e4541efd0d12e9d308d8658577a973f38c",
           "schema": "nations-league-live-edge-v1"
@@ -7074,17 +7595,60 @@
         "competition": "UEFA Nations League",
         "edge_analysis": {
           "betting_enabled": false,
-          "candidate_outcomes": [],
-          "edge_digest": "45d344d7a4cc2d88cd9a613672e15ac14cf081940378ca8fc4f7e20e93c1acd0",
-          "edge_status": "NO_MARKET_SNAPSHOT",
-          "evaluated_at": "2026-10-01T16:46:03.732310Z",
+          "candidate_outcomes": [
+            "away"
+          ],
+          "edge_digest": "ff6234aec8b4a5fa0266d7494ef90829198de625a28bf54bdbaee61b86f1b5f4",
+          "edge_status": "EDGE_MEASURED",
+          "evaluated_at": "2026-10-01T17:25:07.358884Z",
           "fixture_id": "uefa-nl:future-b481b2533144319b8ea8c85b",
-          "highest_edge_outcome": null,
+          "highest_edge_outcome": "away",
           "ledger_mutation": false,
-          "market_snapshot": null,
+          "market_snapshot": {
+            "bookmaker": "iSports European odds component-wise median",
+            "captured_at": "2026-10-01T17:25:07.358884Z",
+            "fixture_id": "uefa-nl:future-b481b2533144319b8ea8c85b",
+            "margin_free_probabilities": {
+              "away": 0.261629,
+              "draw": 0.281154,
+              "home": 0.457217
+            },
+            "odds_decimal": {
+              "away": 3.6,
+              "draw": 3.35,
+              "home": 2.06
+            },
+            "overround": 0.061722,
+            "provider": "isports_api",
+            "provider_match_id": "349418927",
+            "schema": "nations-league-live-market-snapshot-v1",
+            "snapshot_digest": "f9f25dc1a5751b90d767c0e3b9c65d4e299767a40d2d8bd93564d6caf43d7126"
+          },
           "model_release_id": "78161c4097c06e596efa95721aa62db0ed72a057a3fd664cbecd32f0c0be29bb",
           "no_bet": true,
-          "outcomes": {},
+          "outcomes": {
+            "away": {
+              "decimal_odds": 3.6,
+              "ev": 0.416672,
+              "market_probability": 0.261629,
+              "model_probability": 0.39352,
+              "probability_edge": 0.131891
+            },
+            "draw": {
+              "decimal_odds": 3.35,
+              "ev": -0.167126,
+              "market_probability": 0.281154,
+              "model_probability": 0.248619,
+              "probability_edge": -0.032535
+            },
+            "home": {
+              "decimal_odds": 2.06,
+              "ev": -0.262804,
+              "market_probability": 0.457217,
+              "model_probability": 0.357862,
+              "probability_edge": -0.099355
+            }
+          },
           "phase": "initial",
           "prediction_record_id": "b515c5691cac9203477b00cad48c905eda650303414499651c3a7f9b1af6b257",
           "schema": "nations-league-live-edge-v1"
@@ -7123,17 +7687,60 @@
         "competition": "UEFA Nations League",
         "edge_analysis": {
           "betting_enabled": false,
-          "candidate_outcomes": [],
-          "edge_digest": "db4e96e6fab06d622cd10ddd8968e4da983e641753dfee72115de77f81f3e3ab",
-          "edge_status": "NO_MARKET_SNAPSHOT",
-          "evaluated_at": "2026-10-01T16:46:03.732310Z",
+          "candidate_outcomes": [
+            "home"
+          ],
+          "edge_digest": "29add29908f96d550f6388beffa395e11515cfd7b9e21b25135e83faef08d6dc",
+          "edge_status": "EDGE_MEASURED",
+          "evaluated_at": "2026-10-01T17:25:07.358884Z",
           "fixture_id": "uefa-nl:future-bfbbfa43c0c43788dacfacf4",
-          "highest_edge_outcome": null,
+          "highest_edge_outcome": "home",
           "ledger_mutation": false,
-          "market_snapshot": null,
+          "market_snapshot": {
+            "bookmaker": "iSports European odds component-wise median",
+            "captured_at": "2026-10-01T17:25:07.358884Z",
+            "fixture_id": "uefa-nl:future-bfbbfa43c0c43788dacfacf4",
+            "margin_free_probabilities": {
+              "away": 0.522388,
+              "draw": 0.268657,
+              "home": 0.208955
+            },
+            "odds_decimal": {
+              "away": 1.8,
+              "draw": 3.5,
+              "home": 4.5
+            },
+            "overround": 0.063492,
+            "provider": "isports_api",
+            "provider_match_id": "204518929",
+            "schema": "nations-league-live-market-snapshot-v1",
+            "snapshot_digest": "c29056b0cb9ae1833835a0f3b21f0e6d5c23a432c9adcfc5cb982cab498cbbb9"
+          },
           "model_release_id": "78161c4097c06e596efa95721aa62db0ed72a057a3fd664cbecd32f0c0be29bb",
           "no_bet": true,
-          "outcomes": {},
+          "outcomes": {
+            "away": {
+              "decimal_odds": 1.8,
+              "ev": -0.416336,
+              "market_probability": 0.522388,
+              "model_probability": 0.324258,
+              "probability_edge": -0.19813
+            },
+            "draw": {
+              "decimal_odds": 3.5,
+              "ev": -0.334629,
+              "market_probability": 0.268657,
+              "model_probability": 0.190106,
+              "probability_edge": -0.078551
+            },
+            "home": {
+              "decimal_odds": 4.5,
+              "ev": 1.185362,
+              "market_probability": 0.208955,
+              "model_probability": 0.485636,
+              "probability_edge": 0.276681
+            }
+          },
           "phase": "initial",
           "prediction_record_id": "2f1342d68a9f287badcdf80e4fa10de3467d763ce2b72a12d83115f8416a5090",
           "schema": "nations-league-live-edge-v1"
@@ -7172,17 +7779,61 @@
         "competition": "UEFA Nations League",
         "edge_analysis": {
           "betting_enabled": false,
-          "candidate_outcomes": [],
-          "edge_digest": "d0e3bc188da27c004f8d9ea3065194bfe9d17658eab5ad15fa15c0cf36bfb1b7",
-          "edge_status": "NO_MARKET_SNAPSHOT",
-          "evaluated_at": "2026-10-01T16:46:03.732310Z",
+          "candidate_outcomes": [
+            "home",
+            "away"
+          ],
+          "edge_digest": "93ce19cb401e97086aa00660580f5bbb8e5a5b70e9a79cc900fdb38d586fedff",
+          "edge_status": "EDGE_MEASURED",
+          "evaluated_at": "2026-10-01T17:25:07.358884Z",
           "fixture_id": "uefa-nl:future-dd966b82d3bd3c07bfb479ce",
-          "highest_edge_outcome": null,
+          "highest_edge_outcome": "home",
           "ledger_mutation": false,
-          "market_snapshot": null,
+          "market_snapshot": {
+            "bookmaker": "iSports European odds component-wise median",
+            "captured_at": "2026-10-01T17:25:07.358884Z",
+            "fixture_id": "uefa-nl:future-dd966b82d3bd3c07bfb479ce",
+            "margin_free_probabilities": {
+              "away": 0.303945,
+              "draw": 0.286391,
+              "home": 0.409664
+            },
+            "odds_decimal": {
+              "away": 3.1,
+              "draw": 3.29,
+              "home": 2.3
+            },
+            "overround": 0.061315,
+            "provider": "isports_api",
+            "provider_match_id": "314518920",
+            "schema": "nations-league-live-market-snapshot-v1",
+            "snapshot_digest": "f23d45142e40bad1868bd3fb240d31aefb1e92d2f850854cbd6a480c6beedf70"
+          },
           "model_release_id": "78161c4097c06e596efa95721aa62db0ed72a057a3fd664cbecd32f0c0be29bb",
           "no_bet": true,
-          "outcomes": {},
+          "outcomes": {
+            "away": {
+              "decimal_odds": 3.1,
+              "ev": 0.027904,
+              "market_probability": 0.303945,
+              "model_probability": 0.331582,
+              "probability_edge": 0.027637
+            },
+            "draw": {
+              "decimal_odds": 3.29,
+              "ev": -0.34198,
+              "market_probability": 0.286391,
+              "model_probability": 0.200006,
+              "probability_edge": -0.086385
+            },
+            "home": {
+              "decimal_odds": 2.3,
+              "ev": 0.077348,
+              "market_probability": 0.409664,
+              "model_probability": 0.468412,
+              "probability_edge": 0.058748
+            }
+          },
           "phase": "initial",
           "prediction_record_id": "924a74dfa7001a0ea9c34cb225f3c6a36b3dfce6a87515f5c8c2a2630aa91681",
           "schema": "nations-league-live-edge-v1"
@@ -7226,7 +7877,7 @@
       "training_data_digest": "0775611b969cb44cce94c650ecf03da437c40e8c28114c7065a9c3dc1745b6a7"
     },
     "no_bet": true,
-    "public_digest": "7c0737db600d2bb8495dff7ca04f500c80cc83be4e4dcaff495a22bceb66a7ff",
+    "public_digest": "afc4077bcc43867d9f5fb5d2f66a4a1f24b09980f9e3286d07f4ab238aaa462b",
     "publication_enabled": true,
     "schema": "nations-league-live-public-v1",
     "status": "LIVE",
