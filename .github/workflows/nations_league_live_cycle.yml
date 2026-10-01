@@ -60,12 +60,15 @@ jobs:
             --output docs/data/signals_philip.json
 
       - name: Publish through the canonical Worker path when configured
-        if: ${{ secrets.SIGNALS_CLOUD_URL != '' && secrets.SIGNALS_API_TOKEN != '' }}
         continue-on-error: true
         env:
           SIGNALS_CLOUD_URL: ${{ secrets.SIGNALS_CLOUD_URL }}
           SIGNALS_API_TOKEN: ${{ secrets.SIGNALS_API_TOKEN }}
         run: |
+          if [ -z "$SIGNALS_CLOUD_URL" ] || [ -z "$SIGNALS_API_TOKEN" ]; then
+            echo "Canonical Worker publication is not configured; skipping."
+            exit 0
+          fi
           EXPECTED_NL_DIGEST="$(python3 -c 'import json; print(json.load(open("docs/data/signals.json"))["nations_league"]["public_digest"])')"
           python3 scripts/republish_signals_to_cloud.py --expected-nl-digest "$EXPECTED_NL_DIGEST"
 

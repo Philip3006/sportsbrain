@@ -44,7 +44,42 @@ def test_live_workflow_uses_marker_release_and_one_shared_cutoff():
         encoding="utf-8"
     )
     assert "resolve_nations_league_source_release.py" in workflow
-    assert "--source-release-sha \"$SOURCE_RELEASE_SHA\"" in workflow
-    assert "--source-release-sha \"$(git rev-parse HEAD)\"" not in workflow
-    assert workflow.count('date -u +%Y-%m-%dT%H:%M:%SZ') == 1
-    assert workflow.count('--as-of \"$CYCLE_AS_OF\"') == 3
+    assert '--source-release-sha "$SOURCE_RELEASE_SHA"' in workflow
+    assert '--source-release-sha "$(git rev-parse HEAD)"' not in workflow
+    assert workflow.count("date -u +%Y-%m-%dT%H:%M:%SZ") == 1
+    assert workflow.count('--as-of "$CYCLE_AS_OF"') == 3
+
+
+def test_live_workflow_guards_optional_publication_inside_shell():
+    workflow = (ROOT / ".github/workflows/nations_league_live_cycle.yml").read_text(
+        encoding="utf-8"
+    )
+    publication_start = workflow.index(
+        "      - name: Publish through the canonical Worker path when configured"
+    )
+    persistence_start = workflow.index(
+        "      - name: Persist changed LIVE state without creating a PR"
+    )
+    publication = workflow[publication_start:persistence_start]
+
+    assert "on:\n  workflow_dispatch:" in workflow
+    assert "- cron: '*/15 * * * *'" in workflow
+    assert not any(
+        line.lstrip().startswith("if:") and "secrets." in line
+        for line in workflow.splitlines()
+    )
+    assert "SIGNALS_CLOUD_URL: ${{ secrets.SIGNALS_CLOUD_URL }}" in publication
+    assert "SIGNALS_API_TOKEN: ${{ secrets.SIGNALS_API_TOKEN }}" in publication
+    assert (
+        'if [ -z "$SIGNALS_CLOUD_URL" ] || [ -z "$SIGNALS_API_TOKEN" ]; then'
+        in publication
+    )
+    assert (
+        'echo "Canonical Worker publication is not configured; skipping."'
+        in publication
+    )
+    assert "exit 0" in publication
+    assert "continue-on-error: true" in publication
+    assert "republish_signals_to_cloud.py --expected-nl-digest" in publication
+    assert "if: ${{ always() }}" in workflow[persistence_start:]
+    assert "bash scripts/_bot_commit_push.sh" in workflow[persistence_start:]
