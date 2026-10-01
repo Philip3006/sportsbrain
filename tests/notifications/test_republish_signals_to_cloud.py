@@ -69,6 +69,7 @@ def _prepare_run(
     local_football=None,
     local_tennis=None,
     post_status=200,
+    worker_before_status=200,
     now=None,
     expected_digest=None,
 ):
@@ -106,7 +107,7 @@ def _prepare_run(
         tennis=copy.deepcopy(local_tennis),
         nl=public_nl if public_nl is not False else None,
     )
-    get_responses = [Response(before), Response(after)]
+    get_responses = [Response(before, status=worker_before_status), Response(after)]
     calls = {
         "get": [],
         "post": [],
@@ -288,6 +289,39 @@ def test_post_failure_is_blocked_and_never_retried(tmp_path, monkeypatch):
     assert summary["cloud_upload_success"] is False
     assert len(calls["post"]) == 1
     assert len(calls["get"]) == 1
+
+
+def test_stale_worker_get_uses_nl_only_recovery_and_preserves_other_arrays(
+    tmp_path, monkeypatch
+):
+    now = datetime.now(timezone.utc).replace(microsecond=0)
+    football = [{"signal_id": "football-keep"}]
+    tennis = [{"signal_id": "tennis-keep"}]
+    root, now, expected_digest, calls = _prepare_run(
+        tmp_path,
+        monkeypatch,
+        local_football=football,
+        local_tennis=tennis,
+        worker_before_status=500,
+        now=now,
+    )
+
+    summary = _run(root, now, expected_digest)
+
+    assert summary["status"] == republish_script.READY
+    assert summary["recovery_mode"] is True
+    assert summary["worker_http_status_before"] == 500
+    assert summary["worker_recovery_status"] == 200
+    assert summary["worker_http_status_after"] == 200
+    assert summary["nl_digest_after"] == expected_digest
+    assert summary["provider_requests"] == 0
+    assert len(calls["get"]) == 2
+    assert len(calls["post"]) == 1
+    assert calls["post"][0][0] == (
+        "https://signals.example.test/api/signals?merge_nations_league=1"
+    )
+    assert set(calls["payload"]) == {"nations_league"}
+    assert calls["payload"]["nations_league"]["public_digest"] == expected_digest
 
 
 @pytest.mark.parametrize("changed_array", ["football", "tennis"])

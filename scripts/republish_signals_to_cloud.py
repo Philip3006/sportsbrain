@@ -1,8 +1,10 @@
 """Safely republish canonical local SportsBrain state to the signals Worker.
 
-This recovery path deliberately performs no sports-provider requests. It reads
-the existing public/per-user snapshots, validates the Nations League shadow,
-and delegates reconstruction and upload to the canonical dashboard writer.
+This recovery path deliberately performs no sports-provider requests. In the
+healthy case it reads the existing public/per-user snapshots and delegates
+reconstruction and upload to the canonical dashboard writer. If the public
+Worker read is already HTTP 500, it uses the authenticated, NL-only Worker
+merge gate so a valid committed LIVE bundle can repair only that field.
 """
 
 from __future__ import annotations
@@ -238,6 +240,31 @@ def _worker_get(url: str):
     return requests.get(url, timeout=10, allow_redirects=False)
 
 
+def _worker_nl_recovery_url(url: str) -> str:
+    parsed = urlsplit(url)
+    if not parsed.path.endswith("/signals.json"):
+        raise RepublishBlocked
+    path = parsed.path[: -len("signals.json")] + "signals"
+    return f"{parsed.scheme}://{parsed.netloc}{path}?merge_nations_league=1"
+
+
+def _worker_recover_nl(url: str, token: str, public_nl: Mapping):
+    """Replace only the validated NL object through the dedicated Worker gate."""
+    return requests.post(
+        _worker_nl_recovery_url(url),
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        },
+        data=json.dumps(
+            {"nations_league": dict(public_nl)},
+            separators=(",", ":"),
+        ).encode("utf-8"),
+        timeout=10,
+        allow_redirects=False,
+    )
+
+
 def _response_document(response) -> dict:
     if response.status_code != 200:
         raise RepublishBlocked
@@ -297,6 +324,8 @@ def _main_summary(root: Path) -> dict:
         "ledger_mutated": False,
         "betting_mutated": False,
         "activation_mutated": False,
+        "recovery_mode": False,
+        "worker_recovery_status": None,
     }
 
 
@@ -323,20 +352,55 @@ def republish(
             raise RepublishBlocked
         url = _worker_url(environment.get("SIGNALS_CLOUD_URL"))
 
-        before_response = _worker_get(url)
-        summary["worker_http_status_before"] = before_response.status_code
-        before = _response_document(before_response)
-        _record_worker(summary, "before", before_response, before)
-        before_updated = _timestamp(before.get("updated"))
-        worker_football = _public_array(before, "football")
-        worker_tennis = _public_array(before, "tennis")
-
         shared = _read_json_object(root / "docs" / "data" / "signals.json")
         per_user = _read_json_object(root / "docs" / "data" / "signals_philip.json")
         shared_football = _public_array(shared, "football")
         shared_tennis = _public_array(shared, "tennis")
         per_user_football = _public_array(per_user, "football")
         per_user_tennis = _public_array(per_user, "tennis")
+
+        public_nl = _validated_nl(
+            shared.get("nations_league"),
+            expected_nl_digest,
+            current_time().astimezone(timezone.utc),
+        )
+        summary["nl_fixture_count"] = public_nl["fixture_count"]
+
+        before_response = _worker_get(url)
+        summary["worker_http_status_before"] = before_response.status_code
+        recovery_mode = before_response.status_code == 500
+        summary["recovery_mode"] = recovery_mode
+        if recovery_mode:
+            recovery_response = _worker_recover_nl(url, token, public_nl)
+            summary["worker_recovery_status"] = recovery_response.status_code
+            if recovery_response.status_code != 200:
+                raise RepublishBlocked
+            after_response = _worker_get(url)
+            summary["worker_http_status_after"] = after_response.status_code
+            after = _response_document(after_response)
+            _record_worker(summary, "after", after_response, after)
+            after_football = _public_array(after, "football")
+            after_tennis = _public_array(after, "tennis")
+            after_nl = _validated_nl(
+                after.get("nations_league"),
+                expected_nl_digest,
+                current_time().astimezone(timezone.utc),
+            )
+            if (
+                _canonical_hash(after_football) != _canonical_hash(shared_football)
+                or _canonical_hash(after_tennis) != _canonical_hash(shared_tennis)
+                or after_nl["public_digest"] != expected_nl_digest
+            ):
+                raise RepublishBlocked
+            summary["cloud_upload_success"] = True
+            summary["status"] = READY
+            return summary
+
+        before = _response_document(before_response)
+        _record_worker(summary, "before", before_response, before)
+        before_updated = _timestamp(before.get("updated"))
+        worker_football = _public_array(before, "football")
+        worker_tennis = _public_array(before, "tennis")
         if (
             len(worker_football) != len(shared_football)
             or len(worker_football) != len(per_user_football)
@@ -345,12 +409,6 @@ def republish(
         ):
             raise RepublishBlocked
 
-        public_nl = _validated_nl(
-            shared.get("nations_league"),
-            expected_nl_digest,
-            current_time().astimezone(timezone.utc),
-        )
-        summary["nl_fixture_count"] = public_nl["fixture_count"]
         if _contains_nl_fixture(worker_football, public_nl):
             raise RepublishBlocked
 
