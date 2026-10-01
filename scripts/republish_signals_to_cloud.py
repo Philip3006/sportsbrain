@@ -477,11 +477,8 @@ def republish(
         after_nl = _validated_nl(
             after.get("nations_league"), expected_nl_digest, current_utc
         )
-        age = current_utc - after_updated
         if (
-            after_updated <= before_updated
-            or age.total_seconds() < 0
-            or age.total_seconds() > 120
+            after_updated < before_updated
             or _canonical_hash(after_football) != football_hash_before
             or _canonical_hash(after_tennis) != tennis_hash_before
             or after_nl["public_digest"] != expected_nl_digest
