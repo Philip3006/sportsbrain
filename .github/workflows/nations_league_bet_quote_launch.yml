@@ -2,13 +2,15 @@ name: Nations League Bet Quote Launch
 
 on:
   workflow_dispatch:
+  repository_dispatch:
+    types: [sportsbrain_nations_league_bet_quote_launch]
 
 permissions:
   contents: read
 
 concurrency:
-  group: nations-league-bet-quote-launch
-  cancel-in-progress: false
+  group: nations-league-bet-quote-launch-${{ github.event.client_payload.idempotency_key || 'manual' }}
+  cancel-in-progress: true
 
 jobs:
   launch:
