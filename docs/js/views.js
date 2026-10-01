@@ -1228,45 +1228,62 @@ function renderHome() {
   const oddsBtn = (nk, mkt, game) => {
     const od = (oddsMap[nk]||{})[mkt];
     if (!od) return `<div class="b365-btn no-odds">—</div>`;
-    const nlSignal = od.signal?.is_nations_league_value === true ? od.signal : null;
-    const nlActionability = nlSignal && typeof isActionableValueSignal === 'function'
-      ? isActionableValueSignal(nlSignal, _currentBankroll(), (_openBets || []).length)
+    // A Home value action is authoritative only when this odds entry carries
+    // the complete canonical signal. This applies to ordinary Tennis signals
+    // as well as the Nations-League projection; raw schedule odds remain
+    // manual/display-only and never receive fabricated identity.
+    const canonicalSignal = od.signal || null;
+    const canonicalActionability = canonicalSignal && typeof isActionableValueSignal === 'function'
+      ? isActionableValueSignal(canonicalSignal, _currentBankroll(), (_openBets || []).length)
       : null;
-    const isValue = nlSignal ? nlActionability?.ok === true : od.ev !== null && od.ev >= 3;
+    const isValue = canonicalActionability?.ok === true;
     const cls = isValue ? 'val' : '';
     if (!game) return `<div class="b365-btn ${cls}">${od.odds.toFixed(2)}</div>`;
     const mkStr = `${game.home} vs ${game.away}`;
-    // A fresh NL quote is never silently downgraded to a manual CTA.  If its
-    // canonical actionability fails, display the quote without a bet action.
-    if (nlSignal && !isValue) {
-      return `<div class="b365-btn ${cls} nl-value-unavailable" aria-label="Quote nicht aktionierbar · ${mkt} @ ${od.odds.toFixed(2)}">${od.odds.toFixed(2)}</div>`;
+    // A canonical signal that is stale/non-actionable is never silently
+    // downgraded to a manual CTA. Raw odds without a canonical signal retain
+    // the existing manual/display-only behavior.
+    if (canonicalSignal && !isValue) {
+      return `<div class="b365-btn ${cls} value-unavailable" aria-label="Quote nicht aktionierbar · ${mkt} @ ${od.odds.toFixed(2)}">${od.odds.toFixed(2)}</div>`;
     }
-    const src = isValue ? 'value' : 'manual';
-    const evVal = od.ev !== null ? od.ev : 0;
-    const stake = isValue ? 10 : 5;
+    const src = canonicalSignal ? 'value' : 'manual';
+    const actionMatch = canonicalSignal?.match || mkStr;
+    const actionMarket = canonicalSignal?.market || mkt;
+    const actionModelProb = canonicalSignal?.model_prob ?? od.model_prob ?? 0;
+    const actionFairProb = canonicalSignal?.fair_prob ?? 0;
+    const actionConfidence = canonicalSignal?.confidence || '';
+    const evVal = od.ev ?? 0;
+    const stake = canonicalSignal ? 10 : 5;
     const attrs = [
       `type="button"`,
       `class="b365-btn ${cls} b365-btn-click"`,
-      `data-match="${esc(mkStr)}"`,
-      `data-market="${mkt}"`,
+      `data-match="${esc(actionMatch)}"`,
+      `data-market="${esc(actionMarket)}"`,
       `data-odds="${od.odds}"`,
       `data-stake="${stake}"`,
       `data-ev="${evVal}"`,
-      `data-model-prob="${od.model_prob || 0}"`,
-      `data-confidence=""`,
+      `data-model-prob="${actionModelProb || 0}"`,
+      `data-fair-prob="${actionFairProb || 0}"`,
+      `data-confidence="${esc(actionConfidence)}"`,
       `data-kickoff="${esc(game.kickoff || '')}"`,
       `data-sport="${esc(game.sport || '')}"`,
-      `data-signal-id="${esc(nlSignal?.signal_id || '')}"`,
-      `data-signal-status="${esc(nlSignal?.signal_status || '')}"`,
-      `data-fixture-key="${esc(nlSignal?.fixture_key || '')}"`,
-      `data-league="${esc(nlSignal?.league || '')}"`,
-      `data-odds-ts="${esc(nlSignal?.odds_ts || '')}"`,
-      `data-event-status="${esc(nlSignal?.event_status || '')}"`,
-      `data-current-odds="${nlSignal ? nlSignal.current_odds : ''}"`,
-      `data-current-ev="${nlSignal ? nlSignal.current_ev_pct : ''}"`,
+      `data-signal-id="${esc(canonicalSignal?.signal_id || '')}"`,
+      `data-signal-status="${esc(canonicalSignal?.signal_status || '')}"`,
+      `data-fixture-key="${esc(canonicalSignal?.fixture_key || '')}"`,
+      `data-league="${esc(canonicalSignal?.league || '')}"`,
+      `data-odds-ts="${esc(canonicalSignal?.odds_ts || '')}"`,
+      `data-event-status="${esc(canonicalSignal?.event_status || '')}"`,
+      `data-current-odds="${canonicalSignal ? canonicalSignal.current_odds : ''}"`,
+      `data-current-ev="${canonicalSignal ? canonicalSignal.current_ev_pct : ''}"`,
+      `data-shadow="${canonicalSignal?.shadow === true ? 'true' : 'false'}"`,
+      `data-is-shadow="${canonicalSignal?.is_shadow === true ? 'true' : 'false'}"`,
+      `data-unsupported="${canonicalSignal?.unsupported === true ? 'true' : 'false'}"`,
+      `data-edge-lost="${canonicalSignal?.edge_lost === true ? 'true' : 'false'}"`,
+      `data-stale="${canonicalSignal?.stale === true ? 'true' : 'false'}"`,
+      `data-no-bet-flag="${canonicalSignal?.no_bet_flag === true ? 'true' : 'false'}"`,
       `data-source="${src}"`,
       `onclick="event.stopPropagation();_openBetModalFromBtn(this)"`,
-      `aria-label="Wette platzieren · ${mkt} @ ${od.odds.toFixed(2)}"`,
+      `aria-label="Wette platzieren · ${actionMarket} @ ${od.odds.toFixed(2)}"`,
     ].join(' ');
     return `<button ${attrs}>${od.odds.toFixed(2)}</button>`;
   };
