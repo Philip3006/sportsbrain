@@ -223,6 +223,62 @@ def _home_curation_payload() -> dict:
     }
 
 
+def _home_tennis_value_payload() -> dict:
+    """Two current Tennis-shaped canonical signals for the Home bet path."""
+    fixtures = [
+        ("Mensik Jakub", "Bublik Alexander", "home", "sig:mensik-bublik:home"),
+        ("Halys Quentin", "Buse Ignacio", "away", "sig:halys-buse:away"),
+    ]
+    schedule = []
+    signals = []
+    for index, (home, away, market, signal_id) in enumerate(fixtures):
+        kickoff = (_NOW + timedelta(hours=2 + index)).isoformat()
+        fixture_key = f"tennis:{home.lower().replace(' ', '-')}-{away.lower().replace(' ', '-')}:2026-10-01"
+        schedule.append({
+            "sport": "tennis",
+            "home": home,
+            "away": away,
+            "kickoff": kickoff,
+            "tour": "ATP",
+            "odds_home": 2.10,
+            "odds_away": 2.20,
+        })
+        signals.append({
+            "sport": "tennis",
+            "match": f"{home} vs {away}",
+            "home": home,
+            "away": away,
+            "market": market,
+            "odds": 2.10,
+            "current_odds": 2.10,
+            "current_ev_pct": 12.5,
+            "ev_pct": 12.5,
+            "model_prob": 0.55,
+            "fair_prob": 0.48,
+            "confidence": "HIGH",
+            "kickoff": kickoff,
+            "signal_id": signal_id,
+            "signal_status": "ACTIVE",
+            "shadow": False,
+            "is_shadow": False,
+            "unsupported": False,
+            "edge_lost": False,
+            "stale": False,
+            "no_bet_flag": False,
+            "odds_ts": (_NOW - timedelta(minutes=5)).isoformat(),
+            "event_status": "UPCOMING",
+            "fixture_key": fixture_key,
+            "league": "atp",
+        })
+    return {
+        **_BASE,
+        "schedule": schedule,
+        "tennis": signals,
+        "football": [],
+        "bankroll_state": {"start": 100, "free": 100, "staked": 0},
+    }
+
+
 @pytest.fixture(scope="module")
 def server_url():
     """Serve docs/ via local HTTP server on a free port."""
@@ -360,6 +416,95 @@ def test_home_curates_tennis_to_unique_public_signals_and_keeps_football_schedul
     page.locator("[data-view='tennis']").click()
     expect(page.locator("#view-tennis")).to_have_class("view active")
     expect(page.locator("#tennis-container")).to_contain_text("Schedule Tennis Home 177")
+
+
+def test_home_tennis_value_buttons_preserve_canonical_identity_and_open_modal(
+    page: Page, server_url: str
+) -> None:
+    """Real-shaped Tennis value signals remain the bet modal authority on Home."""
+    _inject_signals(page, _home_tennis_value_payload())
+    page.goto(server_url, wait_until="domcontentloaded")
+
+    expected = {
+        "sig:mensik-bublik:home": "home",
+        "sig:halys-buse:away": "away",
+    }
+    buttons = page.locator("#home-container .today-row button.b365-btn-click[data-source='value']")
+    expect(buttons).to_have_count(2, timeout=10_000)
+    for signal_id, market in expected.items():
+        button = page.locator(
+            f"#home-container .today-row button.b365-btn-click[data-signal-id=\"{signal_id}\"]"
+        )
+        expect(button).to_have_count(1)
+        expect(button).to_have_attribute("data-source", "value")
+        expect(button).to_have_attribute("data-market", market)
+        expect(button).to_have_attribute("data-signal-status", "ACTIVE")
+        expect(button).to_have_attribute("data-current-odds", "2.1")
+        for attr in (
+            "data-fixture-key",
+            "data-league",
+            "data-odds-ts",
+            "data-event-status",
+            "data-current-ev",
+            "data-model-prob",
+            "data-fair-prob",
+            "data-confidence",
+            "data-shadow",
+            "data-is-shadow",
+            "data-unsupported",
+            "data-edge-lost",
+            "data-stale",
+            "data-no-bet-flag",
+        ):
+            assert button.get_attribute(attr), f"missing canonical Home field: {attr}"
+
+        button.click()
+        expect(page.locator("#bet-modal-bd")).to_be_visible(timeout=3_000)
+        expect(page.locator("#bet-modal-bd")).not_to_contain_text("signal_id missing or empty")
+        page.locator("#bet-modal-cancel").click()
+
+
+def test_home_non_actionable_canonical_tennis_signal_has_no_value_cta(
+    page: Page, server_url: str
+) -> None:
+    """A stale canonical signal is display-only, never downgraded to a manual bet."""
+    payload = deepcopy(_home_tennis_value_payload())
+    for signal in payload["tennis"]:
+        signal["stale"] = True
+    _inject_signals(page, payload)
+    page.goto(server_url, wait_until="domcontentloaded")
+
+    expect(page.locator("#home-container .today-row button[data-source='value']")).to_have_count(0)
+    expect(page.locator("#home-container .today-row .value-unavailable")).to_have_count(2)
+    expect(page.locator("#home-container")).to_contain_text("Mensik Jakub")
+
+
+def test_home_raw_schedule_odds_never_fabricate_signal_identity(
+    page: Page, server_url: str
+) -> None:
+    """Raw schedule odds can remain manual/display-only without canonical identity."""
+    payload = {
+        **_BASE,
+        "schedule": [{
+            "sport": "football",
+            "home": "Raw Schedule Home",
+            "away": "Raw Schedule Away",
+            "kickoff": (_NOW + timedelta(hours=2)).isoformat(),
+            "odds_home": 2.10,
+            "odds_away": 2.20,
+        }],
+        "tennis": [],
+        "football": [],
+    }
+    _inject_signals(page, payload)
+    page.goto(server_url, wait_until="domcontentloaded")
+
+    manual = page.locator("#home-container .today-row button[data-source='manual']")
+    expect(manual).to_have_count(2, timeout=10_000)
+    expect(page.locator("#home-container .today-row button[data-source='value']")).to_have_count(0)
+    assert all(not value for value in manual.evaluate_all(
+        "nodes => nodes.map(node => node.dataset.signalId)"
+    ))
 
 
 def test_home_renders_all_current_live_nations_league_fixtures_read_only(

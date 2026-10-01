@@ -12,8 +12,8 @@ test('PWA consumes only the validated Nations League value projection', () => {
   assert.match(app, /_validNationsLeagueActionablePayload/);
   assert.match(app, /d\.nations_league_value_signals\?\.signals/);
   assert.match(app, /d\.nations_league_value_signals = null|nations_league_value_signals: null/);
-  assert.match(views, /isActionableValueSignal\(nlSignal/);
-  assert.match(views, /nl-value-unavailable/);
+  assert.match(views, /isActionableValueSignal\(s/);
+  assert.match(views, /value-unavailable/);
   assert.match(views, /data-signal-id=/);
 });
 
