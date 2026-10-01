@@ -159,7 +159,7 @@ jobs:
               raise SystemExit("Worker signal_count mismatch")
 
           print(json.dumps({
-              "status": "NL_ACTIONABLE_BETTING_PROD_VERIFIED",
+              "status": "NL_ACTIONABLE_WORKER_PROJECTION_VERIFIED",
               "artifact_digest": actual["artifact_digest"],
               "quote_captured_at": actual["quote_captured_at"],
               "signal_count": len(actual["signals"]),
