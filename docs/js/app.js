@@ -269,6 +269,49 @@ async function _validNationsLeaguePublicPayload(value, nowMs = Date.now()) {
   return true;
 }
 
+async function _validNationsLeagueActionablePayload(value, nowMs = Date.now()) {
+  if (!value || typeof value !== 'object' || Array.isArray(value) ||
+      value.schema !== 'nations-league-actionable-value-signals-v1' ||
+      value.competition !== 'UEFA Nations League' || value.provider_authority !== 'the_odds_api' ||
+      value.evidence_provider !== 'isports_api' || value.candidate_provider !== 'isports_api' ||
+      value.evidence_status !== 'DERIVED_ACTIONABILITY_ONLY' || value.source_evidence_no_bet !== true ||
+      value.actionability_enabled !== true || value.publication_enabled !== false ||
+      value.production_activation !== false || value.ledger_mutation !== false ||
+      value.phase !== 'refinement' || value.request_count !== 2 || value.retry_count !== 0 ||
+      !Array.isArray(value.signals) || !/^[0-9a-f]{64}$/.test(value.artifact_digest || '') ||
+      !globalThis.crypto?.subtle || typeof TextEncoder === 'undefined') return false;
+  const body = { ...value };
+  delete body.artifact_digest;
+  try {
+    const bytes = new TextEncoder().encode(_canonicalNationsLeagueJson(body));
+    const digest = await globalThis.crypto.subtle.digest('SHA-256', bytes);
+    const actual = [...new Uint8Array(digest)].map((item) => item.toString(16).padStart(2, '0')).join('');
+    if (actual !== value.artifact_digest) return false;
+  } catch { return false; }
+  const seen = new Set();
+  return value.signals.every((signal) => {
+    if (!signal || typeof signal !== 'object' || Array.isArray(signal) ||
+        typeof signal.signal_id !== 'string' || !signal.signal_id.startsWith('nl:value:') ||
+        seen.has(signal.signal_id) || signal.signal_status !== 'ACTIVE' ||
+        signal.shadow !== false || signal.is_shadow !== false || signal.unsupported !== false ||
+        signal.edge_lost !== false || signal.stale !== false || signal.no_bet_flag !== false ||
+        signal.is_nations_league_value !== true || signal.source !== 'nations_league_bet_time_quote' ||
+        signal.phase !== 'refinement' || signal.sport !== 'football' ||
+        typeof signal.fixture_key !== 'string' || !signal.fixture_key ||
+        !['home', 'draw', 'away'].includes(signal.market) ||
+        !Number.isFinite(Number(signal.current_odds)) || Number(signal.current_odds) <= 1 ||
+        !Number.isFinite(Number(signal.current_ev_pct)) || Number(signal.current_ev_pct) <= 0 ||
+        Number(signal.current_ev_pct) > 40 || !Number.isFinite(Date.parse(signal.odds_ts || '')) ||
+        !Number.isFinite(Date.parse(signal.quote_captured_at || '')) ||
+        !/^[0-9a-f]{64}$/.test(signal.quote_snapshot_digest || '') ||
+        !/^[0-9a-f]{64}$/.test(signal.prediction_record_id || '') ||
+        !/^[0-9a-f]{64}$/.test(signal.model_release_id || '')) return false;
+    seen.add(signal.signal_id);
+    const captured = Date.parse(signal.odds_ts);
+    return captured <= nowMs && nowMs - captured <= 30 * 60 * 1000;
+  });
+}
+
 async function _mergeStaticNationsLeagueIfMissing(payload, source, fetcher, nowMs = Date.now()) {
   if (source !== 'worker' || !payload ||
       Object.prototype.hasOwnProperty.call(payload, 'nations_league')) return payload;
@@ -1589,6 +1632,10 @@ async function _load() {
   if (d.nations_league && !(await _validNationsLeaguePublicPayload(d.nations_league))) {
     d = Object.assign({}, d, { nations_league: null });
   }
+  if (d.nations_league_value_signals &&
+      !(await _validNationsLeagueActionablePayload(d.nations_league_value_signals))) {
+    d = Object.assign({}, d, { nations_league_value_signals: null });
+  }
 
   const dt = new Date(d.updated), age = (Date.now()-dt)/36e5;
   document.getElementById('updated-time').textContent =
@@ -1607,9 +1654,10 @@ async function _load() {
     pill.style.display = 'inline-block';
   }
 
-  _signals = [...(d.football||[]), ...(d.tennis||[])];
-  // Nations League shadow fixtures have a separate read-only renderer and are
-  // deliberately never added to the actionable football signal collection.
+  _signals = [...(d.football||[]), ...(d.nations_league_value_signals?.signals || []), ...(d.tennis||[])];
+  // The immutable Nations League prediction bundle remains a separate
+  // read-only renderer; only the independently validated fresh quote
+  // projection enters the canonical signal collection.
   if (d.nations_league?.schema === 'nations-league-live-public-v1' &&
       typeof renderNationsLeagueLive === 'function') {
     renderNationsLeagueLive(d.nations_league || null);

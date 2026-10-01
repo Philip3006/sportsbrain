@@ -21,6 +21,10 @@ from collections.abc import Mapping, Sequence
 from math import isfinite
 from typing import Any
 
+from src.betting.nations_league_actionability import (
+    NationsLeagueActionabilityError,
+    validate_nations_league_actionable_projection,
+)
 from src.football.top5_lifecycle_public import (
     Top5LifecyclePublicError,
     collapse_top5_lifecycle_versions,
@@ -51,6 +55,7 @@ _PUBLIC_TOP_LEVEL_KEYS: frozenset[str] = frozenset(
         "model_evals",
         "football",
         "nations_league",
+        "nations_league_value_signals",
         "tennis",
         "top_elo",
         "wm_results",
@@ -1450,10 +1455,23 @@ def _serialize_public_product(snapshot: dict | None, *, prepublication: bool) ->
         pub["football"] = serialize_public_football_records(pub["football"])
     if "nations_league" in pub:
         try:
-            pub["nations_league"] = validate_public_nations_league(pub["nations_league"])
+            pub["nations_league"] = validate_public_nations_league(
+                pub["nations_league"]
+            )
         except NationsLeaguePublicError as exc:
             raise PublicFootballCompatibilityError(
                 f"invalid public Nations League projection: {exc}"
+            ) from exc
+    if "nations_league_value_signals" in pub:
+        try:
+            pub["nations_league_value_signals"] = (
+                validate_nations_league_actionable_projection(
+                    pub["nations_league_value_signals"]
+                )
+            )
+        except NationsLeagueActionabilityError as exc:
+            raise PublicFootballCompatibilityError(
+                f"invalid Nations League actionable projection: {exc}"
             ) from exc
     if "top5_release" in pub:
         pub["top5_release"] = _public_top5_release(

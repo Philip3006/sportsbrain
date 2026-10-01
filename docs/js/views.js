@@ -706,7 +706,13 @@ function sigCard(s, showMatch) {
   const _hasCurrentOdds = s.current_odds != null && Number.isFinite(s.current_odds) && s.current_odds > 1;
   const _hasCurrentEv = s.current_ev_pct != null && Number.isFinite(s.current_ev_pct) && s.current_ev_pct > 0;
   // VALUE actionability requires BOTH canonical identity AND actual current market data.
-  const _isValueActionable = _hasCanonicalId && _hasCurrentOdds && _hasCurrentEv;
+  const _isNationsLeagueValue = s.is_nations_league_value === true;
+  const _canonicalActionability = _isNationsLeagueValue && typeof isActionableValueSignal === 'function'
+    ? isActionableValueSignal(s, _currentBankroll(), (_openBets || []).length)
+    : null;
+  const _isValueActionable = _isNationsLeagueValue
+    ? _canonicalActionability?.ok === true
+    : _hasCanonicalId && _hasCurrentOdds && _hasCurrentEv;
   const btnAttrs = [
     `data-match="${esc(s.match)}"`,
     `data-market="${esc(s.market)}"`,
@@ -1186,7 +1192,9 @@ function renderHome() {
     else if (s.market === 'draw') k = 'draw';
     else if (['away','ah+0.5_away','first_set_b'].includes(s.market)) k = 'away';
     const _sOddsOk = typeof s.odds === 'number' && isFinite(s.odds) && s.odds > 1.0;
-    if (k && _sOddsOk) oddsMap[nk][k] = { odds: s.odds, ev: s.ev_pct, model_prob: s.model_prob || 0 };
+    if (k && _sOddsOk) oddsMap[nk][k] = {
+      odds: s.odds, ev: s.ev_pct, model_prob: s.model_prob || 0, signal: s,
+    };
   }
 
   // Sort + filter next 30 days; remove finished games 30min after final whistle
@@ -1220,10 +1228,19 @@ function renderHome() {
   const oddsBtn = (nk, mkt, game) => {
     const od = (oddsMap[nk]||{})[mkt];
     if (!od) return `<div class="b365-btn no-odds">—</div>`;
-    const cls = od.ev !== null ? 'val' : '';
+    const nlSignal = od.signal?.is_nations_league_value === true ? od.signal : null;
+    const nlActionability = nlSignal && typeof isActionableValueSignal === 'function'
+      ? isActionableValueSignal(nlSignal, _currentBankroll(), (_openBets || []).length)
+      : null;
+    const isValue = nlSignal ? nlActionability?.ok === true : od.ev !== null && od.ev >= 3;
+    const cls = isValue ? 'val' : '';
     if (!game) return `<div class="b365-btn ${cls}">${od.odds.toFixed(2)}</div>`;
     const mkStr = `${game.home} vs ${game.away}`;
-    const isValue = od.ev !== null && od.ev >= 3;
+    // A fresh NL quote is never silently downgraded to a manual CTA.  If its
+    // canonical actionability fails, display the quote without a bet action.
+    if (nlSignal && !isValue) {
+      return `<div class="b365-btn ${cls} nl-value-unavailable" aria-label="Quote nicht aktionierbar · ${mkt} @ ${od.odds.toFixed(2)}">${od.odds.toFixed(2)}</div>`;
+    }
     const src = isValue ? 'value' : 'manual';
     const evVal = od.ev !== null ? od.ev : 0;
     const stake = isValue ? 10 : 5;
@@ -1239,6 +1256,14 @@ function renderHome() {
       `data-confidence=""`,
       `data-kickoff="${esc(game.kickoff || '')}"`,
       `data-sport="${esc(game.sport || '')}"`,
+      `data-signal-id="${esc(nlSignal?.signal_id || '')}"`,
+      `data-signal-status="${esc(nlSignal?.signal_status || '')}"`,
+      `data-fixture-key="${esc(nlSignal?.fixture_key || '')}"`,
+      `data-league="${esc(nlSignal?.league || '')}"`,
+      `data-odds-ts="${esc(nlSignal?.odds_ts || '')}"`,
+      `data-event-status="${esc(nlSignal?.event_status || '')}"`,
+      `data-current-odds="${nlSignal ? nlSignal.current_odds : ''}"`,
+      `data-current-ev="${nlSignal ? nlSignal.current_ev_pct : ''}"`,
       `data-source="${src}"`,
       `onclick="event.stopPropagation();_openBetModalFromBtn(this)"`,
       `aria-label="Wette platzieren · ${mkt} @ ${od.odds.toFixed(2)}"`,
