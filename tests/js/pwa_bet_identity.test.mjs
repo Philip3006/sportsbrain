@@ -119,6 +119,9 @@ test('deep-link path does not manufacture identity for a missing signal_id', () 
 test('core betting frontend assets use the same cache-bust release', () => {
   const release = '20261002-detail-bet-cta';
   for (const asset of ['app', 'views', 'bets']) {
-    assert.match(indexSource, new RegExp(`src="js/\${asset}\\.js\\?v=\${release}"`));
+    assert.ok(
+      indexSource.includes(`src="js/${asset}.js?v=${release}"`),
+      `missing cache-bust release for ${asset}.js`,
+    );
   }
 });
