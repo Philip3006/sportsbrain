@@ -110,6 +110,7 @@ def _prepare_run(
     get_responses = [Response(before, status=worker_before_status), Response(after)]
     calls = {
         "get": [],
+        "get_payloads": [],
         "post": [],
         "payload": None,
         "provider_urls": [],
@@ -121,6 +122,7 @@ def _prepare_run(
             calls["provider_urls"].append(url)
             raise AssertionError("unexpected non-Worker network request")
         calls["get"].append((url, kwargs))
+        calls["get_payloads"].append(copy.deepcopy(get_responses[0]._payload))
         return get_responses.pop(0)
 
     def fake_post(url, **kwargs):
@@ -162,10 +164,17 @@ def _run(root, now, expected_digest):
     )
 
 
-def test_zero_worker_and_local_counts_republish_shared_nl_via_canonical_writer(
+def test_healthy_worker_stale_nl_digest_uses_one_nl_only_merge(
     tmp_path, monkeypatch, capsys
 ):
-    _root, now, expected_digest, calls = _prepare_run(tmp_path, monkeypatch)
+    local_football = [{"signal_id": "football-keep"}]
+    local_tennis = [{"signal_id": "tennis-keep"}]
+    _root, now, expected_digest, calls = _prepare_run(
+        tmp_path,
+        monkeypatch,
+        local_football=local_football,
+        local_tennis=local_tennis,
+    )
 
     exit_code = republish_script.main(["--expected-nl-digest", expected_digest])
     output = capsys.readouterr()
@@ -180,8 +189,8 @@ def test_zero_worker_and_local_counts_republish_shared_nl_via_canonical_writer(
     assert summary["worker_updated_after"] == (
         now - timedelta(seconds=5)
     ).isoformat().replace("+00:00", "Z")
-    assert summary["football_count_before"] == summary["football_count_after"] == 0
-    assert summary["tennis_count_before"] == summary["tennis_count_after"] == 0
+    assert summary["football_count_before"] == summary["football_count_after"] == 1
+    assert summary["tennis_count_before"] == summary["tennis_count_after"] == 1
     assert summary["nl_present_before"] is False
     assert summary["nl_present_after"] is True
     assert summary["nl_digest_after"] == expected_digest
@@ -193,18 +202,68 @@ def test_zero_worker_and_local_counts_republish_shared_nl_via_canonical_writer(
     assert summary["activation_mutated"] is False
     assert len(calls["get"]) == 2
     assert len(calls["post"]) == 1
-    assert calls["safe_fetch"] == 1
+    assert calls["safe_fetch"] == 0
     assert calls["provider_urls"] == []
+    assert calls["get_payloads"][0]["football"] == calls["get_payloads"][1]["football"]
+    assert calls["get_payloads"][0]["tennis"] == calls["get_payloads"][1]["tennis"]
     assert calls["payload"]["nations_league"]["public_digest"] == expected_digest
-    assert calls["payload"]["football"] == []
-    assert calls["payload"]["tennis"] == []
-    assert calls["post"][0][0] == "https://signals.example.test/api/signals"
+    assert set(calls["payload"]) == {"nations_league"}
+    assert calls["post"][0][0] == (
+        "https://signals.example.test/api/signals?merge_nations_league=1"
+    )
     assert calls["post"][0][1]["allow_redirects"] is False
     assert calls["post"][0][1]["headers"]["Authorization"] == f"Bearer {TOKEN}"
     assert all("headers" not in kwargs for _url, kwargs in calls["get"])
     assert TOKEN not in output.out + output.err
     assert WORKER_URL not in output.out + output.err
     assert "Authorization" not in output.out + output.err
+
+
+def test_healthy_worker_same_nl_digest_skips_post(tmp_path, monkeypatch):
+    now = datetime.now(timezone.utc).replace(microsecond=0)
+    public_nl = _valid_public_nl(now)
+    worker_before = _worker_snapshot(
+        now - timedelta(minutes=2),
+        football=[{"signal_id": "football-keep"}],
+        tennis=[{"signal_id": "tennis-keep"}],
+        nl=public_nl,
+    )
+    root, now, expected_digest, calls = _prepare_run(
+        tmp_path,
+        monkeypatch,
+        public_nl=public_nl,
+        worker_before=worker_before,
+        local_football=[{"signal_id": "football-keep"}],
+        local_tennis=[{"signal_id": "tennis-keep"}],
+        now=now,
+    )
+
+    summary = _run(root, now, expected_digest)
+
+    assert summary["status"] == republish_script.READY
+    assert summary["cloud_upload_success"] is True
+    assert len(calls["get"]) == 1
+    assert calls["post"] == []
+    assert calls["provider_urls"] == []
+    assert summary["nl_digest_before"] == expected_digest
+    assert summary["nl_digest_after"] is None
+
+
+def test_malformed_worker_nl_blocks_before_nl_only_post(tmp_path, monkeypatch):
+    now = datetime.now(timezone.utc).replace(microsecond=0)
+    malformed = {"schema": "nations-league-public-v1", "public_digest": "f" * 64}
+    root, now, expected_digest, calls = _prepare_run(
+        tmp_path,
+        monkeypatch,
+        worker_before=_worker_snapshot(now - timedelta(minutes=2), nl=malformed),
+        now=now,
+    )
+
+    summary = _run(root, now, expected_digest)
+
+    assert summary["status"] == republish_script.BLOCKED
+    assert len(calls["get"]) == 1
+    assert calls["post"] == []
 
 
 @pytest.mark.parametrize("sport", ["football", "tennis"])
