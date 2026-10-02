@@ -120,7 +120,7 @@ test('deep-link path does not manufacture identity for a missing signal_id', () 
 
 
 test('core betting frontend assets use the same cache-bust release', () => {
-  const release = '20261003-value-provenance-v1';
+  const release = '20261003-stake-default-cap-v1';
   for (const asset of ['app', 'views', 'bets']) {
     assert.ok(
       indexSource.includes(`src="js/${asset}.js?v=${release}"`),
@@ -148,6 +148,18 @@ test('primary match quotes remain visibly manual and have no signal identity', (
   assert.match(appSource, /data-source="manual"/);
   assert.match(appSource, /data-signal-id=""/);
   assert.match(appSource, /Manuelle Wette/);
+});
+
+test('modal uses the canonical capped initial stake and explains invalid input dynamically', () => {
+  assert.match(betsSource, /const initialStake = computeSafeStake\(/);
+  assert.match(betsSource, /stake_eur: initialStake\.stake/);
+  assert.match(betsSource, /initial_stake_capped: initialStake\.capApplied/);
+  assert.match(betsSource, /Einsatz auf dein 5%-Limit begrenzt: max\. €\$\{_pendingBet\.stake_eur\.toFixed\(2\)\}/);
+  assert.match(betsSource, /überschreitet dein 5%-Limit von €\$\{capCeiling\.toFixed\(2\)\}/);
+  assert.match(betsSource, /liegt unter dem Mindesteinsatz von €0\.50/);
+  assert.match(betsSource, /Quote muss zwischen 1\.01 und 100 liegen/);
+  assert.match(indexSource, /id="bet-modal-cap-note"/);
+  assert.doesNotMatch(indexSource, /maximal €5 bei €100 Bankroll empfohlen/);
 });
 
 test('actionable SportsBrain signals are expanded and use a distinct Value CTA', () => {
