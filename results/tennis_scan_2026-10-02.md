@@ -7,7 +7,7 @@
 > Filter: EV-gewichtet · Markt-historisch · max. 1 Signal pro Match
 
 - 🟢 **Jelena Ostapenko vs Paula Badosa** · Match Winner: Paula Badosa
-  Quote 2.33 · EV +26.5% · Stake 5.00€ · HIGH
+  Quote 2.36 · EV +28.1% · Stake 5.00€ · HIGH
 
 ---
 
@@ -23,8 +23,8 @@ _Keine Value-Signals._
 ## China Open (WTA) · wta1000 · 🔴 LIVE
 Surface: hard · Best of: 3 · Matches gescannt: 24
 - [WTA] **Jelena Ostapenko vs Paula Badosa** · Match Winner: Paula Badosa ⭐
-  Quote 2.33 · Modell 54.3% · EV +26.5% · Stake 5.00€ · HIGH
+  Quote 2.36 · Modell 54.3% · EV +28.1% · Stake 5.00€ · HIGH
 - [WTA] **Donna Vekic vs Lin Zhu** · Match Winner: Lin Zhu
   Quote 2.30 · Modell 52.5% · EV +20.8% · Stake 5.00€ · HIGH
 - [WTA] **Katerina Siniakova vs Elina Svitolina** · Match Winner: Elina Svitolina
-  Quote 1.41 · Modell 74.2% · EV +4.7% · Stake 5.00€ · MEDIUM
+  Quote 1.42 · Modell 74.2% · EV +5.4% · Stake 5.00€ · MEDIUM
