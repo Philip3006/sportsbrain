@@ -1,6 +1,6 @@
 # Tennis Scan 2026-10-02
 
-**Aktive Turniere:** 3 · **Signals total:** 3
+**Aktive Turniere:** 3 · **Signals total:** 2
 
 
 ## China Open (ATP) · atp500 · 🔴 LIVE
@@ -17,5 +17,3 @@ Surface: hard · Best of: 3 · Matches gescannt: 24
   Quote 2.30 · Modell 52.5% · EV +20.8% · Stake 5.00€ · HIGH
 - [WTA] **Katerina Siniakova vs Elina Svitolina** · Match Winner: Elina Svitolina
   Quote 1.46 · Modell 74.2% · EV +8.4% · Stake 5.00€ · HIGH
-- [WTA] **Jelena Ostapenko vs Paula Badosa** · Match Winner: Jelena Ostapenko
-  Quote 2.33 · Modell 45.7% · EV +6.5% · Stake 5.00€ · MEDIUM
