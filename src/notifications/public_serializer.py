@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import hashlib
 from collections.abc import Mapping, Sequence
+from datetime import datetime, timezone
 from math import isfinite
 from typing import Any
 
@@ -51,6 +52,7 @@ _PUBLIC_TOP_LEVEL_KEYS: frozenset[str] = frozenset(
         "build_info",
         "schedule",
         "all_odds",
+        "current_match_odds",
         "model_tips",
         "model_evals",
         "football",
@@ -1423,6 +1425,79 @@ def _public_tennis_stats(ts: dict | None) -> dict:
     return result
 
 
+def _public_current_match_odds(value: object) -> dict:
+    """Project fresh match-level primary quotes without signal/private state.
+
+    The refresher owns the sidecar and may retain internal signal-market
+    context.  The public channel receives only canonical match identity,
+    complete primary outcomes, provenance, and an age-derived freshness flag.
+    """
+    if not isinstance(value, Mapping):
+        return {}
+    output: dict[str, dict] = {}
+    now = datetime.now(timezone.utc)
+    for key, raw in value.items():
+        if not isinstance(key, str) or not isinstance(raw, Mapping):
+            continue
+        sport = raw.get("sport")
+        match = raw.get("match")
+        home = raw.get("home")
+        away = raw.get("away")
+        source = raw.get("source")
+        odds_ts = raw.get("odds_ts")
+        outcomes = raw.get("outcomes")
+        if not all(
+            isinstance(item, str) and item.strip()
+            for item in (sport, match, home, away, source, odds_ts)
+        ):
+            continue
+        if not isinstance(outcomes, Mapping):
+            continue
+        safe_outcomes: dict[str, float] = {}
+        required = {"home", "away"} | ({"draw"} if sport == "football" else set())
+        for market, odds in outcomes.items():
+            if market not in {"home", "draw", "away"}:
+                continue
+            try:
+                numeric = float(odds)
+            except (TypeError, ValueError):
+                continue
+            if isfinite(numeric) and numeric > 1.0:
+                safe_outcomes[market] = numeric
+        if not required.issubset(safe_outcomes):
+            continue
+        try:
+            timestamp = datetime.fromisoformat(odds_ts.replace("Z", "+00:00"))
+            if timestamp.tzinfo is None:
+                timestamp = timestamp.replace(tzinfo=timezone.utc)
+            age_seconds = (now - timestamp.astimezone(timezone.utc)).total_seconds()
+        except (AttributeError, TypeError, ValueError):
+            continue
+        try:
+            fetch_tier = int(raw.get("odds_fetch_tier", 0) or 0)
+        except (TypeError, ValueError):
+            continue
+        current = bool(raw.get("current")) and 0 <= age_seconds <= 30 * 60
+        item = {
+            "sport": sport,
+            "match": match,
+            "home": home,
+            "away": away,
+            "fixture_key": str(raw.get("fixture_key") or key),
+            "outcomes": safe_outcomes,
+            "odds_ts": odds_ts,
+            "captured_at": str(raw.get("captured_at") or odds_ts),
+            "source_ts": str(raw.get("source_ts") or ""),
+            "source": source,
+            "bookmaker": str(raw.get("bookmaker") or ""),
+            "odds_fetch_tier": fetch_tier,
+            "freshness": "current" if current else "stale",
+            "current": current,
+        }
+        output[key] = item
+    return output
+
+
 def _serialize_public_product(snapshot: dict | None, *, prepublication: bool) -> dict:
     """Project a public payload, selecting an explicit Top-5 lifecycle state.
 
@@ -1453,6 +1528,10 @@ def _serialize_public_product(snapshot: dict | None, *, prepublication: bool) ->
             pub[key] = snapshot[key]
     if "football" in pub:
         pub["football"] = serialize_public_football_records(pub["football"])
+    if "current_match_odds" in pub:
+        pub["current_match_odds"] = _public_current_match_odds(
+            pub["current_match_odds"]
+        )
     if "nations_league" in pub:
         try:
             pub["nations_league"] = validate_public_nations_league(

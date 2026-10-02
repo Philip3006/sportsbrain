@@ -730,6 +730,7 @@ function _top5PublicReleaseGuard(payload, source, nowMs = Date.now()) {
 let _signals = [];
 let _schedule = [];
 let _allOdds = {};
+let _currentMatchOdds = {};
 let _modelTips = {};
 let _modelEvals = {};
 // Nations League stays outside the actionable football/signal collections.
@@ -1059,7 +1060,34 @@ function _matchOutcomeProbabilities(sport, dh, da, tip, modelEvalInfo, sigs) {
   return { home, away };
 }
 
-function _matchQuoteForMarket(market, sigs, oddsEntry) {
+function _findCurrentMatchOdds(dh, da, sport) {
+  const target = matchKey(dh, da);
+  for (const [key, value] of Object.entries(_currentMatchOdds || {})) {
+    if (!value || (sport && value.sport && value.sport !== sport)) continue;
+    const home = value.home || '';
+    const away = value.away || '';
+    if ((home && away && matchKey(home, away) === target) ||
+        matchKey(String(key).split(':').slice(1).join(':').split(' vs ')[0],
+          String(key).split(' vs ')[1] || '') === target) {
+      return value;
+    }
+  }
+  return null;
+}
+
+function _matchQuoteForMarket(market, sigs, oddsEntry, currentMatchOdds) {
+  const matchOutcome = currentMatchOdds?.outcomes?.[market];
+  const authoritative = Number(matchOutcome);
+  if (currentMatchOdds?.current === true && currentMatchOdds?.freshness === 'current' &&
+      currentMatchOdds?.odds_ts && Number.isFinite(authoritative) && authoritative > 1) {
+    return {
+      odds: authoritative,
+      freshness: 'current',
+      oddsTs: currentMatchOdds.odds_ts,
+      source: currentMatchOdds.source || '',
+      bookmaker: currentMatchOdds.bookmaker || '',
+    };
+  }
   const sig = sigs.find(s => s.market === market);
   const current = Number(sig?.current_odds);
   if (Number.isFinite(current) && current > 1) {
@@ -1068,6 +1096,7 @@ function _matchQuoteForMarket(market, sigs, oddsEntry) {
       freshness: 'current',
       oddsTs: sig.odds_ts || '',
       source: sig.odds_source || '',
+      bookmaker: sig.best_bookie?.name || '',
     };
   }
   const scan = Number(oddsEntry?.[market]);
@@ -1077,7 +1106,7 @@ function _matchQuoteForMarket(market, sigs, oddsEntry) {
   return { odds: null, freshness: 'missing', oddsTs: '', source: '' };
 }
 
-function _matchPrimaryMarketsCard({ displayKey, dh, da, sport, kickoff, tour, sigs, oddsEntry, tip, modelEvalInfo, fixtureKey }) {
+function _matchPrimaryMarketsCard({ displayKey, dh, da, sport, kickoff, tour, sigs, oddsEntry, currentMatchOdds, tip, modelEvalInfo, fixtureKey }) {
   const probs = _matchOutcomeProbabilities(sport, dh, da, tip, modelEvalInfo, sigs);
   const outcomes = sport === 'football'
     ? [
@@ -1091,7 +1120,7 @@ function _matchPrimaryMarketsCard({ displayKey, dh, da, sport, kickoff, tour, si
       ];
 
   const rows = outcomes.map(outcome => {
-    const quote = _matchQuoteForMarket(outcome.market, sigs, oddsEntry);
+    const quote = _matchQuoteForMarket(outcome.market, sigs, oddsEntry, currentMatchOdds);
     const prob = probs[outcome.market];
     const marketProb = quote.odds ? 100 / quote.odds : null;
     const modelText = prob != null ? `${prob.toFixed(1)}%` : '—';
@@ -1104,7 +1133,7 @@ function _matchPrimaryMarketsCard({ displayKey, dh, da, sport, kickoff, tour, si
       : 0;
     const quoteText = quote.odds ? quote.odds.toFixed(2) : 'Quote eingeben';
     const quoteMeta = quote.freshness === 'current'
-      ? 'Aktuell'
+      ? `Aktuell${quote.source ? ` · ${esc(quote.source)}` : ''}`
       : quote.freshness === 'scan'
       ? 'Scan-Quote · prüfen'
       : 'Keine veröffentlichte Quote';
@@ -1254,6 +1283,7 @@ function openMatch(displayKey) {
     });
     oddsEntry = found ? found[1] : {};
   }
+  const currentMatchOdds = _findCurrentMatchOdds(dh, da, sport);
 
   const modelEvalInfo = _findModelEvalForMatch(displayKey, dh, da);
   const ouSigs = sigs.filter(s => /^o\/u/.test(s.market));
@@ -1262,7 +1292,7 @@ function openMatch(displayKey) {
   let cards = '';
   cards += _matchPrimaryMarketsCard({
     displayKey, dh, da, sport, kickoff, tour, sigs,
-    oddsEntry, tip, modelEvalInfo, fixtureKey,
+    oddsEntry, currentMatchOdds, tip, modelEvalInfo, fixtureKey,
   });
 
   if (tip) {
@@ -1811,6 +1841,7 @@ async function _load() {
   _tennisStats = d.tennis_stats || {};
   _schedule = d.schedule || [];
   _allOdds = d.all_odds || {};
+  _currentMatchOdds = d.current_match_odds || {};
   _modelTips = d.model_tips || {};
   _modelEvals = d.model_evals || {};
   _nationsLeague = d.nations_league || null;

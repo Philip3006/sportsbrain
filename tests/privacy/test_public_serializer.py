@@ -11,6 +11,7 @@ Finding addressed: FND-20260814-011 (partial), FND-20260814-012, FND-20260814-01
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 import pytest
 
@@ -101,6 +102,52 @@ def test_t1_public_allowlist_retains_expected_fields():
     assert "top_elo" in pub
     assert "wm_results" in pub
     assert "odds_history" in pub
+
+
+def test_match_level_odds_projection_is_public_safe_and_age_derived():
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    pub = serialize_public_product({
+        "current_match_odds": {
+            "tennis:alpha vs beta": {
+                "sport": "tennis",
+                "match": "Alpha vs Beta",
+                "home": "Alpha",
+                "away": "Beta",
+                "fixture_key": "tennis:alpha vs beta",
+                "outcomes": {"home": 1.8, "away": 2.1},
+                "odds_ts": now,
+                "captured_at": now,
+                "source_ts": now,
+                "source": "tennis_explorer",
+                "bookmaker": "consensus",
+                "odds_fetch_tier": 1,
+                "freshness": "current",
+                "current": True,
+                "signal_markets": {"private_runtime_context": 2.0},
+            }
+        }
+    })
+
+    quote = pub["current_match_odds"]["tennis:alpha vs beta"]
+    assert quote["outcomes"] == {"home": 1.8, "away": 2.1}
+    assert quote["current"] is True
+    assert "signal_markets" not in quote
+
+
+def test_stale_match_level_quote_is_not_publicly_current():
+    pub = serialize_public_product({
+        "current_match_odds": {
+            "tennis:alpha vs beta": {
+                "sport": "tennis", "match": "Alpha vs Beta", "home": "Alpha", "away": "Beta",
+                "outcomes": {"home": 1.8, "away": 2.1},
+                "odds_ts": "2020-01-01T00:00:00Z", "source": "tennis_explorer",
+                "current": True,
+            }
+        }
+    })
+    quote = pub["current_match_odds"]["tennis:alpha vs beta"]
+    assert quote["current"] is False
+    assert quote["freshness"] == "stale"
 
 
 # ── T2: Recursive private-key rejection (nested) ─────────────────────────

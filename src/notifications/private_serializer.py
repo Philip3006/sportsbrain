@@ -33,7 +33,7 @@ PRIVATE_STATE_KEYS: frozenset[str] = frozenset({
 # were included, /me would duplicate public data behind auth, breaking the
 # dual-channel invariant and inflating the private response surface.
 PUBLIC_PRODUCT_KEYS: frozenset[str] = frozenset({
-    "schedule", "all_odds", "model_tips", "model_evals",
+    "schedule", "all_odds", "current_match_odds", "model_tips", "model_evals",
     "football", "tennis", "top_elo", "wm_results", "odds_history",
     "tennis_stats", "health", "build_info",
 })

@@ -17,6 +17,7 @@ from src.betting.value_detector import BetSignal
 from src.config import DEFAULT_USER as _DEFAULT_USER
 from src.config import ODDS_MOVE_WARN_PCT
 from src.signals.signal_status import (
+    load_current_match_odds,
     load_odds_state,
     make_signal_id,
     merge_odds_state_into_signal,
@@ -1337,6 +1338,7 @@ def write_signals_json(
         },
         "schedule":       schedule_data,
         "all_odds":       all_odds_data,
+        "current_match_odds": load_current_match_odds(),
         "model_tips":     model_tips_data,
         "model_evals":    model_evals_data,
         "football":       football_data,

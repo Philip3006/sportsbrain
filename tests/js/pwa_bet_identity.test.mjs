@@ -142,6 +142,50 @@ test('non-actionable canonical detail signals render an explicit no-bet state', 
   assert.match(cssSource, /\.no-bet-status/);
 });
 
+test('match detail prefers a fresh match-level primary quote over signal or scan odds', () => {
+  const start = appSource.indexOf('function _matchQuoteForMarket(');
+  const end = appSource.indexOf('\nfunction _matchPrimaryMarketsCard(', start);
+  assert.ok(start >= 0 && end > start);
+  const context = { Number };
+  vm.createContext(context);
+  vm.runInContext(`${appSource.slice(start, end)}\n` +
+    'globalThis.quote = _matchQuoteForMarket;', context);
+
+  const quote = context.quote(
+    'home',
+    [{ market: 'home', current_odds: 1.91, odds_ts: '2026-10-02T11:00:00Z', odds_source: 'signal' }],
+    { home: 1.72 },
+    {
+      outcomes: { home: 2.18, away: 1.74 },
+      current: true,
+      freshness: 'current',
+      odds_ts: '2026-10-02T11:59:00Z',
+      source: 'tennis_explorer',
+      bookmaker: 'consensus',
+    },
+  );
+
+  assert.equal(quote.odds, 2.18);
+  assert.equal(quote.freshness, 'current');
+  assert.equal(quote.source, 'tennis_explorer');
+  assert.equal(quote.bookmaker, 'consensus');
+
+  const noSignalQuote = context.quote(
+    'away',
+    [],
+    {},
+    {
+      outcomes: { home: 2.18, away: 1.74 },
+      current: true,
+      freshness: 'current',
+      odds_ts: '2026-10-02T11:59:00Z',
+      source: 'tennis_explorer',
+    },
+  );
+  assert.equal(noSignalQuote.odds, 1.74);
+  assert.equal(noSignalQuote.freshness, 'current');
+});
+
 
 test('match detail is match-centric and supports manual betting independent of signals', () => {
   assert.match(appSource, /Match & Quoten/);
