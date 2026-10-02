@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-29",
+  "updated": "2026-10-02",
   "teams": {
     "Algeria": {
       "source": "wikipedia",
@@ -862,8 +862,7 @@
       "ampel": "🟢",
       "suspended": [
         "Wesley França",
-        "Lucas Paquetá",
-        "Raphinha"
+        "Lucas Paquetá"
       ],
       "players": [
         {
@@ -919,7 +918,7 @@
         {
           "name": "Raphinha",
           "pos": "FWD",
-          "status": "injured"
+          "status": "fit"
         },
         {
           "name": "Weverton",
@@ -2563,7 +2562,8 @@
       "suspended": [
         "Lennart Karl",
         "Nico Schlotterbeck",
-        "Oliver Baumann"
+        "Oliver Baumann",
+        "Waldemar Anton"
       ],
       "players": [
         {
@@ -2579,7 +2579,7 @@
         {
           "name": "Waldemar Anton",
           "pos": "DEF",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Jonathan Tah",
@@ -4005,7 +4005,8 @@
         "Matthijs de Ligt",
         "Stefan de Vrij",
         "Xavi Simons",
-        "Memphis Depay"
+        "Memphis Depay",
+        "Frenkie de Jong"
       ],
       "players": [
         {
@@ -4111,7 +4112,7 @@
         {
           "name": "Frenkie de Jong",
           "pos": "MID",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Denzel Dumfries",
@@ -5420,7 +5421,6 @@
       "availability_score": 1.0,
       "ampel": "🟢",
       "suspended": [
-        "Teboho Mokoena",
         "Themba Zwane",
         "Thalente Mbatha",
         "Evidence Makgopa"
@@ -5444,7 +5444,7 @@
         {
           "name": "Teboho Mokoena",
           "pos": "MID",
-          "status": "injured"
+          "status": "fit"
         },
         {
           "name": "Thalente Mbatha",
