@@ -1075,11 +1075,23 @@ function _findCurrentMatchOdds(dh, da, sport) {
   return null;
 }
 
-function _matchQuoteForMarket(market, sigs, oddsEntry, currentMatchOdds) {
+const _MAX_MATCH_QUOTE_AGE_MS = 30 * 60 * 1000;
+const _MAX_MATCH_QUOTE_FUTURE_SKEW_MS = 60 * 1000;
+
+function _isCurrentQuote(quote, nowMs = Date.now()) {
+  const odds = Number(quote?.odds ?? quote?.current_odds);
+  const oddsTs = Date.parse(quote?.odds_ts || '');
+  if (!Number.isFinite(odds) || odds <= 1 || !Number.isFinite(oddsTs)) return false;
+  if (quote?.current === false || quote?.stale === true || quote?.freshness === 'stale') return false;
+  const ageMs = nowMs - oddsTs;
+  return ageMs >= -_MAX_MATCH_QUOTE_FUTURE_SKEW_MS && ageMs <= _MAX_MATCH_QUOTE_AGE_MS;
+}
+
+function _matchQuoteForMarket(market, sigs, oddsEntry, currentMatchOdds, nowMs = Date.now()) {
   const matchOutcome = currentMatchOdds?.outcomes?.[market];
   const authoritative = Number(matchOutcome);
   if (currentMatchOdds?.current === true && currentMatchOdds?.freshness === 'current' &&
-      currentMatchOdds?.odds_ts && Number.isFinite(authoritative) && authoritative > 1) {
+      _isCurrentQuote({ ...currentMatchOdds, odds: authoritative }, nowMs)) {
     return {
       odds: authoritative,
       freshness: 'current',
@@ -1090,7 +1102,13 @@ function _matchQuoteForMarket(market, sigs, oddsEntry, currentMatchOdds) {
   }
   const sig = sigs.find(s => s.market === market);
   const current = Number(sig?.current_odds);
-  if (Number.isFinite(current) && current > 1) {
+  if (_isCurrentQuote({
+    current_odds: current,
+    odds_ts: sig?.odds_ts,
+    current: sig?.current !== false,
+    stale: sig?.stale === true,
+    freshness: sig?.freshness,
+  }, nowMs)) {
     return {
       odds: current,
       freshness: 'current',

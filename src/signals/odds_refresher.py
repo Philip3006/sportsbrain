@@ -26,6 +26,11 @@ import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+from src.config import FOOTBALL_LEAGUES_WHITELIST
+from src.football.top5_shadow_provider_redundancy import (
+    TOP5_LEAGUE_NAMES,
+    TOP5_SPORT_KEYS,
+)
 from src.signals.provider_budget import (
     is_provider_available,
     record_error,
@@ -48,6 +53,26 @@ ROOT = Path(__file__).resolve().parents[2]
 _SIGNALS_JSON = ROOT / "docs" / "data" / "signals.json"
 _SCHEDULE_ONLY_WINDOW_HOURS = 24
 _MAX_SCHEDULE_ONLY_MATCHES = 25
+
+# The Odds API is authoritative for football refreshes, but the requested
+# sport key must come from canonical fixture metadata.  Keep this resolver
+# deliberately exact: team names and free-form tournament text are never used
+# to guess a competition.
+_FOOTBALL_SPORT_KEYS = frozenset(
+    key for key in FOOTBALL_LEAGUES_WHITELIST if key.startswith("soccer_")
+)
+_FOOTBALL_LEAGUE_ALIASES = {
+    **{code.casefold(): sport_key for code, sport_key in TOP5_SPORT_KEYS.items()},
+    **{
+        name.casefold(): TOP5_SPORT_KEYS[code]
+        for code, name in TOP5_LEAGUE_NAMES.items()
+    },
+    "bl2": "soccer_germany_bundesliga2",
+    "d2": "soccer_germany_bundesliga2",
+    "2. bundesliga": "soccer_germany_bundesliga2",
+    "bundesliga 2": "soccer_germany_bundesliga2",
+    "soccer_germany_bundesliga2": "soccer_germany_bundesliga2",
+}
 
 # ---------------------------------------------------------------------------
 # Refresh cadence
@@ -167,15 +192,60 @@ def _football_market_odds(quote, market: str) -> float | None:
 # ---------------------------------------------------------------------------
 
 
+def _resolve_football_sport_key(context: dict) -> str | None:
+    """Resolve one exact, repository-supported The Odds API sport key.
+
+    A schedule/signal may provide either ``sport_key`` or
+    ``provider_sport_key`` and may also carry a canonical short league/name.
+    All supplied identities must agree.  Missing or unknown identity returns
+    ``None`` so callers can fail closed before any provider call.
+    """
+    if context.get("_sport_key_conflict") is True:
+        return None
+    candidates: list[str] = []
+    for field in ("sport_key", "provider_sport_key"):
+        value = context.get(field)
+        if value is None or not str(value).strip():
+            continue
+        sport_key = str(value).strip()
+        if sport_key not in _FOOTBALL_SPORT_KEYS:
+            return None
+        candidates.append(sport_key)
+
+    for field in ("league", "league_code"):
+        value = context.get(field)
+        if value is None or not str(value).strip():
+            continue
+        sport_key = _FOOTBALL_LEAGUE_ALIASES.get(str(value).strip().casefold())
+        if sport_key is None:
+            return None
+        candidates.append(sport_key)
+
+    if not candidates or len(set(candidates)) != 1:
+        return None
+    return candidates[0]
+
+
 def _fetch_football_quote(signal: dict):
     """Fetch one authoritative football quote for a match."""
-    home, away = signal.get("match", " vs ").split(" vs ", 1)
+    parts = str(signal.get("match", "")).split(" vs ", 1)
+    if len(parts) != 2 or not all(part.strip() for part in parts):
+        _log.warning("[refresher] football fixture identity is incomplete")
+        return None, "", 0
+    home, away = parts
     kickoff = signal.get("kickoff", "")
+    sport_key = _resolve_football_sport_key(signal)
+    if sport_key is None:
+        _log.warning(
+            "[refresher] refusing football refresh without one exact supported sport key: %s",
+            signal.get("match", ""),
+        )
+        return None, "", 0
     match_hint = {
         "home_team": home.strip(),
         "away_team": away.strip(),
         "commence_time": kickoff,
-        "sport_key": "soccer_germany_bundesliga2",
+        "sport_key": sport_key,
     }
 
     # The Odds API is the sole football odds authority.
@@ -464,6 +534,17 @@ def _match_groups(
                 groups[key]["context"]["event_status"] = context["event_status"]
             if context.get("kickoff"):
                 groups[key]["context"]["kickoff"] = context["kickoff"]
+            for field in ("sport_key", "provider_sport_key"):
+                incoming = context.get(field)
+                existing = groups[key]["context"].get(field)
+                if (
+                    incoming
+                    and existing
+                    and str(incoming).strip() != str(existing).strip()
+                ):
+                    groups[key]["context"]["_sport_key_conflict"] = True
+                elif incoming and not existing:
+                    groups[key]["context"][field] = incoming
             for field in ("fixture_key", "league", "tournament"):
                 if context.get(field) and not groups[key]["context"].get(field):
                     groups[key]["context"][field] = context[field]

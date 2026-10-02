@@ -143,7 +143,7 @@ test('non-actionable canonical detail signals render an explicit no-bet state', 
 });
 
 test('match detail prefers a fresh match-level primary quote over signal or scan odds', () => {
-  const start = appSource.indexOf('function _matchQuoteForMarket(');
+  const start = appSource.indexOf('const _MAX_MATCH_QUOTE_AGE_MS');
   const end = appSource.indexOf('\nfunction _matchPrimaryMarketsCard(', start);
   assert.ok(start >= 0 && end > start);
   const context = { Number };
@@ -163,6 +163,7 @@ test('match detail prefers a fresh match-level primary quote over signal or scan
       source: 'tennis_explorer',
       bookmaker: 'consensus',
     },
+    Date.parse('2026-10-02T12:00:00Z'),
   );
 
   assert.equal(quote.odds, 2.18);
@@ -181,9 +182,44 @@ test('match detail prefers a fresh match-level primary quote over signal or scan
       odds_ts: '2026-10-02T11:59:00Z',
       source: 'tennis_explorer',
     },
+    Date.parse('2026-10-02T12:00:00Z'),
   );
   assert.equal(noSignalQuote.odds, 1.74);
   assert.equal(noSignalQuote.freshness, 'current');
+});
+
+test('match-level and signal quotes are time-true at render time', () => {
+  const start = appSource.indexOf('const _MAX_MATCH_QUOTE_AGE_MS');
+  const end = appSource.indexOf('\nfunction _matchPrimaryMarketsCard(', start);
+  assert.ok(start >= 0 && end > start);
+  const context = { Number, Date };
+  vm.createContext(context);
+  vm.runInContext(`${appSource.slice(start, end)}\n` +
+    'globalThis.quote = _matchQuoteForMarket;', context);
+  const now = Date.parse('2026-10-02T12:00:00Z');
+  const baseSnapshot = {
+    outcomes: { home: 2.18, away: 1.74 },
+    current: true,
+    freshness: 'current',
+    source: 'the_odds_api',
+  };
+
+  assert.equal(context.quote('home', [], {}, {
+    ...baseSnapshot, odds_ts: '2026-10-02T11:31:00Z',
+  }, now).freshness, 'current');
+  assert.equal(context.quote('home', [], {}, {
+    ...baseSnapshot, odds_ts: '2026-10-02T11:29:59Z',
+  }, now).freshness, 'missing');
+  assert.equal(context.quote('home', [], {}, {
+    ...baseSnapshot, odds_ts: '2026-10-02T12:02:00Z',
+  }, now).freshness, 'missing');
+
+  assert.equal(context.quote('home', [{
+    market: 'home', current_odds: 1.91, odds_ts: '2026-10-02T11:29:59Z',
+  }], {}, null, now).freshness, 'missing');
+  assert.equal(context.quote('home', [{
+    market: 'home', current_odds: 1.91, odds_ts: '2026-10-02T11:45:00Z',
+  }], {}, null, now).freshness, 'current');
 });
 
 
