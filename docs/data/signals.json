@@ -1,4 +1,56 @@
 {
+  "wm_results": [
+    {
+      "away": "Argentina",
+      "away_score": 0,
+      "commence_time": "2026-07-19T19:05:00Z",
+      "home": "Spain",
+      "home_score": 1,
+      "match_id": "fb30113e43d113f1ace48b8563ba1ee9"
+    }
+  ],
+  "top_elo": [
+    {
+      "name": "Sinner J.",
+      "rating": 1677
+    },
+    {
+      "name": "Fritz T.",
+      "rating": 1666
+    },
+    {
+      "name": "Alcaraz C.",
+      "rating": 1647
+    },
+    {
+      "name": "Noskova L.",
+      "rating": 1643
+    },
+    {
+      "name": "Djokovic N.",
+      "rating": 1642
+    },
+    {
+      "name": "Zverev A.",
+      "rating": 1626
+    },
+    {
+      "name": "Keys M.",
+      "rating": 1623
+    },
+    {
+      "name": "De Minaur A.",
+      "rating": 1597
+    },
+    {
+      "name": "Pegula J.",
+      "rating": 1596
+    },
+    {
+      "name": "Sabalenka A.",
+      "rating": 1594
+    }
+  ],
   "nations_league": {
     "audit_history": [
       {
@@ -5504,6 +5556,10 @@
       "status_updated_at": "2026-10-01T20:01:15Z"
     }
   ],
+  "build_info": {
+    "sha": "a4e2a3e",
+    "date": "2026-10-02"
+  },
   "model_evals": {
     "Aboian Valerio vs Cundom Julian": {
       "odds_a": 1.4,
@@ -8240,6 +8296,754 @@
       "reason": "Kein Elo-Profil (z.B. Qualifier): Coquelin Hugo, Braswell Micah",
       "odds_a": 2.08,
       "odds_b": 1.67
+    }
+  },
+  "football": [],
+  "updated": "2026-10-02T03:57:48Z",
+  "tennis": [
+    {
+      "signal_id": "7357c53efdcd",
+      "sport": "tennis",
+      "match": "Ekaterina Alexandrova vs Aliaksandra Sasnovich",
+      "market": "home",
+      "odds": 2.2,
+      "model_prob": 62.6,
+      "fair_prob": 42.1,
+      "ev_pct": 37.7,
+      "stake_eur": 5.0,
+      "stake_pct": 5.0,
+      "theoretical_stake_eur": 15.0,
+      "cap_applied": true,
+      "confidence": "HIGH",
+      "n_models_agree": 0,
+      "generated_at": "2026-10-01T20:01:15Z",
+      "form_a": [
+        "L",
+        "W",
+        "L",
+        "W",
+        "W"
+      ],
+      "tour": "wta",
+      "kickoff": "2026-10-02T04:10:00Z",
+      "league": "wta",
+      "tournament": "China Open",
+      "category": "wta1000",
+      "surface": "hard",
+      "best_of": 3,
+      "scheduled_start_current": "2026-10-02T04:10:00Z",
+      "scheduled_start_initial": "2026-10-02T04:10:00Z",
+      "event_status": "UPCOMING",
+      "schedule_updated_at": "2026-10-01T20:01:15Z",
+      "display_priority": "top",
+      "initial_odds": 2.2,
+      "initial_ev_pct": 37.7,
+      "odds_history": [
+        {
+          "ts": "2026-10-01T20:01:15Z",
+          "odds": 2.2,
+          "source": "scan"
+        },
+        {
+          "ts": "2026-10-01T21:46:32Z",
+          "odds": 1.6,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-01T22:17:34Z",
+          "odds": 1.6,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-01T22:49:36Z",
+          "odds": 1.6,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-01T23:20:25Z",
+          "odds": 1.6,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-01T23:51:03Z",
+          "odds": 1.6,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-02T00:21:37Z",
+          "odds": 1.6,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-02T00:52:20Z",
+          "odds": 1.6,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-02T01:38:55Z",
+          "odds": 1.6,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-02T01:49:03Z",
+          "odds": 1.6,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-02T01:59:34Z",
+          "odds": 1.6,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-02T02:09:41Z",
+          "odds": 1.6,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-02T02:19:48Z",
+          "odds": 1.6,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-02T02:30:21Z",
+          "odds": 1.6,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-02T02:40:28Z",
+          "odds": 1.6,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-02T02:50:36Z",
+          "odds": 1.6,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-02T03:01:06Z",
+          "odds": 1.6,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-02T03:11:14Z",
+          "odds": 1.6,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-02T03:16:21Z",
+          "odds": 1.6,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-02T03:21:29Z",
+          "odds": 1.6,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-02T03:42:10Z",
+          "odds": 1.6,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-02T03:47:18Z",
+          "odds": 1.6,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-02T03:52:25Z",
+          "odds": 1.6,
+          "source": "tennis_explorer"
+        }
+      ],
+      "current_odds": 1.6,
+      "current_ev_pct": 0.2,
+      "odds_ts": "2026-10-02T03:52:25Z",
+      "odds_source": "tennis_explorer",
+      "odds_fetch_tier": 2,
+      "signal_status": "EDGE_LOST"
+    },
+    {
+      "signal_id": "94f6c3388c89",
+      "sport": "tennis",
+      "match": "Halys Quentin vs Buse Ignacio",
+      "market": "away",
+      "odds": 2.2,
+      "model_prob": 58.7,
+      "fair_prob": 42.1,
+      "ev_pct": 29.1,
+      "stake_eur": 5.0,
+      "stake_pct": 5.0,
+      "theoretical_stake_eur": 15.0,
+      "cap_applied": true,
+      "confidence": "HIGH",
+      "n_models_agree": 0,
+      "generated_at": "2026-10-01T20:01:15Z",
+      "league": "atp",
+      "scheduled_start_current": "2026-10-01T20:00:00Z",
+      "kickoff": "2026-10-01T20:00:00Z",
+      "scheduled_start_initial": "2026-10-01T20:00:00Z",
+      "event_status": "AWAITING_START",
+      "schedule_updated_at": "2026-10-01T20:01:15Z",
+      "display_priority": "top",
+      "initial_odds": 2.2,
+      "initial_ev_pct": 29.1,
+      "odds_history": [
+        {
+          "ts": "2026-10-01T20:01:15Z",
+          "odds": 2.2,
+          "source": "scan"
+        }
+      ],
+      "odds_fetch_tier": 0,
+      "signal_status": "UNREFRESHABLE"
+    },
+    {
+      "signal_id": "070a2aee5e37",
+      "sport": "tennis",
+      "match": "Mensik Jakub vs Bublik Alexander",
+      "market": "home",
+      "odds": 2.2,
+      "model_prob": 54.4,
+      "fair_prob": 42.0,
+      "ev_pct": 19.7,
+      "stake_eur": 5.0,
+      "stake_pct": 5.0,
+      "theoretical_stake_eur": 15.0,
+      "cap_applied": true,
+      "confidence": "HIGH",
+      "n_models_agree": 0,
+      "generated_at": "2026-10-01T20:01:15Z",
+      "league": "atp",
+      "scheduled_start_current": "2026-10-01T20:00:00Z",
+      "kickoff": "2026-10-01T20:00:00Z",
+      "scheduled_start_initial": "2026-10-01T20:00:00Z",
+      "event_status": "AWAITING_START",
+      "schedule_updated_at": "2026-10-01T20:01:15Z",
+      "display_priority": "top",
+      "initial_odds": 2.2,
+      "initial_ev_pct": 19.7,
+      "odds_history": [
+        {
+          "ts": "2026-10-01T20:01:15Z",
+          "odds": 2.2,
+          "source": "scan"
+        }
+      ],
+      "odds_fetch_tier": 0,
+      "signal_status": "UNREFRESHABLE"
+    },
+    {
+      "signal_id": "e99b7385b151",
+      "sport": "tennis",
+      "match": "Jacquet Kyrian vs Rune Holger",
+      "market": "away",
+      "odds": 1.6,
+      "model_prob": 73.4,
+      "fair_prob": 57.6,
+      "ev_pct": 17.5,
+      "stake_eur": 5.0,
+      "stake_pct": 5.0,
+      "theoretical_stake_eur": 19.5,
+      "cap_applied": true,
+      "confidence": "HIGH",
+      "n_models_agree": 0,
+      "generated_at": "2026-10-01T20:01:15Z",
+      "league": "atp",
+      "scheduled_start_current": "2026-10-01T20:00:00Z",
+      "kickoff": "2026-10-01T20:00:00Z",
+      "scheduled_start_initial": "2026-10-01T20:00:00Z",
+      "event_status": "AWAITING_START",
+      "schedule_updated_at": "2026-10-01T20:01:15Z",
+      "display_priority": "top",
+      "initial_odds": 1.6,
+      "initial_ev_pct": 17.5,
+      "odds_history": [
+        {
+          "ts": "2026-10-01T20:01:15Z",
+          "odds": 1.6,
+          "source": "scan"
+        }
+      ],
+      "odds_fetch_tier": 0,
+      "signal_status": "UNREFRESHABLE"
+    },
+    {
+      "signal_id": "cc9af234a384",
+      "sport": "tennis",
+      "match": "Katerina Siniakova vs Elina Svitolina",
+      "market": "away",
+      "odds": 1.57,
+      "model_prob": 74.2,
+      "fair_prob": 58.9,
+      "ev_pct": 16.5,
+      "stake_eur": 5.0,
+      "stake_pct": 5.0,
+      "theoretical_stake_eur": 19.0,
+      "cap_applied": true,
+      "confidence": "HIGH",
+      "n_models_agree": 0,
+      "generated_at": "2026-10-01T20:01:15Z",
+      "form_a": [
+        "L",
+        "L",
+        "L",
+        "L",
+        "L"
+      ],
+      "form_b": [
+        "L",
+        "L",
+        "W",
+        "L",
+        "L"
+      ],
+      "tour": "wta",
+      "kickoff": "2026-10-03T03:00:00Z",
+      "league": "wta",
+      "tournament": "China Open",
+      "category": "wta1000",
+      "surface": "hard",
+      "best_of": 3,
+      "scheduled_start_current": "2026-10-03T03:00:00Z",
+      "scheduled_start_initial": "2026-10-03T03:00:00Z",
+      "event_status": "UPCOMING",
+      "schedule_updated_at": "2026-10-01T20:01:15Z",
+      "display_priority": "top",
+      "initial_odds": 1.52,
+      "initial_ev_pct": 16.5,
+      "odds_history": [
+        {
+          "ts": "2026-10-01T21:29:20Z",
+          "odds": 1.52,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-01T22:01:42Z",
+          "odds": 1.52,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-01T22:32:48Z",
+          "odds": 1.52,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-01T23:04:44Z",
+          "odds": 1.52,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-01T23:35:37Z",
+          "odds": 1.52,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-02T00:06:11Z",
+          "odds": 1.52,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-02T00:36:48Z",
+          "odds": 1.52,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-02T01:23:31Z",
+          "odds": 1.52,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-02T02:24:56Z",
+          "odds": 1.52,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-02T03:26:37Z",
+          "odds": 1.49,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-02T03:47:18Z",
+          "odds": 1.49,
+          "source": "tennis_explorer"
+        }
+      ],
+      "current_odds": 1.49,
+      "current_ev_pct": 10.6,
+      "odds_ts": "2026-10-02T03:47:18Z",
+      "odds_source": "tennis_explorer",
+      "odds_fetch_tier": 2,
+      "signal_status": "ACTIVE"
+    },
+    {
+      "signal_id": "23d0b6d52332",
+      "sport": "tennis",
+      "match": "Faria Jaime vs Fery Arthur",
+      "market": "away",
+      "odds": 2.16,
+      "model_prob": 53.7,
+      "fair_prob": 42.7,
+      "ev_pct": 16.1,
+      "stake_eur": 5.0,
+      "stake_pct": 5.0,
+      "theoretical_stake_eur": 14.0,
+      "cap_applied": true,
+      "confidence": "HIGH",
+      "n_models_agree": 0,
+      "generated_at": "2026-10-01T20:01:15Z",
+      "league": "atp",
+      "scheduled_start_current": "2026-10-01T20:00:00Z",
+      "kickoff": "2026-10-01T20:00:00Z",
+      "scheduled_start_initial": "2026-10-01T20:00:00Z",
+      "event_status": "AWAITING_START",
+      "schedule_updated_at": "2026-10-01T20:01:15Z",
+      "display_priority": "extra",
+      "initial_odds": 2.16,
+      "initial_ev_pct": 16.1,
+      "odds_history": [
+        {
+          "ts": "2026-10-01T20:01:15Z",
+          "odds": 2.16,
+          "source": "scan"
+        }
+      ],
+      "odds_fetch_tier": 0,
+      "signal_status": "UNREFRESHABLE"
+    },
+    {
+      "signal_id": "4ae2d2c6aee7",
+      "sport": "tennis",
+      "match": "Alcaraz Carlos vs Michelsen Alex",
+      "market": "home",
+      "odds": 1.37,
+      "model_prob": 81.5,
+      "fair_prob": 67.9,
+      "ev_pct": 11.6,
+      "stake_eur": 5.0,
+      "stake_pct": 5.0,
+      "theoretical_stake_eur": 13.0,
+      "cap_applied": true,
+      "confidence": "MEDIUM",
+      "n_models_agree": 0,
+      "generated_at": "2026-10-01T20:01:15Z",
+      "league": "atp",
+      "scheduled_start_current": "2026-10-01T20:00:00Z",
+      "kickoff": "2026-10-01T20:00:00Z",
+      "scheduled_start_initial": "2026-10-01T20:00:00Z",
+      "event_status": "AWAITING_START",
+      "schedule_updated_at": "2026-10-01T20:01:15Z",
+      "display_priority": "extra",
+      "initial_odds": 1.37,
+      "initial_ev_pct": 11.6,
+      "odds_history": [
+        {
+          "ts": "2026-10-01T20:01:15Z",
+          "odds": 1.37,
+          "source": "scan"
+        }
+      ],
+      "odds_fetch_tier": 0,
+      "signal_status": "UNREFRESHABLE"
+    },
+    {
+      "signal_id": "91aa9a1b4d61",
+      "sport": "tennis",
+      "match": "Rublev Andrey vs Griekspoor Tallon",
+      "market": "away",
+      "odds": 2.42,
+      "model_prob": 45.6,
+      "fair_prob": 38.6,
+      "ev_pct": 10.4,
+      "stake_eur": 5.0,
+      "stake_pct": 5.0,
+      "theoretical_stake_eur": 10.0,
+      "cap_applied": true,
+      "confidence": "MEDIUM",
+      "n_models_agree": 0,
+      "generated_at": "2026-10-01T20:01:15Z",
+      "league": "atp",
+      "scheduled_start_current": "2026-10-01T20:00:00Z",
+      "kickoff": "2026-10-01T20:00:00Z",
+      "scheduled_start_initial": "2026-10-01T20:00:00Z",
+      "event_status": "AWAITING_START",
+      "schedule_updated_at": "2026-10-01T20:01:15Z",
+      "display_priority": "extra",
+      "initial_odds": 2.42,
+      "initial_ev_pct": 10.4,
+      "odds_history": [
+        {
+          "ts": "2026-10-01T20:01:15Z",
+          "odds": 2.42,
+          "source": "scan"
+        }
+      ],
+      "odds_fetch_tier": 0,
+      "signal_status": "UNREFRESHABLE"
+    },
+    {
+      "signal_id": "e15d3515411d",
+      "sport": "tennis",
+      "match": "Shang Juncheng vs Baez Sebastian",
+      "market": "away",
+      "odds": 2.23,
+      "model_prob": 49.4,
+      "fair_prob": 41.5,
+      "ev_pct": 10.2,
+      "stake_eur": 5.0,
+      "stake_pct": 5.0,
+      "theoretical_stake_eur": 10.0,
+      "cap_applied": true,
+      "confidence": "MEDIUM",
+      "n_models_agree": 0,
+      "generated_at": "2026-10-01T20:01:15Z",
+      "league": "atp",
+      "scheduled_start_current": "2026-10-01T20:00:00Z",
+      "kickoff": "2026-10-01T20:00:00Z",
+      "scheduled_start_initial": "2026-10-01T20:00:00Z",
+      "event_status": "AWAITING_START",
+      "schedule_updated_at": "2026-10-01T20:01:15Z",
+      "display_priority": "extra",
+      "initial_odds": 2.23,
+      "initial_ev_pct": 10.2,
+      "odds_history": [
+        {
+          "ts": "2026-10-01T20:01:15Z",
+          "odds": 2.23,
+          "source": "scan"
+        }
+      ],
+      "odds_fetch_tier": 0,
+      "signal_status": "UNREFRESHABLE"
+    },
+    {
+      "signal_id": "5e56df5b0d8c",
+      "sport": "tennis",
+      "match": "Donna Vekic vs Lin Zhu",
+      "market": "home",
+      "odds": 2.2,
+      "model_prob": 47.5,
+      "fair_prob": 42.1,
+      "ev_pct": 4.5,
+      "stake_eur": 5.0,
+      "stake_pct": 5.0,
+      "theoretical_stake_eur": 7.0,
+      "cap_applied": true,
+      "confidence": "MEDIUM",
+      "n_models_agree": 0,
+      "generated_at": "2026-10-01T20:01:15Z",
+      "form_a": [
+        "L",
+        "L",
+        "L",
+        "L",
+        "L"
+      ],
+      "tour": "wta",
+      "kickoff": "2026-10-03T03:00:00Z",
+      "league": "wta",
+      "tournament": "China Open",
+      "category": "wta1000",
+      "surface": "hard",
+      "best_of": 3,
+      "scheduled_start_current": "2026-10-03T03:00:00Z",
+      "scheduled_start_initial": "2026-10-03T03:00:00Z",
+      "event_status": "UPCOMING",
+      "schedule_updated_at": "2026-10-01T20:01:15Z",
+      "display_priority": "extra",
+      "initial_odds": 2.2,
+      "initial_ev_pct": 4.5,
+      "odds_history": [
+        {
+          "ts": "2026-10-01T21:29:20Z",
+          "odds": 2.2,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-01T22:01:42Z",
+          "odds": 2.17,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-01T22:32:48Z",
+          "odds": 2.17,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-01T23:04:44Z",
+          "odds": 2.17,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-01T23:35:37Z",
+          "odds": 2.17,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-02T00:06:11Z",
+          "odds": 2.17,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-02T00:36:48Z",
+          "odds": 2.17,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-02T01:23:31Z",
+          "odds": 2.17,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-02T01:54:11Z",
+          "odds": 2.17,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-02T02:24:56Z",
+          "odds": 2.17,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-02T02:55:43Z",
+          "odds": 2.17,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-02T03:16:21Z",
+          "odds": 2.17,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-02T03:37:03Z",
+          "odds": 2.16,
+          "source": "tennis_explorer"
+        },
+        {
+          "ts": "2026-10-02T03:57:32Z",
+          "odds": 2.16,
+          "source": "tennis_explorer"
+        }
+      ],
+      "current_odds": 2.16,
+      "current_ev_pct": 2.6,
+      "odds_ts": "2026-10-02T03:57:32Z",
+      "odds_source": "tennis_explorer",
+      "odds_fetch_tier": 2,
+      "signal_status": "EDGE_LOST"
+    }
+  ],
+  "model_tips": {
+    "France vs England": {
+      "p_away": 0.152,
+      "p_btts_no": 0.443,
+      "p_btts_yes": 0.557,
+      "p_draw": 0.326,
+      "p_home": 0.522,
+      "p_over25": 0.514,
+      "p_under25": 0.486,
+      "top_scorers_away": [
+        {
+          "name": "Ivan Toney",
+          "p": 0.451
+        },
+        {
+          "name": "Harry Kane",
+          "p": 0.447
+        },
+        {
+          "name": "Jude Bellingham",
+          "p": 0.371
+        }
+      ],
+      "top_scorers_home": [
+        {
+          "name": "Jules Koundé",
+          "p": 0.741
+        },
+        {
+          "name": "Bradley Barcola",
+          "p": 0.574
+        },
+        {
+          "name": "Ousmane Dembélé",
+          "p": 0.528
+        }
+      ],
+      "top_scores": [
+        {
+          "a": 1,
+          "h": 1,
+          "p": 15.7
+        },
+        {
+          "a": 0,
+          "h": 0,
+          "p": 11.2
+        },
+        {
+          "a": 0,
+          "h": 2,
+          "p": 10.3
+        }
+      ],
+      "xg_away": 0.95,
+      "xg_home": 1.78
+    },
+    "Spain vs Argentina": {
+      "p_away": 0.066,
+      "p_btts_no": 0.622,
+      "p_btts_yes": 0.378,
+      "p_draw": 0.305,
+      "p_home": 0.629,
+      "p_over25": 0.394,
+      "p_under25": 0.606,
+      "top_scorers_away": [
+        {
+          "name": "Nicolás Otamendi",
+          "p": 0.642
+        },
+        {
+          "name": "Nicolás González",
+          "p": 0.502
+        },
+        {
+          "name": "Lautaro Martínez",
+          "p": 0.481
+        }
+      ],
+      "top_scorers_home": [
+        {
+          "name": "Lamine Yamal",
+          "p": 0.29
+        },
+        {
+          "name": "Fabián Ruiz",
+          "p": 0.251
+        },
+        {
+          "name": "Mikel Oyarzabal",
+          "p": 0.233
+        }
+      ],
+      "top_scores": [
+        {
+          "a": 0,
+          "h": 2,
+          "p": 15.7
+        },
+        {
+          "a": 0,
+          "h": 0,
+          "p": 14.5
+        },
+        {
+          "a": 0,
+          "h": 1,
+          "p": 14.0
+        }
+      ],
+      "xg_away": 0.53,
+      "xg_home": 1.74
     }
   },
   "all_odds": {
@@ -11646,11 +12450,6 @@
       "under22.5_games": 1.94
     }
   },
-  "build_info": {
-    "sha": "a4e2a3e",
-    "date": "2026-10-02"
-  },
-  "updated": "2026-10-02T03:52:26Z",
   "odds_history": {
     "Adam Walton vs Ignacio Buse": [
       {
@@ -37829,805 +38628,11 @@
       }
     ]
   },
-  "wm_results": [
-    {
-      "away": "Argentina",
-      "away_score": 0,
-      "commence_time": "2026-07-19T19:05:00Z",
-      "home": "Spain",
-      "home_score": 1,
-      "match_id": "fb30113e43d113f1ace48b8563ba1ee9"
-    }
-  ],
-  "football": [],
-  "model_tips": {
-    "France vs England": {
-      "p_away": 0.152,
-      "p_btts_no": 0.443,
-      "p_btts_yes": 0.557,
-      "p_draw": 0.326,
-      "p_home": 0.522,
-      "p_over25": 0.514,
-      "p_under25": 0.486,
-      "top_scorers_away": [
-        {
-          "name": "Ivan Toney",
-          "p": 0.451
-        },
-        {
-          "name": "Harry Kane",
-          "p": 0.447
-        },
-        {
-          "name": "Jude Bellingham",
-          "p": 0.371
-        }
-      ],
-      "top_scorers_home": [
-        {
-          "name": "Jules Koundé",
-          "p": 0.741
-        },
-        {
-          "name": "Bradley Barcola",
-          "p": 0.574
-        },
-        {
-          "name": "Ousmane Dembélé",
-          "p": 0.528
-        }
-      ],
-      "top_scores": [
-        {
-          "a": 1,
-          "h": 1,
-          "p": 15.7
-        },
-        {
-          "a": 0,
-          "h": 0,
-          "p": 11.2
-        },
-        {
-          "a": 0,
-          "h": 2,
-          "p": 10.3
-        }
-      ],
-      "xg_away": 0.95,
-      "xg_home": 1.78
-    },
-    "Spain vs Argentina": {
-      "p_away": 0.066,
-      "p_btts_no": 0.622,
-      "p_btts_yes": 0.378,
-      "p_draw": 0.305,
-      "p_home": 0.629,
-      "p_over25": 0.394,
-      "p_under25": 0.606,
-      "top_scorers_away": [
-        {
-          "name": "Nicolás Otamendi",
-          "p": 0.642
-        },
-        {
-          "name": "Nicolás González",
-          "p": 0.502
-        },
-        {
-          "name": "Lautaro Martínez",
-          "p": 0.481
-        }
-      ],
-      "top_scorers_home": [
-        {
-          "name": "Lamine Yamal",
-          "p": 0.29
-        },
-        {
-          "name": "Fabián Ruiz",
-          "p": 0.251
-        },
-        {
-          "name": "Mikel Oyarzabal",
-          "p": 0.233
-        }
-      ],
-      "top_scores": [
-        {
-          "a": 0,
-          "h": 2,
-          "p": 15.7
-        },
-        {
-          "a": 0,
-          "h": 0,
-          "p": 14.5
-        },
-        {
-          "a": 0,
-          "h": 1,
-          "p": 14.0
-        }
-      ],
-      "xg_away": 0.53,
-      "xg_home": 1.74
-    }
-  },
-  "tennis": [
-    {
-      "signal_id": "7357c53efdcd",
-      "sport": "tennis",
-      "match": "Ekaterina Alexandrova vs Aliaksandra Sasnovich",
-      "market": "home",
-      "odds": 2.2,
-      "model_prob": 62.6,
-      "fair_prob": 42.1,
-      "ev_pct": 37.7,
-      "stake_eur": 5.0,
-      "stake_pct": 5.0,
-      "theoretical_stake_eur": 15.0,
-      "cap_applied": true,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "generated_at": "2026-10-01T20:01:15Z",
-      "form_a": [
-        "L",
-        "W",
-        "L",
-        "W",
-        "W"
-      ],
-      "tour": "wta",
-      "kickoff": "2026-10-02T04:10:00Z",
-      "league": "wta",
-      "tournament": "China Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3,
-      "scheduled_start_current": "2026-10-02T04:10:00Z",
-      "scheduled_start_initial": "2026-10-02T04:10:00Z",
-      "event_status": "UPCOMING",
-      "schedule_updated_at": "2026-10-01T20:01:15Z",
-      "display_priority": "top",
-      "initial_odds": 2.2,
-      "initial_ev_pct": 37.7,
-      "odds_history": [
-        {
-          "ts": "2026-10-01T20:01:15Z",
-          "odds": 2.2,
-          "source": "scan"
-        },
-        {
-          "ts": "2026-10-01T21:46:32Z",
-          "odds": 1.6,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-01T22:17:34Z",
-          "odds": 1.6,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-01T22:49:36Z",
-          "odds": 1.6,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-01T23:20:25Z",
-          "odds": 1.6,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-01T23:51:03Z",
-          "odds": 1.6,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-02T00:21:37Z",
-          "odds": 1.6,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-02T00:52:20Z",
-          "odds": 1.6,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-02T01:38:55Z",
-          "odds": 1.6,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-02T01:49:03Z",
-          "odds": 1.6,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-02T01:59:34Z",
-          "odds": 1.6,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-02T02:09:41Z",
-          "odds": 1.6,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-02T02:19:48Z",
-          "odds": 1.6,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-02T02:30:21Z",
-          "odds": 1.6,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-02T02:40:28Z",
-          "odds": 1.6,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-02T02:50:36Z",
-          "odds": 1.6,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-02T03:01:06Z",
-          "odds": 1.6,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-02T03:11:14Z",
-          "odds": 1.6,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-02T03:16:21Z",
-          "odds": 1.6,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-02T03:21:29Z",
-          "odds": 1.6,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-02T03:42:10Z",
-          "odds": 1.6,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-02T03:47:18Z",
-          "odds": 1.6,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-02T03:52:25Z",
-          "odds": 1.6,
-          "source": "tennis_explorer"
-        }
-      ],
-      "current_odds": 1.6,
-      "current_ev_pct": 0.2,
-      "odds_ts": "2026-10-02T03:52:25Z",
-      "odds_source": "tennis_explorer",
-      "odds_fetch_tier": 2,
-      "signal_status": "EDGE_LOST"
-    },
-    {
-      "signal_id": "94f6c3388c89",
-      "sport": "tennis",
-      "match": "Halys Quentin vs Buse Ignacio",
-      "market": "away",
-      "odds": 2.2,
-      "model_prob": 58.7,
-      "fair_prob": 42.1,
-      "ev_pct": 29.1,
-      "stake_eur": 5.0,
-      "stake_pct": 5.0,
-      "theoretical_stake_eur": 15.0,
-      "cap_applied": true,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "generated_at": "2026-10-01T20:01:15Z",
-      "league": "atp",
-      "scheduled_start_current": "2026-10-01T20:00:00Z",
-      "kickoff": "2026-10-01T20:00:00Z",
-      "scheduled_start_initial": "2026-10-01T20:00:00Z",
-      "event_status": "AWAITING_START",
-      "schedule_updated_at": "2026-10-01T20:01:15Z",
-      "display_priority": "top",
-      "initial_odds": 2.2,
-      "initial_ev_pct": 29.1,
-      "odds_history": [
-        {
-          "ts": "2026-10-01T20:01:15Z",
-          "odds": 2.2,
-          "source": "scan"
-        }
-      ],
-      "odds_fetch_tier": 0,
-      "signal_status": "UNREFRESHABLE"
-    },
-    {
-      "signal_id": "070a2aee5e37",
-      "sport": "tennis",
-      "match": "Mensik Jakub vs Bublik Alexander",
-      "market": "home",
-      "odds": 2.2,
-      "model_prob": 54.4,
-      "fair_prob": 42.0,
-      "ev_pct": 19.7,
-      "stake_eur": 5.0,
-      "stake_pct": 5.0,
-      "theoretical_stake_eur": 15.0,
-      "cap_applied": true,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "generated_at": "2026-10-01T20:01:15Z",
-      "league": "atp",
-      "scheduled_start_current": "2026-10-01T20:00:00Z",
-      "kickoff": "2026-10-01T20:00:00Z",
-      "scheduled_start_initial": "2026-10-01T20:00:00Z",
-      "event_status": "AWAITING_START",
-      "schedule_updated_at": "2026-10-01T20:01:15Z",
-      "display_priority": "top",
-      "initial_odds": 2.2,
-      "initial_ev_pct": 19.7,
-      "odds_history": [
-        {
-          "ts": "2026-10-01T20:01:15Z",
-          "odds": 2.2,
-          "source": "scan"
-        }
-      ],
-      "odds_fetch_tier": 0,
-      "signal_status": "UNREFRESHABLE"
-    },
-    {
-      "signal_id": "e99b7385b151",
-      "sport": "tennis",
-      "match": "Jacquet Kyrian vs Rune Holger",
-      "market": "away",
-      "odds": 1.6,
-      "model_prob": 73.4,
-      "fair_prob": 57.6,
-      "ev_pct": 17.5,
-      "stake_eur": 5.0,
-      "stake_pct": 5.0,
-      "theoretical_stake_eur": 19.5,
-      "cap_applied": true,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "generated_at": "2026-10-01T20:01:15Z",
-      "league": "atp",
-      "scheduled_start_current": "2026-10-01T20:00:00Z",
-      "kickoff": "2026-10-01T20:00:00Z",
-      "scheduled_start_initial": "2026-10-01T20:00:00Z",
-      "event_status": "AWAITING_START",
-      "schedule_updated_at": "2026-10-01T20:01:15Z",
-      "display_priority": "top",
-      "initial_odds": 1.6,
-      "initial_ev_pct": 17.5,
-      "odds_history": [
-        {
-          "ts": "2026-10-01T20:01:15Z",
-          "odds": 1.6,
-          "source": "scan"
-        }
-      ],
-      "odds_fetch_tier": 0,
-      "signal_status": "UNREFRESHABLE"
-    },
-    {
-      "signal_id": "cc9af234a384",
-      "sport": "tennis",
-      "match": "Katerina Siniakova vs Elina Svitolina",
-      "market": "away",
-      "odds": 1.57,
-      "model_prob": 74.2,
-      "fair_prob": 58.9,
-      "ev_pct": 16.5,
-      "stake_eur": 5.0,
-      "stake_pct": 5.0,
-      "theoretical_stake_eur": 19.0,
-      "cap_applied": true,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "generated_at": "2026-10-01T20:01:15Z",
-      "form_a": [
-        "L",
-        "L",
-        "L",
-        "L",
-        "L"
-      ],
-      "form_b": [
-        "L",
-        "L",
-        "W",
-        "L",
-        "L"
-      ],
-      "tour": "wta",
-      "kickoff": "2026-10-03T03:00:00Z",
-      "league": "wta",
-      "tournament": "China Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3,
-      "scheduled_start_current": "2026-10-03T03:00:00Z",
-      "scheduled_start_initial": "2026-10-03T03:00:00Z",
-      "event_status": "UPCOMING",
-      "schedule_updated_at": "2026-10-01T20:01:15Z",
-      "display_priority": "top",
-      "initial_odds": 1.52,
-      "initial_ev_pct": 16.5,
-      "odds_history": [
-        {
-          "ts": "2026-10-01T21:29:20Z",
-          "odds": 1.52,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-01T22:01:42Z",
-          "odds": 1.52,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-01T22:32:48Z",
-          "odds": 1.52,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-01T23:04:44Z",
-          "odds": 1.52,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-01T23:35:37Z",
-          "odds": 1.52,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-02T00:06:11Z",
-          "odds": 1.52,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-02T00:36:48Z",
-          "odds": 1.52,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-02T01:23:31Z",
-          "odds": 1.52,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-02T02:24:56Z",
-          "odds": 1.52,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-02T03:26:37Z",
-          "odds": 1.49,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-02T03:47:18Z",
-          "odds": 1.49,
-          "source": "tennis_explorer"
-        }
-      ],
-      "current_odds": 1.49,
-      "current_ev_pct": 10.6,
-      "odds_ts": "2026-10-02T03:47:18Z",
-      "odds_source": "tennis_explorer",
-      "odds_fetch_tier": 2,
-      "signal_status": "ACTIVE"
-    },
-    {
-      "signal_id": "23d0b6d52332",
-      "sport": "tennis",
-      "match": "Faria Jaime vs Fery Arthur",
-      "market": "away",
-      "odds": 2.16,
-      "model_prob": 53.7,
-      "fair_prob": 42.7,
-      "ev_pct": 16.1,
-      "stake_eur": 5.0,
-      "stake_pct": 5.0,
-      "theoretical_stake_eur": 14.0,
-      "cap_applied": true,
-      "confidence": "HIGH",
-      "n_models_agree": 0,
-      "generated_at": "2026-10-01T20:01:15Z",
-      "league": "atp",
-      "scheduled_start_current": "2026-10-01T20:00:00Z",
-      "kickoff": "2026-10-01T20:00:00Z",
-      "scheduled_start_initial": "2026-10-01T20:00:00Z",
-      "event_status": "AWAITING_START",
-      "schedule_updated_at": "2026-10-01T20:01:15Z",
-      "display_priority": "extra",
-      "initial_odds": 2.16,
-      "initial_ev_pct": 16.1,
-      "odds_history": [
-        {
-          "ts": "2026-10-01T20:01:15Z",
-          "odds": 2.16,
-          "source": "scan"
-        }
-      ],
-      "odds_fetch_tier": 0,
-      "signal_status": "UNREFRESHABLE"
-    },
-    {
-      "signal_id": "4ae2d2c6aee7",
-      "sport": "tennis",
-      "match": "Alcaraz Carlos vs Michelsen Alex",
-      "market": "home",
-      "odds": 1.37,
-      "model_prob": 81.5,
-      "fair_prob": 67.9,
-      "ev_pct": 11.6,
-      "stake_eur": 5.0,
-      "stake_pct": 5.0,
-      "theoretical_stake_eur": 13.0,
-      "cap_applied": true,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "generated_at": "2026-10-01T20:01:15Z",
-      "league": "atp",
-      "scheduled_start_current": "2026-10-01T20:00:00Z",
-      "kickoff": "2026-10-01T20:00:00Z",
-      "scheduled_start_initial": "2026-10-01T20:00:00Z",
-      "event_status": "AWAITING_START",
-      "schedule_updated_at": "2026-10-01T20:01:15Z",
-      "display_priority": "extra",
-      "initial_odds": 1.37,
-      "initial_ev_pct": 11.6,
-      "odds_history": [
-        {
-          "ts": "2026-10-01T20:01:15Z",
-          "odds": 1.37,
-          "source": "scan"
-        }
-      ],
-      "odds_fetch_tier": 0,
-      "signal_status": "UNREFRESHABLE"
-    },
-    {
-      "signal_id": "91aa9a1b4d61",
-      "sport": "tennis",
-      "match": "Rublev Andrey vs Griekspoor Tallon",
-      "market": "away",
-      "odds": 2.42,
-      "model_prob": 45.6,
-      "fair_prob": 38.6,
-      "ev_pct": 10.4,
-      "stake_eur": 5.0,
-      "stake_pct": 5.0,
-      "theoretical_stake_eur": 10.0,
-      "cap_applied": true,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "generated_at": "2026-10-01T20:01:15Z",
-      "league": "atp",
-      "scheduled_start_current": "2026-10-01T20:00:00Z",
-      "kickoff": "2026-10-01T20:00:00Z",
-      "scheduled_start_initial": "2026-10-01T20:00:00Z",
-      "event_status": "AWAITING_START",
-      "schedule_updated_at": "2026-10-01T20:01:15Z",
-      "display_priority": "extra",
-      "initial_odds": 2.42,
-      "initial_ev_pct": 10.4,
-      "odds_history": [
-        {
-          "ts": "2026-10-01T20:01:15Z",
-          "odds": 2.42,
-          "source": "scan"
-        }
-      ],
-      "odds_fetch_tier": 0,
-      "signal_status": "UNREFRESHABLE"
-    },
-    {
-      "signal_id": "e15d3515411d",
-      "sport": "tennis",
-      "match": "Shang Juncheng vs Baez Sebastian",
-      "market": "away",
-      "odds": 2.23,
-      "model_prob": 49.4,
-      "fair_prob": 41.5,
-      "ev_pct": 10.2,
-      "stake_eur": 5.0,
-      "stake_pct": 5.0,
-      "theoretical_stake_eur": 10.0,
-      "cap_applied": true,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "generated_at": "2026-10-01T20:01:15Z",
-      "league": "atp",
-      "scheduled_start_current": "2026-10-01T20:00:00Z",
-      "kickoff": "2026-10-01T20:00:00Z",
-      "scheduled_start_initial": "2026-10-01T20:00:00Z",
-      "event_status": "AWAITING_START",
-      "schedule_updated_at": "2026-10-01T20:01:15Z",
-      "display_priority": "extra",
-      "initial_odds": 2.23,
-      "initial_ev_pct": 10.2,
-      "odds_history": [
-        {
-          "ts": "2026-10-01T20:01:15Z",
-          "odds": 2.23,
-          "source": "scan"
-        }
-      ],
-      "odds_fetch_tier": 0,
-      "signal_status": "UNREFRESHABLE"
-    },
-    {
-      "signal_id": "5e56df5b0d8c",
-      "sport": "tennis",
-      "match": "Donna Vekic vs Lin Zhu",
-      "market": "home",
-      "odds": 2.2,
-      "model_prob": 47.5,
-      "fair_prob": 42.1,
-      "ev_pct": 4.5,
-      "stake_eur": 5.0,
-      "stake_pct": 5.0,
-      "theoretical_stake_eur": 7.0,
-      "cap_applied": true,
-      "confidence": "MEDIUM",
-      "n_models_agree": 0,
-      "generated_at": "2026-10-01T20:01:15Z",
-      "form_a": [
-        "L",
-        "L",
-        "L",
-        "L",
-        "L"
-      ],
-      "tour": "wta",
-      "kickoff": "2026-10-03T03:00:00Z",
-      "league": "wta",
-      "tournament": "China Open",
-      "category": "wta1000",
-      "surface": "hard",
-      "best_of": 3,
-      "scheduled_start_current": "2026-10-03T03:00:00Z",
-      "scheduled_start_initial": "2026-10-03T03:00:00Z",
-      "event_status": "UPCOMING",
-      "schedule_updated_at": "2026-10-01T20:01:15Z",
-      "display_priority": "extra",
-      "initial_odds": 2.2,
-      "initial_ev_pct": 4.5,
-      "odds_history": [
-        {
-          "ts": "2026-10-01T21:29:20Z",
-          "odds": 2.2,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-01T22:01:42Z",
-          "odds": 2.17,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-01T22:32:48Z",
-          "odds": 2.17,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-01T23:04:44Z",
-          "odds": 2.17,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-01T23:35:37Z",
-          "odds": 2.17,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-02T00:06:11Z",
-          "odds": 2.17,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-02T00:36:48Z",
-          "odds": 2.17,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-02T01:23:31Z",
-          "odds": 2.17,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-02T01:54:11Z",
-          "odds": 2.17,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-02T02:24:56Z",
-          "odds": 2.17,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-02T02:55:43Z",
-          "odds": 2.17,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-02T03:16:21Z",
-          "odds": 2.17,
-          "source": "tennis_explorer"
-        },
-        {
-          "ts": "2026-10-02T03:37:03Z",
-          "odds": 2.16,
-          "source": "tennis_explorer"
-        }
-      ],
-      "current_odds": 2.16,
-      "current_ev_pct": 2.6,
-      "odds_ts": "2026-10-02T03:37:03Z",
-      "odds_source": "tennis_explorer",
-      "odds_fetch_tier": 2,
-      "signal_status": "EDGE_LOST"
-    }
-  ],
-  "top_elo": [
-    {
-      "name": "Sinner J.",
-      "rating": 1677
-    },
-    {
-      "name": "Fritz T.",
-      "rating": 1666
-    },
-    {
-      "name": "Alcaraz C.",
-      "rating": 1647
-    },
-    {
-      "name": "Noskova L.",
-      "rating": 1643
-    },
-    {
-      "name": "Djokovic N.",
-      "rating": 1642
-    },
-    {
-      "name": "Zverev A.",
-      "rating": 1626
-    },
-    {
-      "name": "Keys M.",
-      "rating": 1623
-    },
-    {
-      "name": "De Minaur A.",
-      "rating": 1597
-    },
-    {
-      "name": "Pegula J.",
-      "rating": 1596
-    },
-    {
-      "name": "Sabalenka A.",
-      "rating": 1594
-    }
-  ],
   "meta": {
     "stale_odds": false
   },
   "tennis_stats": {
-    "updated": "2026-10-02T03:52:26Z",
+    "updated": "2026-10-02T03:57:49Z",
     "active_tournaments": [
       {
         "slug": "beijing_atp",
