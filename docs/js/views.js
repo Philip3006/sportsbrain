@@ -1144,6 +1144,126 @@ function _tennisHomeGames() {
   });
 }
 
+function _currentMatchOddsRecordIsFresh(record, nowMs = Date.now()) {
+  if (record?.sport !== 'tennis' || record.current !== true || record.freshness !== 'current' ||
+      typeof record.home !== 'string' || !record.home.trim() ||
+      typeof record.away !== 'string' || !record.away.trim() ||
+      typeof _isCurrentQuote !== 'function') return false;
+  return ['home', 'away'].every((market) => _isCurrentQuote({
+    odds: record.outcomes?.[market],
+    odds_ts: record.odds_ts,
+    current: record.current,
+    freshness: record.freshness,
+  }, nowMs));
+}
+
+function _tennisScheduleQuote(game, nowMs = Date.now()) {
+  const snapshot = typeof _findCurrentMatchOdds === 'function'
+    ? _findCurrentMatchOdds(game?.home, game?.away, 'tennis')
+    : null;
+  if (_currentMatchOddsRecordIsFresh(snapshot, nowMs)) {
+    return {
+      home: Number(snapshot.outcomes.home),
+      away: Number(snapshot.outcomes.away),
+      freshness: 'current',
+      source: snapshot.source || '',
+    };
+  }
+  const home = Number(game?.odds_home);
+  const away = Number(game?.odds_away);
+  return {
+    home: Number.isFinite(home) && home > 1 ? home : null,
+    away: Number.isFinite(away) && away > 1 ? away : null,
+    freshness: home > 1 || away > 1 ? 'scan' : 'missing',
+    source: '',
+  };
+}
+
+function _tennisMoreGameRow(game, nowMs = Date.now()) {
+  const kickoff = game.scheduled_start_current || game.kickoff;
+  const awaiting = game.event_status === 'AWAITING_START' || game.event_status === 'DELAYED';
+  const time = awaiting
+    ? `${kickoff ? fmtKickoff(kickoff) : ''} · Wartet auf Start`
+    : (kickoff ? fmtKickoff(kickoff) : '');
+  const quotes = _tennisScheduleQuote(game, nowMs);
+  const home = quotes.home != null ? quotes.home.toFixed(2) : '–';
+  const away = quotes.away != null ? quotes.away.toFixed(2) : '–';
+  const tour = (game.tour || '').toUpperCase();
+  const tournament = game.tournament || '';
+  const displayOnly = game.is_display_only === true && quotes.freshness !== 'current';
+  const source = typeof game.odds_source === 'string' ? game.odds_source : '';
+  const oddsBackground = displayOnly ? '#2a1f0a' : '#1a2030';
+  const oddsColor = displayOnly ? '#e0b866' : '#c9d3e0';
+  const badge = displayOnly
+    ? `<span title="Modell-Preis (${esc(source || 'implied')}), keine Marktquote — kein Stake möglich" style="padding:2px 6px;border-radius:4px;background:#2a1f0a;color:#e0b866;font-size:9px;font-weight:800;letter-spacing:.5px;margin-left:6px">MODELL</span>`
+    : quotes.freshness === 'current'
+      ? `<span title="Aktuelle Match-Quote" style="padding:2px 6px;border-radius:4px;background:#0d2540;color:#8ab4f0;font-size:9px;font-weight:800;letter-spacing:.5px;margin-left:6px">AKTUELL${quotes.source ? ` · ${esc(String(quotes.source).toUpperCase())}` : ''}</span>`
+      : quotes.freshness === 'scan'
+        ? '<span title="Letzte veröffentlichte Scan-Quote; nicht als aktuelle Quote bestätigt" style="padding:2px 6px;border-radius:4px;background:#2a1f0a;color:#e0b866;font-size:9px;font-weight:800;letter-spacing:.5px;margin-left:6px">SCAN-QUOTE</span>'
+        : '';
+  return `<div class="tennis-more-game-row" role="button" tabindex="0" aria-label="Matchdetails öffnen" style="padding:10px 16px;border-bottom:1px solid rgba(48,54,61,.35);display:flex;align-items:center;gap:12px;cursor:pointer">
+    <div style="flex:1;min-width:0">
+      <div style="font-size:14px;font-weight:800;color:#e6ecf3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span class="tennis-more-game-team">${esc(game.home)}</span> <span style="color:var(--muted);font-weight:500">vs</span> <span class="tennis-more-game-team">${esc(game.away)}</span>${badge}</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:2px">${esc(tour)}${tournament ? ' · ' + esc(tournament) : ''}${time ? ' · ' + time : ''}</div>
+    </div>
+    <div style="display:flex;gap:6px;font-size:12px;font-weight:700">
+      <span style="padding:4px 8px;border-radius:5px;background:${oddsBackground};color:${oddsColor};min-width:44px;text-align:center">${home}</span>
+      <span style="padding:4px 8px;border-radius:5px;background:${oddsBackground};color:${oddsColor};min-width:44px;text-align:center">${away}</span>
+    </div>
+  </div>`;
+}
+
+function _bindTennisMoreGameRows(container) {
+  container.querySelectorAll('.tennis-more-game-row').forEach((row) => {
+    const teams = row.querySelectorAll('.tennis-more-game-team');
+    if (teams.length !== 2) return;
+    const openDetails = () => openMatch(
+      `${teams[0].textContent.trim()} vs ${teams[1].textContent.trim()}`,
+    );
+    row.addEventListener('click', openDetails);
+    row.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        openDetails();
+      }
+    });
+  });
+}
+
+function _homeValueSignalIsActionable(signal) {
+  if (!signal || signal.signal_status !== 'ACTIVE' ||
+      typeof isActionableValueSignal !== 'function' ||
+      typeof _currentBankroll !== 'function' || typeof _openBets === 'undefined' ||
+      !Array.isArray(_openBets)) return false;
+  return isActionableValueSignal(signal, _currentBankroll(), _openBets.length)?.ok === true;
+}
+
+function _currentOddsHomeMap(currentMatchOdds, signals, nowMs = Date.now()) {
+  const oddsByMatch = {};
+  for (const record of Object.values(currentMatchOdds || {})) {
+    if (!_currentMatchOddsRecordIsFresh(record, nowMs)) continue;
+    const key = matchKey(record.home, record.away);
+    if (!oddsByMatch[key]) oddsByMatch[key] = {};
+    for (const market of ['home', 'away']) {
+      const signal = (signals || []).find((item) => {
+        if (item?.sport !== 'tennis' || item.market !== market || typeof item.match !== 'string') return false;
+        const [home, away] = item.match.split(' vs ').map((name) => name.trim());
+        return matchKey(home, away) === key;
+      });
+      const actionableSignal = signal && _homeValueSignalIsActionable(signal) ? signal : null;
+      oddsByMatch[key][market] = {
+        odds: Number(record.outcomes[market]),
+        ev: actionableSignal
+          ? (actionableSignal.current_ev_pct ?? actionableSignal.ev_pct ?? null)
+          : null,
+        model_prob: actionableSignal?.model_prob ?? 0,
+        signal: actionableSignal,
+      };
+    }
+  }
+  return oddsByMatch;
+}
+
 function _dedupeHomeGames(games) {
   const byMatch = new Map();
   for (const game of games) {
@@ -1223,7 +1343,7 @@ function renderHome() {
   for (const s of _signals) {
     const [sh, sa] = s.match.split(' vs ').map(x => x.trim());
     const nk = matchKey(sh, sa);
-    sigCount[nk] = (sigCount[nk]||0) + 1;
+    if (_homeValueSignalIsActionable(s)) sigCount[nk] = (sigCount[nk]||0) + 1;
     if (!oddsMap[nk]) oddsMap[nk] = {};
     let k = null;
     if (['home','ah-0.5_home','first_set_a'].includes(s.market)) k = 'home';
@@ -1233,6 +1353,13 @@ function renderHome() {
     if (k && _sOddsOk) oddsMap[nk][k] = {
       odds: s.odds, ev: s.ev_pct, model_prob: s.model_prob || 0, signal: s,
     };
+  }
+  // A fresh match-level capture is authoritative for both primary outcomes.
+  // Retain only canonical actionable signals as Value actions; EDGE_LOST remains manual.
+  for (const [nk, outcomes] of Object.entries(
+    _currentOddsHomeMap(_currentMatchOdds, _signals, Date.now()),
+  )) {
+    oddsMap[nk] = { ...(oddsMap[nk] || {}), ...outcomes };
   }
 
   // Sort + filter next 30 days; remove finished games 30min after final whistle
@@ -1854,34 +1981,7 @@ function renderSport(sport) {
           new Date(dk).toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: 'short' });
         h += `<div style="padding:6px 16px;font-size:12px;font-weight:700;color:#a4c6ff;background:rgba(20,24,30,.6)">${esc(dLabel)}</div>`;
         for (const g of games) {
-          const _gKoR = g.scheduled_start_current || g.kickoff;
-          const _isAwaitR = g.event_status === 'AWAITING_START' || g.event_status === 'DELAYED';
-          const timeStr = _isAwaitR
-            ? `${_gKoR ? fmtKickoff(_gKoR) : ''} · Wartet auf Start`
-            : (_gKoR ? fmtKickoff(_gKoR) : '');
-          const oh = g.odds_home > 1 ? g.odds_home.toFixed(2) : '–';
-          const oa = g.odds_away > 1 ? g.odds_away.toFixed(2) : '–';
-          const tourStr = (g.tour || '').toUpperCase();
-          const tName = g.tournament || '';
-          const displayOnly = g.is_display_only === true;
-          const src = g.odds_source || '';
-          const oddsBg = displayOnly ? '#2a1f0a' : '#1a2030';
-          const oddsCol = displayOnly ? '#e0b866' : '#c9d3e0';
-          const badge = displayOnly
-            ? `<span title="Modell-Preis (${esc(src || 'implied')}), keine Marktquote — kein Stake möglich" style="padding:2px 6px;border-radius:4px;background:#2a1f0a;color:#e0b866;font-size:9px;font-weight:800;letter-spacing:.5px;margin-left:6px">MODELL</span>`
-            : (src && src !== 'the_odds_api'
-                ? `<span title="Quote via ${esc(src)}" style="padding:2px 6px;border-radius:4px;background:#0d2540;color:#8ab4f0;font-size:9px;font-weight:800;letter-spacing:.5px;margin-left:6px">${esc(src.toUpperCase())}</span>`
-                : '');
-          h += `<div style="padding:10px 16px;border-bottom:1px solid rgba(48,54,61,.35);display:flex;align-items:center;gap:12px">
-            <div style="flex:1;min-width:0">
-              <div style="font-size:14px;font-weight:800;color:#e6ecf3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(g.home)} <span style="color:var(--muted);font-weight:500">vs</span> ${esc(g.away)}${badge}</div>
-              <div style="font-size:10px;color:var(--muted);margin-top:2px">${esc(tourStr)}${tName ? ' · ' + esc(tName) : ''}${timeStr ? ' · ' + timeStr : ''}</div>
-            </div>
-            <div style="display:flex;gap:6px;font-size:12px;font-weight:700">
-              <span style="padding:4px 8px;border-radius:5px;background:${oddsBg};color:${oddsCol};min-width:44px;text-align:center">${oh}</span>
-              <span style="padding:4px 8px;border-radius:5px;background:${oddsBg};color:${oddsCol};min-width:44px;text-align:center">${oa}</span>
-            </div>
-          </div>`;
+          h += _tennisMoreGameRow(g, now);
         }
       }
     }
@@ -1897,6 +1997,7 @@ function renderSport(sport) {
 
     h += '</div>';
     c.innerHTML = h;
+    if (sport === 'tennis') _bindTennisMoreGameRows(c);
     _bindSportControls(sport);
     return;
   }

@@ -1227,6 +1227,19 @@ describe('Suite 13 — P0C-001 serializePublicProduct()', () => {
     meta: { stale_odds: false, default_user: 'philip', user: 'philip' },
     schedule: [{ match: 'Federer vs Nadal' }],
     all_odds: { 'federer_vs_nadal': { home: 1.95 } },
+    current_match_odds: {
+      'tennis:jelena ostapenko vs paula badosa': {
+        sport: 'tennis',
+        home: 'Jelena Ostapenko',
+        away: 'Paula Badosa',
+        outcomes: { home: 2.35, away: 1.53 },
+        odds_ts: '2026-10-02T12:45:16Z',
+        source: 'tennis_explorer',
+        bookmaker: 'consensus',
+        freshness: 'current',
+        current: true,
+      },
+    },
     model_tips: { 'federer_vs_nadal': { prob: 52.0 } },
     model_evals: {},
     football: [],
@@ -1255,6 +1268,8 @@ describe('Suite 13 — P0C-001 serializePublicProduct()', () => {
     assert.ok(pub.build_info, 'build_info missing');
     assert.ok(pub.schedule, 'schedule missing');
     assert.ok(pub.all_odds, 'all_odds missing');
+    assert.deepStrictEqual(pub.current_match_odds, PRIVATE_SNAPSHOT.current_match_odds,
+      'current match-level odds missing from public payload');
     assert.ok(pub.tennis, 'tennis signals missing');
   });
 
@@ -1410,6 +1425,25 @@ describe('Suite 15 — P0C-001 fail-closed nested private markers', () => {
       () => serializePublicProduct(snap),
       /bankroll/,
       'nested bankroll inside model_tips must throw privacy violation'
+    );
+  });
+
+  test('current match odds remain covered by the recursive private-key guard', () => {
+    const snap = {
+      current_match_odds: {
+        'tennis:fixture': {
+          sport: 'tennis',
+          home: 'Player A',
+          away: 'Player B',
+          outcomes: { home: 2.1, away: 1.8 },
+          owner: 'PRIVATE_TEST_MARKER',
+        },
+      },
+    };
+    assert.throws(
+      () => serializePublicProduct(snap),
+      /owner/,
+      'current_match_odds must not bypass nested private-key validation'
     );
   });
 

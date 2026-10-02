@@ -375,7 +375,7 @@ function _signalsKey(user) {
 // settled_bets, history, portfolio, wm_stats, meta.user/default_user, …)
 // is structurally excluded. Applied to every GET /signals.json response.
 const _PUBLIC_TOP_LEVEL_KEYS = new Set([
-  'updated', 'build_info', 'schedule', 'all_odds', 'model_tips', 'model_evals',
+  'updated', 'build_info', 'schedule', 'all_odds', 'current_match_odds', 'model_tips', 'model_evals',
   'football', 'nations_league', 'nations_league_value_signals', 'tennis', 'top_elo', 'wm_results', 'odds_history', 'health',
   'top5_release',
 ]);
