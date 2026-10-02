@@ -72,7 +72,8 @@ test('standard Tennis signal-card path carries the canonical actionability field
   ]) {
     assert.match(viewsSource, new RegExp(attr.replaceAll('-', '\\-')));
   }
-  assert.match(viewsSource, /:\s*\(!_isValueActionable\)/);
+  assert.match(viewsSource, /data-source="value"/);
+  assert.doesNotMatch(viewsSource, /_isValueActionable \? 'value' : 'manual'/);
   assert.match(viewsSource, /isActionableValueSignal\(s, _currentBankroll\(\), \(_openBets \|\| \[\]\)\.length\)/);
   assert.match(viewsSource, /class="place-bet-btn"/);
 });
@@ -119,7 +120,7 @@ test('deep-link path does not manufacture identity for a missing signal_id', () 
 
 
 test('core betting frontend assets use the same cache-bust release', () => {
-  const release = '20261002-match-level-odds-v2';
+  const release = '20261003-value-provenance-v1';
   for (const asset of ['app', 'views', 'bets']) {
     assert.ok(
       indexSource.includes(`src="js/${asset}.js?v=${release}"`),
@@ -140,6 +141,47 @@ test('non-actionable canonical detail signals render an explicit no-bet state', 
   assert.match(appSource, /data-source="manual"/);
   assert.match(cssSource, /\.sig-card\.no-bet/);
   assert.match(cssSource, /\.no-bet-status/);
+});
+
+test('primary match quotes remain visibly manual and have no signal identity', () => {
+  assert.match(appSource, /✍️ Manuell wetten · \$\{quoteText\}/);
+  assert.match(appSource, /data-source="manual"/);
+  assert.match(appSource, /data-signal-id=""/);
+  assert.match(appSource, /Manuelle Wette/);
+});
+
+test('actionable SportsBrain signals are expanded and use a distinct Value CTA', () => {
+  assert.match(appSource, /const openAttr = active\.length \? ' open' : ''/);
+  assert.match(appSource, /match-signals-panel"\$\{openAttr\}/);
+  assert.match(viewsSource, /💡 SportsBrain Value-Bet · \$\{marketLabel\(s\.market, s\.match\)\} @ \$\{_currentOddsNum\.toFixed\(2\)\}/);
+  assert.match(viewsSource, /_isValueActionable \|\| _positionConflict/);
+});
+
+test('existing fixture-and-market positions suppress a second Value action', () => {
+  const start = betsSource.indexOf('function _positionMatchKey(');
+  const end = betsSource.indexOf('\n/**', start);
+  assert.ok(start >= 0 && end > start);
+  const context = {
+    _openBets: [{ fixture_key: 'tennis:siniakova-svitolina:2026-10-03', market: 'away', source: 'manual' }],
+    _pwaPendingIds: [],
+  };
+  vm.createContext(context);
+  vm.runInContext(`${betsSource.slice(start, end)}\nglobalThis.findPosition = findOpenPositionForSignal;`, context);
+  assert.equal(
+    context.findPosition({ fixture_key: 'tennis:siniakova-svitolina:2026-10-03', market: 'away' }).source,
+    'manual',
+  );
+  assert.equal(
+    context.findPosition({ fixture_key: 'tennis:siniakova-svitolina:2026-10-03', market: 'home' }),
+    null,
+  );
+  context._openBets = [{ match: 'Katerina Siniakova vs Elina Svitolina', market: 'away', source: 'manual' }];
+  assert.equal(
+    context.findPosition({ fixture_key: 'tennis:siniakova-svitolina:2026-10-03', match: 'Katerina Siniakova vs Elina Svitolina', market: 'away' }).source,
+    'manual',
+  );
+  assert.match(viewsSource, /Position bereits offen/);
+  assert.match(betsSource, /findOpenPositionForSignal\(_pendingBet\)/);
 });
 
 test('match detail prefers a fresh match-level primary quote over signal or scan odds', () => {

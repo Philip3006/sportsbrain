@@ -125,6 +125,32 @@ function isActionableValueSignal(signal, bankroll, activeCount) {
   return { ok: true, reason: 'ok' };
 }
 
+function _positionMatchKey(value) {
+  const match = String(
+    value?.match || (value?.home && value?.away ? `${value.home} vs ${value.away}` : ''),
+  ).trim();
+  const [home, away] = match.split(' vs ').map((team) => team.trim());
+  if (!home || !away) return '';
+  return typeof matchKey === 'function'
+    ? `match:${matchKey(home, away)}`
+    : `match:${home.toLowerCase()} vs ${away.toLowerCase()}`;
+}
+
+function findOpenPositionForSignal(signal) {
+  const market = String(signal?.market || '').trim().toLowerCase();
+  const fixtureKey = String(signal?.fixture_key || '').trim();
+  const matchIdentity = _positionMatchKey(signal);
+  if (!market || (!fixtureKey && !matchIdentity)) return null;
+  const pending = (_pwaPendingIds || []).map((item) => ({ ...item, source: item.source || 'pending' }));
+  const position = [...(_openBets || []), ...pending].find((item) => {
+    if (String(item?.market || '').trim().toLowerCase() !== market) return false;
+    const itemFixtureKey = String(item?.fixture_key || '').trim();
+    if (fixtureKey && itemFixtureKey) return fixtureKey === itemFixtureKey;
+    return !!matchIdentity && _positionMatchKey(item) === matchIdentity;
+  });
+  return position || null;
+}
+
 /**
  * Returns {stake: number, capApplied: boolean}.
  * Hard cap: bankroll * 0.05. Cap can only decrease the stake.
@@ -629,6 +655,15 @@ function _openBetModalFromBtn(btn) {
 
   // P0-A: evaluate the full canonical actionability contract before opening VALUE-bet modal
   if (source === 'value') {
+    const existing = findOpenPositionForSignal({
+      fixture_key: d.fixtureKey || d.fixture_key || '',
+      match: d.match || '',
+      market: d.market || '',
+    });
+    if (existing) {
+      showToast(`Position bereits offen · ${existing.source === 'manual' ? 'Manuell' : 'SportsBrain Value-Bet'}`, 'error');
+      return;
+    }
     const bk = _currentBankroll();
     const activeCount = (_openBets || []).length;
     const sig = {
@@ -808,6 +843,12 @@ async function _submitBet() {
   // Blocker-2: re-validate actionability immediately before submit using the LIVE canonical
   // signal from _signals — NOT fabricated defaults. No field may be coerced to a safe value.
   if (_pendingBet.source === 'value') {
+    const existing = findOpenPositionForSignal(_pendingBet);
+    if (existing) {
+      showToast(`Position bereits offen · ${existing.source === 'manual' ? 'Manuell' : 'SportsBrain Value-Bet'}`, 'error');
+      _closeBetModal();
+      return;
+    }
     const activeCount = (_openBets || []).length;
     // Re-resolve the signal from the live _signals array (same data as when modal opened).
     // If signal is no longer present, it was removed/expired — fail closed.
@@ -939,7 +980,14 @@ async function _submitBet() {
     }
     const j = await r.json();
     if (j.id) {
-      const ids = [..._pwaPendingIds, { id: j.id, match: payload.match, market: payload.market, ts: Date.now() }];
+      const ids = [..._pwaPendingIds, {
+        id: j.id,
+        match: payload.match,
+        market: payload.market,
+        fixture_key: payload.fixture_key,
+        source: payload.source,
+        ts: Date.now(),
+      }];
       _savePwaPending(ids);
     }
     _closeBetModal();

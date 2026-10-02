@@ -714,6 +714,10 @@ function sigCard(s, showMatch) {
     ? isActionableValueSignal(s, _currentBankroll(), (_openBets || []).length)
     : null;
   const _isValueActionable = _canonicalActionability?.ok === true;
+  const _existingPosition = _isValueActionable && typeof findOpenPositionForSignal === 'function'
+    ? findOpenPositionForSignal(s)
+    : null;
+  const _positionConflict = !!_existingPosition;
   const _status = String(s.signal_status || '').toUpperCase();
   const _canonicalSignalPresent = !!(s.signal_id || '').toString().trim();
   let _noBetLabel = '';
@@ -732,6 +736,9 @@ function sigCard(s, showMatch) {
     : '';
   const _noBetHtml = _noBetLabel
     ? `<div class="no-bet-status" role="status">⛔ ${_noBetLabel}${_currentEvText ? ` · ${_currentEvText}` : ''}</div>`
+    : '';
+  const _positionConflictHtml = _positionConflict
+    ? `<div class="position-conflict-status" role="status">✓ Position bereits offen · ${esc(_existingPosition.source === 'manual' ? 'Manuell' : 'SportsBrain Value-Bet')}</div>`
     : '';
   const btnAttrs = [
     `data-match="${esc(s.match)}"`,
@@ -763,8 +770,9 @@ function sigCard(s, showMatch) {
     `data-edge-lost="${s.edge_lost === true ? 'true' : 'false'}"`,
     `data-stale="${s.stale === true ? 'true' : 'false'}"`,
     `data-no-bet-flag="${s.no_bet_flag === true ? 'true' : 'false'}"`,
-    // Bet actions are canonical only when the shared actionability contract passes.
-    `data-source="${_isValueActionable ? 'value' : 'manual'}"`,
+    // Signal cards are never a manual fallback. This attribute belongs only to
+    // a canonical Value CTA, which is rendered after all actionability gates.
+    'data-source="value"',
   ].join(' ');
   // Prob-Bars: visueller Vergleich Markt vs Modell (nur wenn fair_prob vorhanden)
   const _edge = s.fair_prob > 0 && s.model_prob > 0 ? s.model_prob - s.fair_prob : null;
@@ -851,6 +859,7 @@ function sigCard(s, showMatch) {
     ${compatMeta}
     ${lifecycleMeta}
     ${_noBetHtml}
+    ${_positionConflictHtml}
     <div class="card-market" ${['ah-1.5_a','ah+1.5_b'].includes(s.market)||s.market.match(/^ah[+-]/) ? 'title="Satz-Handicap (SET handicap) — beim Buchmacher \'Sätze-Handicap\' wählen, NICHT \'Games-Handicap\'!"' : ''}>${marketLabel(s.market, s.match)}</div>
     ${_signalAgeHtml(s)}
     ${isWithdrawn ? '<div class="top5-lifecycle-withdrawn-note">Keine aktive Empfehlung — Signal wurde zurückgezogen.</div>' : `<div class="card-footer">
@@ -883,9 +892,9 @@ function sigCard(s, showMatch) {
       ? `<div style="font-size:10px;color:var(--muted);padding:2px 8px 6px">⚠ HZ-Settlement manuell — Quote beim Buchmacher prüfen</div>`
       : _isLegacySignal
         ? ''
-        : (!_isValueActionable)
+        : (!_isValueActionable || _positionConflict)
           ? ''
-          : `<button class="place-bet-btn" type="button" onclick="event.stopPropagation();_openBetModalFromBtn(this)" ${btnAttrs} aria-label="Wette platzieren">Wette platzieren · €${s.stake_eur.toFixed(0)}</button>`)}
+          : `<button class="place-bet-btn" type="button" onclick="event.stopPropagation();_openBetModalFromBtn(this)" ${btnAttrs} aria-label="SportsBrain Value-Bet platzieren">💡 SportsBrain Value-Bet · ${marketLabel(s.market, s.match)} @ ${_currentOddsNum.toFixed(2)}</button>`)}
     ${!isWithdrawn && (['ah-1.5_a','ah+1.5_b'].includes(s.market)||s.market.match(/^ah[+-]/))
       ? `<div style="font-size:10px;color:#ffb347;background:rgba(58,44,0,0.6);padding:3px 8px 5px;border-top:1px solid rgba(90,70,0,0.5)">⚠ Satz-AH = SET Handicap — beim Buchmacher <strong>Sätze-Handicap</strong> wählen, NICHT Spiele-Handicap</div>`
       : ''}
