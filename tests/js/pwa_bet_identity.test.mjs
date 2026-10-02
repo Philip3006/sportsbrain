@@ -135,7 +135,9 @@ test('non-actionable canonical detail signals render an explicit no-bet state', 
   assert.match(viewsSource, /Warum kein Bet\?/);
   assert.match(viewsSource, /Das frühere Signal hat seinen Value verloren/);
   assert.match(viewsSource, /Kein Einsatz/);
-  assert.match(appSource, /Aktuell kein platzierbarer Value Bet/);
+  assert.match(appSource, /SportsBrain Signale/);
+  assert.match(appSource, /Kein aktuelles SportsBrain-Signal für dieses Spiel/);
+  assert.match(appSource, /data-source="manual"/);
   assert.match(cssSource, /\.sig-card\.no-bet/);
   assert.match(cssSource, /\.no-bet-status/);
 });
