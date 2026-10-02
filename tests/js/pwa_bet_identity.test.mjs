@@ -119,7 +119,7 @@ test('deep-link path does not manufacture identity for a missing signal_id', () 
 
 
 test('core betting frontend assets use the same cache-bust release', () => {
-  const release = '20261002-no-bet-state';
+  const release = '20261002-match-centric';
   for (const asset of ['app', 'views', 'bets']) {
     assert.ok(
       indexSource.includes(`src="js/${asset}.js?v=${release}"`),
@@ -135,7 +135,25 @@ test('non-actionable canonical detail signals render an explicit no-bet state', 
   assert.match(viewsSource, /Warum kein Bet\?/);
   assert.match(viewsSource, /Das frühere Signal hat seinen Value verloren/);
   assert.match(viewsSource, /Kein Einsatz/);
-  assert.match(appSource, /Aktuell kein platzierbarer Value Bet/);
+  assert.match(appSource, /SportsBrain Signale/);
+  assert.match(appSource, /Kein aktuelles SportsBrain-Signal für dieses Spiel/);
+  assert.match(appSource, /data-source="manual"/);
   assert.match(cssSource, /\.sig-card\.no-bet/);
   assert.match(cssSource, /\.no-bet-status/);
+});
+
+
+test('match detail is match-centric and supports manual betting independent of signals', () => {
+  assert.match(appSource, /Match & Quoten/);
+  assert.match(appSource, /Jede Quote kann als manuelle Wette eingetragen werden/);
+  assert.match(appSource, /data-source="manual"/);
+  assert.match(appSource, /class="match-bet-quote"/);
+  assert.match(appSource, /Quote eingeben/);
+  assert.match(appSource, /SportsBrain Signale/);
+  assert.match(appSource, /match-signals-panel/);
+  assert.match(appSource, /Kein aktuelles SportsBrain-Signal für dieses Spiel/);
+  assert.match(appSource, /_matchPrimaryMarketsCard/);
+  assert.match(appSource, /_matchSignalsSection/);
+  assert.match(cssSource, /\.match-betting-overview/);
+  assert.match(cssSource, /\.match-bet-quote/);
 });

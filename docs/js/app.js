@@ -1010,6 +1010,196 @@ function openNationsLeagueMatch(displayKey) {
   });
 }
 
+
+function _findModelEvalForMatch(displayKey, dh, da) {
+  const exact = _modelEvals[displayKey];
+  if (exact) return { eval: exact, reversed: false };
+
+  const _normTokens = n => normTeam(n).split(' ').sort().join(' ');
+  const dhN = _normTokens(dh), daN = _normTokens(da);
+  for (const [k, value] of Object.entries(_modelEvals || {})) {
+    const [kh, ka] = k.split(' vs ').map(x => x.trim());
+    if (!kh || !ka) continue;
+    const khN = _normTokens(kh), kaN = _normTokens(ka);
+    if (khN === dhN && kaN === daN) return { eval: value, reversed: false };
+    if (khN === daN && kaN === dhN) return { eval: value, reversed: true };
+  }
+  return { eval: null, reversed: false };
+}
+
+function _matchOutcomeProbabilities(sport, dh, da, tip, modelEvalInfo, sigs) {
+  const pct = value => {
+    const n = Number(value);
+    if (!Number.isFinite(n) || n < 0) return null;
+    if (n <= 1) return n * 100;
+    return n <= 100 ? n : null;
+  };
+
+  if (sport === 'football') {
+    return {
+      home: pct(tip?.p_home),
+      draw: pct(tip?.p_draw),
+      away: pct(tip?.p_away),
+    };
+  }
+
+  const ev = modelEvalInfo?.eval || null;
+  if (ev && typeof ev.p_a === 'number' && typeof ev.p_b === 'number') {
+    return modelEvalInfo.reversed
+      ? { home: pct(ev.p_b), away: pct(ev.p_a) }
+      : { home: pct(ev.p_a), away: pct(ev.p_b) };
+  }
+
+  const homeSig = sigs.find(s => s.market === 'home');
+  const awaySig = sigs.find(s => s.market === 'away');
+  let home = pct(homeSig?.model_prob);
+  let away = pct(awaySig?.model_prob);
+  if (home != null && away == null) away = Math.max(0, 100 - home);
+  if (away != null && home == null) home = Math.max(0, 100 - away);
+  return { home, away };
+}
+
+function _matchQuoteForMarket(market, sigs, oddsEntry) {
+  const sig = sigs.find(s => s.market === market);
+  const current = Number(sig?.current_odds);
+  if (Number.isFinite(current) && current > 1) {
+    return {
+      odds: current,
+      freshness: 'current',
+      oddsTs: sig.odds_ts || '',
+      source: sig.odds_source || '',
+    };
+  }
+  const scan = Number(oddsEntry?.[market]);
+  if (Number.isFinite(scan) && scan > 1) {
+    return { odds: scan, freshness: 'scan', oddsTs: '', source: '' };
+  }
+  return { odds: null, freshness: 'missing', oddsTs: '', source: '' };
+}
+
+function _matchPrimaryMarketsCard({ displayKey, dh, da, sport, kickoff, tour, sigs, oddsEntry, tip, modelEvalInfo, fixtureKey }) {
+  const probs = _matchOutcomeProbabilities(sport, dh, da, tip, modelEvalInfo, sigs);
+  const outcomes = sport === 'football'
+    ? [
+        { market: 'home', short: '1', label: dh },
+        { market: 'draw', short: 'X', label: 'Unentschieden' },
+        { market: 'away', short: '2', label: da },
+      ]
+    : [
+        { market: 'home', short: '1', label: dh },
+        { market: 'away', short: '2', label: da },
+      ];
+
+  const rows = outcomes.map(outcome => {
+    const quote = _matchQuoteForMarket(outcome.market, sigs, oddsEntry);
+    const prob = probs[outcome.market];
+    const marketProb = quote.odds ? 100 / quote.odds : null;
+    const modelText = prob != null ? `${prob.toFixed(1)}%` : '—';
+    const marketText = marketProb != null ? `${marketProb.toFixed(1)}%` : '—';
+    const edge = prob != null && marketProb != null ? prob - marketProb : null;
+    const edgeText = edge != null ? `${edge >= 0 ? '+' : ''}${edge.toFixed(1)} pp` : '—';
+    const edgeCls = edge == null ? '' : edge >= 0 ? 'pos' : 'neg';
+    const evPct = prob != null && quote.odds
+      ? ((prob / 100) * quote.odds - 1) * 100
+      : 0;
+    const quoteText = quote.odds ? quote.odds.toFixed(2) : 'Quote eingeben';
+    const quoteMeta = quote.freshness === 'current'
+      ? 'Aktuell'
+      : quote.freshness === 'scan'
+      ? 'Scan-Quote · prüfen'
+      : 'Keine veröffentlichte Quote';
+    const fairProb = quote.odds ? 100 / quote.odds : 0;
+    const currentOddsAttr = quote.odds ? quote.odds : '';
+    const league = sigs.find(s => s.market === outcome.market)?.league || tour || '';
+    const eventStatus = sigs.find(s => s.market === outcome.market)?.event_status || '';
+    const attrs = [
+      'type="button"',
+      'class="match-bet-quote"',
+      `data-match="${esc(displayKey)}"`,
+      `data-market="${esc(outcome.market)}"`,
+      `data-odds="${quote.odds || ''}"`,
+      `data-current-odds="${currentOddsAttr}"`,
+      'data-stake="5"',
+      `data-ev="${Number.isFinite(evPct) ? evPct.toFixed(1) : '0'}"`,
+      `data-model-prob="${prob != null ? prob.toFixed(1) : '0'}"`,
+      `data-fair-prob="${fairProb ? fairProb.toFixed(1) : '0'}"`,
+      'data-confidence=""',
+      `data-kickoff="${esc(kickoff || '')}"`,
+      `data-sport="${esc(sport || '')}"`,
+      'data-signal-id=""',
+      'data-signal-status=""',
+      `data-fixture-key="${esc(fixtureKey || '')}"`,
+      `data-league="${esc(league)}"`,
+      `data-odds-ts="${esc(quote.oddsTs || '')}"`,
+      `data-event-status="${esc(eventStatus)}"`,
+      'data-source="manual"',
+      'onclick="event.stopPropagation();_openBetModalFromBtn(this)"',
+      `aria-label="Manuelle Wette · ${esc(outcome.label)}${quote.odds ? ' @ ' + quote.odds.toFixed(2) : ' · Quote eingeben'}"`,
+    ].join(' ');
+
+    return `<div class="match-outcome-card">
+      <div class="match-outcome-head">
+        <span class="match-outcome-short">${outcome.short}</span>
+        <span class="match-outcome-name">${esc(outcome.label)}</span>
+      </div>
+      <div class="match-outcome-probs">
+        <div><span>Modell</span><b>${modelText}</b></div>
+        <div><span>Markt</span><b>${marketText}</b></div>
+        <div><span>Edge</span><b class="${edgeCls}">${edgeText}</b></div>
+      </div>
+      <button ${attrs}>
+        <span class="match-bet-quote-price">${quoteText}</span>
+        <span class="match-bet-quote-meta">${quoteMeta}</span>
+      </button>
+    </div>`;
+  }).join('');
+
+  const evalSource = modelEvalInfo?.eval?.source
+    ? ` · Modellquelle: ${esc(String(modelEvalInfo.eval.source))}`
+    : '';
+  return `<section class="match-betting-overview" aria-label="Match Quoten und Modellwahrscheinlichkeiten">
+    <div class="match-betting-title">
+      <div>
+        <b>Match & Quoten</b>
+        <span>Jede Quote kann als manuelle Wette eingetragen werden.</span>
+      </div>
+      <span class="manual-bet-badge">✍️ Manuell möglich</span>
+    </div>
+    <div class="match-betting-note">„Aktuell“ = vom Odds-Refresher bestätigt. „Scan-Quote“ = letzter veröffentlichter Scan und vor Bestätigung beim Bookmaker prüfen.${evalSource}</div>
+    <div class="match-outcomes-grid ${sport === 'football' ? 'three' : 'two'}">${rows}</div>
+  </section>`;
+}
+
+function _matchSignalsSection(sigs, otherSigs, ouSigs) {
+  const active = sigs.filter(s =>
+    typeof isActionableValueSignal === 'function' &&
+    isActionableValueSignal(s, _currentBankroll(), (_openBets || []).length)?.ok === true
+  );
+  const badge = active.length
+    ? `<span class="match-signal-summary-badge active">${active.length} aktiv</span>`
+    : sigs.length
+    ? '<span class="match-signal-summary-badge">NO BET</span>'
+    : '<span class="match-signal-summary-badge">keine</span>';
+
+  let body = '';
+  if (!sigs.length) {
+    body = '<div class="match-signal-empty">Kein aktuelles SportsBrain-Signal für dieses Spiel. Manuelle Wetten oben bleiben möglich.</div>';
+  } else {
+    body += otherSigs.map(s => sigCard(s, false)).join('');
+    if (ouSigs.length) {
+      body += buildOuAccordion(
+        ouSigs,
+        otherSigs.length === 0 || ouSigs.some(s => s.confidence === 'HIGH'),
+      );
+    }
+  }
+
+  return `<details class="match-signals-panel">
+    <summary><span>💡 SportsBrain Signale</span>${badge}</summary>
+    <div class="match-signals-body">${body}</div>
+  </details>`;
+}
+
 function openMatch(displayKey) {
   const [dh, da] = displayKey.split(' vs ').map(x => x.trim());
   const nk = matchKey(dh, da);
@@ -1017,24 +1207,28 @@ function openMatch(displayKey) {
     const [sh, sa] = s.match.split(' vs ').map(x => x.trim());
     return matchKey(sh, sa) === nk;
   });
-  // Find kickoff + sport from schedule
   const sched = _schedule.find(g => matchKey(g.home, g.away) === nk);
   const s0 = sigs[0];
   const sport = s0?.sport || sched?.sport || 'football';
-  const kickoff = s0?.kickoff || sched?.kickoff || '';
-  const tour = s0?.tour || sched?.tour || '';
+  const kickoff = s0?.kickoff || sched?.scheduled_start_current || sched?.kickoff || '';
+  const tour = s0?.tour || s0?.league || sched?.tour || sched?.league || '';
+  const fixtureKey = s0?.fixture_key || _analyticsFixtureKey(dh, da, kickoff);
   const sourceView = document.body?.dataset?.activeView || _prevView || 'home';
+
   _captureAnalytics('match_opened', {
     sport,
     competition: s0?.competition || s0?.tour || s0?.league || tour,
     fixture_id: s0?.fixture_id,
-    fixture_key: s0?.fixture_key || _analyticsFixtureKey(dh, da, kickoff),
+    fixture_key: fixtureKey,
     lifecycle_stage: s0?.lifecycle?.lifecycle_stage,
     source_view: sourceView,
   });
+
   const sportIcon = sport === 'football' ? '⚽' : '🎾';
   const metaStr = kickoff ? fmtKickoffCompact(kickoff) : '';
-  const cdHtml = kickoff ? `<span class="match-countdown" data-kickoff="${esc(kickoff)}" data-sport="${esc(sport)}" style="margin-top:0;font-size:10px;padding:2px 7px">⏱ …</span>` : '';
+  const cdHtml = kickoff
+    ? `<span class="match-countdown" data-kickoff="${esc(kickoff)}" data-sport="${esc(sport)}" style="margin-top:0;font-size:10px;padding:2px 7px">⏱ …</span>`
+    : '';
   document.getElementById('detail-header').innerHTML = `
     <div class="match-header">
       <span class="match-sport-icon">${sportIcon}</span>
@@ -1043,123 +1237,66 @@ function openMatch(displayKey) {
       ${cdHtml}
     </div>`;
   _tickCountdowns();
-  // Look up model tip — try exact key first, then normalized key
+
   let tip = _modelTips[displayKey];
   if (!tip) {
-    for (const [k, v] of Object.entries(_modelTips)) {
+    for (const [k, v] of Object.entries(_modelTips || {})) {
       const [kh, ka] = k.split(' vs ').map(x => x.trim());
       if (matchKey(kh, ka) === nk) { tip = v; break; }
     }
   }
-  // Find odds for this match
+
   let oddsEntry = _allOdds[displayKey];
   if (!oddsEntry) {
-    const found = Object.entries(_allOdds).find(([k]) => {
+    const found = Object.entries(_allOdds || {}).find(([k]) => {
       const [kh, ka] = k.split(' vs ').map(x => x.trim());
       return matchKey(kh, ka) === nk;
     });
     oddsEntry = found ? found[1] : {};
   }
 
+  const modelEvalInfo = _findModelEvalForMatch(displayKey, dh, da);
   const ouSigs = sigs.filter(s => /^o\/u/.test(s.market));
   const otherSigs = sigs.filter(s => !/^o\/u/.test(s.market));
 
   let cards = '';
-  if (tip) cards += predCard(dh, da, tip, oddsEntry, nk, kickoff, sport);
+  cards += _matchPrimaryMarketsCard({
+    displayKey, dh, da, sport, kickoff, tour, sigs,
+    oddsEntry, tip, modelEvalInfo, fixtureKey,
+  });
+
+  if (tip) {
+    cards += `<details class="match-analysis-panel">
+      <summary>📊 Modellanalyse & weitere Kennzahlen</summary>
+      <div class="match-analysis-body">${predCard(dh, da, tip, oddsEntry, nk, kickoff, sport)}</div>
+    </details>`;
+  } else if (modelEvalInfo.eval) {
+    const ev = modelEvalInfo.eval;
+    const status = esc(String(ev.status || ''));
+    const reason = ev.reason ? ` · ${esc(String(ev.reason))}` : '';
+    cards += `<div class="match-model-meta">Modellstatus: <b>${status || 'verfügbar'}</b>${reason}</div>`;
+  } else {
+    cards += '<div class="match-model-meta">Für dieses Spiel liegt derzeit keine vollständige Modellbewertung vor.</div>';
+  }
+
   if (sport === 'football') cards += _betHistoryCard(dh, da);
   cards += _bookieMatrixCard(oddsEntry, sport);
-
-  if (!tip && !sigs.length) {
-    const _eval = _modelEvals[displayKey] || (() => {
-      // Token-order-agnostic lookup: handles TE "Lastname Firstname" vs OddsAPI "Firstname Lastname"
-      const _normTokens = n => normTeam(n).split(' ').sort().join(' ');
-      const _nhS = _normTokens(dh), _naS = _normTokens(da);
-      const found = Object.entries(_modelEvals).find(([k]) => {
-        const [kh, ka] = k.split(' vs ').map(x => x.trim());
-        const _kh = _normTokens(kh), _ka = _normTokens(ka);
-        return (_kh === _nhS && _ka === _naS) || (_kh === _naS && _ka === _nhS);
-      });
-      return found ? found[1] : null;
-    })();
-    // Status-aware rendering: only show probabilities when eval actually contains them.
-    // UNKNOWN_PLAYER / UNSUPPORTED_TOURNAMENT have status but no p_a/p_b.
-    const _evalStatus = _eval ? (_eval.status || '') : null;
-    const _hasProbs = _eval && typeof _eval.p_a === 'number';
-    const _isShadow = _evalStatus === 'SHADOW_EVALUATED' || (_eval && _eval.tier === 'shadow');
-    if (_hasProbs) {
-      const _pa = (_eval.p_a||0).toFixed(1), _pb = (_eval.p_b||0).toFixed(1);
-      const _ia = (_eval.implied_a||0).toFixed(1), _ib = (_eval.implied_b||0).toFixed(1);
-      const _oa = _eval.odds_a > 1 ? _eval.odds_a.toFixed(2) : '—';
-      const _ob = _eval.odds_b > 1 ? _eval.odds_b.toFixed(2) : '—';
-      const _src = esc(_eval.source || 'elo');
-      const _noOddsNote = _evalStatus === 'NO_ODDS' ? ' Keine Marktquoten verfügbar.' : '';
-      const _cardTitle = _isShadow ? '🔬 Experimentelle Bewertung' : '📊 Modell-Bewertung';
-      const _subNote = _isShadow
-        ? 'Shadow-Evaluation — kein SportsBrain-Signal. Nur zur Modell-Kalibrierung.'
-        : `Kein Value-Bet bei aktuellen Quoten — Edge unter Schwelle.${_noOddsNote}`;
-      const _shadowBar = _isShadow
-        ? `<div style="font-size:10px;color:#c8a000;background:rgba(200,160,0,0.12);border-radius:4px;padding:4px 8px;margin-top:8px;text-align:center">Challenger Shadow-Programm · nicht wettbar</div>`
-        : '';
-      cards += `<div class="pred-card" style="margin:12px 12px 0">
-        <div class="pred-title">${_cardTitle}</div>
-        <div style="padding:10px 16px 14px">
-          <div style="font-size:11px;color:var(--muted);margin-bottom:12px">${_subNote}</div>
-          <div style="display:flex;gap:8px;text-align:center">
-            <div style="flex:1;background:var(--card-bg);border-radius:8px;padding:10px 6px">
-              <div style="font-size:11px;font-weight:700;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(dh)}</div>
-              <div style="font-size:22px;font-weight:800;color:var(--accent)">${_pa}%</div>
-              <div style="font-size:10px;color:var(--muted)">Modell</div>
-              <div style="font-size:10px;color:var(--muted);margin-top:2px">Markt ${_ia}% @${_oa}</div>
-            </div>
-            <div style="align-self:center;font-weight:700;color:var(--muted);font-size:12px">VS</div>
-            <div style="flex:1;background:var(--card-bg);border-radius:8px;padding:10px 6px">
-              <div style="font-size:11px;font-weight:700;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(da)}</div>
-              <div style="font-size:22px;font-weight:800;color:var(--accent)">${_pb}%</div>
-              <div style="font-size:10px;color:var(--muted)">Modell</div>
-              <div style="font-size:10px;color:var(--muted);margin-top:2px">Markt ${_ib}% @${_ob}</div>
-            </div>
-          </div>
-          <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:8px">Quelle: ${_src}</div>
-          ${_shadowBar}
-        </div>
-      </div>`;
-    } else {
-      const _noEvalDetail = _evalStatus === 'UNKNOWN_PLAYER'
-        ? 'Spieler nicht im Rating-Datensatz.'
-        : _evalStatus === 'UNSUPPORTED_TOURNAMENT'
-        ? 'Turnier nicht im Modell-Portfolio.'
-        : _evalStatus === 'NO_ODDS'
-        ? 'Keine qualifizierten Marktquoten verfügbar.'
-        : '';
-      const _noEvalIcon = _evalStatus && _evalStatus !== 'NO_ODDS' ? '🚫' : '⏳';
-      cards += `<div class="empty"><div class="icon">${_noEvalIcon}</div><div>Keine Modellbewertung für dieses Spiel verfügbar.${_noEvalDetail ? `<br><small>${_noEvalDetail}</small>` : ''}</div></div>`;
-    }
-  } else if (sigs.length) {
-    const _hasActionableSignal = sigs.some(s =>
-      typeof isActionableValueSignal === 'function' &&
-      isActionableValueSignal(s, _currentBankroll(), (_openBets || []).length)?.ok === true
-    );
-    const _detailSignalHeading = _hasActionableSignal
-      ? '💡 Vorgeschlagene Value Bets'
-      : '⛔ Aktuell kein platzierbarer Value Bet';
-    cards += `<div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;padding:14px 16px 6px">${_detailSignalHeading}</div>`;
-    cards += otherSigs.map(s => sigCard(s, false)).join('');
-    if (ouSigs.length) cards += buildOuAccordion(ouSigs, otherSigs.length === 0 || ouSigs.some(s => s.confidence === 'HIGH'));
-  }
+  cards += _matchSignalsSection(sigs, otherSigs, ouSigs);
 
   if (sport === 'football') cards += squadSection(dh, da);
 
   document.getElementById('detail-cards').innerHTML = cards;
   showView('detail');
-  if (tip) {
+
+  if (tip || modelEvalInfo.eval) {
     _captureAnalytics('prediction_viewed', {
       sport,
       competition: s0?.competition || s0?.tour || s0?.league || tour,
       fixture_id: s0?.fixture_id,
-      fixture_key: s0?.fixture_key || _analyticsFixtureKey(dh, da, kickoff),
+      fixture_key: fixtureKey,
       lifecycle_stage: s0?.lifecycle?.lifecycle_stage,
-      model_version: tip.model_version || tip.model_identity,
-      confidence: s0?.confidence || tip.confidence,
+      model_version: tip?.model_version || tip?.model_identity || modelEvalInfo.eval?.model_version,
+      confidence: s0?.confidence || tip?.confidence,
       source_view: sourceView,
     });
   }

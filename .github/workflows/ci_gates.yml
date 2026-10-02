@@ -82,7 +82,11 @@ jobs:
         run: python -m pytest -q tests/notifications/test_nations_league_live_public_digest_parity.py
 
       - name: Node Worker contract tests
-        run: node --test tests/js/worker.test.mjs tests/js/top5_delivery.test.mjs tests/js/pwa_bet_identity.test.mjs
+        run: |
+          node --check docs/js/app.js
+          node --check docs/js/views.js
+          node --check docs/js/bets.js
+          node --test tests/js/worker.test.mjs tests/js/top5_delivery.test.mjs tests/js/pwa_bet_identity.test.mjs
 
       # ── HARD GATE 4: Ruff Regression — blockt NEUE Violations,
       # existierender Altbestand steht in .ruff_baseline.json und
