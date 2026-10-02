@@ -119,7 +119,7 @@ test('deep-link path does not manufacture identity for a missing signal_id', () 
 
 
 test('core betting frontend assets use the same cache-bust release', () => {
-  const release = '20261002-match-centric';
+  const release = '20261002-match-level-odds';
   for (const asset of ['app', 'views', 'bets']) {
     assert.ok(
       indexSource.includes(`src="js/${asset}.js?v=${release}"`),
@@ -140,6 +140,86 @@ test('non-actionable canonical detail signals render an explicit no-bet state', 
   assert.match(appSource, /data-source="manual"/);
   assert.match(cssSource, /\.sig-card\.no-bet/);
   assert.match(cssSource, /\.no-bet-status/);
+});
+
+test('match detail prefers a fresh match-level primary quote over signal or scan odds', () => {
+  const start = appSource.indexOf('const _MAX_MATCH_QUOTE_AGE_MS');
+  const end = appSource.indexOf('\nfunction _matchPrimaryMarketsCard(', start);
+  assert.ok(start >= 0 && end > start);
+  const context = { Number };
+  vm.createContext(context);
+  vm.runInContext(`${appSource.slice(start, end)}\n` +
+    'globalThis.quote = _matchQuoteForMarket;', context);
+
+  const quote = context.quote(
+    'home',
+    [{ market: 'home', current_odds: 1.91, odds_ts: '2026-10-02T11:00:00Z', odds_source: 'signal' }],
+    { home: 1.72 },
+    {
+      outcomes: { home: 2.18, away: 1.74 },
+      current: true,
+      freshness: 'current',
+      odds_ts: '2026-10-02T11:59:00Z',
+      source: 'tennis_explorer',
+      bookmaker: 'consensus',
+    },
+    Date.parse('2026-10-02T12:00:00Z'),
+  );
+
+  assert.equal(quote.odds, 2.18);
+  assert.equal(quote.freshness, 'current');
+  assert.equal(quote.source, 'tennis_explorer');
+  assert.equal(quote.bookmaker, 'consensus');
+
+  const noSignalQuote = context.quote(
+    'away',
+    [],
+    {},
+    {
+      outcomes: { home: 2.18, away: 1.74 },
+      current: true,
+      freshness: 'current',
+      odds_ts: '2026-10-02T11:59:00Z',
+      source: 'tennis_explorer',
+    },
+    Date.parse('2026-10-02T12:00:00Z'),
+  );
+  assert.equal(noSignalQuote.odds, 1.74);
+  assert.equal(noSignalQuote.freshness, 'current');
+});
+
+test('match-level and signal quotes are time-true at render time', () => {
+  const start = appSource.indexOf('const _MAX_MATCH_QUOTE_AGE_MS');
+  const end = appSource.indexOf('\nfunction _matchPrimaryMarketsCard(', start);
+  assert.ok(start >= 0 && end > start);
+  const context = { Number, Date };
+  vm.createContext(context);
+  vm.runInContext(`${appSource.slice(start, end)}\n` +
+    'globalThis.quote = _matchQuoteForMarket;', context);
+  const now = Date.parse('2026-10-02T12:00:00Z');
+  const baseSnapshot = {
+    outcomes: { home: 2.18, away: 1.74 },
+    current: true,
+    freshness: 'current',
+    source: 'the_odds_api',
+  };
+
+  assert.equal(context.quote('home', [], {}, {
+    ...baseSnapshot, odds_ts: '2026-10-02T11:31:00Z',
+  }, now).freshness, 'current');
+  assert.equal(context.quote('home', [], {}, {
+    ...baseSnapshot, odds_ts: '2026-10-02T11:29:59Z',
+  }, now).freshness, 'missing');
+  assert.equal(context.quote('home', [], {}, {
+    ...baseSnapshot, odds_ts: '2026-10-02T12:02:00Z',
+  }, now).freshness, 'missing');
+
+  assert.equal(context.quote('home', [{
+    market: 'home', current_odds: 1.91, odds_ts: '2026-10-02T11:29:59Z',
+  }], {}, null, now).freshness, 'missing');
+  assert.equal(context.quote('home', [{
+    market: 'home', current_odds: 1.91, odds_ts: '2026-10-02T11:45:00Z',
+  }], {}, null, now).freshness, 'current');
 });
 
 

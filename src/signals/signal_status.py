@@ -9,17 +9,17 @@ the refresher on signals.json.
 from __future__ import annotations
 
 import hashlib
+import threading
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal
-
-import threading
 
 from src.betting.gates import Gate, gate_for
 from src.utils.atomic_io import atomic_write_json
 
 ROOT = Path(__file__).resolve().parents[2]
 _SIDECAR_PATH = ROOT / "data" / "cache" / "odds_state.json"
+_MATCH_ODDS_PATH = ROOT / "data" / "cache" / "current_match_odds.json"
 _SIDECAR_LOCK = threading.Lock()
 
 SignalStatus = Literal["ACTIVE", "EDGE_LOST", "STALE_ODDS", "STARTED", "EXPIRED", "UNREFRESHABLE"]
@@ -199,6 +199,44 @@ def load_odds_state() -> dict[str, dict]:
     except Exception:
         pass
     return {}
+
+
+def load_current_match_odds() -> dict[str, dict]:
+    """Load the current match-level primary-market quote sidecar.
+
+    Unlike ``odds_state.json`` this state is keyed by canonical match identity
+    and contains the complete primary market fetched in one provider call.  It
+    is intentionally kept separate from signal lifecycle state so a scheduled
+    fixture with no value signal can still receive a fresh display/manual quote.
+    Malformed or non-object entries are ignored fail-closed.
+    """
+    if not _MATCH_ODDS_PATH.exists():
+        return {}
+    try:
+        import json
+
+        data = json.loads(_MATCH_ODDS_PATH.read_text())
+        if not isinstance(data, dict):
+            return {}
+        return {
+            str(key): value
+            for key, value in data.items()
+            if isinstance(key, str) and isinstance(value, dict)
+        }
+    except Exception:  # noqa: BLE001 - corrupt runtime cache fails closed
+        return {}
+
+
+def update_current_match_odds(match_key: str, snapshot: dict) -> None:
+    """Atomically persist one complete current primary-market snapshot."""
+    if not isinstance(match_key, str) or not match_key.strip():
+        raise ValueError("match_key must be a non-empty string")
+    if not isinstance(snapshot, dict):
+        raise TypeError("snapshot must be an object")
+    with _SIDECAR_LOCK:
+        state = load_current_match_odds()
+        state[match_key] = snapshot
+        atomic_write_json(_MATCH_ODDS_PATH, state)
 
 
 def _dedup_history(history: list[dict], new_entry: dict) -> list[dict]:
