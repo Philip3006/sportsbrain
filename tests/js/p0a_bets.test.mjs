@@ -38,8 +38,8 @@ if (!pureSection.includes('function computeSafeStake')) {
 }
 
 // Evaluate pure section in a Function scope — no DOM, no globals needed.
-const { isActionableValueSignal, computeSafeStake } = new Function(
-  `${pureSection}; return { isActionableValueSignal, computeSafeStake };`
+const { isActionableValueSignal, computeSafeStake, stakeCapCeiling } = new Function(
+  `${pureSection}; return { isActionableValueSignal, computeSafeStake, stakeCapCeiling };`
 )();
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -282,7 +282,38 @@ describe('P0-A Browser: >5% stake blocked', () => {
   });
 });
 
-// ── 8. Submit produces no JS exception ────────────────────────────────────────
+// ── 8. Modal default stake is safe before the user sees it ───────────────────
+
+describe('PWA modal stake defaults', () => {
+  test('€5 default with €47.13 bankroll is safely capped below the exact 5% ceiling', () => {
+    const ceiling = 47.13 * 0.05;
+    const { stake, capApplied } = computeSafeStake(47.13, 5);
+    assert.equal(capApplied, true);
+    assert.equal(stake, 2.35);
+    assert.ok(stake <= ceiling, `prefill €${stake} must not exceed €${ceiling}`);
+    assert.equal(stakeCapCeiling(47.13), 2.35);
+  });
+
+  test('safe cent formatting never rounds a cap upward', () => {
+    const { stake } = computeSafeStake(47.13, 999);
+    assert.equal(stake.toFixed(2), '2.35');
+    assert.ok(Number(stake.toFixed(2)) <= 47.13 * 0.05);
+  });
+
+  test('a requested stake already below the cap stays unchanged', () => {
+    const { stake, capApplied } = computeSafeStake(47.13, 2.30);
+    assert.equal(stake, 2.30);
+    assert.equal(capApplied, false);
+  });
+
+  test('the safety helper never raises the requested stake', () => {
+    for (const requested of [0.5, 2.30, 5, 25]) {
+      assert.ok(computeSafeStake(47.13, requested).stake <= requested);
+    }
+  });
+});
+
+// ── 9. Submit produces no JS exception ────────────────────────────────────────
 
 describe('P0-A Browser: Submit path — no JS exceptions', () => {
   test('null signal → does not throw, returns {ok: false}', () => {

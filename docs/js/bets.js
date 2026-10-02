@@ -151,17 +151,33 @@ function findOpenPositionForSignal(signal) {
   return position || null;
 }
 
+function _stakeAmountDown(value) {
+  // Decimal cents such as 2.30 are not exact Binary64 values. This tiny
+  // tolerance corrects representation noise only; floor still never raises
+  // a displayed amount above the actual value or its cap.
+  return Math.floor((Number(value) + 1e-9) * 100) / 100;
+}
+
+function stakeCapCeiling(bankroll) {
+  const br = Number(bankroll);
+  return Number.isFinite(br) && br >= 0
+    ? _stakeAmountDown(br * _MAX_STAKE_PCT)
+    : 0;
+}
+
 /**
  * Returns {stake: number, capApplied: boolean}.
- * Hard cap: bankroll * 0.05. Cap can only decrease the stake.
+ * Hard cap: bankroll * 0.05. Cap can only decrease the stake. Values shown in
+ * the cent-based modal are rounded down so display formatting cannot exceed it.
  */
 function computeSafeStake(bankroll, requestedEur) {
   const br = Number(bankroll);
   const req = Number(requestedEur);
   if (!Number.isFinite(br) || !Number.isFinite(req)) return { stake: 0, capApplied: true };
-  const ceiling = br * _MAX_STAKE_PCT;
-  if (req > ceiling) return { stake: ceiling, capApplied: true };
-  return { stake: req, capApplied: false };
+  const requested = _stakeAmountDown(req);
+  const ceiling = stakeCapCeiling(br);
+  if (requested > ceiling) return { stake: ceiling, capApplied: true };
+  return { stake: requested, capApplied: false };
 }
 
 // ── Deep-link: öffnet Bet-Modal direkt aus ?bet=MATCH:MARKET ──
@@ -697,12 +713,18 @@ function _openBetModalFromBtn(btn) {
                   : 0;
   // P0-A (item B): canonical_odds = actual current_odds from KV only (no scan fallback)
   const canonicalOdds = d.currentOdds ? parseFloat(d.currentOdds) : 0;
+  const requestedStake = parseFloat(d.stake);
+  const initialStake = computeSafeStake(
+    _currentBankroll(),
+    Number.isFinite(requestedStake) && requestedStake > 0 ? requestedStake : 5,
+  );
   _pendingBet = {
     match: d.match,
     market: d.market,
     odds: canonicalOdds,
     canonical_odds: canonicalOdds,  // P0-A: locked for value bets — submit verifies against this
-    stake_eur: parseFloat(d.stake) || 5,
+    stake_eur: initialStake.stake,
+    initial_stake_capped: initialStake.capApplied,
     ev_pct: parseFloat(d.currentEv || d.ev || '0'),
     confidence: d.confidence || '',
     kickoff: d.kickoff || '',
@@ -759,6 +781,11 @@ function _openBetModalFromBtn(btn) {
   }
   const inp = document.getElementById('bet-modal-stake');
   inp.value = _pendingBet.stake_eur.toFixed(2);
+  const capNote = document.getElementById('bet-modal-cap-note');
+  if (capNote) {
+    capNote.textContent = `Einsatz auf dein 5%-Limit begrenzt: max. €${_pendingBet.stake_eur.toFixed(2)}.`;
+    capNote.style.display = _pendingBet.initial_stake_capped ? '' : 'none';
+  }
   _renderQuickStakes();
   _updateBetModalCalcs();
   document.getElementById('bet-modal-bd').classList.add('show');
@@ -826,14 +853,26 @@ function _updateBetModalCalcs() {
       drawer.style.display = 'none';
     }
   }
-  // P0-A: warn if stake exceeds 5% cap; disable confirm if over cap
+  // P0-A: explain every locally invalid input; the Worker independently
+  // revalidates the final confirmation.
   const bkCurrent = _currentBankroll();
-  const capCeiling = bkCurrent * _MAX_STAKE_PCT;
+  const capCeiling = stakeCapCeiling(bkCurrent);
   const warn = document.getElementById('bet-modal-warn');
-  warn.classList.toggle('show', stake > capCeiling + 0.001);
   const btn = document.getElementById('bet-modal-confirm');
   const oddsOk = odds >= 1.01 && odds <= 100;
-  btn.disabled = !(stake >= 0.5 && stake <= 25 && stake <= capCeiling + 0.001 && oddsOk);
+  let invalidReason = '';
+  if (stake < 0.5) {
+    invalidReason = `Einsatz €${stake.toFixed(2)} liegt unter dem Mindesteinsatz von €0.50.`;
+  } else if (stake > 25) {
+    invalidReason = `Einsatz €${stake.toFixed(2)} überschreitet das Einsatzlimit von €25.00.`;
+  } else if (stake > capCeiling) {
+    invalidReason = `Einsatz €${stake.toFixed(2)} überschreitet dein 5%-Limit von €${capCeiling.toFixed(2)}.`;
+  } else if (!oddsOk) {
+    invalidReason = 'Quote muss zwischen 1.01 und 100 liegen.';
+  }
+  warn.textContent = invalidReason ? `⚠️ ${invalidReason}` : '';
+  warn.classList.toggle('show', !!invalidReason);
+  btn.disabled = !!invalidReason;
 }
 
 async function _submitBet() {
@@ -887,8 +926,8 @@ async function _submitBet() {
   // P0-A: REJECT at submission if stake exceeds 5% cap (do not silently alter confirmed amount)
   const rawStake = parseFloat(document.getElementById('bet-modal-stake').value) || 0;
   const stake = rawStake;
-  const capCeiling = bk * _MAX_STAKE_PCT;
-  if (stake > capCeiling + 0.001) {
+  const capCeiling = stakeCapCeiling(bk);
+  if (stake > capCeiling) {
     showToast(`Einsatz €${stake.toFixed(2)} überschreitet 5%-Limit (€${capCeiling.toFixed(2)}) — bitte korrigieren`, 'error');
     return;
   }

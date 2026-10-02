@@ -192,6 +192,6 @@ test('Home preserves Value identity only for actionable signals and uses fresh o
 
 test('frontend cache-bust release includes match-level odds fix', () => {
   for (const asset of ['app.js', 'views.js', 'bets.js']) {
-    assert.ok(indexSource.includes(`${asset}?v=20261003-value-provenance-v1`));
+    assert.ok(indexSource.includes(`${asset}?v=20261003-stake-default-cap-v1`));
   }
 });

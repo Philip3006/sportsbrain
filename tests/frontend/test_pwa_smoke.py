@@ -726,6 +726,74 @@ def test_p0a_over_cap_stake_disables_confirm(page: Page, server_url: str) -> Non
     page.locator("#bet-modal-cancel").click()
 
 
+def test_bet_modal_prefills_a_safe_stake_and_explains_dynamic_validation(
+    page: Page, server_url: str
+) -> None:
+    """Manual and Value modal defaults obey the authoritative 5% cap before display."""
+    payload = {
+        **_FRESH,
+        "bankroll_state": {
+            "start": 47.13, "free": 47.13, "staked": 0,
+            "exposure_pct": 0, "max_win": 0, "pnl_closed": 0,
+        },
+    }
+    _navigate_to_football(page, server_url, payload)
+    # The private channel is the source of authoritative bankroll state. Mirror
+    # that already-loaded state without making a network request in this test.
+    page.evaluate("""
+        () => { _bankrollState = {start: 47.13, free: 47.13, staked: 0,
+          exposure_pct: 0, max_win: 0, pnl_closed: 0}; }
+    """)
+
+    # A real canonical Value action keeps its identity and locked odds while
+    # capping its recommended €5 stake down to the display-safe €2.35.
+    value = page.locator(".place-bet-btn").first
+    expect(value).to_be_visible(timeout=10_000)
+    value.click()
+    expect(page.locator("#bet-modal-bd")).to_be_visible(timeout=3_000)
+    assert page.locator("#bet-modal-kind-badge").inner_text() == "💡 Value-Bet"
+    assert page.locator("#bet-modal-odds-input").evaluate("el => el.readOnly")
+    assert page.locator("#bet-modal-stake").input_value() == "2.35"
+    assert not page.locator("#bet-modal-confirm").evaluate("el => el.disabled")
+    expect(page.locator("#bet-modal-cap-note")).to_contain_text("€2.35")
+    page.locator("#bet-modal-cancel").click()
+
+    # The primary quote path remains explicitly manual: no signal ID, editable
+    # odds, same safe prefill, and transparent disable/re-enable reasons.
+    page.evaluate("""
+        () => {
+          const button = document.createElement('button');
+          Object.assign(button.dataset, {
+            source: 'manual', match: 'Donna Vekic vs Lin Zhu', market: 'away',
+            currentOdds: '1.42', stake: '5', signalId: '', fixtureKey: 'manual-test',
+          });
+          _openBetModalFromBtn(button);
+        }
+    """)
+    expect(page.locator("#bet-modal-bd")).to_be_visible(timeout=3_000)
+    assert page.locator("#bet-modal-kind-badge").inner_text() == "✍️ Manuell"
+    assert not page.locator("#bet-modal-odds-input").evaluate("el => el.readOnly")
+    assert page.locator("#bet-modal-stake").input_value() == "2.35"
+    assert not page.locator("#bet-modal-confirm").evaluate("el => el.disabled")
+
+    stake = page.locator("#bet-modal-stake")
+    stake.fill("5.00")
+    stake.dispatch_event("input")
+    assert page.locator("#bet-modal-confirm").evaluate("el => el.disabled")
+    expect(page.locator("#bet-modal-warn")).to_contain_text("€5.00 überschreitet dein 5%-Limit von €2.35")
+
+    stake.fill("2.35")
+    stake.dispatch_event("input")
+    assert not page.locator("#bet-modal-confirm").evaluate("el => el.disabled")
+
+    odds = page.locator("#bet-modal-odds-input")
+    odds.fill("1.00")
+    odds.dispatch_event("input")
+    assert page.locator("#bet-modal-confirm").evaluate("el => el.disabled")
+    expect(page.locator("#bet-modal-warn")).to_contain_text("Quote muss zwischen 1.01 und 100 liegen")
+    page.locator("#bet-modal-cancel").click()
+
+
 # P0-A Test 9: no JavaScript ReferenceError on modal open + submit flow
 def test_p0a_no_js_reference_error_on_submit(page: Page, server_url: str) -> None:
     """P0-A: No ReferenceError when clicking confirm on a canonical value signal."""
@@ -1191,7 +1259,7 @@ def test_t19_browser_sources_have_no_api_or_master_token_literals() -> None:
     # Product-critical frontend files must move as one cache-busted release.
     # Otherwise fresh Worker data can be rendered by stale betting UI code.
     index = (DOCS_DIR / "index.html").read_text(encoding="utf-8")
-    release = "20261003-value-provenance-v1"
+    release = "20261003-stake-default-cap-v1"
     for asset in ("app", "views", "bets"):
         assert f'src="js/{asset}.js?v={release}"' in index, (
             f"T19: stale/mismatched cache key for {asset}.js"
