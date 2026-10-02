@@ -934,6 +934,175 @@ describe('Worker orchestration — orchestratePendingBetPost (production code)',
   });
 });
 
+describe('Variant A — one pending/open position per fixture and market', () => {
+  const now = Date.parse('2026-10-03T01:00:00Z');
+  const sig = validSig({
+    kickoff: '2026-10-03T03:00:00Z', selection: 'Federer',
+    odds_ts: '2026-10-03T00:55:00Z',
+  });
+  const state = () => ({
+    tennis: [sig, { ...sig, signal_id: 'sig_002' }], football: [],
+    bankroll_state: { free: 90, staked: 10, published_at: '2026-10-03T00:50:00Z' },
+    open_bets: [],
+  });
+  const manual = {
+    match: sig.match, market: sig.market, sport: sig.sport, fixture_key: sig.fixture_key,
+    kickoff: sig.kickoff, selection: sig.selection, league: sig.league,
+    odds: 2.1, stake_eur: 5, source: 'manual',
+  };
+  const value = { ...manual, source: 'value', signal_id: sig.signal_id };
+  const post = (body, pending = [], sj = state(), at = now) =>
+    orchestratePendingBetPost(body, {
+      signalsJson: sj, pendingArr: pending, nowMs: at, genId: () => 'original-id',
+    });
+  const stored = body => {
+    const result = post(body);
+    assert.equal(result.status, 200, JSON.stringify(result.json));
+    assert.ok(result.entry);
+    return result.entry;
+  };
+  const conflict = result => {
+    assert.equal(result.status, 409, JSON.stringify(result.json));
+    assert.equal(result.json.code, 'POSITION_CONFLICT');
+    assert.match(result.json.error, /offene oder ausstehende Position/);
+    assert.equal(result.json.id, undefined);
+    assert.equal(result.entry, undefined);
+  };
+
+  for (const body of [manual, value]) {
+    test(`${body.source}: first entry and exact retry preserve original ID/provenance`, () => {
+      const original = stored(body);
+      const before = structuredClone(original);
+      const result = post(body, [original], state(), now + 5 * 60 * 1000);
+      assert.deepEqual(result.json, { ok: true, id: original.id, duplicate: true });
+      assert.equal(result.entry, undefined);
+      assert.deepEqual(original, before);
+    });
+    test(`${body.source}: exact retry works at three active positions, new fourth blocked`, () => {
+      const original = stored(body);
+      const sj = state();
+      sj.open_bets = [{ match: 'Other vs Player', market: 'home' }, { match: 'Third vs Player', market: 'home' }];
+      assert.equal(post(body, [original], sj).json.id, original.id);
+      const result = post({ ...manual, match: 'Fourth vs Player', fixture_key: 'fourth' }, [original], sj);
+      assert.equal(result.status, 400);
+      assert.match(result.json.error, /max active bets \(3\)/);
+    });
+  }
+
+  for (const [name, patch] of Object.entries({
+    stake: { stake_eur: 4 }, odds: { odds: 2.2 },
+    tinyOddsChange: { odds: 2.1001 }, selection: { selection: 'other' },
+    sport: { sport: 'football' }, fixtureProvenance: { fixture_key: 'different' },
+    kickoffProvenance: { kickoff: '2026-10-03T04:00:00Z' },
+    league: { league: 'other' }, signal: { signal_id: 'sig_002' },
+  })) {
+    test(`manual pending: changed ${name} is 409, never a successful duplicate`, () => {
+      conflict(post({ ...manual, ...patch }, [stored(manual)]));
+    });
+  }
+  test('Manual → Value conflicts without replacing Manual provenance', () => {
+    const original = stored(manual);
+    conflict(post(value, [original]));
+    assert.equal(original.source, 'manual');
+    assert.equal(original.signal_id, '');
+  });
+  test('Value → Manual conflicts without replacing signal provenance', () => {
+    const original = stored(value);
+    conflict(post(manual, [original]));
+    assert.equal(original.source, 'value');
+    assert.equal(original.signal_id, sig.signal_id);
+  });
+  test('different valid canonical signal for same position conflicts', () => {
+    conflict(post({ ...value, signal_id: 'sig_002' }, [stored(value)]));
+  });
+  test('fixture_key catches same fixture despite changed display identity', () => {
+    conflict(post({ ...manual, match: 'Alias vs Nadal' }, [stored(manual)]));
+  });
+  test('omitting fixture_key cannot bypass ledger identity or count as an exact retry', () => {
+    conflict(post({ ...manual, fixture_key: '' }, [stored(manual)]));
+  });
+  test('authoritative open position blocks even an exact pending retry', () => {
+    const sj = state();
+    sj.open_bets = [{ ...manual }];
+    conflict(post(manual, [], sj));
+    conflict(post(manual, [stored(manual)], sj));
+  });
+  test('actual legacy ledger projection (team + match_date) blocks both sources', () => {
+    const sj = state();
+    sj.open_bets = [{ home: 'Federer', away: 'Nadal', market: 'home', match_date: '2026-10-03' }];
+    conflict(post(manual, [], sj));
+    conflict(post(value, [], sj));
+  });
+  test('undated legacy position conflicts conservatively', () => {
+    const sj = state();
+    sj.open_bets = [{ match: sig.match, market: 'home', match_date: '' }];
+    conflict(post(manual, [], sj));
+  });
+  test('different market, different match, and different dated fixture remain allowed', () => {
+    const original = stored(manual);
+    for (const patch of [
+      { market: 'away' },
+      { match: 'Other vs Player', fixture_key: 'different' },
+      { fixture_key: 'next-edition', kickoff: '2026-10-04T03:00:00Z' },
+    ]) assert.ok(post({ ...manual, ...patch }, [original]).entry);
+  });
+  test('stale/private-missing risk state and 5% cap remain fail closed even on retries', () => {
+    const original = stored(manual);
+    const stale = state();
+    stale.bankroll_state.published_at = '2026-10-02T20:00:00Z';
+    assert.equal(post(manual, [original], stale).status, 503);
+    const missing = state();
+    delete missing.open_bets;
+    assert.equal(post(manual, [original], missing).status, 503);
+    const overCap = post({ ...manual, stake_eur: 5.1 });
+    assert.equal(overCap.status, 400);
+    assert.match(overCap.json.error, /5% cap/);
+  });
+  test('retry does not bypass canonical Value actionability, identity or quote validation', () => {
+    const original = stored(value);
+    for (const patch of [{ shadow: true }, { no_bet_flag: true }, { signal_status: 'NO_BET' }]) {
+      const sj = state();
+      sj.tennis = [{ ...sig, ...patch }];
+      assert.equal(post(value, [original], sj).status, 400);
+    }
+    assert.equal(post({ ...value, market: 'away' }, [original]).status, 400);
+    assert.equal(post({ ...value, odds: 2.2 }, [original]).status, 400);
+  });
+  test('ambiguous multiple pending positions fail closed instead of choosing an ID', () => {
+    const original = stored(manual);
+    conflict(post(manual, [original, { ...original, id: 'other-id' }]));
+  });
+  test('actual fetch route writes once; retry/conflict never write pending KV', async () => {
+    const kv = new Map([['signals_json', JSON.stringify(state())]]);
+    let writes = 0;
+    const env = {
+      API_TOKEN: 'synthetic-test-only',
+      SIGNALS: {
+        get: async key => kv.get(key) ?? null,
+        put: async (key, data) => { writes++; kv.set(key, data); },
+      },
+    };
+    const send = body => workerDefault.fetch(new Request('https://worker.invalid/pending_bets', {
+      method: 'POST', headers: { Authorization: 'Bearer synthetic-test-only' },
+      body: JSON.stringify(body),
+    }), env);
+    // Use deterministic current authoritative time without touching production.
+    const realNow = Date.now;
+    Date.now = () => now;
+    try {
+      const first = await send(manual);
+      const id = (await first.json()).id;
+      assert.equal(first.status, 200);
+      const retry = await send(manual);
+      assert.equal((await retry.json()).id, id);
+      const different = await send({ ...manual, stake_eur: 4 });
+      assert.equal(different.status, 409);
+      assert.equal(writes, 1);
+      assert.equal(JSON.parse(kv.get('pending_bets')).length, 1);
+    } finally { Date.now = realNow; }
+  });
+});
+
 // ── 10. model_prob normalization unit tests ────────────────────────────────────
 // Tests normalizeModelProbPct standalone via orchestrate (no direct export needed).
 

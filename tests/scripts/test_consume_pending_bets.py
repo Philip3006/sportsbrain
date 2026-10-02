@@ -437,6 +437,91 @@ def test_lifecycle_c_ack_failure_retry(
     assert delete_calls, "KV ACK (DELETE) must be called on retry even for dup rows"
 
 
+@pytest.mark.parametrize("source,signal_id", [("manual", ""), ("value", "sig_001")])
+def test_variant_a_real_append_ack_retry_preserves_provenance(
+    tmp_path, monkeypatch, source, signal_id
+):
+    """Real CSV/SQLite append; fake remote and HTTP. No production state/credentials.
+
+    First durable push succeeds but ACK fails. Retrying the exact pending bet
+    must prove durability again without a second row or provenance replacement.
+    """
+    import sqlite3
+
+    from scripts import consume_pending_bets as consumer
+    from src.notifications import web_dashboard
+
+    ledger = tmp_path / "ledger_test.csv"
+    remote_copy = tmp_path / "synthetic_remote.csv"
+    bet = _valid_bet({"source": source, "signal_id": signal_id})
+    monkeypatch.setattr(consumer, "_resolve_ledger_path", lambda *_args: ledger)
+    monkeypatch.setattr(consumer, "_worker_base", lambda: "https://worker.invalid")
+    monkeypatch.setattr(consumer, "_token", lambda: "synthetic-test-only")
+    monkeypatch.setattr(consumer, "_get_live_bankroll", lambda _user: 100.0)
+    monkeypatch.setattr(
+        consumer, "count_open_bets", lambda **_kwargs: 0 if not ledger.exists() else 1
+    )
+    monkeypatch.setattr(consumer, "_process_cancel_requests", lambda *_args: 0)
+    monkeypatch.setattr(web_dashboard, "list_known_users", lambda: ["test"])
+    monkeypatch.setattr(web_dashboard, "write_signals_json_all_users", lambda: None)
+    order = []
+    pushed_counts = []
+    ack_attempts = []
+    append = consumer._append_rows
+
+    def append_local(rows, user):
+        order.append("append")
+        return append(rows, user)
+
+    def durable_push(added):
+        order.append("push")
+        pushed_counts.append(added)
+        if remote_copy.exists():
+            assert ledger.read_bytes() == remote_copy.read_bytes()
+        else:
+            remote_copy.write_bytes(ledger.read_bytes())
+        return True
+
+    def http(method, _url, **_kwargs):
+        if method == "GET":
+            return _make_pending_response([bet])
+        assert method == "DELETE"
+        order.append("ack")
+        assert ledger.read_bytes() == remote_copy.read_bytes(), "durability BEFORE ACK"
+        ack_attempts.append(1)
+        return MagicMock(status_code=500 if len(ack_attempts) == 1 else 200)
+
+    monkeypatch.setattr(consumer, "_append_rows", append_local)
+    monkeypatch.setattr(consumer, "_durable_push", durable_push)
+    monkeypatch.setattr(consumer, "retry_request", http)
+    assert consumer.main() == 0
+    original_bytes = ledger.read_bytes()
+    assert consumer.main() == 0
+    assert pushed_counts == [1, 0]
+    assert order == ["append", "push", "ack", "append", "push", "ack"]
+    assert ledger.read_bytes() == original_bytes
+    rows = consumer._load(ledger)
+    assert len(rows) == 1
+    assert rows.iloc[0]["source"] == source
+    assert rows.iloc[0]["signal_id"] == signal_id
+
+    # Defense in depth: even a differently sourced legacy queue entry cannot
+    # overwrite this position's original ledger provenance via duplicate append.
+    conflicting = {
+        **bet,
+        "source": "value" if source == "manual" else "manual",
+        "signal_id": "different-signal",
+    }
+    row, _ = consumer._row_from_bet(conflicting, "2026-10-03", 100.0)
+    assert row is not None
+    assert append([row], "test") == 0
+    assert ledger.read_bytes() == original_bytes
+    with sqlite3.connect(ledger.with_suffix(".db")) as connection:
+        assert connection.execute("SELECT source, signal_id FROM bets").fetchall() == [
+            (source, signal_id)
+        ]
+
+
 @_ENV_PATCH
 @patch(f"{_PATCH_BASE}.count_open_bets", return_value=0)
 @patch(f"{_WD_BASE}.write_signals_json_all_users")
