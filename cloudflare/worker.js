@@ -966,6 +966,43 @@ async function readAuthoritativeState(env, user = DEFAULT_USER) {
   return extractAuthState(await readSignalsJson(env, user));
 }
 
+// Variant A: Manual and Value share one position. Prefer fixture_key, but
+// also guard the consumer's pwa|home|away|kickoff-date identity: changing or
+// omitting a fixture_key must not bypass a position the ledger would dedup.
+function sameBetPosition(left, right) {
+  if (!left || !right || left.market !== right.market) return false;
+  const text = value => String(value || '').trim();
+  const leftKey = text(left.fixture_key);
+  const rightKey = text(right.fixture_key);
+  if (leftKey && rightKey && leftKey === rightKey) return true;
+  const teams = bet => {
+    const match = text(bet.match);
+    return match.includes(' vs ')
+      ? match.split(' vs ', 2).map(team => team.trim().toLowerCase())
+      : [text(bet.home).toLowerCase(), text(bet.away).toLowerCase()];
+  };
+  const [lh, la] = teams(left);
+  const [rh, ra] = teams(right);
+  if (!lh || !la || lh !== rh || la !== ra) return false;
+  const leftDate = text(left.kickoff || left.match_date).slice(0, 10);
+  const rightDate = text(right.kickoff || right.match_date).slice(0, 10);
+  // Legacy open-bet projections expose match_date, not fixture_key. An
+  // undated legacy record is ambiguous: conflict rather than open twice.
+  return !leftDate || !rightDate || leftDate === rightDate;
+}
+
+function samePendingSubmission(original, incoming) {
+  // IDs/time are transport metadata; bankroll_hint is advisory, not authority.
+  // Odds are exact normalized numbers here (NOT the canonical quote tolerance).
+  // Derived Value evidence must still agree; never overwrite the original.
+  const fields = [
+    'match', 'market', 'fixture_key', 'kickoff', 'sport', 'league', 'selection',
+    'source', 'signal_id', 'stake_eur', 'odds', 'model_prob', 'ev_pct',
+    'confidence', 'odds_ts', 'event_status', 'origin',
+  ];
+  return fields.every(field => (original[field] ?? '') === (incoming[field] ?? ''));
+}
+
 /**
  * Blocker-5: Core pending-bet POST orchestration, extracted for testability.
  *
@@ -1016,9 +1053,8 @@ export function orchestratePendingBetPost(body, { signalsJson, pendingArr, nowMs
     return { status: authBankroll === null ? 503 : 400, json: { error: capResult.error } };
 
   const pending = Array.isArray(pendingArr) ? pendingArr : [];
-  const activeBetsResult = validateActiveBets(authOpenBets, pending.length);
-  if (!activeBetsResult.ok)
-    return { status: authOpenBets === null ? 503 : 400, json: { error: activeBetsResult.error } };
+  if (authOpenBets === null)
+    return { status: 503, json: { error: 'authoritative open-bet count unavailable — fail closed' } };
 
   let canonicalSigForEntry = null;
   let canonicalNormalizedProb = null;
@@ -1104,13 +1140,26 @@ export function orchestratePendingBetPost(body, { signalsJson, pendingArr, nowMs
     };
   }
 
-  // Soft duplicate guard
-  const recent = pending.find(b =>
-    b.match === entry.match && b.market === entry.market &&
-    Math.abs(b.odds - entry.odds) < 0.001 &&
-    (_now - new Date(b.placed_at).getTime()) < 60_000
-  );
-  if (recent) return { status: 200, json: { ok: true, id: recent.id, duplicate: true } };
+  const conflict = () => ({
+    status: 409,
+    json: {
+      error: 'Für diesen Markt existiert bereits eine offene oder ausstehende Position. Eine abweichende Wette kann nicht hinzugefügt werden.',
+      code: 'POSITION_CONFLICT',
+    },
+  });
+  if (signalsJson.open_bets.some(bet => sameBetPosition(bet, entry))) return conflict();
+  const existing = pending.filter(bet => sameBetPosition(bet, entry));
+  if (existing.length) {
+    if (existing.length === 1 && existing[0].id && samePendingSubmission(existing[0], entry)) {
+      return { status: 200, json: { ok: true, id: existing[0].id, duplicate: true } };
+    }
+    return conflict();
+  }
+
+  // An exact retry adds no position; enforce the unchanged cap for NEW entries.
+  const activeBetsResult = validateActiveBets(authOpenBets, pending.length);
+  if (!activeBetsResult.ok)
+    return { status: 400, json: { error: activeBetsResult.error } };
 
   return { status: 200, json: { ok: true, id: entry.id }, entry };
 }
