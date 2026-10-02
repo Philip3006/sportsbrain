@@ -1191,7 +1191,7 @@ def test_t19_browser_sources_have_no_api_or_master_token_literals() -> None:
     # Product-critical frontend files must move as one cache-busted release.
     # Otherwise fresh Worker data can be rendered by stale betting UI code.
     index = (DOCS_DIR / "index.html").read_text(encoding="utf-8")
-    release = "20261002-match-level-odds-v2"
+    release = "20261003-value-provenance-v1"
     for asset in ("app", "views", "bets"):
         assert f'src="js/{asset}.js?v={release}"' in index, (
             f"T19: stale/mismatched cache key for {asset}.js"

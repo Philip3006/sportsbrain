@@ -696,7 +696,7 @@
     .match-outcome-probs b.neg { color:var(--red); }
     .match-bet-quote { width:100%; border:1px solid rgba(0,200,83,.45); border-radius:var(--r-base); background:rgba(0,200,83,.09); color:var(--green); padding:8px 7px; display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer; font-family:inherit; -webkit-tap-highlight-color:transparent; }
     .match-bet-quote:active { transform:scale(.98); }
-    .match-bet-quote-price { font-size:18px; line-height:1; font-weight:900; }
+    .match-bet-quote-price { font-size:13px; line-height:1.2; font-weight:900; }
     .match-bet-quote-meta { font-size:8px; color:var(--muted); font-weight:700; }
     .match-analysis-panel, .match-signals-panel { margin:10px 12px 0; border:1px solid var(--border); border-radius:var(--r-lg); background:var(--card); overflow:hidden; }
     .match-analysis-panel > summary, .match-signals-panel > summary { list-style:none; cursor:pointer; padding:11px 12px; display:flex; align-items:center; justify-content:space-between; gap:8px; color:var(--text); font-size:11px; font-weight:900; -webkit-tap-highlight-color:transparent; }
@@ -709,6 +709,7 @@
     .match-signals-body .sig-card { margin-bottom:8px; }
     .match-signal-summary-badge { margin-left:auto; margin-right:6px; padding:2px 7px; border-radius:999px; background:rgba(210,153,34,.10); border:1px solid rgba(210,153,34,.3); color:var(--yellow); font-size:9px; font-weight:900; }
     .match-signal-summary-badge.active { color:var(--green); border-color:rgba(0,200,83,.35); background:rgba(0,200,83,.10); }
+    .position-conflict-status { margin:8px 8px 0; padding:7px 8px; border:1px solid rgba(210,153,34,.35); border-radius:var(--r-sm); background:rgba(210,153,34,.08); color:var(--yellow); font-size:11px; font-weight:800; }
     .match-signal-empty, .match-model-meta { margin:10px 12px 0; padding:10px 12px; color:var(--muted); background:rgba(255,255,255,.025); border:1px solid var(--border); border-radius:var(--r-md); font-size:11px; line-height:1.45; }
     @media (max-width: 560px) {
       .match-outcomes-grid.three { grid-template-columns:1fr; }

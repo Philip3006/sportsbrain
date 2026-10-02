@@ -1195,7 +1195,7 @@ function _matchPrimaryMarketsCard({ displayKey, dh, da, sport, kickoff, tour, si
         <div><span>Edge</span><b class="${edgeCls}">${edgeText}</b></div>
       </div>
       <button ${attrs}>
-        <span class="match-bet-quote-price">${quoteText}</span>
+        <span class="match-bet-quote-price">✍️ Manuell wetten · ${quoteText}</span>
         <span class="match-bet-quote-meta">${quoteMeta}</span>
       </button>
     </div>`;
@@ -1241,7 +1241,10 @@ function _matchSignalsSection(sigs, otherSigs, ouSigs) {
     }
   }
 
-  return `<details class="match-signals-panel">
+  // A real actionable signal is the product recommendation. Keep it directly
+  // visible instead of asking the user to discover it behind a disclosure.
+  const openAttr = active.length ? ' open' : '';
+  return `<details class="match-signals-panel"${openAttr}>
     <summary><span>💡 SportsBrain Signale</span>${badge}</summary>
     <div class="match-signals-body">${body}</div>
   </details>`;
