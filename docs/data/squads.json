@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-02",
+  "updated": "2026-10-03",
   "teams": {
     "Algeria": {
       "source": "wikipedia",
@@ -13,7 +13,8 @@
         "Youcef Atal",
         "Oussama Benbot",
         "Ibrahim Maza",
-        "Nabil Bentaleb"
+        "Nabil Bentaleb",
+        "Anis Hadj Moussa"
       ],
       "players": [
         {
@@ -69,7 +70,7 @@
         {
           "name": "Anis Hadj Moussa",
           "pos": "FWD",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Nadhir Benbouali",
@@ -5710,7 +5711,8 @@
         "Rodri",
         "Lamine Yamal",
         "Gavi",
-        "Pedro Porro"
+        "Pedro Porro",
+        "Ferran Torres"
       ],
       "players": [
         {
@@ -5746,7 +5748,7 @@
         {
           "name": "Ferran Torres",
           "pos": "FWD",
-          "status": "fit"
+          "status": "injured"
         },
         {
           "name": "Fabián Ruiz",
