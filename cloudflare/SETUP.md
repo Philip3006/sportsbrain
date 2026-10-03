@@ -120,6 +120,28 @@ PWA (Homescreen)  ←  GET alle 10 Min  ←  Cloudflare Worker
 
 ---
 
+## Tennis Scan watchdog recovery
+
+GitHub native cron remains the primary Tennis Scan intent. The existing
+five-minute Worker cron also runs a fail-closed watchdog. After a 15-minute
+grace period it inspects the GitHub Actions state and the durable per-slot
+receipt under `results/tennis_scan_slots/`.
+
+Only a definitively missing slot may receive one recovery
+`workflow_dispatch` for `tennis_scan.yml`, carrying the same canonical
+`expected_slot` (`tennis-scan:YYYY-MM-DDTHH:MMZ`) and `recovery=true`.
+Unavailable or ambiguous GitHub evidence causes no dispatch. The workflow
+claims the slot before provider-consuming work; a completed receipt makes a
+late native event a no-op. The authenticated read-only status is available at
+`GET /scheduler/tennis`.
+
+The Worker secret `GH_TOKEN` must have only the minimum repository-scoped
+GitHub permissions needed for this control plane: `actions:write` to dispatch
+the named workflow and `contents:read` to inspect slot receipts. No token value
+is stored in Git or returned by the Worker. The workflow itself keeps its
+existing `GITHUB_TOKEN` `contents:write` permission for its existing runtime
+publication/receipt commits.
+
 # Web Push Setup (Ersatz für Telegram, einmalig ~15 Min)
 
 ## Schritt 1 — VAPID-Keypair generieren
@@ -182,4 +204,3 @@ GitHub-Secrets `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` können gefahrlos gelö
 ## iOS-Caveat ⚠️
 
 Web Push auf iPhone funktioniert **nur** wenn die PWA über Safari → Share → "Zum Home-Bildschirm" hinzugefügt und dann als App (nicht im Safari-Tab) gestartet wird.
-

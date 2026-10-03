@@ -1209,6 +1209,11 @@ function _validSub(s) {
 // ── F5-C/D: Worker Cron Helpers ───────────────────────────────
 // GH_REPO can be overridden via wrangler secret/var; falls back to hardcoded default.
 const _GH_REPO_DEFAULT = 'Philip3006/sportsbrain';
+const _TENNIS_SCAN_WORKFLOW = 'tennis_scan.yml';
+const _TENNIS_WATCHDOG_STATE_KEY = 'tennis_scan_watchdog_v1';
+const _TENNIS_WATCHDOG_GRACE_MS = 15 * 60 * 1000;
+const _TENNIS_WATCHDOG_MAX_SLOT_AGE_MS = 26 * 60 * 60 * 1000;
+const _TENNIS_SCAN_SLOT_HOURS_UTC = [2, 4, 6, 9, 12, 15, 18, 21, 23];
 // Resolved per-request in handlers that need it: env.GH_REPO || _GH_REPO_DEFAULT
 // P0D-003: _cronHealerCheck WORKFLOW_MAP — non-financial, non-model, active workflows only.
 // Financial workflows (settle, tennis_settle, bundesliga2_settle, closing_odds) and model
@@ -1236,6 +1241,224 @@ async function _ghWorkflowDispatch(token, workflow, repo = _GH_REPO_DEFAULT) {
       body: JSON.stringify({ ref: 'main' }),
     },
   );
+}
+
+function _tennisSlotDate(slot) {
+  if (typeof slot !== 'string' || !slot.startsWith('tennis-scan:')) return NaN;
+  const value = Date.parse(slot.slice('tennis-scan:'.length));
+  return Number.isFinite(value) ? value : NaN;
+}
+
+function _tennisSlotId(timestampMs) {
+  return `tennis-scan:${new Date(timestampMs).toISOString().slice(0, 16)}Z`;
+}
+
+function _tennisDueSlots(nowMs) {
+  const now = new Date(nowMs);
+  const candidates = [];
+  for (const dayOffset of [-1, 0]) {
+    const day = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + dayOffset));
+    for (const hour of _TENNIS_SCAN_SLOT_HOURS_UTC) {
+      const slotMs = Date.UTC(day.getUTCFullYear(), day.getUTCMonth(), day.getUTCDate(), hour, 0, 0);
+      if (nowMs >= slotMs + _TENNIS_WATCHDOG_GRACE_MS && nowMs - slotMs <= _TENNIS_WATCHDOG_MAX_SLOT_AGE_MS) {
+        candidates.push(slotMs);
+      }
+    }
+  }
+  return candidates.sort((a, b) => a - b);
+}
+
+function _tennisReceiptPath(slot) {
+  const stamp = slot.replace('tennis-scan:', '').replace(':', '-');
+  return `results/tennis_scan_slots/${stamp}.json`;
+}
+
+function _githubHeaders(token) {
+  return {
+    Authorization: `token ${token}`,
+    Accept: 'application/vnd.github+json',
+    'User-Agent': 'sportsbrain-tennis-watchdog',
+  };
+}
+
+async function _readGithubJson(token, url) {
+  const response = await fetch(url, { headers: _githubHeaders(token) });
+  if (!response.ok) throw new Error(`github_api_http_${response.status}`);
+  return response.json();
+}
+
+async function _readTennisSlotReceipt(token, repo, slot) {
+  const path = _tennisReceiptPath(slot).split('/').map(encodeURIComponent).join('/');
+  const url = `https://api.github.com/repos/${repo}/contents/${path}?ref=main`;
+  const response = await fetch(url, { headers: _githubHeaders(token) });
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error(`github_receipt_http_${response.status}`);
+  const body = await response.json();
+  if (!body || typeof body.content !== 'string') throw new Error('github_receipt_content_missing');
+  const binary = atob(body.content.replace(/\s/g, ''));
+  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+  const receipt = JSON.parse(new TextDecoder().decode(bytes));
+  if (!receipt || typeof receipt !== 'object' || receipt.expected_slot !== slot) {
+    throw new Error('github_receipt_binding_invalid');
+  }
+  return receipt;
+}
+
+async function _listTennisScheduleRuns(token, repo) {
+  const url = `https://api.github.com/repos/${repo}/actions/workflows/${_TENNIS_SCAN_WORKFLOW}/runs?event=schedule&per_page=100`;
+  const body = await _readGithubJson(token, url);
+  if (!body || !Array.isArray(body.workflow_runs)) throw new Error('github_runs_shape_invalid');
+  if (Number(body.total_count) > body.workflow_runs.length) throw new Error('github_runs_incomplete');
+  return body.workflow_runs;
+}
+
+function _nativeRunEvidence(runs, slotMs, nowMs) {
+  const observed = runs.filter((run) => {
+    const createdMs = Date.parse(run?.created_at || '');
+    return Number.isFinite(createdMs) && createdMs >= slotMs && createdMs <= nowMs + 60 * 1000;
+  });
+  if (!observed.length) return null;
+  const active = observed.some((run) => ['queued', 'in_progress', 'waiting', 'requested'].includes(run.status));
+  return {
+    state: active ? 'in_flight' : 'run_observed_without_receipt',
+    count: observed.length,
+  };
+}
+
+function _watchdogState(raw) {
+  if (!raw) return { schema_version: 'tennis-scan-watchdog-v1', slots: {} };
+  try {
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object' || !parsed.slots || typeof parsed.slots !== 'object') throw new Error('shape');
+    return parsed;
+  } catch {
+    return { schema_version: 'tennis-scan-watchdog-v1', slots: {}, state_error: 'stored_state_invalid' };
+  }
+}
+
+async function _persistWatchdogState(env, state) {
+  const keys = Object.keys(state.slots || {});
+  const cutoff = Date.now() - 48 * 60 * 60 * 1000;
+  state.slots = Object.fromEntries(keys.filter((slot) => {
+    const ms = _tennisSlotDate(slot);
+    return Number.isFinite(ms) && ms >= cutoff;
+  }).map((slot) => [slot, state.slots[slot]]));
+  await env.SIGNALS.put(_TENNIS_WATCHDOG_STATE_KEY, JSON.stringify(state));
+}
+
+async function _recordWatchdogState(env, state, patch) {
+  Object.assign(state, patch, {
+    schema_version: 'tennis-scan-watchdog-v1',
+    updated_at: new Date().toISOString(),
+  });
+  try { await _persistWatchdogState(env, state); } catch (error) {
+    console.error(`[cron] tennis watchdog state persistence failed: ${error?.name || 'Error'}`);
+  }
+}
+
+// Independent recovery authority for missed GitHub native Tennis Scan slots.
+// It never calls a provider. It only inspects GitHub/receipt evidence and may
+// issue one workflow_dispatch for the latest due slot after the 15-minute grace.
+async function _cronTennisWatchdog(env, scheduledTime) {
+  const nowMs = Number.isFinite(Number(scheduledTime)) ? Number(scheduledTime) : Date.now();
+  const rawState = await env.SIGNALS.get(_TENNIS_WATCHDOG_STATE_KEY);
+  const state = _watchdogState(rawState);
+  const dueSlots = _tennisDueSlots(nowMs);
+  if (!dueSlots.length) {
+    await _recordWatchdogState(env, state, {
+      watchdog_healthy: true,
+      last_evaluated_slot: null,
+      last_action: 'no_due_slot',
+      failure_class: null,
+    });
+    return;
+  }
+
+  // One slot per watchdog tick prevents a recovery burst after control-plane downtime.
+  const slotMs = dueSlots[dueSlots.length - 1];
+  const slot = _tennisSlotId(slotMs);
+  const slotState = state.slots[slot] || { dispatch_count: 0 };
+  state.last_evaluated_slot = slot;
+
+  const token = env.GH_TOKEN;
+  if (!token) {
+    await _recordWatchdogState(env, state, {
+      watchdog_healthy: false,
+      last_action: 'fail_closed_missing_dispatch_credential',
+      failure_class: 'watchdog_credential_missing',
+    });
+    return;
+  }
+  const repo = env.GH_REPO || _GH_REPO_DEFAULT;
+
+  try {
+    const receipt = await _readTennisSlotReceipt(token, repo, slot);
+    if (receipt && ['COMPLETED', 'CLAIMED'].includes(receipt.status)) {
+      state.slots[slot] = { ...slotState, state: receipt.status.toLowerCase(), dispatch_count: slotState.dispatch_count || 0 };
+      await _recordWatchdogState(env, state, {
+        watchdog_healthy: true,
+        last_action: `receipt_${receipt.status.toLowerCase()}`,
+        failure_class: null,
+      });
+      return;
+    }
+    if (receipt && receipt.status !== 'PRE_PROVIDER_FAILED') throw new Error('receipt_state_ambiguous');
+
+    const runs = await _listTennisScheduleRuns(token, repo);
+    const runEvidence = _nativeRunEvidence(runs, slotMs, nowMs);
+    if (runEvidence) {
+      state.slots[slot] = { ...slotState, state: 'ambiguous', dispatch_count: slotState.dispatch_count || 0 };
+      await _recordWatchdogState(env, state, {
+        watchdog_healthy: true,
+        last_action: runEvidence.state,
+        native_run_count: runEvidence.count,
+        failure_class: null,
+      });
+      return;
+    }
+    if (slotState.dispatch_count > 0) {
+      await _recordWatchdogState(env, state, {
+        watchdog_healthy: true,
+        last_action: 'recovery_already_dispatched',
+        failure_class: null,
+      });
+      return;
+    }
+
+    // Persist the one-shot decision before calling GitHub. If the response is
+    // lost, a later tick still cannot issue a duplicate dispatch.
+    state.slots[slot] = {
+      state: 'recovery_dispatch_pending',
+      dispatch_count: 1,
+      dispatch_requested_at: new Date().toISOString(),
+    };
+    await _persistWatchdogState(env, state);
+    const dispatchUrl = `https://api.github.com/repos/${repo}/actions/workflows/${_TENNIS_SCAN_WORKFLOW}/dispatches`;
+    const response = await fetch(dispatchUrl, {
+      method: 'POST',
+      headers: { ..._githubHeaders(token), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ref: 'main', inputs: { expected_slot: slot, recovery: 'true' } }),
+    });
+    if (!response.ok) throw new Error(`github_recovery_dispatch_http_${response.status}`);
+    state.slots[slot].state = 'recovery_dispatched';
+    await _recordWatchdogState(env, state, {
+      watchdog_healthy: true,
+      last_action: 'recovery_dispatched',
+      failure_class: null,
+    });
+  } catch (error) {
+    state.slots[slot] = {
+      ...slotState,
+      state: 'ambiguous_or_dispatch_failed',
+      dispatch_count: slotState.dispatch_count || 0,
+    };
+    await _recordWatchdogState(env, state, {
+      watchdog_healthy: false,
+      last_action: 'fail_closed_no_dispatch',
+      failure_class: error?.message?.startsWith('github_recovery_dispatch_http_')
+        ? 'recovery_dispatch_failed' : 'github_state_unavailable_or_ambiguous',
+    });
+  }
 }
 
 async function _ghRepositoryDispatch(token, eventType, repo = _GH_REPO_DEFAULT) {
@@ -1633,6 +1856,19 @@ export default {
       });
     }
 
+    // Read-only authenticated watchdog evidence. This is intentionally not
+    // part of the public PWA payload and contains no credentials or provider data.
+    if (request.method === 'GET' && path === '/scheduler/tennis') {
+      const auth = await authResolve(request, env);
+      if (!auth.ok) return new Response('Unauthorized', { status: 401, headers: ch });
+      const raw = await env.SIGNALS.get(_TENNIS_WATCHDOG_STATE_KEY);
+      return jr(raw ? _watchdogState(raw) : {
+        schema_version: 'tennis-scan-watchdog-v1',
+        watchdog_healthy: false,
+        last_action: 'no_evidence',
+      });
+    }
+
     // ── /pending_bets + /cancel_bet + /cancel_requests (per-user via auth) ──
     if (path === '/pending_bets' || path.startsWith('/pending_bets/') ||
         path === '/cancel_bet' || path === '/cancel_requests' ||
@@ -1924,6 +2160,7 @@ export default {
     const cron = event.cron;
     const scheduledTime = event.scheduledTime; // ms epoch from Cloudflare
     if (cron === '*/5 * * * *') {
+      await _cronTennisWatchdog(env, scheduledTime);
       await _cronConsumeCheck(env);
     } else if (cron === '*/30 * * * *') {
       await _cronHealerCheck(env);

@@ -21,6 +21,16 @@ on:
         description: 'Override: erzwingt mode=live für alle Kategorien'
         type: boolean
         default: false
+      expected_slot:
+        description: 'Canonical nominal UTC slot, e.g. tennis-scan:2026-10-03T12:00Z'
+        required: false
+        type: string
+        default: ''
+      recovery:
+        description: 'Watchdog recovery dispatch for the exact expected_slot'
+        required: false
+        type: boolean
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}
@@ -64,8 +74,41 @@ jobs:
       - name: Set ledger directory
         run: echo "SPORTSBRAIN_LEDGER_DIR=${{ github.workspace }}/private-ledger" >> $GITHUB_ENV
 
+      - name: Resolve and claim canonical Tennis Scan slot
+        id: slot
+        env:
+          INPUT_EXPECTED_SLOT: ${{ inputs.expected_slot }}
+          NATIVE_SCHEDULE: ${{ github.event.schedule }}
+        run: |
+          set -euo pipefail
+          if [ -n "$INPUT_EXPECTED_SLOT" ]; then
+            EXPECTED_SLOT="$INPUT_EXPECTED_SLOT"
+          else
+            EXPECTED_SLOT="$(python scripts/tennis_slot_receipt.py derive --schedule "$NATIVE_SCHEDULE")"
+          fi
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.recovery }}" = "true" ]; then
+            TRIGGER_TYPE="watchdog_recovery"
+          else
+            TRIGGER_TYPE="native_schedule"
+          fi
+          python scripts/tennis_slot_receipt.py claim \
+            --expected-slot "$EXPECTED_SLOT" \
+            --trigger-type "$TRIGGER_TYPE" \
+            --run-id "${GITHUB_RUN_ID:-unknown}" > /tmp/tennis_slot_claim.json
+          ACTION="$(python -c 'import json; print(json.load(open("/tmp/tennis_slot_claim.json"))["action"])')"
+          RECEIPT_PATH="$(python -c 'import json; print(json.load(open("/tmp/tennis_slot_claim.json"))["receipt_path"])')"
+          echo "expected_slot=$EXPECTED_SLOT" >> "$GITHUB_OUTPUT"
+          echo "action=$ACTION" >> "$GITHUB_OUTPUT"
+          echo "receipt_path=$RECEIPT_PATH" >> "$GITHUB_OUTPUT"
+          cat /tmp/tennis_slot_claim.json
+          if [ "$ACTION" = "run" ]; then
+            git add "$RECEIPT_PATH"
+            bash scripts/_bot_commit_push.sh "auto: claim tennis scan slot $EXPECTED_SLOT"
+          fi
+
       - name: Run tennis scan (multi-tournament)
         id: scan
+        if: steps.slot.outputs.action == 'run'
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
           SIGNALS_CLOUD_URL: ${{ secrets.SIGNALS_CLOUD_URL }}
@@ -88,8 +131,18 @@ jobs:
           fi
           echo "status=ok" >> $GITHUB_OUTPUT
 
+      - name: Complete canonical Tennis Scan slot receipt
+        if: steps.slot.outputs.action == 'run' && steps.scan.outcome == 'success'
+        env:
+          EXPECTED_SLOT: ${{ steps.slot.outputs.expected_slot }}
+        run: |
+          set -euo pipefail
+          python scripts/tennis_slot_receipt.py complete --expected-slot "$EXPECTED_SLOT"
+          git add "${{ steps.slot.outputs.receipt_path }}"
+          bash scripts/_bot_commit_push.sh "auto: complete tennis scan slot $EXPECTED_SLOT"
+
       - name: Write health snapshot
-        if: always()
+        if: steps.slot.outputs.action == 'run'
         run: |
           STATUS="${{ steps.scan.outputs.status || 'error' }}"
           EXIT_CODE=1
@@ -99,6 +152,7 @@ jobs:
           python -m src.monitoring.health_writer --job tennis_scan --status "$STATUS" --exit-code "$EXIT_CODE" || true
 
       - name: Commit results
+        if: steps.slot.outputs.action == 'run'
         run: |
           git config user.name "SportsBrain Bot"
           git config user.email "bot@sportsbrain"
