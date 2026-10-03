@@ -304,6 +304,7 @@ def _match_snapshot(
     source_ts: str,
     captured_at: str,
     signal_markets: dict | None = None,
+    quote_ts: str | None = None,
 ) -> dict:
     """Build the public-safe match snapshot plus private signal-market context."""
     match_key, home, away = _match_identity(signal)
@@ -315,7 +316,7 @@ def _match_snapshot(
         "away": away,
         "fixture_key": fixture_key,
         "outcomes": outcomes,
-        "odds_ts": captured_at,
+        "odds_ts": quote_ts or captured_at,
         "captured_at": captured_at,
         "source_ts": source_ts,
         "source": source,
@@ -448,14 +449,27 @@ def _refresh_tennis_snapshot(
             quote_cache[cache_key] = cached
     if not cached[0] or not cached[1] or cached[0] <= 1.0 or cached[1] <= 1.0:
         return None
-    captured_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    captured_time = datetime.now(timezone.utc)
+    try:
+        quote_time = datetime.fromisoformat(cached[4].replace("Z", "+00:00"))
+    except (AttributeError, ValueError):
+        return None
+    if quote_time.tzinfo is None:
+        return None
+    quote_time = quote_time.astimezone(timezone.utc)
+    quote_age_seconds = (captured_time - quote_time).total_seconds()
+    if quote_age_seconds < 0 or quote_age_seconds > 30 * 60:
+        return None
+    source_ts = quote_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+    captured_at = captured_time.strftime("%Y-%m-%dT%H:%M:%SZ")
     snapshot = _match_snapshot(
         signal,
         outcomes={"home": cached[0], "away": cached[1]},
         source=cached[2],
         tier=cached[3],
-        source_ts=cached[4],
+        source_ts=source_ts,
         captured_at=captured_at,
+        quote_ts=source_ts,
     )
     snapshot["bookmaker"] = cached[5] or ""
     return snapshot

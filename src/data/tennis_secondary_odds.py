@@ -108,6 +108,9 @@ def _fetch_match_detail(match_id: str) -> dict | None:
     html = _http_get(f"{_BASE}/match-detail/?id={match_id}")
     if not html:
         return None
+    # This is the capture time of the provider response. Keep it with the cached
+    # quote so a later disk-cache read cannot masquerade as a new observation.
+    source_observed_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     # Player-Namen aus Home/Away-Head
     head = _RE_HOMEAWAY_HEAD.search(html)
@@ -187,6 +190,7 @@ def _fetch_match_detail(match_id: str) -> dict | None:
         "te_tour": tour,
         "te_slug": slug,
         "te_bookies_count": len(odds),
+        "source_observed_at": source_observed_at,
     }
 
 

@@ -153,6 +153,7 @@ def test_tennis_refresh_caches_one_provider_call_and_excludes_websearch(monkeypa
         source = "tennis_explorer"
         source_tier = 1
         no_bet_flag = False
+        ts = datetime.now(timezone.utc)
 
     def fetch(match_hint, **kwargs):
         calls.append(kwargs)
@@ -192,6 +193,7 @@ def test_tennis_snapshot_preserves_both_primary_outcomes_from_one_fetch(monkeypa
         source_tier = 1
         bookmaker = "consensus"
         no_bet_flag = False
+        ts = datetime.now(timezone.utc)
 
     monkeypatch.setattr(
         merger,
@@ -204,6 +206,56 @@ def test_tennis_snapshot_preserves_both_primary_outcomes_from_one_fetch(monkeypa
     assert snapshot["source"] == "tennis_explorer"
     assert snapshot["current"] is True
     assert len(calls) == 1
+
+
+def test_tennis_snapshot_uses_provider_observation_time_for_freshness(monkeypatch):
+    from src.signals.odds_refresher import _refresh_tennis_snapshot
+    from src.tennis.odds import merger
+
+    observed_at = datetime.now(timezone.utc).replace(microsecond=0) - timedelta(
+        minutes=8
+    )
+
+    class Quote:
+        h2h_a = 1.8
+        h2h_b = 2.1
+        source = "tennis_explorer"
+        source_tier = 2
+        bookmaker = "consensus"
+        no_bet_flag = False
+        ts = observed_at
+
+    monkeypatch.setattr(
+        merger, "fetch_best_odds_with_diagnostics", lambda *_a, **_kw: (Quote(), [])
+    )
+    snapshot = _refresh_tennis_snapshot(_signal(sport="tennis"), {})
+
+    assert snapshot is not None
+    assert snapshot["odds_ts"] == snapshot["source_ts"]
+    assert snapshot["odds_ts"] == observed_at.strftime("%Y-%m-%dT%H:%M:%SZ")
+    assert snapshot["captured_at"] > snapshot["odds_ts"]
+
+
+def test_tennis_snapshot_rejects_missing_or_stale_quote_timestamp(monkeypatch):
+    from src.signals.odds_refresher import _refresh_tennis_snapshot
+    from src.tennis.odds import merger
+
+    class Quote:
+        h2h_a = 1.8
+        h2h_b = 2.1
+        source = "tennis_explorer"
+        source_tier = 2
+        bookmaker = "consensus"
+        no_bet_flag = False
+        ts = None
+
+    monkeypatch.setattr(
+        merger, "fetch_best_odds_with_diagnostics", lambda *_a, **_kw: (Quote(), [])
+    )
+    assert _refresh_tennis_snapshot(_signal(sport="tennis"), {}) is None
+
+    Quote.ts = datetime.now(timezone.utc) - timedelta(minutes=31)
+    assert _refresh_tennis_snapshot(_signal(sport="tennis"), {}) is None
 
 
 def test_schedule_only_match_is_refreshed_without_a_signal(monkeypatch):
