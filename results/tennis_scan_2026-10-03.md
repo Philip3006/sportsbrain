@@ -13,7 +13,7 @@
 
 
 ## China Open (ATP) · atp500 · 🔴 LIVE
-Surface: hard · Best of: 3 · Matches gescannt: 5
+Surface: hard · Best of: 3 · Matches gescannt: 4
   > ⚠️ **Satz-AH vorhanden** — beim Buchmacher **Sätze-Handicap** wählen, NICHT Spiele-Handicap!
 - [ATP] **Alex de Minaur vs Andrey Rublev** · Alex de Minaur Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
   Quote 2.81 · Modell 41.7% · EV +17.2% · Stake 5.00€ · HIGH
@@ -23,6 +23,6 @@ Surface: hard · Best of: 3 · Matches gescannt: 0
 _Keine Value-Signals._
 
 ## China Open (WTA) · wta1000 · 🔴 LIVE
-Surface: hard · Best of: 3 · Matches gescannt: 14
+Surface: hard · Best of: 3 · Matches gescannt: 13
 - [WTA] **Donna Vekic vs Iga Swiatek** · Match Winner: Iga Swiatek
-  Quote 1.33 · Modell 87.0% · EV +15.7% · Stake 5.00€ · HIGH
+  Quote 1.29 · Modell 87.0% · EV +12.3% · Stake 5.00€ · HIGH
