@@ -7,7 +7,7 @@
 > Filter: EV-gewichtet · Markt-historisch · max. 1 Signal pro Match
 
 - 🟢 **Alex de Minaur vs Andrey Rublev** · Match Winner: Alex de Minaur
-  Quote 2.20 · EV +36.8% · Stake 5.00€ · HIGH
+  Quote 2.15 · EV +33.7% · Stake 5.00€ · HIGH
 
 ---
 
@@ -16,9 +16,9 @@
 Surface: hard · Best of: 3 · Matches gescannt: 4
   > ⚠️ **Satz-AH vorhanden** — beim Buchmacher **Sätze-Handicap** wählen, NICHT Spiele-Handicap!
 - [ATP] **Alex de Minaur vs Andrey Rublev** · Match Winner: Alex de Minaur ⭐
-  Quote 2.20 · Modell 62.2% · EV +36.8% · Stake 5.00€ · HIGH
+  Quote 2.15 · Modell 62.2% · EV +33.7% · Stake 5.00€ · HIGH
 - [ATP] **Alexander Zverev vs Novak Djokovic** · Match Winner: Novak Djokovic
-  Quote 2.65 · Modell 50.3% · EV +33.2% · Stake 5.00€ · HIGH
+  Quote 2.61 · Modell 50.3% · EV +31.2% · Stake 5.00€ · HIGH
 - [ATP] **Alex de Minaur vs Andrey Rublev** · Alex de Minaur Set AH -1.5 _(Satz-AH = SET handicap)_
   Quote 2.81 · Modell 41.7% · EV +17.2% · Stake 5.00€ · HIGH
 
