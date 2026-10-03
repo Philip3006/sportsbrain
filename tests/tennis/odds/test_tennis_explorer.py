@@ -1,6 +1,7 @@
 """J8-B12: tennis_explorer.py — unit tests mit injiziertem Bulk."""
 from __future__ import annotations
 
+import pickle
 import time
 from datetime import datetime, timedelta, timezone
 
@@ -163,3 +164,42 @@ def test_scraper_records_response_capture_time_without_network(monkeypatch):
         match["source_observed_at"].replace("Z", "+00:00")
     )
     assert before.replace(microsecond=0) <= observed_at <= after.replace(microsecond=0)
+
+
+def test_legacy_disk_cache_is_refreshed_without_network(monkeypatch, tmp_path):
+    from src.data import tennis_secondary_odds
+
+    cache_path = tmp_path / "te_upcoming.pkl"
+    cache_path.write_bytes(
+        pickle.dumps(
+            [
+                {
+                    "player_a": "shelton ben",
+                    "player_b": "sinner jannik",
+                    "odds_a": 1.8,
+                    "odds_b": 2.1,
+                    "te_bookies_count": 2,
+                }
+            ]
+        )
+    )
+    monkeypatch.setattr(tennis_secondary_odds, "_CACHE_PATH", cache_path)
+    monkeypatch.setattr(tennis_secondary_odds, "_discover_match_ids", lambda: ["fresh"])
+    observed_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    monkeypatch.setattr(
+        tennis_secondary_odds,
+        "_fetch_match_detail",
+        lambda _match_id: {
+            "player_a": "shelton ben",
+            "player_b": "sinner jannik",
+            "odds_a": 1.8,
+            "odds_b": 2.1,
+            "te_bookies_count": 2,
+            "source_observed_at": observed_at,
+        },
+    )
+
+    matches = tennis_secondary_odds.fetch_te_upcoming_matches()
+
+    assert len(matches) == 1
+    assert matches[0]["source_observed_at"] == observed_at
