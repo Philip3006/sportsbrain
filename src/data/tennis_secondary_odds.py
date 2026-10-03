@@ -108,6 +108,9 @@ def _fetch_match_detail(match_id: str) -> dict | None:
     html = _http_get(f"{_BASE}/match-detail/?id={match_id}")
     if not html:
         return None
+    # This is the capture time of the provider response. Keep it with the cached
+    # quote so a later disk-cache read cannot masquerade as a new observation.
+    source_observed_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     # Player-Namen aus Home/Away-Head
     head = _RE_HOMEAWAY_HEAD.search(html)
@@ -187,7 +190,33 @@ def _fetch_match_detail(match_id: str) -> dict | None:
         "te_tour": tour,
         "te_slug": slug,
         "te_bookies_count": len(odds),
+        "source_observed_at": source_observed_at,
     }
+
+
+def _bulk_has_current_source_times(matches: object) -> bool:
+    if not isinstance(matches, list):
+        return False
+    if not matches:
+        return True
+
+    now = datetime.now(timezone.utc)
+    for match in matches:
+        if not isinstance(match, dict):
+            return False
+        value = match.get("source_observed_at")
+        if not isinstance(value, str) or not value.strip():
+            return False
+        try:
+            observed_at = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError:
+            return False
+        if observed_at.tzinfo is None:
+            return False
+        age_seconds = (now - observed_at.astimezone(timezone.utc)).total_seconds()
+        if age_seconds < 0 or age_seconds > _CACHE_TTL_S:
+            return False
+    return True
 
 
 def fetch_te_upcoming_matches(
@@ -208,7 +237,9 @@ def fetch_te_upcoming_matches(
         age = time.time() - _CACHE_PATH.stat().st_mtime
         if age < _CACHE_TTL_S:
             try:
-                return pickle.loads(_CACHE_PATH.read_bytes())
+                cached = pickle.loads(_CACHE_PATH.read_bytes())
+                if _bulk_has_current_source_times(cached):
+                    return cached
             except Exception:
                 pass
 

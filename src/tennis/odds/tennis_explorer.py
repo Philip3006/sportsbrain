@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import logging
 import time
+from datetime import datetime, timezone
 
 _log = logging.getLogger("sportsbrain.tennis.odds.tennis_explorer")
 
@@ -28,6 +29,18 @@ _TS: float = 0.0
 _TTL_S = 30 * 60
 
 
+def _source_observation_time(value: object) -> datetime | None:
+    if not isinstance(value, str) or not value.strip():
+        return None
+    try:
+        observed_at = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if observed_at.tzinfo is None:
+        return None
+    return observed_at.astimezone(timezone.utc)
+
+
 def _get_bulk() -> list[dict]:
     return _get_bulk_with_diagnostics()[0]
 
@@ -41,7 +54,22 @@ def _get_bulk_with_diagnostics() -> tuple[list[dict], ProviderOutcome]:
         from src.data.tennis_secondary_odds import fetch_te_upcoming_matches
         new_bulk = fetch_te_upcoming_matches(min_bookies=2, max_matches=200)
         if new_bulk:
-            _BULK = new_bulk
+            provenanced_bulk = [
+                match
+                for match in new_bulk
+                if _source_observation_time(match.get("source_observed_at")) is not None
+            ]
+            if not provenanced_bulk:
+                _BULK = []
+                _TS = time.time()
+                return _BULK, ProviderOutcome(
+                    name,
+                    True,
+                    True,
+                    "missing_provenance",
+                    error_class="MissingSourceObservationTime",
+                )
+            _BULK = provenanced_bulk
             _TS = time.time()
         else:
             # J8-B4: Refresh lieferte nichts (Rate-Limit / Netzwerkfehler).
@@ -91,6 +119,13 @@ def _quote_from_bulk(match_hint: dict, bulk: list[dict]) -> OddsQuote | None:
         if not (forward or reverse):
             continue
 
+        observed_at = _source_observation_time(m.get("source_observed_at"))
+        if observed_at is None:
+            continue
+        age_seconds = (datetime.now(timezone.utc) - observed_at).total_seconds()
+        if age_seconds < 0 or age_seconds > _TTL_S:
+            continue
+
         a = m.get("odds_a", 0.0)
         b = m.get("odds_b", 0.0)
         if reverse:
@@ -107,6 +142,7 @@ def _quote_from_bulk(match_hint: dict, bulk: list[dict]) -> OddsQuote | None:
             source="tennis_explorer",
             source_tier=2,
             bookmaker="consensus",
+            ts=observed_at,
             confidence=min(1.0, 0.4 + 0.1 * bookies),
             bookies_count=bookies,
         )
