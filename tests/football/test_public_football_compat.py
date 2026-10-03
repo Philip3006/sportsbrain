@@ -151,6 +151,15 @@ def test_synthetic_cl_cannot_be_published_or_live() -> None:
         )
 
 
+def test_synthetic_cl_cannot_claim_controlled_activation() -> None:
+    with pytest.raises(
+        PublicFootballCompatibilityError, match="synthetic football evidence"
+    ):
+        map_prediction_to_public_football_signals(
+            _synthetic_cl_record(activation_state="controlled")
+        )
+
+
 @pytest.mark.parametrize("publication_status", ("published", "Published", "PUBLISHED"))
 def test_synthetic_publication_status_is_case_insensitive(
     publication_status: str,
