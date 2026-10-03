@@ -8,6 +8,8 @@ id = "b8dafde116544880aaf9c3f19c61dc23"
 
 [triggers]
 # F5-C: consume_pending_bets check every 5 min (triggers GH repo_dispatch only when KV non-empty)
+# Tennis watchdog shares this existing 5-minute control-plane cadence. It is a
+# recovery authority only; GitHub native cron remains the primary intent.
 # F5-D: cloud_healer check every 30 min (triggers workflow_dispatch on failed jobs)
 #       + STAB-SCHED-AUTH-001: tennis_closing_odds dispatch authority (30-min)
 # STAB-SCHED-AUTH-001: BL2 live-push scheduler authority — 2-min cadence during match windows.

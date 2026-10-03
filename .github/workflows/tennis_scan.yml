@@ -21,6 +21,16 @@ on:
         description: 'Override: erzwingt mode=live für alle Kategorien'
         type: boolean
         default: false
+      expected_slot:
+        description: 'Canonical nominal UTC slot, e.g. tennis-scan:2026-10-03T12:00Z'
+        required: false
+        type: string
+        default: ''
+      recovery:
+        description: 'Watchdog recovery dispatch for the exact expected_slot'
+        required: false
+        type: boolean
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}
@@ -64,8 +74,96 @@ jobs:
       - name: Set ledger directory
         run: echo "SPORTSBRAIN_LEDGER_DIR=${{ github.workspace }}/private-ledger" >> $GITHUB_ENV
 
+      - name: Resolve and claim canonical Tennis Scan slot
+        id: slot
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_EXPECTED_SLOT: ${{ inputs.expected_slot }}
+          INPUT_RECOVERY: ${{ inputs.recovery }}
+          NATIVE_SCHEDULE: ${{ github.event.schedule }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "schedule" ]; then
+            EXPECTED_SLOT="$(python scripts/tennis_slot_receipt.py derive --schedule "$NATIVE_SCHEDULE")"
+            TRIGGER_TYPE="native_schedule"
+          elif [ "$INPUT_RECOVERY" = "true" ]; then
+            if [ -z "$INPUT_EXPECTED_SLOT" ]; then
+              echo "watchdog recovery requires expected_slot" >&2
+              exit 1
+            fi
+            EXPECTED_SLOT="$INPUT_EXPECTED_SLOT"
+            TRIGGER_TYPE="watchdog_recovery"
+          else
+            # Preserve the pre-#277 operator/manual path. It has no nominal
+            # slot and must never be treated as cron or watchdog evidence.
+            echo "expected_slot=" >> "$GITHUB_OUTPUT"
+            echo "action=run" >> "$GITHUB_OUTPUT"
+            echo "trigger_type=operator_manual" >> "$GITHUB_OUTPUT"
+            echo "receipt_path=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          RECEIPT_API_PATH="results/tennis_scan_slots/${EXPECTED_SLOT#tennis-scan:}"
+          RECEIPT_API_PATH="${RECEIPT_API_PATH//:/-}.json"
+          AUTH_RECEIPT_JSON=/tmp/tennis_authoritative_receipt.json
+          AUTH_RECEIPT_URL="https://api.github.com/repos/${GITHUB_REPOSITORY}/contents/${RECEIPT_API_PATH}?ref=main"
+          HTTP_CODE="$(curl -sS -o "$AUTH_RECEIPT_JSON" -w '%{http_code}' \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H 'Accept: application/vnd.github+json' \
+            -H 'User-Agent: sportsbrain-tennis-scan' \
+            "$AUTH_RECEIPT_URL")"
+          if [ "$HTTP_CODE" = "404" ]; then
+            rm -f "$AUTH_RECEIPT_JSON"
+          elif [ "$HTTP_CODE" != "200" ]; then
+            echo "authoritative main receipt lookup failed: HTTP $HTTP_CODE" >&2
+            exit 1
+          else
+            python - "$AUTH_RECEIPT_JSON" "$EXPECTED_SLOT" <<'PY'
+          import base64
+          import json
+          import pathlib
+          import sys
+
+          path = pathlib.Path(sys.argv[1])
+          expected_slot = sys.argv[2]
+          envelope = json.loads(path.read_text(encoding="utf-8"))
+          content = envelope.get("content")
+          if not isinstance(content, str):
+              raise SystemExit("authoritative receipt content missing")
+          receipt = json.loads(base64.b64decode(content).decode("utf-8"))
+          if not isinstance(receipt, dict) or receipt.get("expected_slot") != expected_slot:
+              raise SystemExit("authoritative receipt binding invalid")
+          path.write_text(json.dumps(receipt, sort_keys=True), encoding="utf-8")
+          PY
+          fi
+
+          CLAIM_ARGS=(
+            claim
+            --expected-slot "$EXPECTED_SLOT"
+            --trigger-type "$TRIGGER_TYPE"
+            --run-id "${GITHUB_RUN_ID:-unknown}"
+          )
+          if [ -f "$AUTH_RECEIPT_JSON" ]; then
+            CLAIM_ARGS+=(--authoritative-receipt-json "$AUTH_RECEIPT_JSON")
+          fi
+          python scripts/tennis_slot_receipt.py claim \
+            "${CLAIM_ARGS[@]}" > /tmp/tennis_slot_claim.json
+          ACTION="$(python -c 'import json; print(json.load(open("/tmp/tennis_slot_claim.json"))["action"])')"
+          RECEIPT_PATH="$(python -c 'import json; print(json.load(open("/tmp/tennis_slot_claim.json"))["receipt_path"])')"
+          echo "expected_slot=$EXPECTED_SLOT" >> "$GITHUB_OUTPUT"
+          echo "action=$ACTION" >> "$GITHUB_OUTPUT"
+          echo "trigger_type=$TRIGGER_TYPE" >> "$GITHUB_OUTPUT"
+          echo "receipt_path=$RECEIPT_PATH" >> "$GITHUB_OUTPUT"
+          cat /tmp/tennis_slot_claim.json
+          if [ "$ACTION" = "run" ] && [ "$TRIGGER_TYPE" != "operator_manual" ]; then
+            git add "$RECEIPT_PATH"
+            bash scripts/_bot_commit_push.sh "auto: claim tennis scan slot $EXPECTED_SLOT"
+          fi
+
       - name: Run tennis scan (multi-tournament)
         id: scan
+        if: steps.slot.outputs.action == 'run'
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
           SIGNALS_CLOUD_URL: ${{ secrets.SIGNALS_CLOUD_URL }}
@@ -88,8 +186,18 @@ jobs:
           fi
           echo "status=ok" >> $GITHUB_OUTPUT
 
+      - name: Complete canonical Tennis Scan slot receipt
+        if: steps.slot.outputs.action == 'run' && steps.slot.outputs.trigger_type != 'operator_manual' && steps.scan.outcome == 'success'
+        env:
+          EXPECTED_SLOT: ${{ steps.slot.outputs.expected_slot }}
+        run: |
+          set -euo pipefail
+          python scripts/tennis_slot_receipt.py complete --expected-slot "$EXPECTED_SLOT"
+          git add "${{ steps.slot.outputs.receipt_path }}"
+          bash scripts/_bot_commit_push.sh "auto: complete tennis scan slot $EXPECTED_SLOT"
+
       - name: Write health snapshot
-        if: always()
+        if: steps.slot.outputs.action == 'run'
         run: |
           STATUS="${{ steps.scan.outputs.status || 'error' }}"
           EXIT_CODE=1
@@ -99,6 +207,7 @@ jobs:
           python -m src.monitoring.health_writer --job tennis_scan --status "$STATUS" --exit-code "$EXIT_CODE" || true
 
       - name: Commit results
+        if: steps.slot.outputs.action == 'run'
         run: |
           git config user.name "SportsBrain Bot"
           git config user.email "bot@sportsbrain"
