@@ -1304,11 +1304,27 @@ async function _readTennisSlotReceipt(token, repo, slot) {
   return receipt;
 }
 
-async function _listTennisScheduleRuns(token, repo) {
+async function _listTennisScheduleRuns(token, repo, targetSlotMs) {
   const url = `https://api.github.com/repos/${repo}/actions/workflows/${_TENNIS_SCAN_WORKFLOW}/runs?event=schedule&per_page=100`;
   const body = await _readGithubJson(token, url);
   if (!body || !Array.isArray(body.workflow_runs)) throw new Error('github_runs_shape_invalid');
-  if (Number(body.total_count) > body.workflow_runs.length) throw new Error('github_runs_incomplete');
+  const totalCount = Number(body.total_count);
+  if (!Number.isInteger(totalCount) || totalCount < body.workflow_runs.length) {
+    throw new Error('github_runs_count_invalid');
+  }
+  if (totalCount > 0 && body.workflow_runs.length === 0) {
+    throw new Error('github_runs_page_empty');
+  }
+  const createdTimes = body.workflow_runs.map((run) => Date.parse(run?.created_at || ''));
+  if (createdTimes.some((createdMs) => !Number.isFinite(createdMs))) {
+    throw new Error('github_runs_timestamp_invalid');
+  }
+  if (body.workflow_runs.length === 100) {
+    const oldestCreatedMs = Math.min(...createdTimes);
+    if (!Number.isFinite(targetSlotMs) || oldestCreatedMs > targetSlotMs) {
+      throw new Error('github_runs_history_truncated');
+    }
+  }
   return body.workflow_runs;
 }
 
@@ -1435,7 +1451,7 @@ async function _cronTennisWatchdog(env, scheduledTime) {
     }
     if (receipt) throw new Error('receipt_state_ambiguous');
 
-    const runs = await _listTennisScheduleRuns(token, repo);
+    const runs = await _listTennisScheduleRuns(token, repo, slotMs);
     const runEvidence = _nativeRunEvidence(runs, slotMs, nowMs);
     if (runEvidence) {
       state.slots[slot] = { ...slotState, state: 'unbound_temporal_ambiguous', dispatch_count: slotState.dispatch_count || 0 };
