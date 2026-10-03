@@ -988,6 +988,123 @@ def _tag_display_priority(signals: list[dict], top_n: int) -> list[dict]:
     return sorted_sigs
 
 
+def _aware_match_odds_timestamp(value: object) -> datetime | None:
+    """Parse a provenanced match-odds timestamp without assuming a timezone."""
+    if not isinstance(value, str) or not value.strip():
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        return None
+    return parsed.astimezone(timezone.utc)
+
+
+def _merge_current_match_odds(existing: object, local: object) -> dict:
+    """Preserve public match quotes unless local state has newer valid evidence.
+
+    A scanner may run without the runtime-owned odds sidecar.  That absence is
+    not deletion authority: keep the public map and only merge a local entry
+    whose public projection and explicit source/capture timestamps validate.
+    Source observation time, not scanner time or map order, decides precedence.
+    """
+    from collections.abc import Mapping
+
+    from src.notifications.public_serializer import serialize_public_product
+
+    merged = dict(existing) if isinstance(existing, Mapping) else {}
+    if not isinstance(local, Mapping) or not local:
+        return merged
+
+    try:
+        public_local = serialize_public_product(
+            {"current_match_odds": dict(local)}
+        ).get("current_match_odds", {})
+    except (TypeError, ValueError):
+        public_local = {}
+    if not isinstance(public_local, Mapping):
+        public_local = {}
+
+    now = datetime.now(timezone.utc)
+    existing_keys: dict[str, list[str]] = {}
+    for key in merged:
+        if isinstance(key, str) and key.strip():
+            existing_keys.setdefault(key.strip().casefold(), []).append(key)
+
+    local_groups: dict[str, list[tuple[str, object]]] = {}
+    for key, snapshot in local.items():
+        if isinstance(key, str) and key.strip():
+            local_groups.setdefault(key.strip().casefold(), []).append((key, snapshot))
+
+    # Sorting makes output stable for independent map insertion order. If the
+    # local map has multiple spellings of one canonical key, reject that group
+    # rather than letting iteration order choose the quote.
+    for canonical_key in sorted(local_groups):
+        entries = local_groups[canonical_key]
+        if len(entries) != 1:
+            continue
+        local_key, snapshot = entries[0]
+        if not isinstance(snapshot, Mapping):
+            continue
+        if not isinstance(snapshot.get("current"), bool):
+            continue
+        if snapshot.get("freshness") not in {"current", "stale"}:
+            continue
+
+        source_ts = _aware_match_odds_timestamp(snapshot.get("source_ts"))
+        odds_ts = _aware_match_odds_timestamp(snapshot.get("odds_ts"))
+        captured_at = _aware_match_odds_timestamp(snapshot.get("captured_at"))
+        if (
+            source_ts is None
+            or odds_ts is None
+            or captured_at is None
+            or source_ts > captured_at
+            or source_ts > odds_ts
+            or (
+                str(snapshot.get("sport", "")).casefold() == "tennis"
+                and source_ts != odds_ts
+            )
+            or odds_ts > captured_at
+            or source_ts > now
+            or odds_ts > now
+            or captured_at > now
+        ):
+            continue
+
+        if local_key not in public_local:
+            continue
+
+        matches = existing_keys.get(canonical_key, [])
+        if len(matches) > 1:
+            continue
+        target_key = matches[0] if matches else local_key.strip()
+        current = merged.get(target_key)
+        current_source_ts = (
+            _aware_match_odds_timestamp(current.get("source_ts"))
+            if isinstance(current, Mapping) and current.get("source_ts")
+            else None
+        )
+        current_timestamp = current_source_ts or (
+            _aware_match_odds_timestamp(current.get("odds_ts"))
+            if isinstance(current, Mapping)
+            else None
+        )
+        if (
+            current_timestamp is not None
+            and current_timestamp <= now
+            and current_timestamp >= source_ts
+        ):
+            continue
+
+        # Keep the original sidecar record for private Worker consumers; the
+        # canonical public serializer strips private fields and re-derives
+        # current/stale status at the publication boundary.
+        merged[target_key] = dict(snapshot)
+
+    return merged
+
+
 def write_signals_json(
     football: list[BetSignal] | None = None,
     tennis: list[BetSignal] | None = None,
@@ -1338,7 +1455,9 @@ def write_signals_json(
         },
         "schedule":       schedule_data,
         "all_odds":       all_odds_data,
-        "current_match_odds": load_current_match_odds(),
+        "current_match_odds": _merge_current_match_odds(
+            existing.get("current_match_odds"), load_current_match_odds()
+        ),
         "model_tips":     model_tips_data,
         "model_evals":    model_evals_data,
         "football":       football_data,
