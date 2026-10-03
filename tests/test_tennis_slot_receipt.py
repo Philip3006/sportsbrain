@@ -58,14 +58,41 @@ def test_completed_receipt_blocks_late_native_run(tmp_path) -> None:
     assert receipt["provider_consuming_execution"] is True
 
 
-def test_pre_provider_failure_allows_one_explicit_same_slot_retry(tmp_path) -> None:
+def test_pre_provider_failure_is_terminal_and_never_retried(tmp_path) -> None:
     slot = "tennis-scan:2026-10-03T12:00Z"
     claim_slot(slot, "watchdog_recovery", "run-1", root=tmp_path)
     mark_pre_provider_failed(slot, root=tmp_path)
-    retry = claim_slot(slot, "watchdog_recovery_retry", "run-2", root=tmp_path)
-    assert retry["action"] == "run"
+    retry = claim_slot(slot, "watchdog_recovery", "run-2", root=tmp_path)
+    assert retry["action"] == "noop"
     receipt = json.loads(receipt_path(slot, tmp_path).read_text())
-    assert receipt["status"] == "CLAIMED"
+    assert receipt["status"] == "PRE_PROVIDER_FAILED"
+
+
+@pytest.mark.parametrize("status", ["CLAIMED", "COMPLETED"])
+def test_authoritative_current_main_receipt_blocks_stale_local_claim(tmp_path, status) -> None:
+    slot = "tennis-scan:2026-10-03T12:00Z"
+    result = claim_slot(
+        slot,
+        "native_schedule",
+        "run-stale",
+        authoritative_receipt={"expected_slot": slot, "status": status},
+        root=tmp_path,
+    )
+    assert result["action"] == "noop"
+    assert not receipt_path(slot, tmp_path).exists()
+
+
+def test_first_claim_runs_when_local_and_authoritative_receipts_are_absent(tmp_path) -> None:
+    slot = "tennis-scan:2026-10-03T12:00Z"
+    result = claim_slot(slot, "native_schedule", "run-first", root=tmp_path)
+    assert result["action"] == "run"
+
+
+def test_unrelated_authoritative_slot_does_not_block_claim(tmp_path) -> None:
+    slot = "tennis-scan:2026-10-03T12:00Z"
+    claim_slot("tennis-scan:2026-10-03T09:00Z", "native_schedule", "run-other", root=tmp_path)
+    result = claim_slot(slot, "native_schedule", "run-first", root=tmp_path)
+    assert result["action"] == "run"
 
 
 def test_invalid_slot_is_rejected(tmp_path) -> None:

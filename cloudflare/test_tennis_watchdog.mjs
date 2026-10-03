@@ -87,7 +87,10 @@ reset(async (url) => {
   const env = makeEnv();
   await worker.scheduled({ cron: '*/5 * * * *', scheduledTime: NOW }, env);
   assert.equal(fetchCalls.filter((call) => call.url.includes('/dispatches')).length, 0, 'in-flight native run must no-op');
-  assert.equal(JSON.parse(env._store.get('tennis_scan_watchdog_v1')).last_action, 'in_flight');
+  const state = JSON.parse(env._store.get('tennis_scan_watchdog_v1'));
+  assert.equal(state.last_action, 'unbound_temporal_in_flight_fail_closed');
+  assert.equal(state.native_run_observed, false);
+  assert.equal(state.native_run_canonical_slot_bound, false);
 }
 
 reset(async (url) => {
@@ -113,6 +116,31 @@ reset(async () => { throw new Error('dispatch must not be retried'); });
   } });
   await worker.scheduled({ cron: '*/5 * * * *', scheduledTime: NOW }, env);
   assert.equal(fetchCalls.length, 1, 'one receipt check only after dispatch marker');
+}
+
+for (const failure of ['throw', 'http']) {
+  let dispatchAttempts = 0;
+  reset(async (url) => {
+    if (url.includes('/contents/results/tennis_scan_slots/')) return new Response('', { status: 404 });
+    if (url.includes('/actions/workflows/tennis_scan.yml/runs')) {
+      return new Response(JSON.stringify({ workflow_runs: [], total_count: 0 }), { status: 200 });
+    }
+    if (url.includes('/actions/workflows/tennis_scan.yml/dispatches')) {
+      dispatchAttempts += 1;
+      if (failure === 'throw') throw new TypeError('simulated dispatch timeout');
+      return new Response(JSON.stringify({ message: 'simulated failure' }), { status: 502 });
+    }
+    throw new Error('unexpected GitHub call');
+  });
+  const env = makeEnv();
+  await worker.scheduled({ cron: '*/5 * * * *', scheduledTime: NOW }, env);
+  await worker.scheduled({ cron: '*/5 * * * *', scheduledTime: NOW }, env);
+  assert.equal(dispatchAttempts, 1, `${failure} after durable marker must not retry`);
+  const state = JSON.parse(env._store.get('tennis_scan_watchdog_v1'));
+  assert.equal(state.slots[SLOT].dispatch_count, 1);
+  assert.equal(state.slots[SLOT].state, 'dispatch_outcome_unknown');
+  assert.equal(state.last_action, 'dispatch_outcome_unknown_no_retry');
+  assert.equal(state.dispatch_outcome_unknown, true);
 }
 
 {

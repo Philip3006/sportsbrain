@@ -131,9 +131,14 @@ Only a definitively missing slot may receive one recovery
 `workflow_dispatch` for `tennis_scan.yml`, carrying the same canonical
 `expected_slot` (`tennis-scan:YYYY-MM-DDTHH:MMZ`) and `recovery=true`.
 Unavailable or ambiguous GitHub evidence causes no dispatch. The workflow
-claims the slot before provider-consuming work; a completed receipt makes a
-late native event a no-op. The authenticated read-only status is available at
-`GET /scheduler/tennis`.
+reads the receipt from authoritative current `main` immediately before it can
+claim a scheduled/recovery slot; a stale checkout cannot erase a `CLAIMED`,
+`COMPLETED`, or other terminal receipt. The one-shot recovery marker is
+durable before dispatch and an uncertain dispatch outcome is never retried
+automatically. A completed receipt makes a late native event a no-op. Existing
+manual `workflow_dispatch` runs, including `all_live`, remain an explicit
+`operator_manual` path and are not counted as scheduled-slot evidence. The
+authenticated read-only status is available at `GET /scheduler/tennis`.
 
 The Worker secret `GH_TOKEN` must have only the minimum repository-scoped
 GitHub permissions needed for this control plane: `actions:write` to dispatch

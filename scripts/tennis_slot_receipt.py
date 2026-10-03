@@ -89,20 +89,25 @@ def claim_slot(
     trigger_type: str,
     run_id: str,
     *,
+    authoritative_receipt: dict[str, Any] | None = None,
     now: datetime | None = None,
     root: Path = ROOT,
 ) -> dict[str, Any]:
     canonical = validate_slot(slot)
-    if trigger_type not in {"native_schedule", "watchdog_recovery", "watchdog_recovery_retry"}:
+    if trigger_type not in {"native_schedule", "watchdog_recovery"}:
         raise ValueError("invalid trigger_type")
+    if authoritative_receipt is not None:
+        if not isinstance(authoritative_receipt, dict) or authoritative_receipt.get("expected_slot") != canonical:
+            raise ValueError("authoritative slot receipt binding invalid")
+        return {
+            "action": "noop",
+            "reason": "authoritative_slot_receipt_exists",
+            "receipt_path": str(receipt_path(canonical, root)),
+        }
     path = receipt_path(canonical, root)
     existing = load_receipt(path)
     if existing is not None:
-        status = existing.get("status")
-        if status == "PRE_PROVIDER_FAILED" and not existing.get("provider_consuming_execution", True):
-            action = "run"
-        else:
-            return {"action": "noop", "reason": "slot_receipt_exists", "receipt_path": str(path)}
+        return {"action": "noop", "reason": "slot_receipt_exists", "receipt_path": str(path)}
     else:
         action = "run"
 
@@ -173,6 +178,7 @@ def main(argv: list[str] | None = None) -> int:
     claim.add_argument("--expected-slot", required=True)
     claim.add_argument("--trigger-type", required=True)
     claim.add_argument("--run-id", required=True)
+    claim.add_argument("--authoritative-receipt-json")
 
     for name in ("complete", "pre-provider-failed"):
         command = sub.add_parser(name)
@@ -183,7 +189,15 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "derive":
             print(derive_expected_slot(args.schedule, _utc(args.now) if args.now else None))
         elif args.command == "claim":
-            print(json.dumps(claim_slot(args.expected_slot, args.trigger_type, args.run_id)))
+            authoritative = None
+            if args.authoritative_receipt_json:
+                authoritative = json.loads(Path(args.authoritative_receipt_json).read_text(encoding="utf-8"))
+            print(json.dumps(claim_slot(
+                args.expected_slot,
+                args.trigger_type,
+                args.run_id,
+                authoritative_receipt=authoritative,
+            )))
         elif args.command == "complete":
             print(json.dumps(complete_slot(args.expected_slot)))
         else:

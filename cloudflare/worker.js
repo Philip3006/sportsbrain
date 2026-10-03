@@ -1320,7 +1320,11 @@ function _nativeRunEvidence(runs, slotMs, nowMs) {
   if (!observed.length) return null;
   const active = observed.some((run) => ['queued', 'in_progress', 'waiting', 'requested'].includes(run.status));
   return {
-    state: active ? 'in_flight' : 'run_observed_without_receipt',
+    // The Actions API does not bind a scheduled run to a particular cron
+    // expression/nominal slot. Temporal proximity is therefore evidence of a
+    // nearby run only, never proof that this slot was executed.
+    state: active ? 'unbound_temporal_in_flight' : 'unbound_temporal_run_observed',
+    canonical_slot_bound: false,
     count: observed.length,
   };
 }
@@ -1398,6 +1402,7 @@ async function _cronTennisWatchdog(env, scheduledTime) {
     return;
   }
   const repo = env.GH_REPO || _GH_REPO_DEFAULT;
+  let dispatchMarkerCommitted = false;
 
   try {
     const receipt = await _readTennisSlotReceipt(token, repo, slot);
@@ -1415,17 +1420,32 @@ async function _cronTennisWatchdog(env, scheduledTime) {
       });
       return;
     }
-    if (receipt && receipt.status !== 'PRE_PROVIDER_FAILED') throw new Error('receipt_state_ambiguous');
+    if (receipt && receipt.status === 'PRE_PROVIDER_FAILED') {
+      state.slots[slot] = { ...slotState, state: 'pre_provider_failed', dispatch_count: slotState.dispatch_count || 0 };
+      await _recordWatchdogState(env, state, {
+        watchdog_healthy: true,
+        last_action: 'receipt_pre_provider_failed_no_retry',
+        grace_period_seconds: _TENNIS_WATCHDOG_GRACE_MS / 1000,
+        grace_elapsed: true,
+        recovery_required: false,
+        recovery_dispatched: slotState.dispatch_count > 0,
+        failure_class: null,
+      });
+      return;
+    }
+    if (receipt) throw new Error('receipt_state_ambiguous');
 
     const runs = await _listTennisScheduleRuns(token, repo);
     const runEvidence = _nativeRunEvidence(runs, slotMs, nowMs);
     if (runEvidence) {
-      state.slots[slot] = { ...slotState, state: 'ambiguous', dispatch_count: slotState.dispatch_count || 0 };
+      state.slots[slot] = { ...slotState, state: 'unbound_temporal_ambiguous', dispatch_count: slotState.dispatch_count || 0 };
       await _recordWatchdogState(env, state, {
         watchdog_healthy: true,
-        last_action: runEvidence.state,
+        last_action: `${runEvidence.state}_fail_closed`,
         native_run_count: runEvidence.count,
-        native_run_observed: true,
+        native_run_observed: false,
+        native_run_evidence: 'unbound_temporal',
+        native_run_canonical_slot_bound: false,
         grace_period_seconds: _TENNIS_WATCHDOG_GRACE_MS / 1000,
         grace_elapsed: true,
         recovery_required: false,
@@ -1435,14 +1455,16 @@ async function _cronTennisWatchdog(env, scheduledTime) {
       return;
     }
     if (slotState.dispatch_count > 0) {
+      const dispatchOutcomeUnknown = slotState.state === 'dispatch_outcome_unknown';
       await _recordWatchdogState(env, state, {
-        watchdog_healthy: true,
-        last_action: 'recovery_already_dispatched',
+        watchdog_healthy: !dispatchOutcomeUnknown,
+        last_action: dispatchOutcomeUnknown ? 'dispatch_outcome_unknown_no_retry' : 'recovery_already_dispatched',
         grace_period_seconds: _TENNIS_WATCHDOG_GRACE_MS / 1000,
         grace_elapsed: true,
         recovery_required: true,
         recovery_dispatched: true,
-        failure_class: null,
+        dispatch_outcome_unknown: dispatchOutcomeUnknown,
+        failure_class: dispatchOutcomeUnknown ? 'recovery_dispatch_outcome_unknown' : null,
       });
       return;
     }
@@ -1455,6 +1477,7 @@ async function _cronTennisWatchdog(env, scheduledTime) {
       dispatch_requested_at: new Date().toISOString(),
     };
     await _persistWatchdogState(env, state);
+    dispatchMarkerCommitted = true;
     const dispatchUrl = `https://api.github.com/repos/${repo}/actions/workflows/${_TENNIS_SCAN_WORKFLOW}/dispatches`;
     const response = await fetch(dispatchUrl, {
       method: 'POST',
@@ -1473,20 +1496,22 @@ async function _cronTennisWatchdog(env, scheduledTime) {
       failure_class: null,
     });
   } catch (error) {
+    const attempted = dispatchMarkerCommitted || Number(state.slots[slot]?.dispatch_count) > 0;
     state.slots[slot] = {
-      ...slotState,
-      state: 'ambiguous_or_dispatch_failed',
-      dispatch_count: slotState.dispatch_count || 0,
+      ...(attempted ? state.slots[slot] : slotState),
+      state: attempted ? 'dispatch_outcome_unknown' : 'ambiguous_or_dispatch_failed',
+      dispatch_count: attempted ? 1 : (slotState.dispatch_count || 0),
     };
     await _recordWatchdogState(env, state, {
       watchdog_healthy: false,
-      last_action: 'fail_closed_no_dispatch',
+      last_action: attempted ? 'dispatch_outcome_unknown_no_retry' : 'fail_closed_no_dispatch',
       grace_period_seconds: _TENNIS_WATCHDOG_GRACE_MS / 1000,
       grace_elapsed: true,
       recovery_required: true,
-      recovery_dispatched: slotState.dispatch_count > 0,
-      failure_class: error?.message?.startsWith('github_recovery_dispatch_http_')
-        ? 'recovery_dispatch_failed' : 'github_state_unavailable_or_ambiguous',
+      recovery_dispatched: attempted,
+      dispatch_outcome_unknown: attempted,
+      failure_class: attempted && error?.message?.startsWith('github_recovery_dispatch_http_')
+        ? 'recovery_dispatch_failed' : (attempted ? 'recovery_dispatch_outcome_unknown' : 'github_state_unavailable_or_ambiguous'),
     });
   }
 }
