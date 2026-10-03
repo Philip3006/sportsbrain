@@ -1369,6 +1369,10 @@ async function _cronTennisWatchdog(env, scheduledTime) {
       watchdog_healthy: true,
       last_evaluated_slot: null,
       last_action: 'no_due_slot',
+      grace_period_seconds: _TENNIS_WATCHDOG_GRACE_MS / 1000,
+      grace_elapsed: false,
+      recovery_required: false,
+      recovery_dispatched: false,
       failure_class: null,
     });
     return;
@@ -1385,6 +1389,10 @@ async function _cronTennisWatchdog(env, scheduledTime) {
     await _recordWatchdogState(env, state, {
       watchdog_healthy: false,
       last_action: 'fail_closed_missing_dispatch_credential',
+      grace_period_seconds: _TENNIS_WATCHDOG_GRACE_MS / 1000,
+      grace_elapsed: true,
+      recovery_required: true,
+      recovery_dispatched: false,
       failure_class: 'watchdog_credential_missing',
     });
     return;
@@ -1398,6 +1406,11 @@ async function _cronTennisWatchdog(env, scheduledTime) {
       await _recordWatchdogState(env, state, {
         watchdog_healthy: true,
         last_action: `receipt_${receipt.status.toLowerCase()}`,
+        last_successful_slot: receipt.status === 'COMPLETED' ? slot : state.last_successful_slot || null,
+        grace_period_seconds: _TENNIS_WATCHDOG_GRACE_MS / 1000,
+        grace_elapsed: true,
+        recovery_required: false,
+        recovery_dispatched: slotState.dispatch_count > 0,
         failure_class: null,
       });
       return;
@@ -1412,6 +1425,11 @@ async function _cronTennisWatchdog(env, scheduledTime) {
         watchdog_healthy: true,
         last_action: runEvidence.state,
         native_run_count: runEvidence.count,
+        native_run_observed: true,
+        grace_period_seconds: _TENNIS_WATCHDOG_GRACE_MS / 1000,
+        grace_elapsed: true,
+        recovery_required: false,
+        recovery_dispatched: false,
         failure_class: null,
       });
       return;
@@ -1420,6 +1438,10 @@ async function _cronTennisWatchdog(env, scheduledTime) {
       await _recordWatchdogState(env, state, {
         watchdog_healthy: true,
         last_action: 'recovery_already_dispatched',
+        grace_period_seconds: _TENNIS_WATCHDOG_GRACE_MS / 1000,
+        grace_elapsed: true,
+        recovery_required: true,
+        recovery_dispatched: true,
         failure_class: null,
       });
       return;
@@ -1444,6 +1466,10 @@ async function _cronTennisWatchdog(env, scheduledTime) {
     await _recordWatchdogState(env, state, {
       watchdog_healthy: true,
       last_action: 'recovery_dispatched',
+      grace_period_seconds: _TENNIS_WATCHDOG_GRACE_MS / 1000,
+      grace_elapsed: true,
+      recovery_required: true,
+      recovery_dispatched: true,
       failure_class: null,
     });
   } catch (error) {
@@ -1455,6 +1481,10 @@ async function _cronTennisWatchdog(env, scheduledTime) {
     await _recordWatchdogState(env, state, {
       watchdog_healthy: false,
       last_action: 'fail_closed_no_dispatch',
+      grace_period_seconds: _TENNIS_WATCHDOG_GRACE_MS / 1000,
+      grace_elapsed: true,
+      recovery_required: true,
+      recovery_dispatched: slotState.dispatch_count > 0,
       failure_class: error?.message?.startsWith('github_recovery_dispatch_http_')
         ? 'recovery_dispatch_failed' : 'github_state_unavailable_or_ambiguous',
     });
