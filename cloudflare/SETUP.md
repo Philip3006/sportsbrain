@@ -143,9 +143,12 @@ authenticated read-only status is available at `GET /scheduler/tennis`.
 The watchdog queries the newest 100 scheduled runs. A full page is considered
 complete for a slot only when its oldest `created_at` is at or before that
 slot; otherwise the history is treated as truncated and recovery fails closed.
-Shorter pages are complete only when GitHub's returned count is internally
-consistent. This avoids scanning the entire historical Actions archive while
-preventing an incomplete page from authorizing a recovery dispatch.
+Shorter pages are complete only when `total_count` exactly equals the returned
+run count. A short page with a larger reported total is treated as truncated
+and cannot authorize a recovery dispatch. Pages larger than 100, invalid counts,
+and invalid run timestamps also fail closed. This avoids scanning the entire
+historical Actions archive while preventing an incomplete page from authorizing
+a recovery dispatch.
 
 The Worker secret `GH_TOKEN` must have only the minimum repository-scoped
 GitHub permissions needed for this control plane: `actions:write` to dispatch

@@ -1308,12 +1308,16 @@ async function _listTennisScheduleRuns(token, repo, targetSlotMs) {
   const url = `https://api.github.com/repos/${repo}/actions/workflows/${_TENNIS_SCAN_WORKFLOW}/runs?event=schedule&per_page=100`;
   const body = await _readGithubJson(token, url);
   if (!body || !Array.isArray(body.workflow_runs)) throw new Error('github_runs_shape_invalid');
-  const totalCount = Number(body.total_count);
-  if (!Number.isInteger(totalCount) || totalCount < body.workflow_runs.length) {
+  const totalCount = body.total_count;
+  const returnedCount = body.workflow_runs.length;
+  if (!Number.isInteger(totalCount) || totalCount < returnedCount) {
     throw new Error('github_runs_count_invalid');
   }
-  if (totalCount > 0 && body.workflow_runs.length === 0) {
-    throw new Error('github_runs_page_empty');
+  if (returnedCount > 100) {
+    throw new Error('github_runs_page_oversized');
+  }
+  if (returnedCount < 100 && totalCount !== returnedCount) {
+    throw new Error('github_runs_short_page_incomplete');
   }
   const createdTimes = body.workflow_runs.map((run) => Date.parse(run?.created_at || ''));
   if (createdTimes.some((createdMs) => !Number.isFinite(createdMs))) {

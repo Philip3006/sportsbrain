@@ -139,7 +139,6 @@ jobs:
           fi
 
           CLAIM_ARGS=(
-            claim
             --expected-slot "$EXPECTED_SLOT"
             --trigger-type "$TRIGGER_TYPE"
             --run-id "${GITHUB_RUN_ID:-unknown}"
