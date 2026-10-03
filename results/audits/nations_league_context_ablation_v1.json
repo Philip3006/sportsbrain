@@ -1,0 +1,2411 @@
+{
+  "activation_changed": false,
+  "b4_field_status_allowlist": [
+    "SAFE_EXACT",
+    "SAFE_BOUND"
+  ],
+  "b4_ready_integrity_validation_passed": true,
+  "baseline": {
+    "accuracy_argmax": 0.48326359832635984,
+    "away_calibration": {
+      "absolute_calibration_gap": 0.04020158784338679,
+      "brier_one_vs_rest": 0.20307204632483158,
+      "mean_probability": 0.36237732006096,
+      "observed_frequency": 0.32217573221757323
+    },
+    "coverage_count": 478,
+    "draw_calibration": {
+      "absolute_calibration_gap": 0.01650670392839615,
+      "brier_one_vs_rest": 0.191803675789332,
+      "mean_probability": 0.2696447792422037,
+      "observed_frequency": 0.25313807531380755
+    },
+    "ece_10_bin_macro_ovr": 0.05500970403080969,
+    "home_calibration": {
+      "absolute_calibration_gap": 0.05670829177178299,
+      "brier_one_vs_rest": 0.21594485413737827,
+      "mean_probability": 0.3679779006968363,
+      "observed_frequency": 0.4246861924686193
+    },
+    "multiclass_brier": 0.6108205762515417,
+    "multiclass_log_loss": 1.0203441788418808,
+    "sharpness_mean_max_probability": 0.5131458813023888
+  },
+  "baseline_plus_context": {
+    "accuracy_argmax": 0.44142259414225943,
+    "away_calibration": {
+      "absolute_calibration_gap": 0.001961051213404341,
+      "brier_one_vs_rest": 0.2324961177681301,
+      "mean_probability": 0.3202146810041689,
+      "observed_frequency": 0.32217573221757323
+    },
+    "coverage_count": 478,
+    "draw_calibration": {
+      "absolute_calibration_gap": 0.015828593480826103,
+      "brier_one_vs_rest": 0.233423737267726,
+      "mean_probability": 0.26896666879463366,
+      "observed_frequency": 0.25313807531380755
+    },
+    "ece_10_bin_macro_ovr": 0.16404704614288937,
+    "home_calibration": {
+      "absolute_calibration_gap": 0.013867542267421817,
+      "brier_one_vs_rest": 0.26444783321337817,
+      "mean_probability": 0.41081865020119746,
+      "observed_frequency": 0.4246861924686193
+    },
+    "multiclass_brier": 0.7303676882492343,
+    "multiclass_log_loss": 1.3611384306885852,
+    "sharpness_mean_max_probability": 0.668603009328861
+  },
+  "betting_or_ledger_changed": false,
+  "causal_gbt_comparison": "not_run_no_certified_row_level_forecasts",
+  "classification_reason": "material_log_loss_or_calibration_regression",
+  "context_feature_non_null_counts": {
+    "away_goal_difference_before": 512,
+    "away_goals_against_before": 512,
+    "away_goals_for_before": 512,
+    "away_matches_played_before": 512,
+    "away_points_before": 512,
+    "away_points_bound_promotion_possible": 330,
+    "away_points_bound_relegation_possible": 282,
+    "away_points_per_game_before": 430,
+    "away_remaining_games_before": 512,
+    "away_table_position_max": 272,
+    "away_table_position_min": 272,
+    "away_table_position_tied": 512,
+    "group": 474,
+    "home_goal_difference_before": 512,
+    "home_goals_against_before": 512,
+    "home_goals_for_before": 512,
+    "home_matches_played_before": 512,
+    "home_points_before": 512,
+    "home_points_bound_promotion_possible": 330,
+    "home_points_bound_relegation_possible": 282,
+    "home_points_per_game_before": 431,
+    "home_remaining_games_before": 512,
+    "home_table_position_max": 282,
+    "home_table_position_min": 282,
+    "home_table_position_tied": 512,
+    "league_tier": 512,
+    "points_diff_home_minus_away": 512
+  },
+  "context_features": {
+    "categorical": [
+      "league_tier",
+      "group"
+    ],
+    "numeric": [
+      "home_matches_played_before",
+      "away_matches_played_before",
+      "home_points_before",
+      "away_points_before",
+      "points_diff_home_minus_away",
+      "home_goals_for_before",
+      "away_goals_for_before",
+      "home_goals_against_before",
+      "away_goals_against_before",
+      "home_goal_difference_before",
+      "away_goal_difference_before",
+      "home_points_per_game_before",
+      "away_points_per_game_before",
+      "home_remaining_games_before",
+      "away_remaining_games_before",
+      "home_table_position_min",
+      "home_table_position_max",
+      "away_table_position_min",
+      "away_table_position_max",
+      "home_table_position_tied",
+      "away_table_position_tied",
+      "home_points_bound_promotion_possible",
+      "away_points_bound_promotion_possible",
+      "home_points_bound_relegation_possible",
+      "away_points_bound_relegation_possible"
+    ]
+  },
+  "coverage": 0.9372549019607843,
+  "eligible_fixtures": 510,
+  "excluded_features": {
+    "NOT_APPLICABLE_fields": "not encoded as predictive categories or outcomes; treated as unavailable",
+    "UNRESOLVED_fields": "not encoded as predictive categories or outcomes; treated as unavailable",
+    "article_15_tiebreak_outputs": "unresolved or missing source inputs",
+    "c_league_relegation_allocation": "edition-specific allocation unresolved",
+    "causal_gbt": "no certified row-level causal GBT forecast artifact supplied on current main or #216",
+    "disciplinary_and_access_list_tiebreaks": "no source data in the B4 artifact",
+    "exact_must_win_and_qualification_labels": "UNRESOLVED under the final B4 field-status contract",
+    "inferred_matchday": "not present in #215 timeline evidence; never inferred",
+    "official_uefa_fixture_ids": "unavailable and not a predictive feature",
+    "subjective_motivation": "not defined or used"
+  },
+  "fixture_coverage": {
+    "administratively_decided_fixture_ids_excluded": [
+      "uefa-nl:63f926e0ced3f284c077ee10",
+      "uefa-nl:c07e17c2e1a35c4b056be0aa"
+    ],
+    "administratively_decided_outcomes_excluded": 2,
+    "canonical_b4_identities": 512,
+    "context_available_fixtures": 510,
+    "edition_counts_evaluated": {
+      "2020/21": 165,
+      "2022/23": 162,
+      "2024/25": 183
+    },
+    "edition_counts_source": {
+      "2020/21": 166,
+      "2022/23": 162,
+      "2024/25": 184
+    },
+    "exact_causal_kickoff_cutoffs": 512,
+    "local_result_identity_matches": 512,
+    "played_fixtures_in_primary_evaluation": 510,
+    "raw_causal_baseline_forecasts": 510,
+    "verified_kickoffs": 512
+  },
+  "fixtures_evaluated": 478,
+  "gates": {
+    "brier_improved": false,
+    "class_calibration_not_relevantly_worse": true,
+    "ece_not_relevantly_worse": false,
+    "gain_not_confined_to_small_stratum": false,
+    "log_loss_not_relevantly_worse": false,
+    "minimum_evaluation_coverage": true,
+    "paired_full_cohort": true
+  },
+  "global_claim_basis": "full_paired_out_of_sample_fixture_cohort_only",
+  "included_features": {
+    "categorical": [
+      "league_tier",
+      "group"
+    ],
+    "numeric": [
+      "home_matches_played_before",
+      "away_matches_played_before",
+      "home_points_before",
+      "away_points_before",
+      "points_diff_home_minus_away",
+      "home_goals_for_before",
+      "away_goals_for_before",
+      "home_goals_against_before",
+      "away_goals_against_before",
+      "home_goal_difference_before",
+      "away_goal_difference_before",
+      "home_points_per_game_before",
+      "away_points_per_game_before",
+      "home_remaining_games_before",
+      "away_remaining_games_before",
+      "home_table_position_min",
+      "home_table_position_max",
+      "away_table_position_min",
+      "away_table_position_max",
+      "home_table_position_tied",
+      "away_table_position_tied",
+      "home_points_bound_promotion_possible",
+      "away_points_bound_promotion_possible",
+      "home_points_bound_relegation_possible",
+      "away_points_bound_relegation_possible"
+    ]
+  },
+  "interpretation": "research_only_no_production_hook",
+  "outcome_label_policy": {
+    "administrative_outcomes": "excluded from scoring and DC training because no played-match result-safe timestamp exists",
+    "excluded_fixture_ids": [
+      "uefa-nl:63f926e0ced3f284c077ee10",
+      "uefa-nl:c07e17c2e1a35c4b056be0aa"
+    ],
+    "primary_evaluation": "played/completed-result fixtures only"
+  },
+  "paired_date_cluster_bootstrap": {
+    "brier_context_minus_baseline": {
+      "bootstrap_replicates": 2000,
+      "lower_95": 0.0770577254549604,
+      "upper_95": 0.16412626973404085
+    },
+    "confidence_level": 0.95,
+    "log_loss_context_minus_baseline": {
+      "bootstrap_replicates": 2000,
+      "lower_95": 0.21710300369198413,
+      "upper_95": 0.47775014836063906
+    },
+    "method": "paired date-cluster bootstrap, resampled within edition",
+    "seed": 20260929,
+    "status": "computed"
+  },
+  "paired_difference_context_minus_baseline": {
+    "away_absolute_calibration_gap": -0.03824053662998245,
+    "draw_absolute_calibration_gap": -0.0006781104475700461,
+    "ece_10_bin_macro_ovr": 0.10903734211207969,
+    "home_absolute_calibration_gap": -0.042840749504361175,
+    "accuracy_argmax": -0.04184100418410042,
+    "multiclass_brier": 0.11954711199769252,
+    "multiclass_log_loss": 0.3407942518467044,
+    "sharpness_mean_max_probability": 0.15545712802647216
+  },
+  "production_hook": false,
+  "provenance": {
+    "b4_artifact_status": "NL_COMPETITION_STATE_READY",
+    "b4_coverage_digest": "04f86e1b8c5a1ec2f43dcb59c9d692060cba189683502ee896eaef41a5ecf298",
+    "b4_coverage_file_sha256": "4af0df1012b4e4ae1a0f1cac091995c7270098ddf7df53c5d8bc65915c50eb45",
+    "b4_timeline_artifact_file_sha256": "cc6db137a7599f572a5aa3118807fa7cf71a53ed194b894422fb30596bc2bfa4",
+    "b4_timeline_artifact_path": "results/research/nations_league_fixture_timeline_v1.json",
+    "b4_timeline_dataset_sha256": "2c60c6b823b0cae948947fffe2a0e3456495c1fc5d510379ae95690e1c3fa6ef",
+    "baseline_forecast_coverage": 510,
+    "baseline_method": "existing causal event-level Dixon-Coles walk-forward",
+    "baseline_source_sha256": "6b47d79b84891306d8bb2ce4c0abec810b11818c6e4c3fad9fa2415c228b7f2d",
+    "competition_state_artifact_file_sha256": "80fff7df3d7e3319e66f6c10b9d6ec810c1882d8aadcd02815284f60be91207b",
+    "competition_state_artifact_path": "results/research/nations_league_competition_state_v1.json",
+    "competition_state_dataset_sha256": "26c80331d248bb4918bab1624e044c5d3476dabeead5f1825ac7e3e3dccaafb0",
+    "competition_state_source_pr": 215,
+    "competition_state_source_sha": "eb6b2d85a3c119afeeabc0e0b3fe88ffc3295394",
+    "historical_fixture_identity_coverage": 512,
+    "identity_only_alias_matches": 20,
+    "identity_only_team_aliases": {
+      "Turkey": "T\u00fcrkiye"
+    },
+    "source_main_sha": "eb09e8c0b5fb6087c69820129212665bfec57d71"
+  },
+  "previous_result_comparison": {
+    "previous_pr_head": "aec24ae0237a7838722819a0c6d187ef5bb7c82f",
+    "previous_audit_sha256": "2ab44455a85f2021b24ae67efa22254305b3d159cce7ff4eba12424066b04680",
+    "previous_b4_source_sha": "037eb99148a39d57bd4aa09624ddc4841403d2b1",
+    "previous_b4_dataset_digest": "354d5c542f0646bf0914b17a1361f4d5723db2b1f117f6d6375a8579c44b7edf",
+    "previous_b4_coverage_digest": "11f415e9f1964c3d034055bb62f49e0e78b46ebdc3bb9e09745a545ede441333",
+    "previous_paired_fixture_count": 478,
+    "current_paired_fixture_count": 478,
+    "paired_fixture_count_unchanged": true,
+    "predictive_features_compared": 27,
+    "source_projection_fixture_count_compared": 512,
+    "changed_fixture_count": 0,
+    "changed_feature_values_by_feature": {},
+    "global_metrics_reproduced_exactly": true,
+    "previous_baseline_brier": 0.6108205762515417,
+    "previous_context_brier": 0.7303676882492343,
+    "previous_brier_difference": 0.11954711199769252,
+    "previous_baseline_log_loss": 1.0203441788418808,
+    "previous_context_log_loss": 1.3611384306885852,
+    "previous_log_loss_difference": 0.3407942518467044,
+    "previous_brier_difference_ci95": [
+      0.0770577254549604,
+      0.16412626973404085
+    ],
+    "previous_log_loss_difference_ci95": [
+      0.21710300369198413,
+      0.47775014836063906
+    ],
+    "explanation": "The final READY artifact adds an explicit per-record field-status contract. After admitting only SAFE_EXACT and SAFE_BOUND values, the selected predictive feature projection is identical to the previous 512-fixture projection; thus the paired OOS set and global metrics reproduce exactly."
+  },
+  "publication_changed": false,
+  "raw_causal_baseline_forecast_metrics_oos": {
+    "accuracy_argmax": 0.49581589958158995,
+    "away_calibration": {
+      "absolute_calibration_gap": 0.011811391083932532,
+      "brier_one_vs_rest": 0.1979229604218273,
+      "mean_probability": 0.3103643411336407,
+      "observed_frequency": 0.32217573221757323
+    },
+    "coverage_count": 478,
+    "draw_calibration": {
+      "absolute_calibration_gap": 0.012757456846123783,
+      "brier_one_vs_rest": 0.18887120472416533,
+      "mean_probability": 0.26589553215993134,
+      "observed_frequency": 0.25313807531380755
+    },
+    "ece_10_bin_macro_ovr": 0.05035334561818838,
+    "home_calibration": {
+      "absolute_calibration_gap": 0.000946065762191195,
+      "brier_one_vs_rest": 0.21395518738868013,
+      "mean_probability": 0.4237401267064281,
+      "observed_frequency": 0.4246861924686193
+    },
+    "multiclass_brier": 0.6007493525346727,
+    "multiclass_log_loss": 1.0069784462678064,
+    "sharpness_mean_max_probability": 0.5643735699068331
+  },
+  "schema": "nations-league-safe-context-ablation-audit-v1",
+  "small_stratum_sensitivity": {
+    "checks": [
+      {
+        "brier_gain_remains": false,
+        "partition": "league_tier",
+        "remaining_fixtures": 460,
+        "small_categories_removed": [
+          "C/D",
+          "C/B",
+          "B/A",
+          "B/C",
+          "A/B"
+        ]
+      }
+    ],
+    "method": "remove all below-minimum categories per partition; verify full-cohort Brier direction remains",
+    "small_stratum_only_uplift": true
+  },
+  "stacker_recommendation": "Do not include as a stacker candidate based on this result; no supported safe-context gain was established.",
+  "status": "NL_SAFE_CONTEXT_REGRESSION",
+  "strata": {
+    "edition": {
+      "2020/21": {
+        "baseline": {
+          "accuracy_argmax": 0.37593984962406013,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.10896241354108843,
+            "brier_one_vs_rest": 0.2297260602814157,
+            "mean_probability": 0.40971429324033654,
+            "observed_frequency": 0.3007518796992481
+          },
+          "coverage_count": 133,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.0009072419570735901,
+            "brier_one_vs_rest": 0.2151427921577157,
+            "mean_probability": 0.3016591216563217,
+            "observed_frequency": 0.3007518796992481
+          },
+          "ece_10_bin_macro_ovr": 0.11269911994653115,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.10986965549816197,
+            "brier_one_vs_rest": 0.22420318991977795,
+            "mean_probability": 0.28862658510334177,
+            "observed_frequency": 0.39849624060150374
+          },
+          "multiclass_brier": 0.6690720423589094,
+          "multiclass_log_loss": 1.0995690259361592,
+          "sharpness_mean_max_probability": 0.4975140996442072
+        },
+        "baseline_plus_context": {
+          "accuracy_argmax": 0.41353383458646614,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.06345787559573643,
+            "brier_one_vs_rest": 0.2628660887147275,
+            "mean_probability": 0.23729400410351167,
+            "observed_frequency": 0.3007518796992481
+          },
+          "coverage_count": 133,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.018414490719839416,
+            "brier_one_vs_rest": 0.29876693078513267,
+            "mean_probability": 0.3191663704190875,
+            "observed_frequency": 0.3007518796992481
+          },
+          "ece_10_bin_macro_ovr": 0.2578724063649718,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.045043384875896986,
+            "brier_one_vs_rest": 0.3088044569462048,
+            "mean_probability": 0.4435396254774007,
+            "observed_frequency": 0.39849624060150374
+          },
+          "multiclass_brier": 0.870437476446065,
+          "multiclass_log_loss": 1.8822717499721562,
+          "sharpness_mean_max_probability": 0.7645515110597244
+        },
+        "paired_difference_context_minus_baseline": {
+          "ece_10_bin_macro_ovr": 0.14517328641844063,
+          "multiclass_brier": 0.20136543408715557,
+          "multiclass_log_loss": 0.7827027240359969
+        },
+        "sample_count": 133,
+        "status": "reported"
+      },
+      "2022/23": {
+        "baseline": {
+          "accuracy_argmax": 0.49382716049382713,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.006267094733550083,
+            "brier_one_vs_rest": 0.21033894859516372,
+            "mean_probability": 0.3519461070792291,
+            "observed_frequency": 0.345679012345679
+          },
+          "coverage_count": 162,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.04765543406514702,
+            "brier_one_vs_rest": 0.17965336555658162,
+            "mean_probability": 0.27605049579354207,
+            "observed_frequency": 0.22839506172839505
+          },
+          "ece_10_bin_macro_ovr": 0.09072046145264123,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.05392252879869702,
+            "brier_one_vs_rest": 0.22932973592866623,
+            "mean_probability": 0.3720033971272289,
+            "observed_frequency": 0.42592592592592593
+          },
+          "multiclass_brier": 0.6193220500804116,
+          "multiclass_log_loss": 1.0361878810191807,
+          "sharpness_mean_max_probability": 0.48061915565449065
+        },
+        "baseline_plus_context": {
+          "accuracy_argmax": 0.42592592592592593,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.010354668388841914,
+            "brier_one_vs_rest": 0.2365129034016933,
+            "mean_probability": 0.3353243439568371,
+            "observed_frequency": 0.345679012345679
+          },
+          "coverage_count": 162,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.06957093231282527,
+            "brier_one_vs_rest": 0.20269613374017845,
+            "mean_probability": 0.2979659940412203,
+            "observed_frequency": 0.22839506172839505
+          },
+          "ece_10_bin_macro_ovr": 0.1628989523298441,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.059216263923983326,
+            "brier_one_vs_rest": 0.26720005145482334,
+            "mean_probability": 0.3667096620019426,
+            "observed_frequency": 0.42592592592592593
+          },
+          "multiclass_brier": 0.706409088596695,
+          "multiclass_log_loss": 1.225559799856908,
+          "sharpness_mean_max_probability": 0.6242837714975711
+        },
+        "paired_difference_context_minus_baseline": {
+          "ece_10_bin_macro_ovr": 0.07217849087720288,
+          "multiclass_brier": 0.08708703851628341,
+          "multiclass_log_loss": 0.18937191883772742
+        },
+        "sample_count": 162,
+        "status": "reported"
+      },
+      "2024/25": {
+        "baseline": {
+          "accuracy_argmax": 0.5519125683060109,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.02026824394174309,
+            "brier_one_vs_rest": 0.17726755439029881,
+            "mean_probability": 0.3372081346521256,
+            "observed_frequency": 0.31693989071038253
+          },
+          "coverage_count": 183,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.0002697321252940199,
+            "brier_one_vs_rest": 0.18559737950906166,
+            "mean_probability": 0.24070689059523936,
+            "observed_frequency": 0.24043715846994534
+          },
+          "ece_10_bin_macro_ovr": 0.07340070796795212,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.02053797606703711,
+            "brier_one_vs_rest": 0.19809398250214422,
+            "mean_probability": 0.422084974752635,
+            "observed_frequency": 0.4426229508196721
+          },
+          "multiclass_brier": 0.5609589164015047,
+          "multiclass_log_loss": 0.9487398924142215,
+          "sharpness_mean_max_probability": 0.5533008349389879
+        },
+        "baseline_plus_context": {
+          "accuracy_argmax": 0.47540983606557374,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.05016377733998928,
+            "brier_one_vs_rest": 0.20686811007121925,
+            "mean_probability": 0.3671036680503718,
+            "observed_frequency": 0.31693989071038253
+          },
+          "coverage_count": 183,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.03362595965345033,
+            "brier_one_vs_rest": 0.2131353604024125,
+            "mean_probability": 0.206811198816495,
+            "observed_frequency": 0.24043715846994534
+          },
+          "ece_10_bin_macro_ovr": 0.11787793235416806,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.01653781768653878,
+            "brier_one_vs_rest": 0.22977411566376027,
+            "mean_probability": 0.42608513313313334,
+            "observed_frequency": 0.4426229508196721
+          },
+          "multiclass_brier": 0.649777586137392,
+          "multiclass_log_loss": 1.1024116915083495,
+          "sharpness_mean_max_probability": 0.6381033688833098
+        },
+        "paired_difference_context_minus_baseline": {
+          "ece_10_bin_macro_ovr": 0.044477224386215944,
+          "multiclass_brier": 0.08881866973588726,
+          "multiclass_log_loss": 0.15367179909412798
+        },
+        "sample_count": 183,
+        "status": "reported"
+      }
+    },
+    "group_phase_progress": {
+      "early_by_matches_played": {
+        "baseline": {
+          "accuracy_argmax": 0.49282296650717705,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.03418400418833195,
+            "brier_one_vs_rest": 0.21506541172959176,
+            "mean_probability": 0.38346630083904965,
+            "observed_frequency": 0.3492822966507177
+          },
+          "coverage_count": 209,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.005840099974629476,
+            "brier_one_vs_rest": 0.1957388718791213,
+            "mean_probability": 0.26688717275264323,
+            "observed_frequency": 0.2727272727272727
+          },
+          "ece_10_bin_macro_ovr": 0.0466802340823775,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.02834390421370242,
+            "brier_one_vs_rest": 0.18301817286520516,
+            "mean_probability": 0.3496465264083071,
+            "observed_frequency": 0.37799043062200954
+          },
+          "multiclass_brier": 0.5938224564739183,
+          "multiclass_log_loss": 0.9932679036039541,
+          "sharpness_mean_max_probability": 0.5242555096039665
+        },
+        "baseline_plus_context": {
+          "accuracy_argmax": 0.44976076555023925,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.037329080873965914,
+            "brier_one_vs_rest": 0.23318678100077692,
+            "mean_probability": 0.3866113775246836,
+            "observed_frequency": 0.3492822966507177
+          },
+          "coverage_count": 209,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.018746478767141583,
+            "brier_one_vs_rest": 0.2426621208919646,
+            "mean_probability": 0.2914737514944143,
+            "observed_frequency": 0.2727272727272727
+          },
+          "ece_10_bin_macro_ovr": 0.15676389546216743,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.05607555964110744,
+            "brier_one_vs_rest": 0.24059235746876093,
+            "mean_probability": 0.3219148709809021,
+            "observed_frequency": 0.37799043062200954
+          },
+          "multiclass_brier": 0.7164412593615023,
+          "multiclass_log_loss": 1.4155306957625668,
+          "sharpness_mean_max_probability": 0.6580505881311675
+        },
+        "paired_difference_context_minus_baseline": {
+          "ece_10_bin_macro_ovr": 0.11008366137978992,
+          "multiclass_brier": 0.12261880288758398,
+          "multiclass_log_loss": 0.42226279215861273
+        },
+        "sample_count": 209,
+        "status": "reported"
+      },
+      "late_by_matches_played": {
+        "baseline": {
+          "accuracy_argmax": 0.4931506849315068,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.07101482754800409,
+            "brier_one_vs_rest": 0.18625189873671022,
+            "mean_probability": 0.3312888001507438,
+            "observed_frequency": 0.2602739726027397
+          },
+          "coverage_count": 146,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.04493218892186107,
+            "brier_one_vs_rest": 0.18267860451119042,
+            "mean_probability": 0.2641102711136419,
+            "observed_frequency": 0.2191780821917808
+          },
+          "ece_10_bin_macro_ovr": 0.11487994546079934,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.11594701646986505,
+            "brier_one_vs_rest": 0.2606370019370455,
+            "mean_probability": 0.4046009287356144,
+            "observed_frequency": 0.5205479452054794
+          },
+          "multiclass_brier": 0.6295675051849462,
+          "multiclass_log_loss": 1.052477108916824,
+          "sharpness_mean_max_probability": 0.5010768324814654
+        },
+        "baseline_plus_context": {
+          "accuracy_argmax": 0.4383561643835616,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.03627825140525198,
+            "brier_one_vs_rest": 0.21650608889785783,
+            "mean_probability": 0.22399572119748773,
+            "observed_frequency": 0.2602739726027397
+          },
+          "coverage_count": 146,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.006303241090725692,
+            "brier_one_vs_rest": 0.21142662239490623,
+            "mean_probability": 0.2254813232825065,
+            "observed_frequency": 0.2191780821917808
+          },
+          "ece_10_bin_macro_ovr": 0.18747218362298299,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.02997501031452643,
+            "brier_one_vs_rest": 0.2910885045256928,
+            "mean_probability": 0.5505229555200059,
+            "observed_frequency": 0.5205479452054794
+          },
+          "multiclass_brier": 0.7190212158184569,
+          "multiclass_log_loss": 1.29932219324756,
+          "sharpness_mean_max_probability": 0.6931494565290452
+        },
+        "paired_difference_context_minus_baseline": {
+          "ece_10_bin_macro_ovr": 0.07259223816218364,
+          "multiclass_brier": 0.08945371063351071,
+          "multiclass_log_loss": 0.24684508433073615
+        },
+        "sample_count": 146,
+        "status": "reported"
+      },
+      "middle_by_matches_played": {
+        "baseline": {
+          "accuracy_argmax": 0.4235294117647059,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.04849100439933163,
+            "brier_one_vs_rest": 0.1934685872377632,
+            "mean_probability": 0.377902769105214,
+            "observed_frequency": 0.32941176470588235
+          },
+          "coverage_count": 85,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.006997196203527178,
+            "brier_one_vs_rest": 0.20905166632108782,
+            "mean_probability": 0.28712045085529636,
+            "observed_frequency": 0.29411764705882354
+          },
+          "ece_10_bin_macro_ovr": 0.07910702574833688,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.04149380819580445,
+            "brier_one_vs_rest": 0.2175419705030826,
+            "mean_probability": 0.33497678003948966,
+            "observed_frequency": 0.3764705882352941
+          },
+          "multiclass_brier": 0.6200622240619336,
+          "multiclass_log_loss": 1.0337752271964336,
+          "sharpness_mean_max_probability": 0.5084664612820751
+        },
+        "baseline_plus_context": {
+          "accuracy_argmax": 0.4235294117647059,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.07866189269709845,
+            "brier_one_vs_rest": 0.231165452596267,
+            "mean_probability": 0.2507498720087839,
+            "observed_frequency": 0.32941176470588235
+          },
+          "coverage_count": 85,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.04987205078399132,
+            "brier_one_vs_rest": 0.269407884806709,
+            "mean_probability": 0.34398969784281486,
+            "observed_frequency": 0.29411764705882354
+          },
+          "ece_10_bin_macro_ovr": 0.21055180544531474,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.028789841913107295,
+            "brier_one_vs_rest": 0.2752831030812548,
+            "mean_probability": 0.4052604301484014,
+            "observed_frequency": 0.3764705882352941
+          },
+          "multiclass_brier": 0.7758564404842309,
+          "multiclass_log_loss": 1.3469297456980127,
+          "sharpness_mean_max_probability": 0.6597013169657991
+        },
+        "paired_difference_context_minus_baseline": {
+          "ece_10_bin_macro_ovr": 0.13144477969697788,
+          "multiclass_brier": 0.1557942164222973,
+          "multiclass_log_loss": 0.31315451850157916
+        },
+        "sample_count": 85,
+        "status": "reported"
+      },
+      "not_group_stage_or_unavailable": {
+        "baseline": {
+          "accuracy_argmax": 0.5263157894736842,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.06363152847827042,
+            "brier_one_vs_rest": 0.223214735816191,
+            "mean_probability": 0.33110531362699275,
+            "observed_frequency": 0.39473684210526316
+          },
+          "coverage_count": 38,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.0827749333468171,
+            "brier_one_vs_rest": 0.1666385502273178,
+            "mean_probability": 0.26698545966260656,
+            "observed_frequency": 0.18421052631578946
+          },
+          "ece_10_bin_macro_ovr": 0.16307844259304166,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.019143404868546654,
+            "brier_one_vs_rest": 0.22175716771758558,
+            "mean_probability": 0.4019092267104007,
+            "observed_frequency": 0.42105263157894735
+          },
+          "multiclass_brier": 0.6116104537610945,
+          "multiclass_log_loss": 1.0157624584115623,
+          "sharpness_mean_max_probability": 0.5088806053695396
+        },
+        "baseline_plus_context": {
+          "accuracy_argmax": 0.4473684210526316,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.08536118951984162,
+            "brier_one_vs_rest": 0.29310933195352307,
+            "mean_probability": 0.4800980316251048,
+            "observed_frequency": 0.39473684210526316
+          },
+          "coverage_count": 38,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.03977220774691731,
+            "brier_one_vs_rest": 0.18663700182436452,
+            "mean_probability": 0.14443831856887215,
+            "observed_frequency": 0.18421052631578946
+          },
+          "ece_10_bin_macro_ovr": 0.20073026997962132,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.04558898177292431,
+            "brier_one_vs_rest": 0.2690598984833134,
+            "mean_probability": 0.37546364980602304,
+            "observed_frequency": 0.42105263157894735
+          },
+          "multiclass_brier": 0.7488062322612009,
+          "multiclass_log_loss": 1.3312680488498012,
+          "sharpness_mean_max_probability": 0.6522429722223148
+        },
+        "paired_difference_context_minus_baseline": {
+          "ece_10_bin_macro_ovr": 0.037651827386579656,
+          "multiclass_brier": 0.13719577850010645,
+          "multiclass_log_loss": 0.3155055904382389
+        },
+        "sample_count": 38,
+        "status": "reported"
+      }
+    },
+    "league_tier": {
+      "A": {
+        "baseline": {
+          "accuracy_argmax": 0.4838709677419355,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.0262436270758738,
+            "brier_one_vs_rest": 0.21547039315741995,
+            "mean_probability": 0.35527588514038994,
+            "observed_frequency": 0.32903225806451614
+          },
+          "coverage_count": 155,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.021540349024555955,
+            "brier_one_vs_rest": 0.19301479059739876,
+            "mean_probability": 0.2667016393471366,
+            "observed_frequency": 0.24516129032258063
+          },
+          "ece_10_bin_macro_ovr": 0.08900282002336045,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.04778397610042978,
+            "brier_one_vs_rest": 0.21717731412971536,
+            "mean_probability": 0.3780224755124734,
+            "observed_frequency": 0.4258064516129032
+          },
+          "multiclass_brier": 0.6256624978845341,
+          "multiclass_log_loss": 1.0392695522727564,
+          "sharpness_mean_max_probability": 0.5209768306747765
+        },
+        "baseline_plus_context": {
+          "accuracy_argmax": 0.43870967741935485,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.005498905459147829,
+            "brier_one_vs_rest": 0.27625502802794555,
+            "mean_probability": 0.33453116352366397,
+            "observed_frequency": 0.32903225806451614
+          },
+          "coverage_count": 155,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.023225608406032494,
+            "brier_one_vs_rest": 0.21972906383767762,
+            "mean_probability": 0.22193568191654814,
+            "observed_frequency": 0.24516129032258063
+          },
+          "ece_10_bin_macro_ovr": 0.1942365383702956,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.017726702946884554,
+            "brier_one_vs_rest": 0.2705114712614264,
+            "mean_probability": 0.44353315455978776,
+            "observed_frequency": 0.4258064516129032
+          },
+          "multiclass_brier": 0.7664955631270495,
+          "multiclass_log_loss": 1.4275720743414304,
+          "sharpness_mean_max_probability": 0.6857645372765842
+        },
+        "paired_difference_context_minus_baseline": {
+          "ece_10_bin_macro_ovr": 0.10523371834693517,
+          "multiclass_brier": 0.14083306524251538,
+          "multiclass_log_loss": 0.388302522068674
+        },
+        "sample_count": 155,
+        "status": "reported"
+      },
+      "A/B": {
+        "baseline": {
+          "accuracy_argmax": 0.75,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.12835435105040593,
+            "brier_one_vs_rest": 0.2199241714404555,
+            "mean_probability": 0.37164564894959407,
+            "observed_frequency": 0.5
+          },
+          "coverage_count": 4,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.29566670538520934,
+            "brier_one_vs_rest": 0.08775874029905786,
+            "mean_probability": 0.29566670538520934,
+            "observed_frequency": 0.0
+          },
+          "ece_10_bin_macro_ovr": 0.2835372633418786,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.16731235433480335,
+            "brier_one_vs_rest": 0.2259605412943711,
+            "mean_probability": 0.33268764566519665,
+            "observed_frequency": 0.5
+          },
+          "multiclass_brier": 0.5336434530338845,
+          "multiclass_log_loss": 0.9149848339200753,
+          "sharpness_mean_max_probability": 0.45175191905040607
+        },
+        "baseline_plus_context": {
+          "accuracy_argmax": 0.75,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.02824969607842953,
+            "brier_one_vs_rest": 0.159819866878969,
+            "mean_probability": 0.5282496960784295,
+            "observed_frequency": 0.5
+          },
+          "coverage_count": 4,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.19684587045660348,
+            "brier_one_vs_rest": 0.04709650551128016,
+            "mean_probability": 0.19684587045660348,
+            "observed_frequency": 0.0
+          },
+          "ece_10_bin_macro_ovr": 0.17525303662498,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.22509556653503288,
+            "brier_one_vs_rest": 0.20936945824269748,
+            "mean_probability": 0.2749044334649671,
+            "observed_frequency": 0.5
+          },
+          "multiclass_brier": 0.41628583063294666,
+          "multiclass_log_loss": 0.7869839654457947,
+          "sharpness_mean_max_probability": 0.6675820004573045
+        },
+        "paired_difference_context_minus_baseline": {
+          "ece_10_bin_macro_ovr": -0.10828422671689861,
+          "multiclass_brier": -0.11735762240093783,
+          "multiclass_log_loss": -0.1280008684742806
+        },
+        "sample_count": 4,
+        "status": "insufficient_sample"
+      },
+      "B": {
+        "baseline": {
+          "accuracy_argmax": 0.48031496062992124,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.06401133585496199,
+            "brier_one_vs_rest": 0.19128902201393985,
+            "mean_probability": 0.36322393428015887,
+            "observed_frequency": 0.2992125984251969
+          },
+          "coverage_count": 127,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.028600431707898444,
+            "brier_one_vs_rest": 0.18735312990780972,
+            "mean_probability": 0.27269491989687483,
+            "observed_frequency": 0.2440944881889764
+          },
+          "ece_10_bin_macro_ovr": 0.07621928565369818,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.09261176756286044,
+            "brier_one_vs_rest": 0.2261117274756004,
+            "mean_probability": 0.36408114582296636,
+            "observed_frequency": 0.4566929133858268
+          },
+          "multiclass_brier": 0.60475387939735,
+          "multiclass_log_loss": 1.0173217993678758,
+          "sharpness_mean_max_probability": 0.49948158551935673
+        },
+        "baseline_plus_context": {
+          "accuracy_argmax": 0.4251968503937008,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.003428441763257406,
+            "brier_one_vs_rest": 0.2147322799251344,
+            "mean_probability": 0.29578415666193947,
+            "observed_frequency": 0.2992125984251969
+          },
+          "coverage_count": 127,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.03725508818302248,
+            "brier_one_vs_rest": 0.2436745579886066,
+            "mean_probability": 0.28134957637199887,
+            "observed_frequency": 0.2440944881889764
+          },
+          "ece_10_bin_macro_ovr": 0.177582025534975,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.03382664641976513,
+            "brier_one_vs_rest": 0.26643852644523275,
+            "mean_probability": 0.42286626696606167,
+            "observed_frequency": 0.4566929133858268
+          },
+          "multiclass_brier": 0.7248453643589737,
+          "multiclass_log_loss": 1.2901814754219443,
+          "sharpness_mean_max_probability": 0.6599036180559615
+        },
+        "paired_difference_context_minus_baseline": {
+          "ece_10_bin_macro_ovr": 0.10136273988127684,
+          "multiclass_brier": 0.1200914849616237,
+          "multiclass_log_loss": 0.27285967605406847
+        },
+        "sample_count": 127,
+        "status": "reported"
+      },
+      "B/A": {
+        "baseline": {
+          "accuracy_argmax": 0.25,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.021017860017280343,
+            "brier_one_vs_rest": 0.2502799346374092,
+            "mean_probability": 0.27101786001728034,
+            "observed_frequency": 0.25
+          },
+          "coverage_count": 4,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.020090364435652486,
+            "brier_one_vs_rest": 0.19644089861608888,
+            "mean_probability": 0.2700903644356525,
+            "observed_frequency": 0.25
+          },
+          "ece_10_bin_macro_ovr": 0.3955453579126759,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.04110822445293283,
+            "brier_one_vs_rest": 0.37946848228585994,
+            "mean_probability": 0.45889177554706717,
+            "observed_frequency": 0.5
+          },
+          "multiclass_brier": 0.8261893155393578,
+          "multiclass_log_loss": 1.3419170191047467,
+          "sharpness_mean_max_probability": 0.5136151094194282
+        },
+        "baseline_plus_context": {
+          "accuracy_argmax": 0.25,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.146390460023075,
+            "brier_one_vs_rest": 0.28908386503400013,
+            "mean_probability": 0.396390460023075,
+            "observed_frequency": 0.25
+          },
+          "coverage_count": 4,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.18956588255677903,
+            "brier_one_vs_rest": 0.23338181785870418,
+            "mean_probability": 0.06043411744322097,
+            "observed_frequency": 0.25
+          },
+          "ece_10_bin_macro_ovr": 0.39304814969236573,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.04317542253370399,
+            "brier_one_vs_rest": 0.40008376659883466,
+            "mean_probability": 0.543175422533704,
+            "observed_frequency": 0.5
+          },
+          "multiclass_brier": 0.9225494494915388,
+          "multiclass_log_loss": 1.5723721464146851,
+          "sharpness_mean_max_probability": 0.617991288957678
+        },
+        "paired_difference_context_minus_baseline": {
+          "ece_10_bin_macro_ovr": -0.0024972082203101875,
+          "multiclass_brier": 0.09636013395218102,
+          "multiclass_log_loss": 0.23045512730993845
+        },
+        "sample_count": 4,
+        "status": "insufficient_sample"
+      },
+      "B/C": {
+        "baseline": {
+          "accuracy_argmax": 1.0,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.011417029172083037,
+            "brier_one_vs_rest": 0.11246662484594408,
+            "mean_probability": 0.23858297082791696,
+            "observed_frequency": 0.25
+          },
+          "coverage_count": 4,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.24716039774043547,
+            "brier_one_vs_rest": 0.06339796860225767,
+            "mean_probability": 0.24716039774043547,
+            "observed_frequency": 0.0
+          },
+          "ece_10_bin_macro_ovr": 0.30214304818680304,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.23574336856835232,
+            "brier_one_vs_rest": 0.149572646117665,
+            "mean_probability": 0.5142566314316477,
+            "observed_frequency": 0.75
+          },
+          "multiclass_brier": 0.32543723956586673,
+          "multiclass_log_loss": 0.6219344114632219,
+          "sharpness_mean_max_probability": 0.5467854277197955
+        },
+        "baseline_plus_context": {
+          "accuracy_argmax": 0.75,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.13864422967395162,
+            "brier_one_vs_rest": 0.10177605625923553,
+            "mean_probability": 0.3886442296739516,
+            "observed_frequency": 0.25
+          },
+          "coverage_count": 4,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.17010988290678378,
+            "brier_one_vs_rest": 0.03934690332254311,
+            "mean_probability": 0.17010988290678378,
+            "observed_frequency": 0.0
+          },
+          "ece_10_bin_macro_ovr": 0.2749196663088269,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.3087541125807353,
+            "brier_one_vs_rest": 0.17196068596385644,
+            "mean_probability": 0.4412458874192647,
+            "observed_frequency": 0.75
+          },
+          "multiclass_brier": 0.31308364554563506,
+          "multiclass_log_loss": 0.5866959792228106,
+          "sharpness_mean_max_probability": 0.6148146874372389
+        },
+        "paired_difference_context_minus_baseline": {
+          "ece_10_bin_macro_ovr": -0.027223381877976127,
+          "multiclass_brier": -0.012353594020231673,
+          "multiclass_log_loss": -0.035238432240411344
+        },
+        "sample_count": 4,
+        "status": "insufficient_sample"
+      },
+      "C": {
+        "baseline": {
+          "accuracy_argmax": 0.4626865671641791,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.04371641469788612,
+            "brier_one_vs_rest": 0.20477734154148355,
+            "mean_probability": 0.3646119370859458,
+            "observed_frequency": 0.3208955223880597
+          },
+          "coverage_count": 134,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.0031914932747202363,
+            "brier_one_vs_rest": 0.19257121733686713,
+            "mean_probability": 0.2718482096926307,
+            "observed_frequency": 0.26865671641791045
+          },
+          "ece_10_bin_macro_ovr": 0.07228856985971326,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.0469079079726063,
+            "brier_one_vs_rest": 0.21867508407194247,
+            "mean_probability": 0.36353985322142357,
+            "observed_frequency": 0.41044776119402987
+          },
+          "multiclass_brier": 0.6160236429502932,
+          "multiclass_log_loss": 1.0256623693288278,
+          "sharpness_mean_max_probability": 0.5112972090225184
+        },
+        "baseline_plus_context": {
+          "accuracy_argmax": 0.48507462686567165,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.003476599599111785,
+            "brier_one_vs_rest": 0.20610920107964684,
+            "mean_probability": 0.3174189227889479,
+            "observed_frequency": 0.3208955223880597
+          },
+          "coverage_count": 134,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.04714885433528826,
+            "brier_one_vs_rest": 0.21450561580247116,
+            "mean_probability": 0.3158055707531987,
+            "observed_frequency": 0.26865671641791045
+          },
+          "ece_10_bin_macro_ovr": 0.1261342185802353,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.043672254736176475,
+            "brier_one_vs_rest": 0.23577844265014927,
+            "mean_probability": 0.3667755064578534,
+            "observed_frequency": 0.41044776119402987
+          },
+          "multiclass_brier": 0.6563932595322671,
+          "multiclass_log_loss": 1.2458134946873596,
+          "sharpness_mean_max_probability": 0.6611659319232497
+        },
+        "paired_difference_context_minus_baseline": {
+          "ece_10_bin_macro_ovr": 0.05384564872052204,
+          "multiclass_brier": 0.04036961658197391,
+          "multiclass_log_loss": 0.22015112535853176
+        },
+        "sample_count": 134,
+        "status": "reported"
+      },
+      "C/B": {
+        "baseline": {
+          "accuracy_argmax": 0.75,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.08066414297313351,
+            "brier_one_vs_rest": 0.1887056778827595,
+            "mean_probability": 0.4193358570268665,
+            "observed_frequency": 0.5
+          },
+          "coverage_count": 4,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.04438942525092404,
+            "brier_one_vs_rest": 0.17736226108976721,
+            "mean_probability": 0.29438942525092404,
+            "observed_frequency": 0.25
+          },
+          "ece_10_bin_macro_ovr": 0.2509642712166539,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.03627471772220947,
+            "brier_one_vs_rest": 0.11357403512733669,
+            "mean_probability": 0.28627471772220947,
+            "observed_frequency": 0.25
+          },
+          "multiclass_brier": 0.47964197409986337,
+          "multiclass_log_loss": 0.8317897586802694,
+          "sharpness_mean_max_probability": 0.4679099453589586
+        },
+        "baseline_plus_context": {
+          "accuracy_argmax": 0.5,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.09887349129006062,
+            "brier_one_vs_rest": 0.22443404488313032,
+            "mean_probability": 0.5988734912900606,
+            "observed_frequency": 0.5
+          },
+          "coverage_count": 4,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.13802241337117194,
+            "brier_one_vs_rest": 0.21154207560202642,
+            "mean_probability": 0.11197758662882806,
+            "observed_frequency": 0.25
+          },
+          "ece_10_bin_macro_ovr": 0.2413212573345441,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.039148922081111315,
+            "brier_one_vs_rest": 0.15866593944878443,
+            "mean_probability": 0.2891489220811113,
+            "observed_frequency": 0.25
+          },
+          "multiclass_brier": 0.5946420599339411,
+          "multiclass_log_loss": 1.019898588043076,
+          "sharpness_mean_max_probability": 0.5988734912900606
+        },
+        "paired_difference_context_minus_baseline": {
+          "ece_10_bin_macro_ovr": -0.00964301388210978,
+          "multiclass_brier": 0.11500008583407778,
+          "multiclass_log_loss": 0.1881088293628066
+        },
+        "sample_count": 4,
+        "status": "insufficient_sample"
+      },
+      "C/D": {
+        "baseline": {
+          "accuracy_argmax": 1.0,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.09561909005404007,
+            "brier_one_vs_rest": 0.0452364372546344,
+            "mean_probability": 0.40438090994595993,
+            "observed_frequency": 0.5
+          },
+          "coverage_count": 2,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.12639782063123078,
+            "brier_one_vs_rest": 0.02142600027002897,
+            "mean_probability": 0.12639782063123078,
+            "observed_frequency": 0.0
+          },
+          "ece_10_bin_macro_ovr": 0.14418062569102924,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.03077873057719066,
+            "brier_one_vs_rest": 0.014440790636261048,
+            "mean_probability": 0.46922126942280934,
+            "observed_frequency": 0.5
+          },
+          "multiclass_brier": 0.08110322816092441,
+          "multiclass_log_loss": 0.2476201257181882,
+          "sharpness_mean_max_probability": 0.7837290614634562
+        },
+        "baseline_plus_context": {
+          "accuracy_argmax": 1.0,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.1425189585616089,
+            "brier_one_vs_rest": 0.05147406320900631,
+            "mean_probability": 0.6425189585616089,
+            "observed_frequency": 0.5
+          },
+          "coverage_count": 2,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.004827119215613995,
+            "brier_one_vs_rest": 2.4378707129128414e-05,
+            "mean_probability": 0.004827119215613995,
+            "observed_frequency": 0.0
+          },
+          "ece_10_bin_macro_ovr": 0.11894886269570548,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.14734607777722292,
+            "brier_one_vs_rest": 0.052507849022701725,
+            "mean_probability": 0.3526539222227771,
+            "observed_frequency": 0.5
+          },
+          "multiclass_brier": 0.10400629093883716,
+          "multiclass_log_loss": 0.2122222674660525,
+          "sharpness_mean_max_probability": 0.8215767059564418
+        },
+        "paired_difference_context_minus_baseline": {
+          "ece_10_bin_macro_ovr": -0.02523176299532376,
+          "multiclass_brier": 0.02290306277791275,
+          "multiclass_log_loss": -0.035397858252135705
+        },
+        "sample_count": 2,
+        "status": "insufficient_sample"
+      },
+      "D": {
+        "baseline": {
+          "accuracy_argmax": 0.45454545454545453,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.04886514550233967,
+            "brier_one_vs_rest": 0.1991063439046524,
+            "mean_probability": 0.38977423641143055,
+            "observed_frequency": 0.3409090909090909
+          },
+          "coverage_count": 44,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.049783812710448294,
+            "brier_one_vs_rest": 0.227813236097798,
+            "mean_probability": 0.2683980054713699,
+            "observed_frequency": 0.3181818181818182
+          },
+          "ece_10_bin_macro_ovr": 0.12113030328833813,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.0009186672081085701,
+            "brier_one_vs_rest": 0.18266639845331614,
+            "mean_probability": 0.34182775811719945,
+            "observed_frequency": 0.3409090909090909
+          },
+          "multiclass_brier": 0.6095859784557667,
+          "multiclass_log_loss": 1.0150310575056571,
+          "sharpness_mean_max_probability": 0.5249233502012381
+        },
+        "baseline_plus_context": {
+          "accuracy_argmax": 0.29545454545454547,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.06413876821240544,
+            "brier_one_vs_rest": 0.2322858862506936,
+            "mean_probability": 0.27677032269668544,
+            "observed_frequency": 0.3409090909090909
+          },
+          "coverage_count": 44,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.001146130944897683,
+            "brier_one_vs_rest": 0.3568773220558261,
+            "mean_probability": 0.3170356872369205,
+            "observed_frequency": 0.3181818181818182
+          },
+          "ece_10_bin_macro_ovr": 0.3173671612436098,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.06528489915730301,
+            "brier_one_vs_rest": 0.34498743085788647,
+            "mean_probability": 0.4061939900663939,
+            "observed_frequency": 0.3409090909090909
+          },
+          "multiclass_brier": 0.9341506391644061,
+          "multiclass_log_loss": 1.8697771688202598,
+          "sharpness_mean_max_probability": 0.6648759437731909
+        },
+        "paired_difference_context_minus_baseline": {
+          "ece_10_bin_macro_ovr": 0.19623685795527168,
+          "multiclass_brier": 0.32456466070863943,
+          "multiclass_log_loss": 0.8547461113146027
+        },
+        "sample_count": 44,
+        "status": "reported"
+      }
+    },
+    "observed_outcome": {
+      "away": {
+        "baseline": {
+          "accuracy_argmax": 0.6623376623376623,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.5743974117646609,
+            "brier_one_vs_rest": 0.35130801120562083,
+            "mean_probability": 0.4256025882353391,
+            "observed_frequency": 1.0
+          },
+          "coverage_count": 154,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.2952921245886572,
+            "brier_one_vs_rest": 0.0930243581489425,
+            "mean_probability": 0.2952921245886572,
+            "observed_frequency": 0.0
+          },
+          "ece_10_bin_macro_ovr": 0.38293160784310726,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.27910528717600364,
+            "brier_one_vs_rest": 0.10579517496114905,
+            "mean_probability": 0.27910528717600364,
+            "observed_frequency": 0.0
+          },
+          "multiclass_brier": 0.5501275443157124,
+          "multiclass_log_loss": 0.9187876655238012,
+          "sharpness_mean_max_probability": 0.49604243430059536
+        },
+        "baseline_plus_context": {
+          "accuracy_argmax": 0.461038961038961,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.5862614899324152,
+            "brier_one_vs_rest": 0.42286166265681135,
+            "mean_probability": 0.41373851006758483,
+            "observed_frequency": 1.0
+          },
+          "coverage_count": 154,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.2888550632645142,
+            "brier_one_vs_rest": 0.13736445111735235,
+            "mean_probability": 0.2888550632645142,
+            "observed_frequency": 0.0
+          },
+          "ece_10_bin_macro_ovr": 0.3908409932882768,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.2974064266679009,
+            "brier_one_vs_rest": 0.1586238653593629,
+            "mean_probability": 0.2974064266679009,
+            "observed_frequency": 0.0
+          },
+          "multiclass_brier": 0.7188499791335268,
+          "multiclass_log_loss": 1.362210687411791,
+          "sharpness_mean_max_probability": 0.654974090681503
+        },
+        "paired_difference_context_minus_baseline": {
+          "ece_10_bin_macro_ovr": 0.007909385445169559,
+          "multiclass_brier": 0.16872243481781435,
+          "multiclass_log_loss": 0.44342302188798977
+        },
+        "sample_count": 154,
+        "status": "reported"
+      },
+      "draw": {
+        "baseline": {
+          "accuracy_argmax": 0.008264462809917356,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.3905953140801891,
+            "brier_one_vs_rest": 0.17467737774459707,
+            "mean_probability": 0.3905953140801891,
+            "observed_frequency": 0.0
+          },
+          "coverage_count": 121,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.7203925326499346,
+            "brier_one_vs_rest": 0.5247243656378869,
+            "mean_probability": 0.27960746735006536,
+            "observed_frequency": 1.0
+          },
+          "ece_10_bin_macro_ovr": 0.4802616884332898,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.3297972185697455,
+            "brier_one_vs_rest": 0.144513507323949,
+            "mean_probability": 0.3297972185697455,
+            "observed_frequency": 0.0
+          },
+          "multiclass_brier": 0.843915250706433,
+          "multiclass_log_loss": 1.3220444280339239,
+          "sharpness_mean_max_probability": 0.49971258043893285
+        },
+        "baseline_plus_context": {
+          "accuracy_argmax": 0.24793388429752067,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.30269591477738467,
+            "brier_one_vs_rest": 0.16716129022532064,
+            "mean_probability": 0.30269591477738467,
+            "observed_frequency": 0.0
+          },
+          "coverage_count": 121,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.7141098938932691,
+            "brier_one_vs_rest": 0.5725325516472224,
+            "mean_probability": 0.2858901061067309,
+            "observed_frequency": 1.0
+          },
+          "ece_10_bin_macro_ovr": 0.47607326259551286,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.41141397911588456,
+            "brier_one_vs_rest": 0.26674565920307414,
+            "mean_probability": 0.41141397911588456,
+            "observed_frequency": 0.0
+          },
+          "multiclass_brier": 1.0064395010756173,
+          "multiclass_log_loss": 1.9092425105053765,
+          "sharpness_mean_max_probability": 0.6823267596711243
+        },
+        "paired_difference_context_minus_baseline": {
+          "ece_10_bin_macro_ovr": -0.0041884258377769545,
+          "multiclass_brier": 0.16252425036918428,
+          "multiclass_log_loss": 0.5871980824714527
+        },
+        "sample_count": 121,
+        "status": "reported"
+      },
+      "home": {
+        "baseline": {
+          "accuracy_argmax": 0.6305418719211823,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.2975937310206589,
+            "brier_one_vs_rest": 0.10754207739166328,
+            "mean_probability": 0.2975937310206589,
+            "observed_frequency": 0.0
+          },
+          "coverage_count": 203,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.24424982138799148,
+            "brier_one_vs_rest": 0.06829929867083363,
+            "mean_probability": 0.24424982138799148,
+            "observed_frequency": 0.0
+          },
+          "ece_10_bin_macro_ovr": 0.3612290349391003,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.5418435524086502,
+            "brier_one_vs_rest": 0.3420839849628178,
+            "mean_probability": 0.4581564475913497,
+            "observed_frequency": 1.0
+          },
+          "multiclass_brier": 0.5179253610253147,
+          "multiclass_log_loss": 0.9175558679982698,
+          "sharpness_mean_max_probability": 0.5341279514637405
+        },
+        "baseline_plus_context": {
+          "accuracy_argmax": 0.541871921182266,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.2597077895641433,
+            "brier_one_vs_rest": 0.12702429619090363,
+            "mean_probability": 0.2597077895641433,
+            "observed_frequency": 0.0
+          },
+          "coverage_count": 203,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.2437915522275139,
+            "brier_one_vs_rest": 0.10416739996348207,
+            "mean_probability": 0.2437915522275139,
+            "observed_frequency": 0.0
+          },
+          "ece_10_bin_macro_ovr": 0.3356662278611047,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.5034993417916571,
+            "brier_one_vs_rest": 0.3433584445669009,
+            "mean_probability": 0.4965006582083429,
+            "observed_frequency": 1.0
+          },
+          "multiclass_brier": 0.5745501407212866,
+          "multiclass_log_loss": 1.0336225627417606,
+          "sharpness_mean_max_probability": 0.670762022532207
+        },
+        "paired_difference_context_minus_baseline": {
+          "ece_10_bin_macro_ovr": -0.025562807077995575,
+          "multiclass_brier": 0.056624779695971905,
+          "multiclass_log_loss": 0.11606669474349074
+        },
+        "sample_count": 203,
+        "status": "reported"
+      }
+    },
+    "points_bound_constraint": {
+      "constrained_by_supported_points_bound": {
+        "baseline": {
+          "accuracy_argmax": 0.5341614906832298,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.052837356507065836,
+            "brier_one_vs_rest": 0.18145512292298768,
+            "mean_probability": 0.33855164222135153,
+            "observed_frequency": 0.2857142857142857
+          },
+          "coverage_count": 161,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.024717241024948544,
+            "brier_one_vs_rest": 0.1842513843976146,
+            "mean_probability": 0.26074208574544544,
+            "observed_frequency": 0.2360248447204969
+          },
+          "ece_10_bin_macro_ovr": 0.08382815130916466,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.07755459753201438,
+            "brier_one_vs_rest": 0.22538069432504182,
+            "mean_probability": 0.400706272033203,
+            "observed_frequency": 0.4782608695652174
+          },
+          "multiclass_brier": 0.5910872016456441,
+          "multiclass_log_loss": 0.994661647071376,
+          "sharpness_mean_max_probability": 0.5104747662785544
+        },
+        "baseline_plus_context": {
+          "accuracy_argmax": 0.453416149068323,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.048298917536258645,
+            "brier_one_vs_rest": 0.2233879301389367,
+            "mean_probability": 0.23741536817802705,
+            "observed_frequency": 0.2857142857142857
+          },
+          "coverage_count": 161,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.0026783002822915736,
+            "brier_one_vs_rest": 0.21724544899066534,
+            "mean_probability": 0.23870314500278847,
+            "observed_frequency": 0.2360248447204969
+          },
+          "ece_10_bin_macro_ovr": 0.17937784308700122,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.04562061725396693,
+            "brier_one_vs_rest": 0.2671529390845571,
+            "mean_probability": 0.5238814868191843,
+            "observed_frequency": 0.4782608695652174
+          },
+          "multiclass_brier": 0.707786318214159,
+          "multiclass_log_loss": 1.2709133038296094,
+          "sharpness_mean_max_probability": 0.6999064880819269
+        },
+        "paired_difference_context_minus_baseline": {
+          "ece_10_bin_macro_ovr": 0.09554969177783657,
+          "multiclass_brier": 0.11669911656851495,
+          "multiclass_log_loss": 0.2762516567582334
+        },
+        "sample_count": 161,
+        "status": "reported"
+      },
+      "no_closed_supported_points_bound": {
+        "baseline": {
+          "accuracy_argmax": 0.44802867383512546,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.04705212427840699,
+            "brier_one_vs_rest": 0.21280287953997573,
+            "mean_probability": 0.3803854576117403,
+            "observed_frequency": 0.3333333333333333
+          },
+          "coverage_count": 279,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.0027429433891670296,
+            "brier_one_vs_rest": 0.19958931623887696,
+            "mean_probability": 0.2751443770809233,
+            "observed_frequency": 0.2724014336917563
+          },
+          "ece_10_bin_macro_ovr": 0.05384060886186604,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.04979506766757408,
+            "brier_one_vs_rest": 0.20970815812927174,
+            "mean_probability": 0.3444701653073363,
+            "observed_frequency": 0.3942652329749104
+          },
+          "multiclass_brier": 0.6221003539081243,
+          "multiclass_log_loss": 1.035788598165907,
+          "sharpness_mean_max_probability": 0.5152682110668533
+        },
+        "baseline_plus_context": {
+          "accuracy_argmax": 0.4336917562724014,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.012885369324646456,
+            "brier_one_vs_rest": 0.2294965337869659,
+            "mean_probability": 0.34621870265797977,
+            "observed_frequency": 0.3333333333333333
+          },
+          "coverage_count": 279,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.030989982913149916,
+            "brier_one_vs_rest": 0.249131982283692,
+            "mean_probability": 0.3033914166049062,
+            "observed_frequency": 0.2724014336917563
+          },
+          "ece_10_bin_macro_ovr": 0.16876317199964463,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.04387535223779643,
+            "brier_one_vs_rest": 0.26225865570256324,
+            "mean_probability": 0.35038988073711397,
+            "observed_frequency": 0.3942652329749104
+          },
+          "multiclass_brier": 0.7408871717732212,
+          "multiclass_log_loss": 1.4172721938934918,
+          "sharpness_mean_max_probability": 0.6527672434894529
+        },
+        "paired_difference_context_minus_baseline": {
+          "ece_10_bin_macro_ovr": 0.1149225631377786,
+          "multiclass_brier": 0.11878681786509682,
+          "multiclass_log_loss": 0.38148359572758483
+        },
+        "sample_count": 279,
+        "status": "reported"
+      },
+      "unavailable": {
+        "baseline": {
+          "accuracy_argmax": 0.5263157894736842,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.06363152847827042,
+            "brier_one_vs_rest": 0.223214735816191,
+            "mean_probability": 0.33110531362699275,
+            "observed_frequency": 0.39473684210526316
+          },
+          "coverage_count": 38,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.0827749333468171,
+            "brier_one_vs_rest": 0.1666385502273178,
+            "mean_probability": 0.26698545966260656,
+            "observed_frequency": 0.18421052631578946
+          },
+          "ece_10_bin_macro_ovr": 0.16307844259304166,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.019143404868546654,
+            "brier_one_vs_rest": 0.22175716771758558,
+            "mean_probability": 0.4019092267104007,
+            "observed_frequency": 0.42105263157894735
+          },
+          "multiclass_brier": 0.6116104537610945,
+          "multiclass_log_loss": 1.0157624584115623,
+          "sharpness_mean_max_probability": 0.5088806053695396
+        },
+        "baseline_plus_context": {
+          "accuracy_argmax": 0.4473684210526316,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.08536118951984162,
+            "brier_one_vs_rest": 0.29310933195352307,
+            "mean_probability": 0.4800980316251048,
+            "observed_frequency": 0.39473684210526316
+          },
+          "coverage_count": 38,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.03977220774691731,
+            "brier_one_vs_rest": 0.18663700182436452,
+            "mean_probability": 0.14443831856887215,
+            "observed_frequency": 0.18421052631578946
+          },
+          "ece_10_bin_macro_ovr": 0.20073026997962132,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.04558898177292431,
+            "brier_one_vs_rest": 0.2690598984833134,
+            "mean_probability": 0.37546364980602304,
+            "observed_frequency": 0.42105263157894735
+          },
+          "multiclass_brier": 0.7488062322612009,
+          "multiclass_log_loss": 1.3312680488498012,
+          "sharpness_mean_max_probability": 0.6522429722223148
+        },
+        "paired_difference_context_minus_baseline": {
+          "ece_10_bin_macro_ovr": 0.037651827386579656,
+          "multiclass_brier": 0.13719577850010645,
+          "multiclass_log_loss": 0.3155055904382389
+        },
+        "sample_count": 38,
+        "status": "reported"
+      }
+    },
+    "points_gap_band": {
+      "level": {
+        "baseline": {
+          "accuracy_argmax": 0.4661016949152542,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.029010720066042828,
+            "brier_one_vs_rest": 0.23288998005698175,
+            "mean_probability": 0.3692943646797199,
+            "observed_frequency": 0.3983050847457627
+          },
+          "coverage_count": 118,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.03669204594284198,
+            "brier_one_vs_rest": 0.18168650868678957,
+            "mean_probability": 0.2655056052648759,
+            "observed_frequency": 0.2288135593220339
+          },
+          "ece_10_bin_macro_ovr": 0.0656012246830203,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.007681325876799372,
+            "brier_one_vs_rest": 0.19944720576706407,
+            "mean_probability": 0.365200030055404,
+            "observed_frequency": 0.3728813559322034
+          },
+          "multiclass_brier": 0.6140236945108353,
+          "multiclass_log_loss": 1.0236846130542443,
+          "sharpness_mean_max_probability": 0.5106638356970268
+        },
+        "baseline_plus_context": {
+          "accuracy_argmax": 0.4406779661016949,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.0038732357865483014,
+            "brier_one_vs_rest": 0.23145704236867753,
+            "mean_probability": 0.3944318489592144,
+            "observed_frequency": 0.3983050847457627
+          },
+          "coverage_count": 118,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.03951221186208764,
+            "brier_one_vs_rest": 0.20185450321191342,
+            "mean_probability": 0.26832577118412154,
+            "observed_frequency": 0.2288135593220339
+          },
+          "ece_10_bin_macro_ovr": 0.13912795524830504,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.03563897607553945,
+            "brier_one_vs_rest": 0.22407449251968106,
+            "mean_probability": 0.33724237985666394,
+            "observed_frequency": 0.3728813559322034
+          },
+          "multiclass_brier": 0.6573860381002722,
+          "multiclass_log_loss": 1.2218901506276394,
+          "sharpness_mean_max_probability": 0.6143074988933639
+        },
+        "paired_difference_context_minus_baseline": {
+          "ece_10_bin_macro_ovr": 0.07352673056528473,
+          "multiclass_brier": 0.043362343589436914,
+          "multiclass_log_loss": 0.1982055375733951
+        },
+        "sample_count": 118,
+        "status": "reported"
+      },
+      "tight_1_to_3": {
+        "baseline": {
+          "accuracy_argmax": 0.48868778280542985,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.023562877545643846,
+            "brier_one_vs_rest": 0.20481124115814298,
+            "mean_probability": 0.35840450650491984,
+            "observed_frequency": 0.334841628959276
+          },
+          "coverage_count": 221,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.012300497000729549,
+            "brier_one_vs_rest": 0.18740422026719797,
+            "mean_probability": 0.27021904903692867,
+            "observed_frequency": 0.2579185520361991
+          },
+          "ece_10_bin_macro_ovr": 0.057454464042969056,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.03586337454637334,
+            "brier_one_vs_rest": 0.21178141949673251,
+            "mean_probability": 0.37137644445815154,
+            "observed_frequency": 0.4072398190045249
+          },
+          "multiclass_brier": 0.6039968809220734,
+          "multiclass_log_loss": 1.009950491135641,
+          "sharpness_mean_max_probability": 0.5113255146194322
+        },
+        "baseline_plus_context": {
+          "accuracy_argmax": 0.4343891402714932,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.04769916174269745,
+            "brier_one_vs_rest": 0.25436452874310606,
+            "mean_probability": 0.28714246721657855,
+            "observed_frequency": 0.334841628959276
+          },
+          "coverage_count": 221,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.018674917679408876,
+            "brier_one_vs_rest": 0.23529371320765963,
+            "mean_probability": 0.276593469715608,
+            "observed_frequency": 0.2579185520361991
+          },
+          "ece_10_bin_macro_ovr": 0.18204222239523427,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.029024244063288573,
+            "brier_one_vs_rest": 0.2808538944888835,
+            "mean_probability": 0.43626406306781346,
+            "observed_frequency": 0.4072398190045249
+          },
+          "multiclass_brier": 0.7705121364396492,
+          "multiclass_log_loss": 1.4806346987478,
+          "sharpness_mean_max_probability": 0.6761295076351483
+        },
+        "paired_difference_context_minus_baseline": {
+          "ece_10_bin_macro_ovr": 0.12458775835226521,
+          "multiclass_brier": 0.16651525551757584,
+          "multiclass_log_loss": 0.4706842076121591
+        },
+        "sample_count": 221,
+        "status": "reported"
+      },
+      "wide_4_plus": {
+        "baseline": {
+          "accuracy_argmax": 0.4892086330935252,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.1254117123693859,
+            "brier_one_vs_rest": 0.174993785615799,
+            "mean_probability": 0.36282178431183193,
+            "observed_frequency": 0.23741007194244604
+          },
+          "coverage_count": 139,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.006058512369473412,
+            "brier_one_vs_rest": 0.20738716779286892,
+            "mean_probability": 0.27224556272918565,
+            "observed_frequency": 0.26618705035971224
+          },
+          "ece_10_bin_macro_ovr": 0.12492163331764355,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.13147022473885933,
+            "brier_one_vs_rest": 0.23656961358543419,
+            "mean_probability": 0.3649326529589824,
+            "observed_frequency": 0.49640287769784175
+          },
+          "multiclass_brier": 0.618950566994102,
+          "multiclass_log_loss": 1.0340336302520967,
+          "sharpness_mean_max_probability": 0.5181471936647348
+        },
+        "baseline_plus_context": {
+          "accuracy_argmax": 0.45323741007194246,
+          "away_calibration": {
+            "absolute_calibration_gap": 0.07238254739526287,
+            "brier_one_vs_rest": 0.1986090103700416,
+            "mean_probability": 0.3097926193377089,
+            "observed_frequency": 0.23741007194244604
+          },
+          "coverage_count": 139,
+          "draw_calibration": {
+            "absolute_calibration_gap": 0.00880237498590486,
+            "brier_one_vs_rest": 0.2572503914825502,
+            "mean_probability": 0.2573846753738074,
+            "observed_frequency": 0.26618705035971224
+          },
+          "ece_10_bin_macro_ovr": 0.19469747384515892,
+          "home_calibration": {
+            "absolute_calibration_gap": 0.06358017240935798,
+            "brier_one_vs_rest": 0.2726371473138787,
+            "mean_probability": 0.43282270528848377,
+            "observed_frequency": 0.49640287769784175
+          },
+          "multiclass_brier": 0.7284965491664704,
+          "multiclass_log_loss": 1.2893587314519321,
+          "sharpness_mean_max_probability": 0.7027290100892862
+        },
+        "paired_difference_context_minus_baseline": {
+          "ece_10_bin_macro_ovr": 0.06977584052751537,
+          "multiclass_brier": 0.10954598217236844,
+          "multiclass_log_loss": 0.2553251011998354
+        },
+        "sample_count": 139,
+        "status": "reported"
+      }
+    }
+  },
+  "synthetic_evidence_used": false,
+  "thresholds": {
+    "class_calibration_regression_tolerance": 0.03,
+    "ece_regression_tolerance": 0.02,
+    "log_loss_regression_tolerance": 0.01,
+    "minimum_coverage": 0.8,
+    "minimum_evaluation_count": 100,
+    "minimum_stratum_sample": 20
+  },
+  "walk_forward": {
+    "competition_state_information_strictly_pre_kickoff": true,
+    "method": "expanding window; same-kickoff fixtures share a fold",
+    "minimum_training_rows": 30,
+    "no_lookahead": true,
+    "predicted_fixture_ids": [
+      "uefa-nl:62296853d5f712c16fea35c4",
+      "uefa-nl:9bc25ba1751c8dd3e5ac3298",
+      "uefa-nl:b81833521c1caf2440861b53",
+      "uefa-nl:d0b0b200dc971748f69faaa3",
+      "uefa-nl:c22aa832cc7cd8078b423692",
+      "uefa-nl:838750baa7404416fdca1000",
+      "uefa-nl:aaff68a2b58b3993f0dd76eb",
+      "uefa-nl:a8062ebc12deed98d2414255",
+      "uefa-nl:918cf534e67a29295269cc36",
+      "uefa-nl:26383ca713a24883cbf041d3",
+      "uefa-nl:9ce22296a53e40f6a2f628de",
+      "uefa-nl:fc2ded60c89ad9cbdbda02d1",
+      "uefa-nl:7fffc584c13d541474deb554",
+      "uefa-nl:c6b20713f1d0afd5712fecf1",
+      "uefa-nl:529e6ab8e047ad06add08be4",
+      "uefa-nl:35a43d20ec6ecd1bd6b36ca2",
+      "uefa-nl:f9ea2217b0343f5a021b6bca",
+      "uefa-nl:7105ad0199cb367880b5d39e",
+      "uefa-nl:507a9c48ba36971b83e1d869",
+      "uefa-nl:c61cfbc2cc14def44a8907a3",
+      "uefa-nl:8b6ad9793284b4d67a532898",
+      "uefa-nl:16055e5c2422854f86f2c491",
+      "uefa-nl:f3c46f771450e11b36b6d8a1",
+      "uefa-nl:f27eb13460096383fcf2214d",
+      "uefa-nl:6ce53cfb9471ee897181b9a7",
+      "uefa-nl:d5526e829895b0e7fb05a0f0",
+      "uefa-nl:e98ef4fededb786c94d063f7",
+      "uefa-nl:4c0be79e27e1b6b4c300a482",
+      "uefa-nl:ba6feaf89a18d3cc08e00235",
+      "uefa-nl:dac1dc439b04661979f07047",
+      "uefa-nl:a099539a30c75ee06786a9ee",
+      "uefa-nl:e75fbee1c7dce935d735c1bb",
+      "uefa-nl:ca0d13b6d371df2b3367a9b9",
+      "uefa-nl:515bee96f475d4d212994a0b",
+      "uefa-nl:dfbbe81b836c8038465d191c",
+      "uefa-nl:8d63f8e26450e3bc40f9457a",
+      "uefa-nl:2d6ec0ecccf79baf4072cec1",
+      "uefa-nl:b2158418a4972c07cb755adf",
+      "uefa-nl:32a0db7e0d8aaa809abeec6f",
+      "uefa-nl:556a36328a9d1cc0fc5d2f40",
+      "uefa-nl:8b8a5dce27588449940e0268",
+      "uefa-nl:2f592575a9a335e9c674cb31",
+      "uefa-nl:73e3aafa836453c70fb16a5e",
+      "uefa-nl:a05198e6b05d399f0379f77e",
+      "uefa-nl:16f8bf01d93a4203a24e90e9",
+      "uefa-nl:f6cac2277fc8d0b1c5cd6e04",
+      "uefa-nl:839d5720c8fffcf3607c7a85",
+      "uefa-nl:8f4899f2cb62b1c3a205e29c",
+      "uefa-nl:5a143ba2962ffe2abee3aaa9",
+      "uefa-nl:4b17ac52d2b01439ac9e8707",
+      "uefa-nl:939587a9958a49148b5b31b7",
+      "uefa-nl:0f662b04a39be6c910cd4989",
+      "uefa-nl:eb093f676a29e4531a6a2102",
+      "uefa-nl:48b9c9147693b93697876b74",
+      "uefa-nl:c639e8e9584c4c602d130dc6",
+      "uefa-nl:901d4a3e8605f536b7366d76",
+      "uefa-nl:92ed9576a7cd7a6bbe0fbf59",
+      "uefa-nl:27c1c16bd70b4ab2b3341a2d",
+      "uefa-nl:ff395411ce87f3548e9372b2",
+      "uefa-nl:d46035941f83784a2206c125",
+      "uefa-nl:053b525ec12942fa4da77b62",
+      "uefa-nl:f54b356a1bc6eb9905d963dc",
+      "uefa-nl:24206718082db19cae6f7c8e",
+      "uefa-nl:142565c09b7982ec5047f344",
+      "uefa-nl:17543be684dbf9bb399a5118",
+      "uefa-nl:db513031218d21e50145fa9b",
+      "uefa-nl:19d134911b74cba55b73fc87",
+      "uefa-nl:7d88a0caf0c3d80ddda1a445",
+      "uefa-nl:d0c48e624a6785153bfbeb89",
+      "uefa-nl:b3bbf74b46a2c17144da65bc",
+      "uefa-nl:5fa47c6276fde26a831cf8b2",
+      "uefa-nl:6db0e9c4e098fe9f552f274d",
+      "uefa-nl:99c6b88f8514496b5d2f70ee",
+      "uefa-nl:5d7de06677c40abd3c98bbcf",
+      "uefa-nl:5c0ab1d4963db0e64b8ecf3d",
+      "uefa-nl:d10e659eb584f0444984bfa5",
+      "uefa-nl:85af0b4ea9f81213123ea4f2",
+      "uefa-nl:413e5744dab5c5102cb5774b",
+      "uefa-nl:e202c6c204341537859077e8",
+      "uefa-nl:b86841665819e0c0a86160d9",
+      "uefa-nl:89a0359439da4bac1514f3fc",
+      "uefa-nl:938a34b7d5b01407c76e07dc",
+      "uefa-nl:ca6b5440663a24d4a7f69541",
+      "uefa-nl:1711de4579eb030020ccd9e5",
+      "uefa-nl:bc24af5389b892f94b4d526a",
+      "uefa-nl:b53100fdd47285e988fbaec4",
+      "uefa-nl:e83d1cbaa33838182c2a6300",
+      "uefa-nl:0d79badefb52f751d6065736",
+      "uefa-nl:d21bf2f8c2c2c7a7aa0da345",
+      "uefa-nl:eceea930e1d3f071db1977fb",
+      "uefa-nl:63c1aafb887510e064983a54",
+      "uefa-nl:2f51adeec5ad1d46e1dcc181",
+      "uefa-nl:dc3838ab912995d1da9f75fe",
+      "uefa-nl:ed74b7a6eaf6c048d43ae1f1",
+      "uefa-nl:a2670e7e646eaf1fe472578b",
+      "uefa-nl:285c5d8a0efda8bf746af37a",
+      "uefa-nl:295706f3e976a9d10131af1a",
+      "uefa-nl:172966506b5d605c5b670acc",
+      "uefa-nl:ca50bd66bf7536fdb6bbb62b",
+      "uefa-nl:0c66caf9725556e046fa1bd9",
+      "uefa-nl:96cf0fdf61fc694387974263",
+      "uefa-nl:a0b65a58651e1a2dbdba6a8f",
+      "uefa-nl:fc325adf043072b18a8fef63",
+      "uefa-nl:a67e3493d72447f20b467375",
+      "uefa-nl:ea2e34964124afc7b009c30f",
+      "uefa-nl:0ddeec6f43f3f42f5df13d2e",
+      "uefa-nl:61e1cbee39e7ad79c41396cb",
+      "uefa-nl:58e956d64d038beb5001eafb",
+      "uefa-nl:c66c925b97daef87276c692b",
+      "uefa-nl:5e362b9add23a1c64366d0d5",
+      "uefa-nl:1e3731d5e22d6fbe2a11f49a",
+      "uefa-nl:b3037f9337456a99351951ff",
+      "uefa-nl:d5f2a2d705acd329d7a0600b",
+      "uefa-nl:dd80242241f3cdb4e0d0600a",
+      "uefa-nl:5c2f55585f636412cef002ba",
+      "uefa-nl:3fc2fae81ab5107114413279",
+      "uefa-nl:6f82dce5beddfa32fba5b967",
+      "uefa-nl:825e9d63657924ec35e0424b",
+      "uefa-nl:de5539e0e1175a4dd9f2fe26",
+      "uefa-nl:eba2be8f1da90437352e0bdf",
+      "uefa-nl:4d32e0cd11ead4a55c981bbf",
+      "uefa-nl:53c3b0ca680738a0c476e95e",
+      "uefa-nl:9b3bdcc14cb18b1f638d69b9",
+      "uefa-nl:536974ac56011a43eb970ff1",
+      "uefa-nl:449bcf960c63fcf015900ad7",
+      "uefa-nl:e6da32aedb997bcb04a954a5",
+      "uefa-nl:c34e3589e9b56b71124999f7",
+      "uefa-nl:bfb7872e7575a4a25d825bb8",
+      "uefa-nl:6aaadd705987466bfa7b9812",
+      "uefa-nl:54fd1edf01274e590c9d0ffa",
+      "uefa-nl:b32d0f65e763aaff191d0cc6",
+      "uefa-nl:b0f9ddc2d2bce564fa9a8aa3",
+      "uefa-nl:febe334345357cb50f72af65",
+      "uefa-nl:bd37b7f2d3fd6b2c45e4e9ba",
+      "uefa-nl:fe74fd2d344963825fcd9436",
+      "uefa-nl:00821582e84e0cad16c98140",
+      "uefa-nl:e3e7193c685cf4acef6edec7",
+      "uefa-nl:acef5c8bf3c83a7da1da5183",
+      "uefa-nl:0f938fccd923f265d246b497",
+      "uefa-nl:3da825ebd0302a6bcd1594c9",
+      "uefa-nl:4274d482c0c3b143b27bd2a3",
+      "uefa-nl:32caffd3bcda396490b2dbd2",
+      "uefa-nl:2f24e0a7d9f4038d003888f7",
+      "uefa-nl:dc63dcb1f41aba5f1fff14fa",
+      "uefa-nl:4d589431350245171dd9c04c",
+      "uefa-nl:7bf5bbf9df6caed81a04e23f",
+      "uefa-nl:7c4caf64bde26dc05ea3d2ec",
+      "uefa-nl:2d53c6fbf58d5bbb3b09d36c",
+      "uefa-nl:9c3cfdc4bb2bcbce00ed1f94",
+      "uefa-nl:4da36e028c463ecb8240922b",
+      "uefa-nl:807b10ed4b9e8daedc5a8435",
+      "uefa-nl:0ce84f1775dead2fec7a041e",
+      "uefa-nl:68fd1f66a9363cc169f0a081",
+      "uefa-nl:ad1ad8b68541074d7ef7c0c0",
+      "uefa-nl:65a094c07448740ef74fb3b0",
+      "uefa-nl:428d65ea1e958dc53b9326cf",
+      "uefa-nl:02a61ccf29437bf59955abf1",
+      "uefa-nl:f5ff69e6ee554118b871ad63",
+      "uefa-nl:051d26d144295c1907196ed5",
+      "uefa-nl:0bfd9e193cdd9de223f7bde4",
+      "uefa-nl:2a37f9d4072140dd5be168c3",
+      "uefa-nl:86abae01ba5f1ba6502cd695",
+      "uefa-nl:d29eb19a7537324881b6905c",
+      "uefa-nl:883135e576a6d2b880c15998",
+      "uefa-nl:3e6576a3d0f7c85cb6de8303",
+      "uefa-nl:7c58f164c38930879d5deecc",
+      "uefa-nl:8a3e3e11bb9422a92f6339e9",
+      "uefa-nl:bf88c7f0e32cdb7e8ee85933",
+      "uefa-nl:d88a6ddc4da92aa8bd217613",
+      "uefa-nl:6604a3de45b86f4d30b2ff91",
+      "uefa-nl:1a1ce9b1e4616e75490417f1",
+      "uefa-nl:dc44a7ba811e48b3493ca03f",
+      "uefa-nl:85b7c325ce58632e55a88f63",
+      "uefa-nl:4c873bb9d6334d899b83182b",
+      "uefa-nl:4705acf5cf8ce25578508be6",
+      "uefa-nl:021e0078bad0256adc6f12cf",
+      "uefa-nl:88f905f9caf3ce066d15f3a7",
+      "uefa-nl:9400cfe77da0268119afb10c",
+      "uefa-nl:d044980303ca51a068f3d8ae",
+      "uefa-nl:2601ea67ffb968edb6bfc071",
+      "uefa-nl:4076f65cd688022ed22a10b8",
+      "uefa-nl:0d669e7a2dc40e7e6435133b",
+      "uefa-nl:3e5f610ef3484acf82797b75",
+      "uefa-nl:b98de806f6c6c6a9f270e0a6",
+      "uefa-nl:c986d1f3b30d09ee932f5e37",
+      "uefa-nl:799fa7673be9427740e6c175",
+      "uefa-nl:c9cf53d97fec290a6f996376",
+      "uefa-nl:8245d0c00099ca7c29e72a50",
+      "uefa-nl:ad3ea264bd9eaeb20000fd3d",
+      "uefa-nl:b4646a13e9d72f0bd46c0a82",
+      "uefa-nl:ad752af1df13307e44c184e2",
+      "uefa-nl:1f67a2a9061da56484ed5f38",
+      "uefa-nl:8964eb1d1ced0a59c2fafe66",
+      "uefa-nl:123f269150cf57e793285be7",
+      "uefa-nl:0a7389c8f0bcc2eba89ffff5",
+      "uefa-nl:bfea585f187a1e5d08e4a9d8",
+      "uefa-nl:75b2ecfec8afdb640c7ce186",
+      "uefa-nl:4e23042b313bf5c9156d81f0",
+      "uefa-nl:d9e0c5645c6221fa41514950",
+      "uefa-nl:6d890cfa01f8d5405bc312ee",
+      "uefa-nl:1f3c64c337a909eeec98c7f7",
+      "uefa-nl:5e6fe1bd3c8aa0570c0d02e7",
+      "uefa-nl:62dfd2fd8bc441f3704addcc",
+      "uefa-nl:414287f2c388b02543fd1496",
+      "uefa-nl:39fff7a7549b51adef4c97d5",
+      "uefa-nl:894aaf30d3b57793345df3cd",
+      "uefa-nl:e4db9fd6f18234746122e17c",
+      "uefa-nl:9761cb25bfd6f6819cba75b7",
+      "uefa-nl:4ee152dedc59604ca77ddfd9",
+      "uefa-nl:df19f887f6424cc2f8447fed",
+      "uefa-nl:b4834da7aa9c4018e628a86e",
+      "uefa-nl:7056629b516ea0c7580f7acc",
+      "uefa-nl:48d8da2b50d20eab7fd3a37c",
+      "uefa-nl:fef4ebf85e42617295d8bf00",
+      "uefa-nl:795d4e008866148e0c39c470",
+      "uefa-nl:b4644f7af603090911a85664",
+      "uefa-nl:e46fd670409a98b1945cc962",
+      "uefa-nl:b4b5ef1eaa55f3dcb6599239",
+      "uefa-nl:ed196cdeaaa0e8ca009d7bf8",
+      "uefa-nl:f673884ffc26cd849e27f28b",
+      "uefa-nl:e5d8cac3e93c469510d6903e",
+      "uefa-nl:94bb6a0891efc583de96ea30",
+      "uefa-nl:b89ec123b32842ac573034d7",
+      "uefa-nl:56e66015fe73a989ff902bb0",
+      "uefa-nl:da2c3d508026ffb8cb68e302",
+      "uefa-nl:028f15a1133e2e4b1a41889e",
+      "uefa-nl:018af0653f7f43c4802ac227",
+      "uefa-nl:55701dae76a1b233bf31ab2a",
+      "uefa-nl:3cde54547732adff6a409244",
+      "uefa-nl:84fca5b8c25eb73bbe6a4866",
+      "uefa-nl:27599f52479bb083eda0ddfe",
+      "uefa-nl:5170d23dd84067aa35ada0b1",
+      "uefa-nl:944e6b7cfa9a5af886a5ddae",
+      "uefa-nl:bef7663f1f844e54a2def9d0",
+      "uefa-nl:b19220a2b4a696c798c888cd",
+      "uefa-nl:2fab46a6e1b596987fa9614e",
+      "uefa-nl:2044d1e9a309ac7908bffd7f",
+      "uefa-nl:ebe3597a7f879e4dc9d239ff",
+      "uefa-nl:8aa2e5b4ea57df8fab20a795",
+      "uefa-nl:3ef63af8e8aa5b60b1fdefc0",
+      "uefa-nl:ededb00cb194718a8d464994",
+      "uefa-nl:bf312c1f429a0a75f23911f7",
+      "uefa-nl:9974282bbf7332f756efa2f1",
+      "uefa-nl:8ded4186d87e97d2284eca4e",
+      "uefa-nl:2f3c96800aad424a06e0ce9f",
+      "uefa-nl:3a36a9b6570d5f47ac0937e8",
+      "uefa-nl:3e4491d38cfd6e501cbc4e95",
+      "uefa-nl:7c397bf506e5345cbda2c1f5",
+      "uefa-nl:3348b0bc21572ad85cfef5a1",
+      "uefa-nl:00cc841ea90e1f22e2e1081b",
+      "uefa-nl:45065d4e2b2c2748b12f06f2",
+      "uefa-nl:37fd600248ee1982cbdb1a9d",
+      "uefa-nl:dab7f696a80cf5e4b878d067",
+      "uefa-nl:16cdd8e70cd0cab257215a3a",
+      "uefa-nl:0915b1be02fb094866029c28",
+      "uefa-nl:546d6e502e75a29b4eed54c8",
+      "uefa-nl:e2c96a068bed0d0c27600dbf",
+      "uefa-nl:f97dfb65f269aaf889ee478f",
+      "uefa-nl:92c207e55f279adec69b1551",
+      "uefa-nl:54a8c64cffc8aee06f04cbb1",
+      "uefa-nl:3ebc3cd2a101204fbb39da7a",
+      "uefa-nl:9a02cdf1048086a504f11a4b",
+      "uefa-nl:0ffa4ba6d02b61806ffaa259",
+      "uefa-nl:ea8a1e387c9cad905443e920",
+      "uefa-nl:650fc95d50dfa89f80b5faf1",
+      "uefa-nl:a01b9c4286f0f32fe487808f",
+      "uefa-nl:9f0fb57c4490cdb619b7eae2",
+      "uefa-nl:915577845f50bd37dff26511",
+      "uefa-nl:2ded514cff59402ceb229eca",
+      "uefa-nl:1b13e65df8be6e1eb5c5dd33",
+      "uefa-nl:f727d05a9fe53519c43953c9",
+      "uefa-nl:3365e4aa938c51524f47ef5b",
+      "uefa-nl:1c3831fc69617ed414286b9a",
+      "uefa-nl:2fd589acb60ece49b35c6f47",
+      "uefa-nl:e2e41b8a64d9d2a4cddcb125",
+      "uefa-nl:81a508998702013c14af1bb3",
+      "uefa-nl:265ac5a4a6bd22c67f356c80",
+      "uefa-nl:876267f2397af013a2b51687",
+      "uefa-nl:ff9de9d271d85535db875255",
+      "uefa-nl:c31e87b0351f610c932f8967",
+      "uefa-nl:15cf339bab102a0742510f40",
+      "uefa-nl:d4a5ad3f19c7523100bc099a",
+      "uefa-nl:185ff04eab24571c3ad873b7",
+      "uefa-nl:a801c3035d2bf76f61cef190",
+      "uefa-nl:99b8d04851b34cc37afa5014",
+      "uefa-nl:248e2f56e7b71c355eb795cb",
+      "uefa-nl:8adce1cce7cc8355b0c158c8",
+      "uefa-nl:1540a3ee653c5928256528b3",
+      "uefa-nl:820ddc306e3497af7fd0bbf8",
+      "uefa-nl:688a66b712f9043c418cec8a",
+      "uefa-nl:60ac5c8505d54989ee789e62",
+      "uefa-nl:8856b33809caa90c7ea32f8f",
+      "uefa-nl:bba893703db043657f0e846f",
+      "uefa-nl:db89f3d52adf7b11c2959bd1",
+      "uefa-nl:9e66e6d92943a427fb4e21bc",
+      "uefa-nl:07dbbcd98364447cd0fe8f5f",
+      "uefa-nl:32adc9d4bfb1c729b8279d8f",
+      "uefa-nl:1d869aa7871bdc18c8508729",
+      "uefa-nl:7d7a98391c4a2d3e8fb3231c",
+      "uefa-nl:43f314cb9c9b548809672155",
+      "uefa-nl:df70ca7df830da3585143808",
+      "uefa-nl:5c5c437a797d8fde61509929",
+      "uefa-nl:79fc98565623f12184402f01",
+      "uefa-nl:c8e653d13e3cf5863a419128",
+      "uefa-nl:c19d4fc23417a26cd4d3150e",
+      "uefa-nl:1ad586c44e8db6ca7f4aca8b",
+      "uefa-nl:c16adae1f7802fae9328b0a1",
+      "uefa-nl:5f4580143033446571dfa0ce",
+      "uefa-nl:55d809887a65fd19db6c8e9f",
+      "uefa-nl:bd1b0d07454a994b4e3ac7a7",
+      "uefa-nl:40e1d76632bfe79062bdd69a",
+      "uefa-nl:57d7b878f881cdd5652e807f",
+      "uefa-nl:b90bd99db47530ca809cf809",
+      "uefa-nl:11fd4ec515bd9ed2d2fc24f8",
+      "uefa-nl:8a5652fe204d87674c7b8c57",
+      "uefa-nl:1c9775f357ce05d981e5faf8",
+      "uefa-nl:33c1ff9b6b44efa611b2807f",
+      "uefa-nl:38fc75a43aebc12a1ea20c65",
+      "uefa-nl:07b3121957a0454e81b87aef",
+      "uefa-nl:1614ef658e41abfb581cfbdb",
+      "uefa-nl:f5d2da8db5ea58ed1a129a28",
+      "uefa-nl:bb92e8b385a4545ef650e612",
+      "uefa-nl:777c0af107a72e79d0c7838a",
+      "uefa-nl:29035c9df56829aeeec94908",
+      "uefa-nl:a1d6e618b5e6c9436e2f6cb7",
+      "uefa-nl:cad01c369d7ad57d46f634d2",
+      "uefa-nl:a68a35df44d7d92420f4faa8",
+      "uefa-nl:d6f7e93e0794aed5ef54f84c",
+      "uefa-nl:5745a6eac14c775f2e8fab0f",
+      "uefa-nl:f53e3806777c8961f0010d8c",
+      "uefa-nl:bb335e63b0784db00d46dbb6",
+      "uefa-nl:a62392654abc5c02e4b52630",
+      "uefa-nl:e9fc8143e9716d45838086df",
+      "uefa-nl:0b5f2a3e5c487a8a5ceb1319",
+      "uefa-nl:4748c488ba41739cfccfe8d4",
+      "uefa-nl:358c006c5fe7f5768ad390c0",
+      "uefa-nl:60ace01bac539fc51a05da59",
+      "uefa-nl:811f0b6a61f2321f88fa9d4c",
+      "uefa-nl:84d57190436ac62ae65536b8",
+      "uefa-nl:dd69e53c0d474ab8299c14bb",
+      "uefa-nl:ddf97938f89383eba11dea7c",
+      "uefa-nl:e528c1475282cd551f258115",
+      "uefa-nl:c12ed1c85a20b266dfd97914",
+      "uefa-nl:3213cd48ec27ccc7fd2ca36e",
+      "uefa-nl:829c08a26895ea0f4c622d19",
+      "uefa-nl:32fe68d1238852926d55af52",
+      "uefa-nl:b54140bbbcf132fc8af76333",
+      "uefa-nl:ab9e4cfa635c4c330ae17f50",
+      "uefa-nl:d0e0402b237930c814bd8b8c",
+      "uefa-nl:f424dd6297449c20e80e3684",
+      "uefa-nl:a3109528780d6598f99a83bc",
+      "uefa-nl:6fb5c751f3282bf21123d875",
+      "uefa-nl:45c6bcb6698f64297d8f7e2d",
+      "uefa-nl:64b4efc331ea6d24f0803ff8",
+      "uefa-nl:a2338cc4b27f370604a73466",
+      "uefa-nl:4a48c260bf91833236def2ce",
+      "uefa-nl:1203fe7a350759935ca0d9b3",
+      "uefa-nl:8d4895e3945996669087b76e",
+      "uefa-nl:bfb3b53826ecd59d714f0f66",
+      "uefa-nl:b9f025336dc0ce15bd619229",
+      "uefa-nl:81dbef705906b46d434b4e93",
+      "uefa-nl:5dff485678e011de13f8584a",
+      "uefa-nl:f10042b7e981cfdfaf87f2d5",
+      "uefa-nl:7dcec4aea7c415068fcdce52",
+      "uefa-nl:45c504aa8f03448773ca5096",
+      "uefa-nl:a6e68542527dbffc8aeaa6e4",
+      "uefa-nl:fd5b6c7ab2139801f6d90d64",
+      "uefa-nl:ca590030031c66c56fb915c2",
+      "uefa-nl:6a0923b7c769fc75f1150df7",
+      "uefa-nl:6cfb4b382ec810d60d4aefb8",
+      "uefa-nl:d5d741ab5e6c1e2ff083fff1",
+      "uefa-nl:4104b25faa139a8648e18d6a",
+      "uefa-nl:1478498bd55db764061af472",
+      "uefa-nl:3d929a98be42d4e4bf1ccaa6",
+      "uefa-nl:930c1d367c87f8b160cb924c",
+      "uefa-nl:a6bbfd9df94df99320bfb42e",
+      "uefa-nl:303e5d2f57fdd7bec5c0bd48",
+      "uefa-nl:6c94ca403396722f012ae683",
+      "uefa-nl:6142da3669763acb858cf5ba",
+      "uefa-nl:e542c055893d93a1a349eb80",
+      "uefa-nl:a74482f3b44e6bde17f445ec",
+      "uefa-nl:6c8f57dae8e64da64deb2077",
+      "uefa-nl:79853f504ce61a655f8838f0",
+      "uefa-nl:973c2ba0ee0c73ffc43dc991",
+      "uefa-nl:233da207615734adaaeca5c3",
+      "uefa-nl:9871ec0c5968ccb674589677",
+      "uefa-nl:5d676fbaef76dcf54d768549",
+      "uefa-nl:f5f9c8f5a3e8b48ec4536675",
+      "uefa-nl:228c2d6c4837294e2a8b7acb",
+      "uefa-nl:062959773f6cf820e3c72358",
+      "uefa-nl:eb36179549b06325f68096a1",
+      "uefa-nl:d72040bb159d786928f5225e",
+      "uefa-nl:37b2d4992f2ffb56feabb6b9",
+      "uefa-nl:95bbdb5eb86cc12eed622df8",
+      "uefa-nl:cf3251ea0762ce99bbec1157",
+      "uefa-nl:f309aba9a132f8cf104a9db9",
+      "uefa-nl:a432c515f5c42893a645069b",
+      "uefa-nl:7b7f3fdd2893cf25da25d5e7",
+      "uefa-nl:842a4fa6d7d75fedbe00d784",
+      "uefa-nl:0a6d32ceea1cfe2872d338d7",
+      "uefa-nl:672b8a97fb2d414b1abd6961",
+      "uefa-nl:7de05eb0d9766ce853bda88f",
+      "uefa-nl:ca614f8390f80dc345f44e9b",
+      "uefa-nl:dfe2719562b1fe343eb744ea",
+      "uefa-nl:bc521729e4299b4ebed32d59",
+      "uefa-nl:a26cd4d0342ad16292627388",
+      "uefa-nl:7144db8a0dd19b7f2f0a5b6a",
+      "uefa-nl:c31e92e1008172f1304fa8e5",
+      "uefa-nl:a181f11b3f3fcb34d3388902",
+      "uefa-nl:bb446c97c493013e0133d90a",
+      "uefa-nl:be730cf14babc06684552d40",
+      "uefa-nl:38e1227cd633e75409cae8ba",
+      "uefa-nl:43a3bc11c6c41060c0491c51",
+      "uefa-nl:3419bb996ade5cf35348b433",
+      "uefa-nl:e4c4b4253cec3052763b4da2",
+      "uefa-nl:c1a050da2bee6623db3f6027",
+      "uefa-nl:f4c5a1326a887bbc85c387a5",
+      "uefa-nl:08026b0c64b37479583a0a8c",
+      "uefa-nl:8cfbbef86f9fc423f13d0edb",
+      "uefa-nl:ca7ccbe868c5c1afccf34cb8",
+      "uefa-nl:8c322df2f5a16cadd2300ad3",
+      "uefa-nl:bd63bf99b4bfbfd8b708a6c7",
+      "uefa-nl:ab64e6d9b68bbcd76df3f146",
+      "uefa-nl:9b79e1861ab6f7a5f8350df7",
+      "uefa-nl:02633643313e9a1137fa8587",
+      "uefa-nl:363d328c74100d5546d8cd3d",
+      "uefa-nl:42385928e0850df3d7ec7940",
+      "uefa-nl:667b4256c283f3642f3b4c51",
+      "uefa-nl:ff3fa8b033c734cc672e39fe",
+      "uefa-nl:30333909c4da78f0950ebace",
+      "uefa-nl:16cb436af6c15a25d00f1067",
+      "uefa-nl:ada718e4e87f8f5bd7113a9f",
+      "uefa-nl:0e1803272cec9de71fab5ed2",
+      "uefa-nl:de529f370fcb3604af0a8885",
+      "uefa-nl:1c8609b002dcb479fa33ef77",
+      "uefa-nl:8db7936bde13043329114846",
+      "uefa-nl:eaa33b5ea6d080c9236e166b",
+      "uefa-nl:4df3812bd6363dbe2977309b",
+      "uefa-nl:3dd594e023ea93a12d7dcb41",
+      "uefa-nl:1b0810258425ad4cf162eed4",
+      "uefa-nl:f2162f3efe52939e56696750",
+      "uefa-nl:7437286441b6098fe58ff389",
+      "uefa-nl:3c8d76532717788b9b1a1468",
+      "uefa-nl:4edb37cc19226719428e63bc",
+      "uefa-nl:8528039f6de0703846b8aac3",
+      "uefa-nl:ed74f603cb9ef8308e0a9518",
+      "uefa-nl:7801ec1586941a60c8bdca39",
+      "uefa-nl:58ada95b25a2c6c2974a4652",
+      "uefa-nl:d3160ca7f548c22ce48ddec2",
+      "uefa-nl:526539a3b0e2ce9971d214e8",
+      "uefa-nl:ad7d29491391fbcda72d2396",
+      "uefa-nl:30d30d0dcc938af8d15b12d9",
+      "uefa-nl:b0b514d08791da25cb29f9c5",
+      "uefa-nl:6749dea5f6ca79e5059b3a54",
+      "uefa-nl:1c5bf7f09b4d3e583d588705",
+      "uefa-nl:04b266ca4f8951351205c4b4",
+      "uefa-nl:5c42181e49fe34bf2933d748",
+      "uefa-nl:87446503ed49ad41b3e3951e",
+      "uefa-nl:ed6fa1a21256d766b5d01a6f",
+      "uefa-nl:5ae853387a7630373af640d4",
+      "uefa-nl:ad5800d0ac8679c6cc3b07b6",
+      "uefa-nl:f702fddd089b587817f151c8",
+      "uefa-nl:13a2238fd49f9eed4f7e4c7f",
+      "uefa-nl:2e1ac15d9133a0827d51a253",
+      "uefa-nl:ed7f04997b23bd92e703742f",
+      "uefa-nl:8939e8a22237f3a5c7b41449",
+      "uefa-nl:7d1f1aceaf5b618f460920fb",
+      "uefa-nl:6ef28c93ad791fee40399cfe",
+      "uefa-nl:037b4db70722a726ac7493f3",
+      "uefa-nl:c03437535af48ef569f63d37",
+      "uefa-nl:8822139f27cab3bb279df264",
+      "uefa-nl:6462a3a99b50d814291eabec",
+      "uefa-nl:86b3ad00b56cb1b023ddea31",
+      "uefa-nl:9c870aeea5c398116260e5f5",
+      "uefa-nl:4a51b064c0835ed02d964d71",
+      "uefa-nl:fad8bef45d450167a0113426",
+      "uefa-nl:94841374361dabdcaa80e805",
+      "uefa-nl:20912d75c7787b7c0139dee0"
+    ],
+    "warmup_exclusions": [
+      "uefa-nl:6e4af01ae28db94d38f6950a",
+      "uefa-nl:1360df7e33713a2018721516",
+      "uefa-nl:bf506349539b808dcfa89976",
+      "uefa-nl:23c11fac4934643b83db4397",
+      "uefa-nl:e4802248423beb41284411c6",
+      "uefa-nl:ce5fad9e3a26994879fb91cb",
+      "uefa-nl:40d47f871f3074e62b6c4913",
+      "uefa-nl:af19cfd54091daae7e9a57fb",
+      "uefa-nl:ddc9519eec7e2f3a12fc8f51",
+      "uefa-nl:1b8da9fe1b8e6e4d2dd028a7",
+      "uefa-nl:fdf154d7056c82f73e8548e3",
+      "uefa-nl:6621ced63dd1ec78a30b9d6f",
+      "uefa-nl:53ff80c07bc7cfc314e76d7f",
+      "uefa-nl:74fd150cfcd15daeda23bdec",
+      "uefa-nl:267387663f0a939be6ede08a",
+      "uefa-nl:b81363c820fbb5f4fa89f9d1",
+      "uefa-nl:ffc55c1dada30daa31d72eb8",
+      "uefa-nl:cae6a991c53dc852f5b34a48",
+      "uefa-nl:84cc46e6ee92727ea7ad0da8",
+      "uefa-nl:a276da738a2cb99aa9ac9749",
+      "uefa-nl:e1d23d869eeaa3a547a01dd8",
+      "uefa-nl:9f8b207e82a7dc310d7b5721",
+      "uefa-nl:3d8e2dec6aa7a7645d292809",
+      "uefa-nl:cbedf003ec7441bc9d974634",
+      "uefa-nl:02d723acb8e0daaaf79814c1",
+      "uefa-nl:a79870b4b3812b23fddbd06d",
+      "uefa-nl:a0b97f8c56484fcef7300dee",
+      "uefa-nl:f3219afad7656e2b8e9d0f5c",
+      "uefa-nl:2f09f90fe5678427a08b9f9c",
+      "uefa-nl:5d8514d8a59b8c2cddeec560",
+      "uefa-nl:ac79ab026571d4cf2e4631d9",
+      "uefa-nl:66d3599845e5660bba0b9892"
+    ]
+  }
+}
