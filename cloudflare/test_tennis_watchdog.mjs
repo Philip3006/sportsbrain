@@ -41,6 +41,15 @@ function githubReceipt(status, slot) {
 const NOW = new Date('2026-10-03T12:20:00Z').getTime();
 const SLOT = 'tennis-scan:2026-10-03T12:00Z';
 
+function scheduleRuns(count, createdAt) {
+  return Array.from({ length: count }, (_, index) => ({
+    id: 1000 + index,
+    created_at: createdAt,
+    status: 'completed',
+    conclusion: 'success',
+  }));
+}
+
 reset(async (url) => {
   if (url.includes('/contents/results/tennis_scan_slots/')) return new Response('', { status: 404 });
   if (url.includes('/actions/workflows/tennis_scan.yml/runs')) {
@@ -63,14 +72,143 @@ reset(async (url) => {
 }
 
 reset(async (url) => {
-  if (url.includes('/contents/results/tennis_scan_slots/')) return githubReceipt('COMPLETED', SLOT);
+  if (url.includes('/contents/results/tennis_scan_slots/')) return new Response('', { status: 404 });
+  if (url.includes('/actions/workflows/tennis_scan.yml/runs')) {
+    return new Response(JSON.stringify({
+      total_count: 500,
+      workflow_runs: scheduleRuns(100, '2026-09-01T00:00:00Z'),
+    }), { status: 200 });
+  }
+  if (url.includes('/actions/workflows/tennis_scan.yml/dispatches')) return new Response(null, { status: 204 });
   throw new Error('unexpected GitHub call');
 });
 {
   const env = makeEnv();
   await worker.scheduled({ cron: '*/5 * * * *', scheduledTime: NOW }, env);
-  assert.equal(fetchCalls.filter((call) => call.url.includes('/dispatches')).length, 0, 'completed receipt must no-op');
-  assert.equal(JSON.parse(env._store.get('tennis_scan_watchdog_v1')).last_action, 'receipt_completed');
+  assert.equal(fetchCalls.filter((call) => call.url.includes('/dispatches')).length, 1, 'older full page permits absence conclusion');
+}
+
+reset(async (url) => {
+  if (url.includes('/contents/results/tennis_scan_slots/')) return new Response('', { status: 404 });
+  if (url.includes('/actions/workflows/tennis_scan.yml/runs')) {
+    return new Response(JSON.stringify({
+      total_count: 500,
+      workflow_runs: scheduleRuns(100, '2026-10-03T13:00:00Z'),
+    }), { status: 200 });
+  }
+  throw new Error('truncated history must not dispatch');
+});
+{
+  const env = makeEnv();
+  await worker.scheduled({ cron: '*/5 * * * *', scheduledTime: NOW }, env);
+  assert.equal(fetchCalls.filter((call) => call.url.includes('/dispatches')).length, 0, 'newer oldest page entry is ambiguous');
+  const state = JSON.parse(env._store.get('tennis_scan_watchdog_v1'));
+  assert.equal(state.last_action, 'fail_closed_no_dispatch');
+  assert.equal(state.failure_class, 'github_state_unavailable_or_ambiguous');
+}
+
+reset(async (url) => {
+  if (url.includes('/contents/results/tennis_scan_slots/')) return new Response('', { status: 404 });
+  if (url.includes('/actions/workflows/tennis_scan.yml/runs')) {
+    return new Response(JSON.stringify({
+      total_count: 50,
+      workflow_runs: scheduleRuns(50, '2026-09-01T00:00:00Z'),
+    }), { status: 200 });
+  }
+  if (url.includes('/actions/workflows/tennis_scan.yml/dispatches')) return new Response(null, { status: 204 });
+  throw new Error('unexpected GitHub call');
+});
+{
+  const env = makeEnv();
+  await worker.scheduled({ cron: '*/5 * * * *', scheduledTime: NOW }, env);
+  assert.equal(fetchCalls.filter((call) => call.url.includes('/dispatches')).length, 1, 'short complete page permits absence conclusion');
+}
+
+for (const [totalCount, returnedCount] of [[500, 50], [99, 50], [0, 1]]) {
+  reset(async (url) => {
+    if (url.includes('/contents/results/tennis_scan_slots/')) return new Response('', { status: 404 });
+    if (url.includes('/actions/workflows/tennis_scan.yml/runs')) {
+      return new Response(JSON.stringify({
+        total_count: totalCount,
+        workflow_runs: scheduleRuns(returnedCount, '2026-09-01T00:00:00Z'),
+      }), { status: 200 });
+    }
+    throw new Error('inconsistent short page must not dispatch');
+  });
+  const env = makeEnv();
+  await worker.scheduled({ cron: '*/5 * * * *', scheduledTime: NOW }, env);
+  assert.equal(fetchCalls.filter((call) => call.url.includes('/dispatches')).length, 0,
+    `short page total_count=${totalCount} returned=${returnedCount} fails closed`);
+  const state = JSON.parse(env._store.get('tennis_scan_watchdog_v1'));
+  assert.equal(state.last_action, 'fail_closed_no_dispatch');
+}
+
+reset(async (url) => {
+  if (url.includes('/contents/results/tennis_scan_slots/')) return new Response('', { status: 404 });
+  if (url.includes('/actions/workflows/tennis_scan.yml/runs')) {
+    return new Response(JSON.stringify({ total_count: 101, workflow_runs: scheduleRuns(101, '2026-09-01T00:00:00Z') }), { status: 200 });
+  }
+  throw new Error('oversized run page must not dispatch');
+});
+{
+  const env = makeEnv();
+  await worker.scheduled({ cron: '*/5 * * * *', scheduledTime: NOW }, env);
+  assert.equal(fetchCalls.filter((call) => call.url.includes('/dispatches')).length, 0, 'more than 100 returned entries fails closed');
+}
+
+reset(async (url) => {
+  if (url.includes('/contents/results/tennis_scan_slots/')) return new Response('', { status: 404 });
+  if (url.includes('/actions/workflows/tennis_scan.yml/runs')) {
+    return new Response(JSON.stringify({ total_count: 1, workflow_runs: [{}] }), { status: 200 });
+  }
+  throw new Error('malformed run data must not dispatch');
+});
+{
+  const env = makeEnv();
+  await worker.scheduled({ cron: '*/5 * * * *', scheduledTime: NOW }, env);
+  assert.equal(fetchCalls.filter((call) => call.url.includes('/dispatches')).length, 0, 'malformed run data fails closed');
+}
+
+for (const body of [
+  { total_count: '1', workflow_runs: scheduleRuns(1, '2026-09-01T00:00:00Z') },
+  { total_count: 1, workflow_runs: [{ created_at: 'not-a-timestamp' }] },
+]) {
+  reset(async (url) => {
+    if (url.includes('/contents/results/tennis_scan_slots/')) return new Response('', { status: 404 });
+    if (url.includes('/actions/workflows/tennis_scan.yml/runs')) {
+      return new Response(JSON.stringify(body), { status: 200 });
+    }
+    throw new Error('malformed run page must not dispatch');
+  });
+  const env = makeEnv();
+  await worker.scheduled({ cron: '*/5 * * * *', scheduledTime: NOW }, env);
+  assert.equal(fetchCalls.filter((call) => call.url.includes('/dispatches')).length, 0, 'malformed count or timestamp fails closed');
+}
+
+reset(async (url) => {
+  if (url.includes('/contents/results/tennis_scan_slots/')) return new Response('', { status: 404 });
+  if (url.includes('/actions/workflows/tennis_scan.yml/runs')) return new Response('unavailable', { status: 503 });
+  throw new Error('GitHub API failure must not dispatch');
+});
+{
+  const env = makeEnv();
+  await worker.scheduled({ cron: '*/5 * * * *', scheduledTime: NOW }, env);
+  assert.equal(fetchCalls.filter((call) => call.url.includes('/dispatches')).length, 0, 'GitHub run-history failure fails closed');
+}
+
+for (const receiptStatus of ['CLAIMED', 'COMPLETED']) {
+  reset(async (url) => {
+    if (url.includes('/contents/results/tennis_scan_slots/')) return githubReceipt(receiptStatus, SLOT);
+    throw new Error('authoritative receipt must prevent run lookup or dispatch');
+  });
+  const env = makeEnv();
+  await worker.scheduled({ cron: '*/5 * * * *', scheduledTime: NOW }, env);
+  assert.equal(fetchCalls.filter((call) => call.url.includes('/dispatches')).length, 0,
+    `${receiptStatus} receipt must no-op`);
+  assert.equal(fetchCalls.filter((call) => call.url.includes('/actions/workflows/')).length, 0,
+    `${receiptStatus} receipt must prevent schedule-history lookup`);
+  assert.equal(JSON.parse(env._store.get('tennis_scan_watchdog_v1')).last_action,
+    `receipt_${receiptStatus.toLowerCase()}`);
 }
 
 reset(async (url) => {
