@@ -196,15 +196,19 @@ reset(async (url) => {
   assert.equal(fetchCalls.filter((call) => call.url.includes('/dispatches')).length, 0, 'GitHub run-history failure fails closed');
 }
 
-reset(async (url) => {
-  if (url.includes('/contents/results/tennis_scan_slots/')) return githubReceipt('COMPLETED', SLOT);
-  throw new Error('unexpected GitHub call');
-});
-{
+for (const receiptStatus of ['CLAIMED', 'COMPLETED']) {
+  reset(async (url) => {
+    if (url.includes('/contents/results/tennis_scan_slots/')) return githubReceipt(receiptStatus, SLOT);
+    throw new Error('authoritative receipt must prevent run lookup or dispatch');
+  });
   const env = makeEnv();
   await worker.scheduled({ cron: '*/5 * * * *', scheduledTime: NOW }, env);
-  assert.equal(fetchCalls.filter((call) => call.url.includes('/dispatches')).length, 0, 'completed receipt must no-op');
-  assert.equal(JSON.parse(env._store.get('tennis_scan_watchdog_v1')).last_action, 'receipt_completed');
+  assert.equal(fetchCalls.filter((call) => call.url.includes('/dispatches')).length, 0,
+    `${receiptStatus} receipt must no-op`);
+  assert.equal(fetchCalls.filter((call) => call.url.includes('/actions/workflows/')).length, 0,
+    `${receiptStatus} receipt must prevent schedule-history lookup`);
+  assert.equal(JSON.parse(env._store.get('tennis_scan_watchdog_v1')).last_action,
+    `receipt_${receiptStatus.toLowerCase()}`);
 }
 
 reset(async (url) => {
