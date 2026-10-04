@@ -25,6 +25,8 @@ import pickle
 import re
 import time
 from datetime import datetime, timezone
+from html import unescape
+from html.parser import HTMLParser
 from zoneinfo import ZoneInfo
 
 _EUROPE_BERLIN = ZoneInfo("Europe/Berlin")
@@ -38,6 +40,11 @@ _BASE = "https://www.tennisexplorer.com"
 _UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15"
 _CACHE_PATH = DATA_CACHE / "te_upcoming.pkl"
 _CACHE_TTL_S = 30 * 60  # 30 min
+# Bound exact lookups to the existing schedule-only inventory ceiling.
+_MAX_TARGETED_MATCH_DETAILS = 25
+_NEXT_HTML: str | None = None
+_NEXT_HTML_TS = 0.0
+_TARGETED_MATCH_DETAIL_COUNT = 0
 
 # Regex: match-detail links auf /next/
 _RE_MATCH_ID = re.compile(r'/match-detail/\?id=(\d+)')
@@ -61,8 +68,11 @@ _RE_ODDS_ROW = re.compile(
 _RE_TOURNAMENT_LINK = re.compile(
     r'<a href="/([^/"]+)/2026/(atp-men|wta-women)[^"]*"[^>]*>([A-Z][^<]{2,40})</a>'
 )
-# Kickoff-Zeit im Detail-Header (z.B. "31.07. 22:00")
-_RE_KICKOFF = re.compile(r'(\d{2}\.\d{2}\.)\s*(\d{2}:\d{2})')
+# Kickoff-Zeit im Detail-Header. Aktuelle Seiten enthalten das Jahr
+# ("05.10.2026, 05:00"); historische Seiten teils nur "31.07. 22:00".
+# Immer den datierten Matchkopf vor Odds-Verlaufszeitstempeln bevorzugen.
+_RE_KICKOFF_WITH_YEAR = re.compile(r"\b(\d{2}\.\d{2}\.\d{4})\s*,?\s*(\d{2}:\d{2})\b")
+_RE_KICKOFF = re.compile(r"\b(\d{2}\.\d{2}\.)\s*(\d{2}:\d{2})\b")
 
 
 def _http_get(url: str, timeout: int = 15) -> str | None:
@@ -76,19 +86,22 @@ def _http_get(url: str, timeout: int = 15) -> str | None:
 
 
 def _parse_commence_time(dtstr: str, timestr: str) -> str:
-    """'31.07.', '22:00' → ISO-8601 UTC using Europe/Berlin timezone.
+    """Parse TE's dated or legacy header in Europe/Berlin local time.
 
     TE displays match times in local Central European time (CET/CEST).
     zoneinfo handles the CET↔CEST DST boundary automatically so we do not
-    hardcode +1/+2 offsets.  Signal IDs are date-only so the UTC conversion
-    does not change fixture identity for matches within normal playing hours.
+    hardcode +1/+2 offsets. A year supplied by the current page is retained;
+    older pages without a year use the current UTC year.
     """
     try:
-        year = datetime.now(timezone.utc).year
-        d, m, _ = dtstr.split(".")
+        d, m, *year_part = dtstr.split(".")
+        year = (
+            int(year_part[0])
+            if year_part and year_part[0]
+            else datetime.now(timezone.utc).year
+        )
         h, mi = int(timestr[:2]), int(timestr[3:5])
-        local_dt = datetime(year, int(m), int(d), h, mi,
-                            tzinfo=_EUROPE_BERLIN)
+        local_dt = datetime(year, int(m), int(d), h, mi, tzinfo=_EUROPE_BERLIN)
         utc_dt = local_dt.astimezone(timezone.utc)
         return utc_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
     except Exception:
@@ -97,10 +110,136 @@ def _parse_commence_time(dtstr: str, timestr: str) -> str:
 
 def _discover_match_ids() -> list[str]:
     """Holt alle unique match-detail-IDs aus /next/."""
-    html = _http_get(f"{_BASE}/next/")
+    html = _get_next_html()
     if not html:
         return []
     return list(dict.fromkeys(_RE_MATCH_ID.findall(html)))  # preserve order, dedup
+
+
+def _get_next_html() -> str | None:
+    """Return one short-lived /next/ page snapshot shared by bulk and exact lookup."""
+    global _NEXT_HTML, _NEXT_HTML_TS, _TARGETED_MATCH_DETAIL_COUNT
+    if _NEXT_HTML and time.time() - _NEXT_HTML_TS < _CACHE_TTL_S:
+        return _NEXT_HTML
+    html = _http_get(f"{_BASE}/next/")
+    if html:
+        _NEXT_HTML = html
+        _NEXT_HTML_TS = time.time()
+        _TARGETED_MATCH_DETAIL_COUNT = 0
+    return html
+
+
+class _NamedMatchLinkParser(HTMLParser):
+    """Find explicit match-detail anchors whose visible text names both players."""
+
+    def __init__(self, wanted: frozenset[str]) -> None:
+        super().__init__(convert_charrefs=True)
+        self.wanted = wanted
+        self._active_id: str | None = None
+        self._active_text: list[str] = []
+        self.match_ids: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag != "a":
+            return
+        href = dict(attrs).get("href") or ""
+        match = _RE_MATCH_ID.search(href)
+        if match:
+            self._active_id = match.group(1)
+            self._active_text = []
+
+    def handle_data(self, data: str) -> None:
+        if self._active_id is not None:
+            self._active_text.append(data)
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag != "a" or self._active_id is None:
+            return
+        label = " ".join(" ".join(self._active_text).split())
+        participants = re.split(r"\s+[–—-]\s+", label, maxsplit=1)
+        if len(participants) == 2:
+            from src.tennis.name_norm import to_elo_name_from_te
+
+            pair = frozenset(
+                to_elo_name_from_te(name).casefold() for name in participants
+            )
+            if pair == self.wanted:
+                self.match_ids.append(self._active_id)
+        self._active_id = None
+        self._active_text = []
+
+
+def _named_match_ids(html: str, player_a: str, player_b: str) -> list[str]:
+    """Resolve only exact two-player match links, independent of their page rank."""
+    from src.tennis.name_norm import to_elo_name_from_odds_api
+
+    wanted = frozenset(
+        to_elo_name_from_odds_api(name).casefold() for name in (player_a, player_b)
+    )
+    if len(wanted) != 2 or "" in wanted:
+        return []
+    parser = _NamedMatchLinkParser(wanted)
+    parser.feed(html)
+    return list(dict.fromkeys(parser.match_ids))
+
+
+def fetch_te_match_for_hint(match_hint: dict, min_bookies: int = 2) -> dict | None:
+    """Fetch one exact requested fixture omitted by the bounded 200-ID bulk.
+
+    The existing bulk limit is intentionally unchanged. This fallback follows
+    an explicit two-player match link from the same /next/ response, then
+    validates participants and UTC kickoff date again on its detail response.
+    """
+    global _TARGETED_MATCH_DETAIL_COUNT
+    player_a = str(match_hint.get("player_a", "")).strip()
+    player_b = str(match_hint.get("player_b", "")).strip()
+    if not player_a or not player_b:
+        return None
+    requested_kickoff = _parse_aware_utc(match_hint.get("commence_time"))
+    if requested_kickoff is None:
+        return None
+    html = _get_next_html()
+    if not html:
+        return None
+
+    for match_id in _named_match_ids(html, player_a, player_b):
+        if _TARGETED_MATCH_DETAIL_COUNT >= _MAX_TARGETED_MATCH_DETAILS:
+            return None
+        _TARGETED_MATCH_DETAIL_COUNT += 1
+        match = _fetch_match_detail(match_id)
+        if not match or int(match.get("te_bookies_count", 0) or 0) < min_bookies:
+            continue
+        from src.tennis.name_norm import to_elo_name_from_odds_api, to_elo_name_from_te
+
+        requested_pair = frozenset(
+            to_elo_name_from_odds_api(name).casefold() for name in (player_a, player_b)
+        )
+        returned_pair = frozenset(
+            to_elo_name_from_te(str(match.get(field, ""))).casefold()
+            for field in ("player_a", "player_b")
+        )
+        if len(returned_pair) != 2 or returned_pair != requested_pair:
+            continue
+        returned_kickoff = _parse_aware_utc(match.get("commence_time"))
+        if (
+            returned_kickoff is None
+            or returned_kickoff.date() != requested_kickoff.date()
+        ):
+            continue
+        return match
+    return None
+
+
+def _parse_aware_utc(value: object) -> datetime | None:
+    if not isinstance(value, str) or not value.strip():
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        return None
+    return parsed.astimezone(timezone.utc)
 
 
 def _fetch_match_detail(match_id: str) -> dict | None:
@@ -173,7 +312,10 @@ def _fetch_match_detail(match_id: str) -> dict | None:
         return None
 
     # Kickoff
-    ko_m = _RE_KICKOFF.search(html)
+    visible_text = unescape(re.sub(r"<[^>]+>", " ", html))
+    ko_m = _RE_KICKOFF_WITH_YEAR.search(visible_text) or _RE_KICKOFF.search(
+        visible_text
+    )
     commence = _parse_commence_time(ko_m.group(1), ko_m.group(2)) if ko_m else ""
 
     return {
