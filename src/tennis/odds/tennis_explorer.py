@@ -150,14 +150,37 @@ def _quote_from_bulk(match_hint: dict, bulk: list[dict]) -> OddsQuote | None:
 
 
 def fetch(match_hint: dict) -> OddsQuote | None:
-    return _quote_from_bulk(match_hint, _get_bulk())
+    quote = _quote_from_bulk(match_hint, _get_bulk())
+    if quote is not None:
+        return quote
+    return _quote_from_requested_fixture(match_hint)
 
 
-def fetch_with_diagnostics(match_hint: dict) -> tuple[OddsQuote | None, ProviderOutcome]:
+def _quote_from_requested_fixture(match_hint: dict) -> OddsQuote | None:
+    """Use the exact TE match link when the fixture falls past the bulk cap."""
+    try:
+        from src.data.tennis_secondary_odds import fetch_te_match_for_hint
+
+        match = fetch_te_match_for_hint(match_hint, min_bookies=2)
+    except Exception as exc:  # noqa: BLE001 - provider boundary remains fail-closed
+        _log.debug("targeted Tennis Explorer lookup failed: %s", type(exc).__name__)
+        return None
+    return _quote_from_bulk(match_hint, [match] if match else [])
+
+
+def fetch_with_diagnostics(
+    match_hint: dict,
+) -> tuple[OddsQuote | None, ProviderOutcome]:
     bulk, outcome = _get_bulk_with_diagnostics()
     if outcome.status_class != "success":
         return None, outcome
     quote = _quote_from_bulk(match_hint, bulk)
+    if quote is None:
+        quote = _quote_from_requested_fixture(match_hint)
     if quote and quote.sane():
-        return quote, ProviderOutcome(name, True, True, "success", result="usable_quote")
-    return quote, ProviderOutcome(name, True, True, "invalid_quote" if quote else "no_match")
+        return quote, ProviderOutcome(
+            name, True, True, "success", result="usable_quote"
+        )
+    return quote, ProviderOutcome(
+        name, True, True, "invalid_quote" if quote else "no_match"
+    )
