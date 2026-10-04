@@ -4,7 +4,7 @@
 
 
 ## China Open (ATP) · atp500 · 🔴 LIVE
-Surface: hard · Best of: 3 · Matches gescannt: 1
+Surface: hard · Best of: 3 · Matches gescannt: 2
 _Keine Value-Signals._
 
 ## Japan Open (ATP) · atp500 · 🔴 LIVE
@@ -12,5 +12,5 @@ Surface: hard · Best of: 3 · Matches gescannt: 0
 _Keine Value-Signals._
 
 ## China Open (WTA) · wta1000 · 🔴 LIVE
-Surface: hard · Best of: 3 · Matches gescannt: 12
+Surface: hard · Best of: 3 · Matches gescannt: 11
 _Keine Value-Signals._
