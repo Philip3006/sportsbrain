@@ -1,6 +1,6 @@
 # Tennis Scan 2026-10-05
 
-**Aktive Turniere:** 4 · **Signals total:** 1
+**Aktive Turniere:** 4 · **Signals total:** 0
 
 
 ## China Open (ATP) · atp500 · 🔴 LIVE
@@ -17,5 +17,4 @@ _Keine Value-Signals._
 
 ## China Open (WTA) · wta1000 · 🔴 LIVE
 Surface: hard · Best of: 3 · Matches gescannt: 8
-- [WTA] **Coco Gauff vs Elise Mertens** · Match Winner: Coco Gauff
-  Quote 1.36 · Modell 76.9% · EV +4.6% · Stake 5.00€ · MEDIUM
+_Keine Value-Signals._
