@@ -1,15 +1,6 @@
 # Tennis Scan 2026-10-05
 
-**Aktive Turniere:** 3 · **Signals total:** 1
-
-## ⭐ TOP-PICKS — nur diese spielen
-
-> Filter: EV-gewichtet · Markt-historisch · max. 1 Signal pro Match
-
-- 🟢 **Karolina Muchova vs Naomi Osaka** · Match Winner: Karolina Muchova
-  Quote 2.21 · EV +32.4% · Stake 5.00€ · HIGH
-
----
+**Aktive Turniere:** 4 · **Signals total:** 1
 
 
 ## China Open (ATP) · atp500 · 🔴 LIVE
@@ -20,7 +11,11 @@ _Keine Value-Signals._
 Surface: hard · Best of: 3 · Matches gescannt: 0
 _Keine Value-Signals._
 
+## Atp Shanghai Masters (ATP) · atp250 · 🔴 LIVE
+Surface: unknown · Best of: 3 · Matches gescannt: 17
+_Keine Value-Signals._
+
 ## China Open (WTA) · wta1000 · 🔴 LIVE
-Surface: hard · Best of: 3 · Matches gescannt: 7
-- [WTA] **Karolina Muchova vs Naomi Osaka** · Match Winner: Karolina Muchova ⭐
-  Quote 2.21 · Modell 59.9% · EV +32.4% · Stake 5.00€ · HIGH
+Surface: hard · Best of: 3 · Matches gescannt: 8
+- [WTA] **Coco Gauff vs Elise Mertens** · Match Winner: Coco Gauff
+  Quote 1.36 · Modell 76.9% · EV +4.6% · Stake 5.00€ · MEDIUM
