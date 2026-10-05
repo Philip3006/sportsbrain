@@ -1,0 +1,66 @@
+{
+  "schema_version": "sportsbrain-nl-historical-odds-executor-reconciliation-v1",
+  "status": "RECONCILED",
+  "generated_at": "2026-09-29T00:00:00Z",
+  "timeline_head": "065c6b40eb9911df3703d2e3079730a556136ee3",
+  "timeline_dataset_digest": "2c60c6b823b0cae948947fffe2a0e3456495c1fc5d510379ae95690e1c3fa6ef",
+  "final_plan_path": "results/audits/nations_league_historical_odds_request_plan_20260929.json",
+  "final_plan_sha256": "1f8f7dd9ee56a68983f0631d400c93bbe04b9199e9a37471a285cdfb8966006d",
+  "old_218": {
+    "prediction_only": {"unique_requests": 150, "estimated_credits": 1500},
+    "full_research": {"unique_requests": 225, "estimated_credits": 2250}
+  },
+  "reference_214": {
+    "head": "48b14907f89bd97cd920546df6d3cfa5c4bbc3eb",
+    "plan_digest": "b231bda6e22566529c0747cc8c110cb7049ba574b63a6892f883ac7015ddfb02",
+    "prediction_only": {"unique_requests": 147, "estimated_credits": 1470},
+    "full_research": {"unique_requests": 182, "estimated_credits": 1820}
+  },
+  "final_218": {
+    "prediction_only": {"unique_requests": 147, "estimated_credits": 1470},
+    "full_research": {"unique_requests": 182, "estimated_credits": 1820},
+    "phase_local_requests": {
+      "INITIAL": 72,
+      "REFINEMENT": 75,
+      "CLOSING_BENCHMARK": 75
+    },
+    "cross_phase_duplicate_timestamps": 40,
+    "initial_excluded_fixture_count": 10,
+    "initial_covered_fixture_count": 269
+  },
+  "difference_explanations": [
+    {
+      "dimension": "INITIAL eligibility",
+      "old_218": 75,
+      "final_218": 72,
+      "reason": "Ten 2022-06-11 fixtures have exact T-24h timestamps before the historical coverage boundary."
+    },
+    {
+      "dimension": "PREDICTION_ONLY identity union",
+      "old_218": 150,
+      "final_218": 147,
+      "reason": "The three shared pre-boundary INITIAL timestamps are excluded."
+    },
+    {
+      "dimension": "FULL_RESEARCH identity union",
+      "old_218": 225,
+      "final_218": 182,
+      "reason": "Forty exact historical timestamps are shared across phases and phase is not part of paid provider identity."
+    },
+    {
+      "dimension": "credit estimate",
+      "old_218": 2250,
+      "final_218": 1820,
+      "reason": "Credits equal canonical paid request identities multiplied by the declared 10-credit cost."
+    }
+  ],
+  "safety": {
+    "provider_requests": 0,
+    "credential_reads": 0,
+    "credits_consumed": 0,
+    "production_mutation": false,
+    "publication": false,
+    "betting": false,
+    "ledger_mutations": 0
+  }
+}
