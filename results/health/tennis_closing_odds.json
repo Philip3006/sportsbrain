@@ -1,8 +1,8 @@
 {
   "job": "tennis_closing_odds",
   "status": "ok",
-  "last_run_at": "2026-10-06T07:31:59Z",
-  "started_at": "2026-10-06T07:31:59Z",
+  "last_run_at": "2026-10-06T08:02:06Z",
+  "started_at": "2026-10-06T08:02:06Z",
   "duration_s": null,
   "exit_code": 0,
   "error": null,
@@ -10,7 +10,7 @@
   "run_id": null,
   "recovery_attempt_id": null,
   "scheduler": "cloudflare_cron",
-  "scheduled_at": "2026-10-06T07:30:41.000Z",
-  "scheduler_lag_s": 36,
-  "idempotency_key": "tennis_closing_odds/2026-10-06T07:30"
+  "scheduled_at": "2026-10-06T08:00:41.000Z",
+  "scheduler_lag_s": 40,
+  "idempotency_key": "tennis_closing_odds/2026-10-06T08:00"
 }
