@@ -13,7 +13,7 @@
 
 
 ## Atp Shanghai Masters (ATP) · atp250 · 🔴 LIVE
-Surface: unknown · Best of: 3 · Matches gescannt: 31
+Surface: unknown · Best of: 3 · Matches gescannt: 32
   > ⚠️ **Satz-AH vorhanden** — beim Buchmacher **Sätze-Handicap** wählen, NICHT Spiele-Handicap!
 - [ATP] **Novak Djokovic vs Hubert Hurkacz** · Novak Djokovic Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
   Quote 2.20 · Modell 52.3% · EV +15.1% · Stake 5.00€ · HIGH
