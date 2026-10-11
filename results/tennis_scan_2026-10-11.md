@@ -22,7 +22,7 @@
 Surface: unknown · Best of: 3 · Matches gescannt: 16
   > ⚠️ **Satz-AH vorhanden** — beim Buchmacher **Sätze-Handicap** wählen, NICHT Spiele-Handicap!
 - [ATP] **Hubert Hurkacz vs Yi Zhou** · Match Winner: Yi Zhou
-  Quote 3.38 · Modell 37.7% · EV +27.3% · Stake 5.00€ · HIGH
+  Quote 3.62 · Modell 37.7% · EV +36.3% · Stake 5.00€ · HIGH
 - [ATP] **Hubert Hurkacz vs Yi Zhou** · Hubert Hurkacz Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
   Quote 2.80 · Modell 41.8% · EV +17.2% · Stake 5.00€ · HIGH
 - [ATP] **Ben Shelton vs Arthur Gea** · Ben Shelton Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
