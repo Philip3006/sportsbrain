@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-10-12T20:16:37.844628+00:00",
-  "n_signals_total": 1797,
+  "generated_at": "2026-10-12T22:16:40.285647+00:00",
+  "n_signals_total": 1798,
   "n_with_outcome": 1784,
   "by_market": {
     "ah+0.5_away": {
@@ -186,11 +186,11 @@
       "ev_mean": 37.63
     },
     "home": {
-      "n": 284,
-      "n_placed": 252,
+      "n": 285,
+      "n_placed": 253,
       "n_outcome": 281,
       "accuracy": 0.4555,
-      "ev_mean": 17.59
+      "ev_mean": 17.63
     },
     "o/u1.5_over": {
       "n": 21,
@@ -825,8 +825,8 @@
   },
   "by_confidence": {
     "HIGH": {
-      "n": 462,
-      "accuracy": 0.4827
+      "n": 463,
+      "accuracy": 0.4816
     },
     "LOW": {
       "n": 403,
