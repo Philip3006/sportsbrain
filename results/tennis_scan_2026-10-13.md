@@ -22,5 +22,5 @@ Surface: unknown · Best of: 3 · Matches gescannt: 5
 
 ## Wta Wuhan Open (WTA) · wta250 · 🔴 LIVE
 Surface: unknown · Best of: 3 · Matches gescannt: 14
-- [WTA] **Jelena Ostapenko vs Jessica Pegula** · Match Winner: Jessica Pegula
-  Quote 1.50 · Modell 76.7% · EV +15.0% · Stake 5.00€ · HIGH
+- [WTA] **Aryna Sabalenka vs Ann Li** · Match Winner: Aryna Sabalenka
+  Quote 1.35 · Modell 80.6% · EV +8.9% · Stake 5.00€ · HIGH
