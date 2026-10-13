@@ -1,6 +1,6 @@
 # Tennis Scan 2026-10-13
 
-**Aktive Turniere:** 2 · **Signals total:** 2
+**Aktive Turniere:** 2 · **Signals total:** 3
 
 ## ⭐ TOP-PICKS — nur diese spielen
 
@@ -22,4 +22,5 @@ Surface: unknown · Best of: 3 · Matches gescannt: 6
 
 ## Wta Wuhan Open (WTA) · wta250 · 🔴 LIVE
 Surface: unknown · Best of: 3 · Matches gescannt: 15
-_Keine Value-Signals._
+- [WTA] **Aryna Sabalenka vs Ann Li** · Match Winner: Aryna Sabalenka
+  Quote 1.34 · Modell 80.6% · EV +8.1% · Stake 5.00€ · HIGH
