@@ -1,6 +1,6 @@
 # Tennis Scan 2026-10-13
 
-**Aktive Turniere:** 2 · **Signals total:** 3
+**Aktive Turniere:** 2 · **Signals total:** 2
 
 ## ⭐ TOP-PICKS — nur diese spielen
 
@@ -13,7 +13,7 @@
 
 
 ## Atp Shanghai Masters (ATP) · atp250 · 🔴 LIVE
-Surface: unknown · Best of: 3 · Matches gescannt: 5
+Surface: unknown · Best of: 3 · Matches gescannt: 6
   > ⚠️ **Satz-AH vorhanden** — beim Buchmacher **Sätze-Handicap** wählen, NICHT Spiele-Handicap!
 - [ATP] **Daniil Medvedev vs Stefanos Tsitsipas** · Match Winner: Daniil Medvedev ⭐
   Quote 2.20 · Modell 60.4% · EV +32.9% · Stake 5.00€ · HIGH
@@ -21,6 +21,5 @@ Surface: unknown · Best of: 3 · Matches gescannt: 5
   Quote 2.93 · Modell 40.1% · EV +17.4% · Stake 5.00€ · HIGH
 
 ## Wta Wuhan Open (WTA) · wta250 · 🔴 LIVE
-Surface: unknown · Best of: 3 · Matches gescannt: 14
-- [WTA] **Aryna Sabalenka vs Ann Li** · Match Winner: Aryna Sabalenka
-  Quote 1.35 · Modell 80.6% · EV +8.9% · Stake 5.00€ · HIGH
+Surface: unknown · Best of: 3 · Matches gescannt: 15
+_Keine Value-Signals._
