@@ -13,11 +13,11 @@
 
 
 ## Atp Shanghai Masters (ATP) · atp250 · 🔴 LIVE
-Surface: unknown · Best of: 3 · Matches gescannt: 3
+Surface: unknown · Best of: 3 · Matches gescannt: 4
   > ⚠️ **Satz-AH vorhanden** — beim Buchmacher **Sätze-Handicap** wählen, NICHT Spiele-Handicap!
 - [ATP] **Alexander Zverev vs Alex de Minaur** · Alexander Zverev Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
   Quote 2.59 · Modell 45.0% · EV +16.7% · Stake 5.00€ · HIGH
 
 ## Wta Wuhan Open (WTA) · wta250 · 🔴 LIVE
-Surface: unknown · Best of: 3 · Matches gescannt: 6
+Surface: unknown · Best of: 3 · Matches gescannt: 7
 _Keine Value-Signals._
