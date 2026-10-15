@@ -23,5 +23,5 @@ Surface: unknown · Best of: 3 · Matches gescannt: 3
   Quote 2.29 · Modell 50.4% · EV +15.4% · Stake 5.00€ · HIGH
 
 ## Wta Wuhan Open (WTA) · wta250 · 🔴 LIVE
-Surface: unknown · Best of: 3 · Matches gescannt: 3
+Surface: unknown · Best of: 3 · Matches gescannt: 4
 _Keine Value-Signals._
