@@ -1,0 +1,95 @@
+{
+  "schema": "nations-league-web-odds-source-registry-v1",
+  "generated_at": "2026-09-30T10:34:06Z",
+  "research_only": true,
+  "provider_network_requests": 0,
+  "credentials_accessed": false,
+  "source_records": [
+    {
+      "fixture_id": "uefa-nl:00821582e84e0cad16c98140",
+      "source_name": "TipsterArea",
+      "source_url": "https://tipsterarea.com/match/north-macedonia-bulgaria-uefa-nations-league-group-stage-730350",
+      "odds_decimal": [
+        2.58,
+        2.96,
+        2.89
+      ],
+      "evidence_status": "UNTIMESTAMPED_HISTORICAL",
+      "source_quality": {
+        "direct_url": true,
+        "exact_fixture": true,
+        "timestamp_explicit": false,
+        "aggregate_or_bookmaker": "aggregate"
+      },
+      "notes": "Search-visible pre-match 1X2 row; no target-phase capture timestamp."
+    },
+    {
+      "fixture_id": "uefa-nl:1d869aa7871bdc18c8508729",
+      "source_name": "Odds Math",
+      "source_url": "https://www.oddsmath.com/football/matches/2024-09-05/",
+      "odds_decimal": [
+        2.685,
+        3.165,
+        3.17
+      ],
+      "evidence_status": "UNTIMESTAMPED_HISTORICAL",
+      "source_quality": {
+        "direct_url": true,
+        "exact_fixture": true,
+        "timestamp_explicit": false,
+        "aggregate_or_bookmaker": "aggregate"
+      },
+      "notes": "Search-visible historical 1X2 row; page does not prove target-phase capture timing."
+    },
+    {
+      "fixture_id": "uefa-nl:a26cd4d0342ad16292627388",
+      "source_name": "Marbet PDF",
+      "source_url": "https://marbet.com.mk/content/Documents/Marbet%20-%202024-11-14T094832.879.pdf",
+      "odds_decimal": [
+        1.45,
+        4.2,
+        8.0
+      ],
+      "evidence_status": "UNTIMESTAMPED_HISTORICAL",
+      "source_quality": {
+        "direct_url": true,
+        "exact_fixture": true,
+        "timestamp_explicit": false,
+        "aggregate_or_bookmaker": "bookmaker"
+      },
+      "notes": "PDF filename contains a publication-like timestamp, but no auditable capture-time semantics are established."
+    },
+    {
+      "fixture_id": "uefa-nl:5c5c437a797d8fde61509929",
+      "source_name": "AnnaBet",
+      "source_url": "https://annabet.com/en/soccerstats/serie_735_UEFA_Nations_League_D%2C222%2Cseason_2024-2025.html",
+      "odds_decimal": [
+        3.86,
+        2.91,
+        2.16
+      ],
+      "evidence_status": "UNTIMESTAMPED_HISTORICAL",
+      "source_quality": {
+        "direct_url": true,
+        "exact_fixture": true,
+        "timestamp_explicit": false,
+        "aggregate_or_bookmaker": "aggregate"
+      },
+      "notes": "Historical 1X2 row found; no target-phase timestamp."
+    }
+  ],
+  "unusable_source_attempts": [
+    {
+      "source_name": "UEFA match pages",
+      "reason": "fixture identity/results available, no public historical 1X2 time series"
+    },
+    {
+      "source_name": "OddsPortal/BetExplorer candidate pages",
+      "reason": "no auditable target-phase capture retrieved in ordinary public search"
+    },
+    {
+      "source_name": "Flashscore/Soccerway candidate pages",
+      "reason": "fixture pages found or searchable, target-phase odds history not exposed"
+    }
+  ]
+}
