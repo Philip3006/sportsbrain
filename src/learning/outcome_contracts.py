@@ -15,7 +15,7 @@ import json
 import math
 import os
 import threading
-from collections.abc import Iterable, Mapping, MutableMapping
+from collections.abc import Callable, Iterable, Mapping, MutableMapping
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import StrEnum
@@ -233,6 +233,7 @@ class PredictionSnapshotV1:
     feature_cutoff: str
     prediction: dict[str, Any]
     prediction_digest: str
+    source_record_id: str | None = None
 
     def __post_init__(self) -> None:
         for field in (
@@ -247,6 +248,8 @@ class PredictionSnapshotV1:
         ):
             _text(getattr(self, field), field)
         _digest(self.prediction_id, "prediction_id")
+        if self.source_record_id is not None:
+            _text(self.source_record_id, "source_record_id")
         _utc(self.prediction_timestamp, "prediction_timestamp")
         _utc(self.feature_cutoff, "feature_cutoff")
         if _utc(self.feature_cutoff, "feature_cutoff") > _utc(
@@ -265,7 +268,7 @@ class PredictionSnapshotV1:
         return {"prediction": _public(self.prediction)}
 
     def identity_payload(self) -> dict[str, Any]:
-        return {
+        identity = {
             "schema": PREDICTION_SCHEMA,
             "signal_id": self.signal_id,
             "fixture_id": self.fixture_id,
@@ -279,6 +282,9 @@ class PredictionSnapshotV1:
             "feature_cutoff": self.feature_cutoff,
             "prediction_digest": self.prediction_digest,
         }
+        if self.source_record_id is not None:
+            identity["source_record_id"] = self.source_record_id
+        return identity
 
     def to_payload(self) -> dict[str, Any]:
         return {
@@ -305,6 +311,7 @@ class PredictionSnapshotV1:
             feature_cutoff=payload.get("feature_cutoff", ""),
             prediction=payload.get("prediction", {}),
             prediction_digest=payload.get("prediction_digest", ""),
+            source_record_id=payload.get("source_record_id"),
         )
 
 
@@ -678,6 +685,8 @@ def build_outcome_attachment(
     *,
     settled_at: str,
     provenance_digest: str,
+    outcome_resolver: Callable[[Mapping[str, Any], Mapping[str, Any]], str]
+    | None = None,
 ) -> OutcomeAttachmentV1:
     """Create the only supported prediction→result attachment."""
 
@@ -688,7 +697,13 @@ def build_outcome_attachment(
         prediction.prediction_timestamp, "prediction_timestamp"
     ):
         raise LifecycleError("result must become safe after prediction")
-    state = _market_outcome(result.actual_result, prediction.prediction)
+    state = (
+        outcome_resolver(result.actual_result, prediction.prediction)
+        if outcome_resolver is not None
+        else _market_outcome(result.actual_result, prediction.prediction)
+    )
+    if state not in {item.value for item in SettlementState}:
+        raise LifecycleError("outcome resolver returned an unsupported state")
     base = {
         "schema": ATTACHMENT_SCHEMA,
         "prediction_id": prediction.prediction_id,

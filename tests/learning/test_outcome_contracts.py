@@ -152,6 +152,13 @@ def test_result_prediction_attachment_is_immutable_and_idempotent():
     }
 
 
+def test_prediction_contract_without_optional_source_id_round_trips():
+    prediction = _prediction()
+    payload = prediction.to_payload()
+    assert "source_record_id" not in payload
+    assert PredictionSnapshotV1.from_payload(payload).to_payload() == payload
+
+
 def test_conflicting_result_replay_fails_closed():
     store = InMemoryOutcomeStore()
     original = _result()
