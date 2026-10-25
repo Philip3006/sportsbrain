@@ -1,0 +1,520 @@
+{
+  "baseline_context_only": {
+    "causal_squad_comparison": false,
+    "coverage": 1.0,
+    "label": "frozen_dixon_coles_component",
+    "limitations": [
+      "Context only: the source audit says historical model reconstruction uses current static squad-value inputs and default squad context where historical snapshots are absent.",
+      "These metrics are not a matched baseline for any squad ablation and must not be read as squad-feature evidence."
+    ],
+    "log_loss_multiclass": null,
+    "matches_evaluated": 512,
+    "metrics": {
+      "accuracy_argmax": 0.49609375,
+      "brier_score_multiclass": 0.619594444105348,
+      "expected_calibration_error_10_bins_mean_one_vs_rest": 0.08073667939911858,
+      "home_draw_away_calibration": {
+        "away": {
+          "brier_score_one_vs_rest": 0.21437594667481338,
+          "mean_probability": 0.28207832684706213,
+          "observed_frequency": 0.330078125,
+          "reliability_bins": [
+            {
+              "calibration_error": -0.10772328853271096,
+              "count": 117,
+              "lower_bound_inclusive": 0.0,
+              "mean_probability": 0.046122865313442896,
+              "observed_frequency": 0.15384615384615385,
+              "upper_bound_exclusive": 0.1
+            },
+            {
+              "calibration_error": -0.08662437511182083,
+              "count": 115,
+              "lower_bound_inclusive": 0.1,
+              "mean_probability": 0.14815823358383134,
+              "observed_frequency": 0.23478260869565218,
+              "upper_bound_exclusive": 0.2
+            },
+            {
+              "calibration_error": -0.10882946127787457,
+              "count": 82,
+              "lower_bound_inclusive": 0.2,
+              "mean_probability": 0.24482907530749126,
+              "observed_frequency": 0.35365853658536583,
+              "upper_bound_exclusive": 0.30000000000000004
+            },
+            {
+              "calibration_error": -0.0034886283831735976,
+              "count": 63,
+              "lower_bound_inclusive": 0.30000000000000004,
+              "mean_probability": 0.3457177208231756,
+              "observed_frequency": 0.3492063492063492,
+              "upper_bound_exclusive": 0.4
+            },
+            {
+              "calibration_error": -0.14179587383979309,
+              "count": 43,
+              "lower_bound_inclusive": 0.4,
+              "mean_probability": 0.43959947499741625,
+              "observed_frequency": 0.5813953488372093,
+              "upper_bound_exclusive": 0.5
+            },
+            {
+              "calibration_error": 0.08315187109770417,
+              "count": 34,
+              "lower_bound_inclusive": 0.5,
+              "mean_probability": 0.5537401063918218,
+              "observed_frequency": 0.47058823529411764,
+              "upper_bound_exclusive": 0.6000000000000001
+            },
+            {
+              "calibration_error": 0.12898607878127677,
+              "count": 27,
+              "lower_bound_inclusive": 0.6000000000000001,
+              "mean_probability": 0.6475045972997953,
+              "observed_frequency": 0.5185185185185185,
+              "upper_bound_exclusive": 0.7000000000000001
+            },
+            {
+              "calibration_error": 0.01268742079549412,
+              "count": 15,
+              "lower_bound_inclusive": 0.7000000000000001,
+              "mean_probability": 0.7460207541288274,
+              "observed_frequency": 0.7333333333333333,
+              "upper_bound_exclusive": 0.8
+            },
+            {
+              "calibration_error": 0.3451989129488646,
+              "count": 14,
+              "lower_bound_inclusive": 0.8,
+              "mean_probability": 0.8451989129488646,
+              "observed_frequency": 0.5,
+              "upper_bound_exclusive": 0.9
+            },
+            {
+              "calibration_error": 0.948834696143108,
+              "count": 2,
+              "lower_bound_inclusive": 0.9,
+              "mean_probability": 0.948834696143108,
+              "observed_frequency": 0.0,
+              "upper_bound_exclusive": 1.0
+            }
+          ]
+        },
+        "draw": {
+          "brier_score_one_vs_rest": 0.19456390742526208,
+          "mean_probability": 0.3136328021244952,
+          "observed_frequency": 0.25390625,
+          "reliability_bins": [
+            {
+              "calibration_error": -0.03135907480007172,
+              "count": 30,
+              "lower_bound_inclusive": 0.0,
+              "mean_probability": 0.06864092519992829,
+              "observed_frequency": 0.1,
+              "upper_bound_exclusive": 0.1
+            },
+            {
+              "calibration_error": -0.06778215138247337,
+              "count": 80,
+              "lower_bound_inclusive": 0.1,
+              "mean_probability": 0.15721784861752663,
+              "observed_frequency": 0.225,
+              "upper_bound_exclusive": 0.2
+            },
+            {
+              "calibration_error": 0.0683896757981877,
+              "count": 107,
+              "lower_bound_inclusive": 0.2,
+              "mean_probability": 0.255305563648655,
+              "observed_frequency": 0.18691588785046728,
+              "upper_bound_exclusive": 0.30000000000000004
+            },
+            {
+              "calibration_error": 0.09119462869998513,
+              "count": 151,
+              "lower_bound_inclusive": 0.30000000000000004,
+              "mean_probability": 0.3560952909516408,
+              "observed_frequency": 0.26490066225165565,
+              "upper_bound_exclusive": 0.4
+            },
+            {
+              "calibration_error": 0.10972625443775186,
+              "count": 135,
+              "lower_bound_inclusive": 0.4,
+              "mean_probability": 0.4430595877710852,
+              "observed_frequency": 0.3333333333333333,
+              "upper_bound_exclusive": 0.5
+            },
+            {
+              "calibration_error": 0.11929786265817593,
+              "count": 7,
+              "lower_bound_inclusive": 0.5,
+              "mean_probability": 0.5478692912296045,
+              "observed_frequency": 0.42857142857142855,
+              "upper_bound_exclusive": 0.6000000000000001
+            },
+            {
+              "calibration_error": 0.10356270526699429,
+              "count": 2,
+              "lower_bound_inclusive": 0.6000000000000001,
+              "mean_probability": 0.6035627052669943,
+              "observed_frequency": 0.5,
+              "upper_bound_exclusive": 0.7000000000000001
+            }
+          ]
+        },
+        "home": {
+          "brier_score_one_vs_rest": 0.2106545900052726,
+          "mean_probability": 0.4042888710284427,
+          "observed_frequency": 0.416015625,
+          "reliability_bins": [
+            {
+              "calibration_error": -0.09927212162333368,
+              "count": 58,
+              "lower_bound_inclusive": 0.0,
+              "mean_probability": 0.05590029216976977,
+              "observed_frequency": 0.15517241379310345,
+              "upper_bound_exclusive": 0.1
+            },
+            {
+              "calibration_error": -0.057310026528400476,
+              "count": 63,
+              "lower_bound_inclusive": 0.1,
+              "mean_probability": 0.14903917982080586,
+              "observed_frequency": 0.20634920634920634,
+              "upper_bound_exclusive": 0.2
+            },
+            {
+              "calibration_error": -0.03485900933695346,
+              "count": 78,
+              "lower_bound_inclusive": 0.2,
+              "mean_probability": 0.2471922727143286,
+              "observed_frequency": 0.28205128205128205,
+              "upper_bound_exclusive": 0.30000000000000004
+            },
+            {
+              "calibration_error": -0.02711374522583665,
+              "count": 80,
+              "lower_bound_inclusive": 0.30000000000000004,
+              "mean_probability": 0.34788625477416335,
+              "observed_frequency": 0.375,
+              "upper_bound_exclusive": 0.4
+            },
+            {
+              "calibration_error": -0.021745156774053587,
+              "count": 60,
+              "lower_bound_inclusive": 0.4,
+              "mean_probability": 0.4449215098926131,
+              "observed_frequency": 0.4666666666666667,
+              "upper_bound_exclusive": 0.5
+            },
+            {
+              "calibration_error": -0.040622304669010956,
+              "count": 56,
+              "lower_bound_inclusive": 0.5,
+              "mean_probability": 0.5486634096167033,
+              "observed_frequency": 0.5892857142857143,
+              "upper_bound_exclusive": 0.6000000000000001
+            },
+            {
+              "calibration_error": 0.14506182407634938,
+              "count": 39,
+              "lower_bound_inclusive": 0.6000000000000001,
+              "mean_probability": 0.6578823368968622,
+              "observed_frequency": 0.5128205128205128,
+              "upper_bound_exclusive": 0.7000000000000001
+            },
+            {
+              "calibration_error": 0.09935711137673608,
+              "count": 38,
+              "lower_bound_inclusive": 0.7000000000000001,
+              "mean_probability": 0.7572518482188414,
+              "observed_frequency": 0.6578947368421053,
+              "upper_bound_exclusive": 0.8
+            },
+            {
+              "calibration_error": 0.05624320532784988,
+              "count": 25,
+              "lower_bound_inclusive": 0.8,
+              "mean_probability": 0.8562432053278499,
+              "observed_frequency": 0.8,
+              "upper_bound_exclusive": 0.9
+            },
+            {
+              "calibration_error": 0.06618773345150142,
+              "count": 15,
+              "lower_bound_inclusive": 0.9,
+              "mean_probability": 0.9328544001181681,
+              "observed_frequency": 0.8666666666666667,
+              "upper_bound_exclusive": 1.0
+            }
+          ]
+        }
+      },
+      "mean_max_probability_sharpness": 0.5674821395604239
+    },
+    "source_artifact": "results/audits/nations_league_model_validation_20260927.json"
+  },
+  "data_quality_and_coverage": {
+    "current_nonhistorical_snapshot": {
+      "path": "docs/data/squads.json",
+      "reason": "Current/future national squads without fixture binding or archived point-in-time capture.",
+      "sources": [
+        "wikipedia"
+      ],
+      "team_count": 48,
+      "updated": "2026-09-29",
+      "usable_for_historical_nations_league": false
+    },
+    "current_nonhistorical_suspension_overlay": {
+      "last_updated": "2026-08-14",
+      "path": "data/suspensions.json",
+      "reason": "One current overlay without per-player, per-fixture observation timestamps.",
+      "team_count": 48,
+      "usable_for_historical_nations_league": false
+    },
+    "data_quality_strata": {
+      "HIGH": 0,
+      "LOW": 0,
+      "MEDIUM": 0,
+      "UNAVAILABLE": 512
+    },
+    "forward_capture_count": 0,
+    "forward_capture_started": false,
+    "historical_fixture_count": 512,
+    "historical_fixture_count_unavailable_for_squad_features": 512,
+    "historical_fixture_count_with_verified_pit_squad_data": 0,
+    "inspected_snapshot_candidate_files": [
+      "data/cache/injuries/covers_injuries.json",
+      "data/suspensions.json",
+      "docs/data/squads.json"
+    ],
+    "inspected_snapshot_roots": [
+      "data/cache/squad",
+      "data",
+      "results",
+      "docs/data"
+    ]
+  },
+  "evaluation_contract": {
+    "fair_comparison_rule": "Every variant must use the same fixture IDs, outcomes, prediction cutoffs, and PIT evidence rows; otherwise the ablation fails closed.",
+    "metrics": [
+      "multiclass_brier",
+      "multiclass_log_loss",
+      "ece",
+      "home_draw_away_calibration",
+      "coverage",
+      "sharpness"
+    ],
+    "paired_date_cluster_bootstrap": {
+      "replicates": 1000,
+      "seed": 20260929
+    },
+    "paired_fixture_comparison": true,
+    "result": "NOT_RUN_NO_VERIFIED_PIT_SQUAD_FEATURES"
+  },
+  "feature_ablations": {
+    "availability": {
+      "coverage": 0.0,
+      "matches_evaluated": 0,
+      "metrics": null,
+      "reason": "No fixture-bound historical REAL_OBSERVED squad snapshot with source and capture timestamps was located.",
+      "status": "HISTORICAL_POINT_IN_TIME_UNAVAILABLE"
+    },
+    "baseline": {
+      "coverage": 0.0,
+      "matches_evaluated": 0,
+      "metrics": null,
+      "reason": "No fixture-bound historical REAL_OBSERVED squad snapshot with source and capture timestamps was located.",
+      "status": "HISTORICAL_POINT_IN_TIME_UNAVAILABLE"
+    },
+    "full_candidate": {
+      "coverage": 0.0,
+      "matches_evaluated": 0,
+      "metrics": null,
+      "reason": "No fixture-bound historical REAL_OBSERVED squad snapshot with source and capture timestamps was located.",
+      "status": "HISTORICAL_POINT_IN_TIME_UNAVAILABLE"
+    },
+    "lineup_strength": {
+      "coverage": 0.0,
+      "matches_evaluated": 0,
+      "metrics": null,
+      "reason": "No fixture-bound historical REAL_OBSERVED squad snapshot with source and capture timestamps was located.",
+      "status": "HISTORICAL_POINT_IN_TIME_UNAVAILABLE"
+    },
+    "positional_absences": {
+      "coverage": 0.0,
+      "matches_evaluated": 0,
+      "metrics": null,
+      "reason": "No fixture-bound historical REAL_OBSERVED squad snapshot with source and capture timestamps was located.",
+      "status": "HISTORICAL_POINT_IN_TIME_UNAVAILABLE"
+    },
+    "rotation_load": {
+      "coverage": 0.0,
+      "matches_evaluated": 0,
+      "metrics": null,
+      "reason": "No fixture-bound historical REAL_OBSERVED squad snapshot with source and capture timestamps was located.",
+      "status": "HISTORICAL_POINT_IN_TIME_UNAVAILABLE"
+    },
+    "squad_market_value": {
+      "coverage": 0.0,
+      "matches_evaluated": 0,
+      "metrics": null,
+      "reason": "No fixture-bound historical REAL_OBSERVED squad snapshot with source and capture timestamps was located.",
+      "status": "HISTORICAL_POINT_IN_TIME_UNAVAILABLE"
+    },
+    "weighted_player_impact": {
+      "coverage": 0.0,
+      "matches_evaluated": 0,
+      "metrics": null,
+      "reason": "No fixture-bound historical REAL_OBSERVED squad snapshot with source and capture timestamps was located.",
+      "status": "HISTORICAL_POINT_IN_TIME_UNAVAILABLE"
+    }
+  },
+  "generated_at": "2026-09-29T09:19:41.855036+00:00",
+  "historical_sample": {
+    "fixture_matched_pit_coverage": 0.0,
+    "match_count": 512,
+    "periods": [
+      {
+        "edition": "2020/21",
+        "end": "2021-10-10",
+        "id": "2020/21",
+        "match_count": 166,
+        "observed_end": "2021-10-10",
+        "observed_start": "2020-09-03",
+        "start": "2020-09-03"
+      },
+      {
+        "edition": "2022/23",
+        "end": "2023-06-30",
+        "id": "2022/23",
+        "match_count": 160,
+        "observed_end": "2023-06-18",
+        "observed_start": "2022-06-01",
+        "start": "2022-06-01"
+      },
+      {
+        "edition": "2022/23",
+        "end": "2024-03-26",
+        "id": "2022/23-delayed-relegation-playoffs",
+        "match_count": 2,
+        "observed_end": "2024-03-26",
+        "observed_start": "2024-03-21",
+        "start": "2024-03-21"
+      },
+      {
+        "edition": "2024/25",
+        "end": "2025-06-08",
+        "id": "2024/25",
+        "match_count": 184,
+        "observed_end": "2025-06-08",
+        "observed_start": "2024-09-05",
+        "start": "2024-09-05"
+      }
+    ],
+    "schema_matching_real_snapshot_records_in_audited_paths": 0,
+    "status": "HISTORICAL_POINT_IN_TIME_UNAVAILABLE",
+    "verified_historical_pit_squad_captures": 0
+  },
+  "report_digest": "2bf44d829dee542fed3e44f01adee64b80e78abd9b7f0c14a18f7ad9a6761df0",
+  "research_feature_schema": "nl-squad-lineup-research-feature-v1",
+  "research_status": "NL_SQUAD_FEATURES_FORWARD_EVIDENCE_REQUIRED",
+  "safety": {
+    "activation_publication_betting_ledger": false,
+    "credential_accesses": 0,
+    "production_code_changed": false,
+    "provider_requests": 0,
+    "quota_consumed": 0,
+    "scanner_or_signal_detector_changed": false
+  },
+  "schema_version": "nl-squad-lineup-research-report-v1",
+  "source_audit": {
+    "existing_squad_impact_features": [
+      "squad_availability_home",
+      "squad_availability_away",
+      "squad_availability_diff",
+      "key_player_risk_home",
+      "key_player_risk_away",
+      "weighted_impact_lost_home",
+      "weighted_impact_lost_away",
+      "weighted_impact_lost_diff"
+    ],
+    "limitations": [
+      "Empty SquadReport availability_score is 1.0 and default_report is empty; in this research contract, incomplete/missing data emits nulls and UNAVAILABLE.",
+      "Covers supplies current unavailable/doubtful players only; its current injury source is not match-date queried and cannot establish full-roster availability.",
+      "Transfermarkt scrapes current/previous-season pages with a filesystem-mtime 24-hour cache, not archived as-of snapshots.",
+      "Wikipedia squad source is current/future 2026 World Cup roster data, not historical Nations League matchday squads.",
+      "SofaScore values are current/live and require an API key; no provider call or credential read was made.",
+      "Manual suspension overlay is current and not event/player timestamp bound.",
+      "FotMob lineups/ratings are read from finished-match pages and are post-match for the target fixture; excluded as prediction inputs.",
+      "Static national-team market values are June 2026 approximations and are not point-in-time historical Nations League values.",
+      "StatsBomb player xG coverage is limited to other tournament competitions and is not a historical Nations League lineup dataset."
+    ]
+  },
+  "source_main_sha": "0ab36238451b80d0478fd130ca6209e562a9bd98",
+  "subgroup_analyses": {
+    "balanced": {
+      "matches_evaluated": 0,
+      "metrics": null,
+      "status": "not_evaluated"
+    },
+    "confirmed_lineup": {
+      "matches_evaluated": 0,
+      "metrics": null,
+      "status": "not_evaluated"
+    },
+    "favorites": {
+      "matches_evaluated": 0,
+      "metrics": null,
+      "status": "not_evaluated"
+    },
+    "large_strength_difference": {
+      "matches_evaluated": 0,
+      "metrics": null,
+      "status": "not_evaluated"
+    },
+    "one_or_more_important_absences": {
+      "matches_evaluated": 0,
+      "metrics": null,
+      "status": "not_evaluated"
+    },
+    "probable_lineup": {
+      "matches_evaluated": 0,
+      "metrics": null,
+      "status": "not_evaluated"
+    },
+    "quality_HIGH": {
+      "matches_evaluated": 0,
+      "metrics": null,
+      "status": "not_evaluated"
+    },
+    "quality_LOW": {
+      "matches_evaluated": 0,
+      "metrics": null,
+      "status": "not_evaluated"
+    },
+    "quality_MEDIUM": {
+      "matches_evaluated": 0,
+      "metrics": null,
+      "status": "not_evaluated"
+    },
+    "tier_A_B_C_D": {
+      "matches_evaluated": 0,
+      "metrics": null,
+      "status": "not_evaluated"
+    },
+    "underdogs": {
+      "matches_evaluated": 0,
+      "metrics": null,
+      "status": "not_evaluated"
+    },
+    "zero_important_absences": {
+      "matches_evaluated": 0,
+      "metrics": null,
+      "status": "not_evaluated"
+    }
+  },
+  "tournament": "UEFA Nations League"
+}
