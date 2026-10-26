@@ -19,7 +19,7 @@ Surface: unknown · Best of: 3 · Matches gescannt: 11
 _Keine Value-Signals._
 
 ## Atp Vienna Open (ATP) · atp250 · 🔴 LIVE
-Surface: unknown · Best of: 3 · Matches gescannt: 10
+Surface: unknown · Best of: 3 · Matches gescannt: 11
   > ⚠️ **Satz-AH vorhanden** — beim Buchmacher **Sätze-Handicap** wählen, NICHT Spiele-Handicap!
 - [ATP] **Tommy Paul vs Andrey Rublev** · Match Winner: Tommy Paul
   Quote 2.22 · Modell 58.1% · EV +29.0% · Stake 5.00€ · HIGH
