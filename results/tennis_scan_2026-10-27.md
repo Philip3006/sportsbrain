@@ -17,7 +17,7 @@ Surface: unknown · Best of: 3 · Matches gescannt: 8
 _Keine Value-Signals._
 
 ## Atp Vienna Open (ATP) · atp250 · 🔴 LIVE
-Surface: unknown · Best of: 3 · Matches gescannt: 7
+Surface: unknown · Best of: 3 · Matches gescannt: 8
   > ⚠️ **Satz-AH vorhanden** — beim Buchmacher **Sätze-Handicap** wählen, NICHT Spiele-Handicap!
 - [ATP] **Flavio Cobolli vs Grigor Dimitrov** · Flavio Cobolli Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
   Quote 2.79 · Modell 42.0% · EV +17.3% · Stake 5.00€ · HIGH
