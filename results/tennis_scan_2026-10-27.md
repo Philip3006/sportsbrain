@@ -1,6 +1,6 @@
 # Tennis Scan 2026-10-27
 
-**Aktive Turniere:** 3 · **Signals total:** 9
+**Aktive Turniere:** 3 · **Signals total:** 8
 
 ## ⭐ TOP-PICKS — nur diese spielen
 
@@ -11,7 +11,7 @@
 - 🟢 **Flavio Cobolli vs Grigor Dimitrov** · Flavio Cobolli Set AH -1.5 _(SET handicap)_
   Quote 2.79 · EV +17.3% · Stake 5.00€ · HIGH
 - 🟢 **Karen Khachanov vs Carlos Alcaraz** · Match Winner: Carlos Alcaraz
-  Quote 1.51 · EV +30.4% · Stake 5.00€ · HIGH
+  Quote 1.49 · EV +28.7% · Stake 5.00€ · HIGH
 - 🟡 **Ben Shelton vs Aleksandar Kovacevic** · Ben Shelton Set AH -1.5 _(SET handicap)_
   Quote 2.00 · EV +14.4% · Stake 5.00€ · MEDIUM
 - 🟡 **Alexander Zverev vs Martin Landaluce** · Alexander Zverev Set AH -1.5 _(SET handicap)_
@@ -33,19 +33,17 @@ Surface: unknown · Best of: 3 · Matches gescannt: 12
 ## Atp Vienna Open (ATP) · atp250 · 🔴 LIVE
 Surface: unknown · Best of: 3 · Matches gescannt: 11
   > ⚠️ **Satz-AH vorhanden** — beim Buchmacher **Sätze-Handicap** wählen, NICHT Spiele-Handicap!
-- [ATP] **Karen Khachanov vs Carlos Alcaraz** · Match Winner: Carlos Alcaraz ⭐
-  Quote 1.51 · Modell 86.4% · EV +30.4% · Stake 5.00€ · HIGH
 - [ATP] **Tommy Paul vs Andrey Rublev** · Match Winner: Tommy Paul
   Quote 2.22 · Modell 58.1% · EV +29.0% · Stake 5.00€ · HIGH
+- [ATP] **Karen Khachanov vs Carlos Alcaraz** · Match Winner: Carlos Alcaraz ⭐
+  Quote 1.49 · Modell 86.4% · EV +28.7% · Stake 5.00€ · HIGH
 - [ATP] **Tommy Paul vs Andrey Rublev** · Tommy Paul Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
   Quote 3.10 · Modell 38.0% · EV +17.9% · Stake 5.00€ · HIGH
 - [ATP] **Flavio Cobolli vs Grigor Dimitrov** · Flavio Cobolli Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
   Quote 2.79 · Modell 42.0% · EV +17.3% · Stake 5.00€ · HIGH
-- [ATP] **Alexander Zverev vs Martin Landaluce** · Match Winner: Alexander Zverev
-  Quote 1.34 · Modell 84.0% · EV +12.5% · Stake 5.00€ · MEDIUM
 - [ATP] **Alexander Zverev vs Martin Landaluce** · Alexander Zverev Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
   Quote 1.71 · Modell 65.6% · EV +12.1% · Stake 5.00€ · MEDIUM
 
 ## Wta Pan Pacific Open (WTA) · wta250 · 🔴 LIVE
-Surface: unknown · Best of: 3 · Matches gescannt: 6
+Surface: unknown · Best of: 3 · Matches gescannt: 5
 _Keine Value-Signals._
