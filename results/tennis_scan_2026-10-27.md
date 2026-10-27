@@ -1,6 +1,6 @@
 # Tennis Scan 2026-10-27
 
-**Aktive Turniere:** 3 · **Signals total:** 8
+**Aktive Turniere:** 3 · **Signals total:** 9
 
 ## ⭐ TOP-PICKS — nur diese spielen
 
@@ -21,7 +21,7 @@
 
 
 ## Atp Swiss Indoors (ATP) · atp250 · 🔴 LIVE
-Surface: unknown · Best of: 3 · Matches gescannt: 12
+Surface: unknown · Best of: 3 · Matches gescannt: 11
   > ⚠️ **Satz-AH vorhanden** — beim Buchmacher **Sätze-Handicap** wählen, NICHT Spiele-Handicap!
 - [ATP] **Alex Michelsen vs Botic van de Zandschulp** · Match Winner: Alex Michelsen
   Quote 2.20 · Modell 53.8% · EV +18.5% · Stake 5.00€ · HIGH
@@ -41,6 +41,8 @@ Surface: unknown · Best of: 3 · Matches gescannt: 11
   Quote 3.10 · Modell 38.0% · EV +17.9% · Stake 5.00€ · HIGH
 - [ATP] **Flavio Cobolli vs Grigor Dimitrov** · Flavio Cobolli Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
   Quote 2.79 · Modell 42.0% · EV +17.3% · Stake 5.00€ · HIGH
+- [ATP] **Cameron Norrie vs Francisco Cerundolo** · Match Winner: Cameron Norrie
+  Quote 2.42 · Modell 46.8% · EV +13.3% · Stake 5.00€ · MEDIUM
 - [ATP] **Alexander Zverev vs Martin Landaluce** · Alexander Zverev Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
   Quote 1.71 · Modell 65.6% · EV +12.1% · Stake 5.00€ · MEDIUM
 
