@@ -1,6 +1,6 @@
 # Tennis Scan 2026-10-27
 
-**Aktive Turniere:** 3 · **Signals total:** 8
+**Aktive Turniere:** 3 · **Signals total:** 9
 
 ## ⭐ TOP-PICKS — nur diese spielen
 
@@ -41,9 +41,11 @@ Surface: unknown · Best of: 3 · Matches gescannt: 11
   Quote 3.10 · Modell 38.0% · EV +17.9% · Stake 5.00€ · HIGH
 - [ATP] **Flavio Cobolli vs Grigor Dimitrov** · Flavio Cobolli Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
   Quote 2.79 · Modell 42.0% · EV +17.3% · Stake 5.00€ · HIGH
+- [ATP] **Alexander Zverev vs Martin Landaluce** · Match Winner: Alexander Zverev
+  Quote 1.34 · Modell 84.0% · EV +12.5% · Stake 5.00€ · MEDIUM
 - [ATP] **Alexander Zverev vs Martin Landaluce** · Alexander Zverev Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
   Quote 1.71 · Modell 65.6% · EV +12.1% · Stake 5.00€ · MEDIUM
 
 ## Wta Pan Pacific Open (WTA) · wta250 · 🔴 LIVE
-Surface: unknown · Best of: 3 · Matches gescannt: 8
+Surface: unknown · Best of: 3 · Matches gescannt: 6
 _Keine Value-Signals._
