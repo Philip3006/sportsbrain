@@ -1,6 +1,6 @@
 # Tennis Scan 2026-10-28
 
-**Aktive Turniere:** 3 · **Signals total:** 5
+**Aktive Turniere:** 3 · **Signals total:** 6
 
 ## ⭐ TOP-PICKS — nur diese spielen
 
@@ -32,7 +32,9 @@ Surface: unknown · Best of: 3 · Matches gescannt: 8
 - [ATP] **Jakub Mensik vs Adrian Mannarino** · Jakub Mensik Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
   Quote 2.22 · Modell 52.0% · EV +15.4% · Stake 5.00€ · HIGH
 - [ATP] **Jurij Rodionov vs Nikoloz Basilashvili** · Match Winner: Jurij Rodionov
-  Quote 2.20 · Modell 52.0% · EV +14.4% · Stake 5.00€ · MEDIUM
+  Quote 2.21 · Modell 52.0% · EV +14.9% · Stake 5.00€ · MEDIUM
+- [ATP] **Tallon Griekspoor vs Brandon Nakashima** · Match Winner: Brandon Nakashima
+  Quote 1.65 · Modell 68.3% · EV +12.7% · Stake 5.00€ · MEDIUM
 
 ## Wta Pan Pacific Open (WTA) · wta250 · 🔴 LIVE
 Surface: unknown · Best of: 3 · Matches gescannt: 6
