@@ -7,7 +7,7 @@
 > Filter: EV-gewichtet · Markt-historisch · max. 1 Signal pro Match
 
 - 🟢 **Flavio Cobolli vs Matteo Berrettini** · Match Winner: Flavio Cobolli
-  Quote 2.16 · EV +31.9% · Stake 5.00€ · HIGH
+  Quote 2.17 · EV +32.5% · Stake 5.00€ · HIGH
 - 🟢 **Tommy Paul vs Luciano Darderi** · Tommy Paul Set AH -1.5 _(SET handicap)_
   Quote 2.74 · EV +17.2% · Stake 5.00€ · HIGH
 - 🟢 **Ben Shelton vs Jerome Kym** · Ben Shelton Set AH -1.5 _(SET handicap)_
@@ -32,7 +32,7 @@ Surface: unknown · Best of: 3 · Matches gescannt: 6
 Surface: unknown · Best of: 3 · Matches gescannt: 6
   > ⚠️ **Satz-AH vorhanden** — beim Buchmacher **Sätze-Handicap** wählen, NICHT Spiele-Handicap!
 - [ATP] **Flavio Cobolli vs Matteo Berrettini** · Match Winner: Flavio Cobolli ⭐
-  Quote 2.16 · Modell 61.0% · EV +31.9% · Stake 5.00€ · HIGH
+  Quote 2.17 · Modell 61.0% · EV +32.5% · Stake 5.00€ · HIGH
 - [ATP] **Flavio Cobolli vs Matteo Berrettini** · Flavio Cobolli Set AH -1.5 _(Satz-AH = SET handicap)_
   Quote 2.89 · Modell 40.7% · EV +17.5% · Stake 5.00€ · HIGH
 - [ATP] **Tommy Paul vs Luciano Darderi** · Tommy Paul Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
@@ -41,5 +41,5 @@ Surface: unknown · Best of: 3 · Matches gescannt: 6
   Quote 1.85 · Modell 61.2% · EV +13.2% · Stake 5.00€ · MEDIUM
 
 ## Wta Pan Pacific Open (WTA) · wta250 · 🔴 LIVE
-Surface: unknown · Best of: 3 · Matches gescannt: 4
+Surface: unknown · Best of: 3 · Matches gescannt: 3
 _Keine Value-Signals._
