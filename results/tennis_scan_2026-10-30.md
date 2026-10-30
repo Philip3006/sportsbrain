@@ -1,6 +1,15 @@
 # Tennis Scan 2026-10-30
 
-**Aktive Turniere:** 3 · **Signals total:** 1
+**Aktive Turniere:** 3 · **Signals total:** 2
+
+## ⭐ TOP-PICKS — nur diese spielen
+
+> Filter: EV-gewichtet · Markt-historisch · max. 1 Signal pro Match
+
+- 🟢 **Alexander Zverev vs Alex de Minaur** · Alexander Zverev Set AH -1.5 _(SET handicap)_
+  Quote 2.59 · EV +16.7% · Stake 5.00€ · HIGH
+
+---
 
 
 ## Atp Swiss Indoors (ATP) · atp250 · 🔴 LIVE
@@ -8,9 +17,12 @@ Surface: unknown · Best of: 3 · Matches gescannt: 2
 _Keine Value-Signals._
 
 ## Atp Vienna Open (ATP) · atp250 · 🔴 LIVE
-Surface: unknown · Best of: 3 · Matches gescannt: 1
+Surface: unknown · Best of: 3 · Matches gescannt: 2
+  > ⚠️ **Satz-AH vorhanden** — beim Buchmacher **Sätze-Handicap** wählen, NICHT Spiele-Handicap!
+- [ATP] **Alexander Zverev vs Alex de Minaur** · Alexander Zverev Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
+  Quote 2.59 · Modell 45.0% · EV +16.7% · Stake 5.00€ · HIGH
 - [ATP] **Daniil Medvedev vs Carlos Alcaraz** · Match Winner: Carlos Alcaraz
-  Quote 1.49 · Modell 76.1% · EV +13.4% · Stake 5.00€ · MEDIUM
+  Quote 1.51 · Modell 76.1% · EV +14.9% · Stake 5.00€ · MEDIUM
 
 ## Wta Pan Pacific Open (WTA) · wta250 · 🔴 LIVE
 Surface: unknown · Best of: 3 · Matches gescannt: 2
