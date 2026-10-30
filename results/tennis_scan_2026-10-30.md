@@ -13,11 +13,11 @@
 
 
 ## Atp Swiss Indoors (ATP) · atp250 · 🔴 LIVE
-Surface: unknown · Best of: 3 · Matches gescannt: 4
+Surface: unknown · Best of: 3 · Matches gescannt: 3
 _Keine Value-Signals._
 
 ## Atp Vienna Open (ATP) · atp250 · 🔴 LIVE
-Surface: unknown · Best of: 3 · Matches gescannt: 4
+Surface: unknown · Best of: 3 · Matches gescannt: 2
   > ⚠️ **Satz-AH vorhanden** — beim Buchmacher **Sätze-Handicap** wählen, NICHT Spiele-Handicap!
 - [ATP] **Alexander Zverev vs Arthur Fery** · Alexander Zverev Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
   Quote 2.04 · Modell 56.0% · EV +14.3% · Stake 5.00€ · MEDIUM
