@@ -24,5 +24,5 @@ Surface: unknown · Best of: 3 · Matches gescannt: 4
   Quote 2.04 · Modell 56.0% · EV +14.3% · Stake 5.00€ · MEDIUM
 
 ## Wta Pan Pacific Open (WTA) · wta250 · 🔴 LIVE
-Surface: unknown · Best of: 3 · Matches gescannt: 2
+Surface: unknown · Best of: 3 · Matches gescannt: 1
 _Keine Value-Signals._
