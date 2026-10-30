@@ -1,6 +1,6 @@
 # Tennis Scan 2026-10-30
 
-**Aktive Turniere:** 3 · **Signals total:** 2
+**Aktive Turniere:** 3 · **Signals total:** 1
 
 ## ⭐ TOP-PICKS — nur diese spielen
 
@@ -14,8 +14,7 @@
 
 ## Atp Swiss Indoors (ATP) · atp250 · 🔴 LIVE
 Surface: unknown · Best of: 3 · Matches gescannt: 4
-- [ATP] **Taylor Fritz vs Arthur Fils** · Match Winner: Arthur Fils
-  Quote 2.12 · Modell 54.0% · EV +14.4% · Stake 5.00€ · MEDIUM
+_Keine Value-Signals._
 
 ## Atp Vienna Open (ATP) · atp250 · 🔴 LIVE
 Surface: unknown · Best of: 3 · Matches gescannt: 4
@@ -24,5 +23,5 @@ Surface: unknown · Best of: 3 · Matches gescannt: 4
   Quote 2.04 · Modell 56.0% · EV +14.3% · Stake 5.00€ · MEDIUM
 
 ## Wta Pan Pacific Open (WTA) · wta250 · 🔴 LIVE
-Surface: unknown · Best of: 3 · Matches gescannt: 1
+Surface: unknown · Best of: 3 · Matches gescannt: 2
 _Keine Value-Signals._
