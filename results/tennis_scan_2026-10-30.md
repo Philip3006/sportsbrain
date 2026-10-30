@@ -15,7 +15,7 @@
 ## Atp Swiss Indoors (ATP) · atp250 · 🔴 LIVE
 Surface: unknown · Best of: 3 · Matches gescannt: 4
 - [ATP] **Taylor Fritz vs Arthur Fils** · Match Winner: Arthur Fils
-  Quote 2.10 · Modell 54.0% · EV +13.4% · Stake 5.00€ · MEDIUM
+  Quote 2.12 · Modell 54.0% · EV +14.4% · Stake 5.00€ · MEDIUM
 
 ## Atp Vienna Open (ATP) · atp250 · 🔴 LIVE
 Surface: unknown · Best of: 3 · Matches gescannt: 4
