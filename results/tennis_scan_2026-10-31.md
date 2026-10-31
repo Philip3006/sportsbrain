@@ -1,17 +1,19 @@
 # Tennis Scan 2026-10-31
 
-**Aktive Turniere:** 4 · **Signals total:** 10
+**Aktive Turniere:** 4 · **Signals total:** 9
 
 ## ⭐ TOP-PICKS — nur diese spielen
 
 > Filter: EV-gewichtet · Markt-historisch · max. 1 Signal pro Match
 
-- 🟢 **Hugo Gaston vs Vit Kopriva** · Match Winner: Vit Kopriva
-  Quote 2.48 · EV +36.5% · Stake 5.00€ · HIGH
-- 🟢 **Tomas Machac vs Martin Landaluce** · Tomas Machac Set AH -1.5 _(SET handicap)_
-  Quote 3.03 · EV +17.9% · Stake 5.00€ · HIGH
-- 🟢 **Sebastian Baez vs Damir Dzumhur** · Sebastian Baez Set AH -1.5 _(SET handicap)_
-  Quote 2.98 · EV +17.6% · Stake 5.00€ · HIGH
+- 🟢 **Alex Molcan vs Daniel Altmaier** · Alex Molcan Set AH -1.5 _(SET handicap)_
+  Quote 3.25 · EV +18.3% · Stake 5.00€ · HIGH
+- 🟢 **Sebastian Baez vs Damir Dzumhur** · Match Winner: Sebastian Baez
+  Quote 2.21 · EV +32.0% · Stake 5.00€ · HIGH
+- 🟢 **Lorenzo Sonego vs Jaume Munar** · Match Winner: Jaume Munar
+  Quote 2.46 · EV +31.7% · Stake 5.00€ · HIGH
+- 🟢 **Nuno Borges vs Adrian Mannarino** · Nuno Borges Set AH -1.5 _(SET handicap)_
+  Quote 2.66 · EV +16.8% · Stake 5.00€ · HIGH
 - 🟢 **Alexander Zverev vs Alex de Minaur** · Alexander Zverev Set AH -1.5 _(SET handicap)_
   Quote 2.59 · EV +16.7% · Stake 5.00€ · HIGH
 
@@ -19,24 +21,22 @@
 
 
 ## Paris Masters (ATP) · m1000 · 🔴 LIVE
-Surface: hard · Best of: 3 · Matches gescannt: 10
+Surface: hard · Best of: 3 · Matches gescannt: 19
   > ⚠️ **Satz-AH vorhanden** — beim Buchmacher **Sätze-Handicap** wählen, NICHT Spiele-Handicap!
-- [ATP] **Hugo Gaston vs Vit Kopriva** · Match Winner: Vit Kopriva ⭐
-  Quote 2.48 · Modell 55.1% · EV +36.5% · Stake 5.00€ · HIGH
-- [ATP] **Sebastian Baez vs Damir Dzumhur** · Match Winner: Sebastian Baez
-  Quote 2.19 · Modell 59.7% · EV +30.8% · Stake 5.00€ · HIGH
-- [ATP] **Tomas Machac vs Martin Landaluce** · Match Winner: Tomas Machac
-  Quote 2.15 · Modell 59.1% · EV +27.1% · Stake 5.00€ · HIGH
+- [ATP] **Sebastian Baez vs Damir Dzumhur** · Match Winner: Sebastian Baez ⭐
+  Quote 2.21 · Modell 59.7% · EV +32.0% · Stake 5.00€ · HIGH
+- [ATP] **Lorenzo Sonego vs Jaume Munar** · Match Winner: Jaume Munar ⭐
+  Quote 2.46 · Modell 53.5% · EV +31.7% · Stake 5.00€ · HIGH
 - [ATP] **Tallon Griekspoor vs Benjamin Bonzi** · Match Winner: Tallon Griekspoor
-  Quote 2.27 · Modell 54.1% · EV +22.8% · Stake 5.00€ · HIGH
-- [ATP] **Tomas Machac vs Martin Landaluce** · Tomas Machac Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
-  Quote 3.03 · Modell 38.9% · EV +17.9% · Stake 5.00€ · HIGH
-- [ATP] **Sebastian Baez vs Damir Dzumhur** · Sebastian Baez Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
+  Quote 2.28 · Modell 54.1% · EV +23.3% · Stake 5.00€ · HIGH
+- [ATP] **Alex Molcan vs Daniel Altmaier** · Alex Molcan Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
+  Quote 3.25 · Modell 36.4% · EV +18.3% · Stake 5.00€ · HIGH
+- [ATP] **Sebastian Baez vs Damir Dzumhur** · Sebastian Baez Set AH -1.5 _(Satz-AH = SET handicap)_
   Quote 2.98 · Modell 39.5% · EV +17.6% · Stake 5.00€ · HIGH
-- [ATP] **Lorenzo Sonego vs Jaume Munar** · Match Winner: Lorenzo Sonego
-  Quote 2.37 · Modell 46.5% · EV +10.1% · Stake 5.00€ · MEDIUM
-- [ATP] **James Duckworth vs Miomir Kecmanovic** · Match Winner: James Duckworth
-  Quote 2.17 · Modell 50.4% · EV +9.4% · Stake 5.00€ · MEDIUM
+- [ATP] **Alex Molcan vs Daniel Altmaier** · Match Winner: Alex Molcan
+  Quote 2.09 · Modell 56.2% · EV +17.5% · Stake 5.00€ · HIGH
+- [ATP] **Nuno Borges vs Adrian Mannarino** · Nuno Borges Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
+  Quote 2.66 · Modell 43.9% · EV +16.8% · Stake 5.00€ · HIGH
 
 ## Atp Swiss Indoors (ATP) · atp250 · 🔴 LIVE
 Surface: unknown · Best of: 3 · Matches gescannt: 2
@@ -46,7 +46,7 @@ _Keine Value-Signals._
 Surface: unknown · Best of: 3 · Matches gescannt: 2
   > ⚠️ **Satz-AH vorhanden** — beim Buchmacher **Sätze-Handicap** wählen, NICHT Spiele-Handicap!
 - [ATP] **Daniil Medvedev vs Carlos Alcaraz** · Match Winner: Carlos Alcaraz
-  Quote 1.55 · Modell 76.1% · EV +18.0% · Stake 5.00€ · HIGH
+  Quote 1.54 · Modell 76.1% · EV +17.2% · Stake 5.00€ · HIGH
 - [ATP] **Alexander Zverev vs Alex de Minaur** · Alexander Zverev Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
   Quote 2.59 · Modell 45.0% · EV +16.7% · Stake 5.00€ · HIGH
 
