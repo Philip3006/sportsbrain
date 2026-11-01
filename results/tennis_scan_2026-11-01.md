@@ -1,6 +1,6 @@
 # Tennis Scan 2026-11-01
 
-**Aktive Turniere:** 4 · **Signals total:** 7
+**Aktive Turniere:** 3 · **Signals total:** 6
 
 ## ⭐ TOP-PICKS — nur diese spielen
 
@@ -8,10 +8,8 @@
 
 - 🟢 **Jiri Lehecka vs Valentin Vacherot** · Match Winner: Jiri Lehecka
   Quote 2.20 · EV +35.2% · Stake 5.00€ · HIGH
-- 🟢 **Lorenzo Musetti vs Hubert Hurkacz** · Match Winner: Lorenzo Musetti
-  Quote 2.12 · EV +32.9% · Stake 5.00€ · HIGH
-- 🟡 **Benjamin Bonzi vs Yannick Hanfmann** · O/U Games 24.5 under
-  Quote 1.92 · EV +12.4% · Stake 5.00€ · MEDIUM
+- 🟢 **Nuno Borges vs Alex Molcan** · Nuno Borges Set AH -1.5 _(SET handicap)_
+  Quote 3.01 · EV +17.6% · Stake 5.00€ · HIGH
 
 ---
 
@@ -19,14 +17,12 @@
 ## Paris Masters (ATP) · m1000 · 🔴 LIVE
 Surface: hard · Best of: 3 · Matches gescannt: 21
   > ⚠️ **Satz-AH vorhanden** — beim Buchmacher **Sätze-Handicap** wählen, NICHT Spiele-Handicap!
-- [ATP] **Lorenzo Musetti vs Hubert Hurkacz** · Match Winner: Lorenzo Musetti ⭐
-  Quote 2.12 · Modell 62.7% · EV +32.9% · Stake 5.00€ · HIGH
-- [ATP] **Lorenzo Musetti vs Hubert Hurkacz** · Lorenzo Musetti Set AH -1.5 _(Satz-AH = SET handicap)_
-  Quote 2.78 · Modell 42.2% · EV +17.2% · Stake 5.00€ · HIGH
-- [ATP] **Benjamin Bonzi vs Yannick Hanfmann** · O/U Games 24.5 under ⭐
-  Quote 1.92 · Modell 58.6% · EV +12.4% · Stake 5.00€ · MEDIUM
-- [ATP] **Benjamin Bonzi vs Yannick Hanfmann** · Match Winner: Yannick Hanfmann
-  Quote 2.16 · Modell 50.4% · EV +8.9% · Stake 5.00€ · MEDIUM
+- [ATP] **Nuno Borges vs Alex Molcan** · Nuno Borges Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
+  Quote 3.01 · Modell 39.1% · EV +17.6% · Stake 5.00€ · HIGH
+- [ATP] **Rinky Hijikata vs Vit Kopriva** · Match Winner: Rinky Hijikata
+  Quote 2.10 · Modell 53.6% · EV +12.5% · Stake 5.00€ · MEDIUM
+- [ATP] **Ugo Humbert vs Botic van de Zandschulp** · Match Winner: Botic van de Zandschulp
+  Quote 2.28 · Modell 47.4% · EV +8.0% · Stake 5.00€ · MEDIUM
 
 ## Atp Swiss Indoors (ATP) · atp250 · 🔴 LIVE
 Surface: unknown · Best of: 3 · Matches gescannt: 1
@@ -39,8 +35,4 @@ Surface: unknown · Best of: 3 · Matches gescannt: 1
 ## Atp Vienna Open (ATP) · atp250 · 🔴 LIVE
 Surface: unknown · Best of: 3 · Matches gescannt: 1
 - [ATP] **Alex de Minaur vs Carlos Alcaraz** · Match Winner: Carlos Alcaraz
-  Quote 1.50 · Modell 74.9% · EV +12.3% · Stake 5.00€ · MEDIUM
-
-## Wta Pan Pacific Open (WTA) · wta250 · 🔴 LIVE
-Surface: unknown · Best of: 3 · Matches gescannt: 0
-_Keine Value-Signals._
+  Quote 1.51 · Modell 74.9% · EV +13.0% · Stake 5.00€ · MEDIUM
