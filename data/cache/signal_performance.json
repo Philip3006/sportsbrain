@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-11-01T00:16:02.815564+00:00",
-  "n_signals_total": 1900,
+  "generated_at": "2026-11-01T02:34:01.731565+00:00",
+  "n_signals_total": 1916,
   "n_with_outcome": 1893,
   "by_market": {
     "ah+0.5_away": {
@@ -158,11 +158,11 @@
       "ev_mean": 38.43
     },
     "away": {
-      "n": 324,
-      "n_placed": 271,
+      "n": 331,
+      "n_placed": 278,
       "n_outcome": 321,
       "accuracy": 0.4984,
-      "ev_mean": 22.05
+      "ev_mean": 22.03
     },
     "btts_yes": {
       "n": 9,
@@ -186,11 +186,11 @@
       "ev_mean": 37.63
     },
     "home": {
-      "n": 314,
-      "n_placed": 282,
+      "n": 317,
+      "n_placed": 285,
       "n_outcome": 312,
       "accuracy": 0.4808,
-      "ev_mean": 18.09
+      "ev_mean": 18.14
     },
     "o/u1.5_over": {
       "n": 21,
@@ -480,11 +480,18 @@
       "ev_mean": 12.68
     },
     "o/u_games_23.5_under": {
-      "n": 2,
-      "n_placed": 2,
+      "n": 3,
+      "n_placed": 3,
       "n_outcome": 2,
       "accuracy": 0.5,
-      "ev_mean": 16.42
+      "ev_mean": 13.9
+    },
+    "o/u_games_24.0_under": {
+      "n": 1,
+      "n_placed": 1,
+      "n_outcome": 0,
+      "accuracy": null,
+      "ev_mean": 8.29
     },
     "o/u_games_24.5_over": {
       "n": 2,
@@ -494,18 +501,18 @@
       "ev_mean": 9.09
     },
     "o/u_games_24.5_under": {
-      "n": 2,
-      "n_placed": 2,
+      "n": 5,
+      "n_placed": 5,
       "n_outcome": 2,
       "accuracy": 0.5,
-      "ev_mean": 9.86
+      "ev_mean": 13.44
     },
     "o/u_games_25.5_under": {
-      "n": 1,
-      "n_placed": 1,
+      "n": 2,
+      "n_placed": 2,
       "n_outcome": 1,
       "accuracy": 1.0,
-      "ev_mean": 12.05
+      "ev_mean": 17.83
     },
     "o/u_games_30.5_over": {
       "n": 1,
@@ -825,16 +832,16 @@
   },
   "by_confidence": {
     "HIGH": {
-      "n": 539,
-      "accuracy": 0.5083
+      "n": 546,
+      "accuracy": 0.5018
     },
     "LOW": {
       "n": 403,
       "accuracy": 0.3052
     },
     "MEDIUM": {
-      "n": 958,
-      "accuracy": 0.4499
+      "n": 967,
+      "accuracy": 0.4457
     }
   }
 }
