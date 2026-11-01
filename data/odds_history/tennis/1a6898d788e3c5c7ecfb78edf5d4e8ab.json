@@ -1,0 +1,15 @@
+{
+  "match_id": "1a6898d788e3c5c7ecfb78edf5d4e8ab",
+  "player_a": "Denis Shapovalov",
+  "player_b": "Karen Khachanov",
+  "tournament_slug": "paris_masters_atp",
+  "snapshots": [
+    {
+      "label": "auto_20261101_00",
+      "ts_utc": "2026-11-01T00:08:42.421392+00:00",
+      "odds_a": 2.38,
+      "odds_b": 1.57,
+      "source": "sport888"
+    }
+  ]
+}

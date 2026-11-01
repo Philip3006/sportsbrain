@@ -1,0 +1,15 @@
+{
+  "match_id": "ab2cc6778482917ac72005c2edb26824",
+  "player_a": "Ignacio Buse",
+  "player_b": "Zizou Bergs",
+  "tournament_slug": "paris_masters_atp",
+  "snapshots": [
+    {
+      "label": "auto_20261101_00",
+      "ts_utc": "2026-11-01T00:08:42.421821+00:00",
+      "odds_a": 3.1,
+      "odds_b": 1.36,
+      "source": "sport888"
+    }
+  ]
+}

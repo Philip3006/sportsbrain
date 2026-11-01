@@ -1,0 +1,15 @@
+{
+  "match_id": "ffcb837b0caf57b860936111d914874c",
+  "player_a": "Adolfo Daniel Vallejo",
+  "player_b": "Lorenzo Sonego",
+  "tournament_slug": "paris_masters_atp",
+  "snapshots": [
+    {
+      "label": "auto_20261101_00",
+      "ts_utc": "2026-11-01T00:08:42.419617+00:00",
+      "odds_a": 2.19,
+      "odds_b": 1.7,
+      "source": "pinnacle"
+    }
+  ]
+}

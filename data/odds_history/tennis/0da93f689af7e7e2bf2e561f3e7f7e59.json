@@ -1,0 +1,15 @@
+{
+  "match_id": "0da93f689af7e7e2bf2e561f3e7f7e59",
+  "player_a": "Benjamin Bonzi",
+  "player_b": "Yannick Hanfmann",
+  "tournament_slug": "paris_masters_atp",
+  "snapshots": [
+    {
+      "label": "auto_20261101_00",
+      "ts_utc": "2026-11-01T00:08:42.418859+00:00",
+      "odds_a": 1.77,
+      "odds_b": 2.1,
+      "source": "pinnacle"
+    }
+  ]
+}

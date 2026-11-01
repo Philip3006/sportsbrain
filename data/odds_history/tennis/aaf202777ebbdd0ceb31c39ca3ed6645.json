@@ -1,0 +1,15 @@
+{
+  "match_id": "aaf202777ebbdd0ceb31c39ca3ed6645",
+  "player_a": "Rinky Hijikata",
+  "player_b": "Vit Kopriva",
+  "tournament_slug": "paris_masters_atp",
+  "snapshots": [
+    {
+      "label": "auto_20261101_00",
+      "ts_utc": "2026-11-01T00:08:42.419379+00:00",
+      "odds_a": 1.42,
+      "odds_b": 2.96,
+      "source": "pinnacle"
+    }
+  ]
+}

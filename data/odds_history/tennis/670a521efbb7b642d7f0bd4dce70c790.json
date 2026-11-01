@@ -1,0 +1,15 @@
+{
+  "match_id": "670a521efbb7b642d7f0bd4dce70c790",
+  "player_a": "Sebastian Baez",
+  "player_b": "Tomas Machac",
+  "tournament_slug": "paris_masters_atp",
+  "snapshots": [
+    {
+      "label": "auto_20261101_00",
+      "ts_utc": "2026-11-01T00:08:42.419499+00:00",
+      "odds_a": 5.32,
+      "odds_b": 1.16,
+      "source": "pinnacle"
+    }
+  ]
+}

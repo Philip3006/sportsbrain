@@ -1,0 +1,15 @@
+{
+  "match_id": "39b752c46a334d801ef2449710faa164",
+  "player_a": "Alex de Minaur",
+  "player_b": "Carlos Alcaraz",
+  "tournament_slug": "tennis_atp_vienna_open",
+  "snapshots": [
+    {
+      "label": "auto_20261101_00",
+      "ts_utc": "2026-11-01T00:08:42.841456+00:00",
+      "odds_a": 4.3,
+      "odds_b": 1.19,
+      "source": "betclic_fr"
+    }
+  ]
+}

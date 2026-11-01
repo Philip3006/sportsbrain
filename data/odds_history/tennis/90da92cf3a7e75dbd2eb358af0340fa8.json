@@ -1,0 +1,15 @@
+{
+  "match_id": "90da92cf3a7e75dbd2eb358af0340fa8",
+  "player_a": "Arthur Fery",
+  "player_b": "Quentin Halys",
+  "tournament_slug": "paris_masters_atp",
+  "snapshots": [
+    {
+      "label": "auto_20261101_00",
+      "ts_utc": "2026-11-01T00:08:42.420454+00:00",
+      "odds_a": 2.2,
+      "odds_b": 1.67,
+      "source": "sport888"
+    }
+  ]
+}

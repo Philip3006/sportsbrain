@@ -1,0 +1,15 @@
+{
+  "match_id": "e33e004fe9457eef4c8e5a50d15392c0",
+  "player_a": "Diana Shnaider",
+  "player_b": "Leylah Fernandez",
+  "tournament_slug": "tennis_wta_pan_pacific_open",
+  "snapshots": [
+    {
+      "label": "auto_20261101_00",
+      "ts_utc": "2026-11-01T00:08:43.003702+00:00",
+      "odds_a": 1.61,
+      "odds_b": 2.28,
+      "source": "nordicbet"
+    }
+  ]
+}

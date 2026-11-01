@@ -1,0 +1,15 @@
+{
+  "match_id": "0b15b685479df1479050365848bcfe54",
+  "player_a": "Alejandro Tabilo",
+  "player_b": "Rafael Jodar",
+  "tournament_slug": "paris_masters_atp",
+  "snapshots": [
+    {
+      "label": "auto_20261101_00",
+      "ts_utc": "2026-11-01T00:08:42.419977+00:00",
+      "odds_a": 4.0,
+      "odds_b": 1.25,
+      "source": "sport888"
+    }
+  ]
+}

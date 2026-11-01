@@ -1,0 +1,15 @@
+{
+  "match_id": "db55f6491d2491e31599e3af63c11471",
+  "player_a": "Arthur Rinderknech",
+  "player_b": "Francisco Cerundolo",
+  "tournament_slug": "paris_masters_atp",
+  "snapshots": [
+    {
+      "label": "auto_20261101_00",
+      "ts_utc": "2026-11-01T00:08:42.420636+00:00",
+      "odds_a": 2.9,
+      "odds_b": 1.4,
+      "source": "sport888"
+    }
+  ]
+}

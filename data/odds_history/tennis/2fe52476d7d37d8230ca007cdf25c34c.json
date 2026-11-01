@@ -1,0 +1,15 @@
+{
+  "match_id": "2fe52476d7d37d8230ca007cdf25c34c",
+  "player_a": "Holger Rune",
+  "player_b": "Tommy Paul",
+  "tournament_slug": "paris_masters_atp",
+  "snapshots": [
+    {
+      "label": "auto_20261101_00",
+      "ts_utc": "2026-11-01T00:08:42.421534+00:00",
+      "odds_a": 2.6,
+      "odds_b": 1.5,
+      "source": "sport888"
+    }
+  ]
+}

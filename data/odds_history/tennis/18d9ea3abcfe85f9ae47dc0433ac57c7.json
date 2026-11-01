@@ -1,0 +1,15 @@
+{
+  "match_id": "18d9ea3abcfe85f9ae47dc0433ac57c7",
+  "player_a": "Brandon Nakashima",
+  "player_b": "Matteo Berrettini",
+  "tournament_slug": "paris_masters_atp",
+  "snapshots": [
+    {
+      "label": "auto_20261101_00",
+      "ts_utc": "2026-11-01T00:08:42.421065+00:00",
+      "odds_a": 1.67,
+      "odds_b": 2.2,
+      "source": "sport888"
+    }
+  ]
+}

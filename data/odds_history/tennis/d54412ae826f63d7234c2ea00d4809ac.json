@@ -1,0 +1,15 @@
+{
+  "match_id": "d54412ae826f63d7234c2ea00d4809ac",
+  "player_a": "Alexander Blockx",
+  "player_b": "Daniel Merida Aguilar",
+  "tournament_slug": "paris_masters_atp",
+  "snapshots": [
+    {
+      "label": "auto_20261101_00",
+      "ts_utc": "2026-11-01T00:08:42.420144+00:00",
+      "odds_a": 1.62,
+      "odds_b": 2.41,
+      "source": "pinnacle"
+    }
+  ]
+}

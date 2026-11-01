@@ -1,0 +1,15 @@
+{
+  "match_id": "9e065ecef1e149fdf4c5e361ba6d2f2b",
+  "player_a": "Hubert Hurkacz",
+  "player_b": "Lorenzo Musetti",
+  "tournament_slug": "paris_masters_atp",
+  "snapshots": [
+    {
+      "label": "auto_20261101_00",
+      "ts_utc": "2026-11-01T00:08:42.421704+00:00",
+      "odds_a": 1.86,
+      "odds_b": 2.01,
+      "source": "pinnacle"
+    }
+  ]
+}

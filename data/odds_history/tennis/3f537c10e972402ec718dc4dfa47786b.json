@@ -1,0 +1,15 @@
+{
+  "match_id": "3f537c10e972402ec718dc4dfa47786b",
+  "player_a": "Alex Molcan",
+  "player_b": "Nuno Borges",
+  "tournament_slug": "paris_masters_atp",
+  "snapshots": [
+    {
+      "label": "auto_20261101_00",
+      "ts_utc": "2026-11-01T00:08:42.419764+00:00",
+      "odds_a": 2.28,
+      "odds_b": 1.65,
+      "source": "pinnacle"
+    }
+  ]
+}

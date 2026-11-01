@@ -1,0 +1,15 @@
+{
+  "match_id": "87dd1f372becd90b913ceac1b31578d1",
+  "player_a": "Juan Manuel Cerundolo",
+  "player_b": "Miomir Kecmanovic",
+  "tournament_slug": "paris_masters_atp",
+  "snapshots": [
+    {
+      "label": "auto_20261101_00",
+      "ts_utc": "2026-11-01T00:08:42.419116+00:00",
+      "odds_a": 1.74,
+      "odds_b": 2.14,
+      "source": "pinnacle"
+    }
+  ]
+}

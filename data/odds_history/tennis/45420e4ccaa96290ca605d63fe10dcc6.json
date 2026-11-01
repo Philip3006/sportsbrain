@@ -1,0 +1,15 @@
+{
+  "match_id": "45420e4ccaa96290ca605d63fe10dcc6",
+  "player_a": "Jiri Lehecka",
+  "player_b": "Valentin Vacherot",
+  "tournament_slug": "tennis_atp_swiss_indoors",
+  "snapshots": [
+    {
+      "label": "auto_20261101_00",
+      "ts_utc": "2026-11-01T00:08:42.629502+00:00",
+      "odds_a": 1.49,
+      "odds_b": 2.6,
+      "source": "marathonbet"
+    }
+  ]
+}

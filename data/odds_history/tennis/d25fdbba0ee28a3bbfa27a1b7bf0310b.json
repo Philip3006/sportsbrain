@@ -1,0 +1,15 @@
+{
+  "match_id": "d25fdbba0ee28a3bbfa27a1b7bf0310b",
+  "player_a": "Andrey Rublev",
+  "player_b": "Tomas Martin Etcheverry",
+  "tournament_slug": "paris_masters_atp",
+  "snapshots": [
+    {
+      "label": "auto_20261101_00",
+      "ts_utc": "2026-11-01T00:08:42.420297+00:00",
+      "odds_a": 1.4,
+      "odds_b": 2.9,
+      "source": "sport888"
+    }
+  ]
+}
