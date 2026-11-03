@@ -1,6 +1,6 @@
 # Tennis Scan 2026-11-03
 
-**Aktive Turniere:** 1 · **Signals total:** 7
+**Aktive Turniere:** 1 · **Signals total:** 4
 
 ## ⭐ TOP-PICKS — nur diese spielen
 
@@ -8,32 +8,22 @@
 
 - 🟢 **Ben Shelton vs Cameron Norrie** · Ben Shelton Set AH -1.5 _(SET handicap)_
   Quote 2.65 · EV +16.9% · Stake 5.00€ · HIGH
-- 🟢 **Brandon Nakashima vs Matteo Berrettini** · Brandon Nakashima Set AH -1.5 _(SET handicap)_
-  Quote 2.64 · EV +16.8% · Stake 5.00€ · HIGH
 - 🟢 **Alexander Zverev vs Lorenzo Musetti** · Alexander Zverev Set AH -1.5 _(SET handicap)_
   Quote 2.57 · EV +16.4% · Stake 5.00€ · HIGH
-- 🟢 **Alejandro Davidovich Fokina vs Moise Kouame** · Alejandro Davidovich Fokina Set AH -1.5 _(SET handicap)_
-  Quote 2.50 · EV +16.4% · Stake 5.00€ · HIGH
-- 🟢 **Tommy Paul vs Holger Rune** · Match Winner: Tommy Paul
-  Quote 2.41 · EV +28.3% · Stake 5.00€ · HIGH
+- 🟡 **Novak Djokovic vs Valentin Vacherot** · Novak Djokovic Set AH -1.5 _(SET handicap)_
+  Quote 2.05 · EV +14.5% · Stake 5.00€ · MEDIUM
 
 ---
 
 
 ## Paris Masters (ATP) · m1000 · 🔴 LIVE
-Surface: hard · Best of: 3 · Matches gescannt: 16
+Surface: hard · Best of: 3 · Matches gescannt: 11
   > ⚠️ **Satz-AH vorhanden** — beim Buchmacher **Sätze-Handicap** wählen, NICHT Spiele-Handicap!
-- [ATP] **Tommy Paul vs Holger Rune** · Match Winner: Tommy Paul ⭐
-  Quote 2.41 · Modell 53.2% · EV +28.3% · Stake 5.00€ · HIGH
+- [ATP] **Tommy Paul vs Holger Rune** · Match Winner: Tommy Paul
+  Quote 2.55 · Modell 53.2% · EV +35.7% · Stake 5.00€ · HIGH
 - [ATP] **Ben Shelton vs Cameron Norrie** · Ben Shelton Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
   Quote 2.65 · Modell 44.1% · EV +16.9% · Stake 5.00€ · HIGH
-- [ATP] **Brandon Nakashima vs Matteo Berrettini** · Brandon Nakashima Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
-  Quote 2.64 · Modell 44.2% · EV +16.8% · Stake 5.00€ · HIGH
 - [ATP] **Alexander Zverev vs Lorenzo Musetti** · Alexander Zverev Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
   Quote 2.57 · Modell 45.3% · EV +16.4% · Stake 5.00€ · HIGH
-- [ATP] **Alejandro Davidovich Fokina vs Moise Kouame** · Alejandro Davidovich Fokina Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
-  Quote 2.50 · Modell 46.5% · EV +16.4% · Stake 5.00€ · HIGH
-- [ATP] **Novak Djokovic vs Valentin Vacherot** · Novak Djokovic Set AH -1.5 _(Satz-AH = SET handicap)_
+- [ATP] **Novak Djokovic vs Valentin Vacherot** · Novak Djokovic Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
   Quote 2.05 · Modell 55.9% · EV +14.5% · Stake 5.00€ · MEDIUM
-- [ATP] **Ben Shelton vs Cameron Norrie** · Match Winner: Cameron Norrie
-  Quote 3.16 · Modell 35.2% · EV +11.3% · Stake 5.00€ · MEDIUM
