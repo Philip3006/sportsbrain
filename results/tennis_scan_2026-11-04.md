@@ -32,12 +32,12 @@ Surface: hard · Best of: 3 · Matches gescannt: 14
 - [ATP] **Alexander Zverev vs Lorenzo Musetti** · Alexander Zverev Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
   Quote 2.57 · Modell 45.3% · EV +16.4% · Stake 5.00€ · HIGH
 - [ATP] **Quentin Halys vs Frances Tiafoe** · Match Winner: Frances Tiafoe
-  Quote 1.57 · Modell 73.3% · EV +15.1% · Stake 5.00€ · HIGH
+  Quote 1.58 · Modell 73.3% · EV +15.8% · Stake 5.00€ · HIGH
 - [ATP] **Arthur Fils vs Tomas Machac** · Arthur Fils Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
   Quote 2.21 · Modell 52.1% · EV +15.1% · Stake 5.00€ · HIGH
+- [ATP] **Alex Michelsen vs Carlos Alcaraz** · Match Winner: Carlos Alcaraz
+  Quote 1.41 · Modell 81.5% · EV +14.9% · Stake 5.00€ · MEDIUM
 - [ATP] **Novak Djokovic vs Rinky Hijikata** · Novak Djokovic Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
   Quote 1.83 · Modell 61.9% · EV +13.2% · Stake 5.00€ · MEDIUM
 - [ATP] **Novak Djokovic vs Rinky Hijikata** · Match Winner: Novak Djokovic
   Quote 1.38 · Modell 81.1% · EV +12.0% · Stake 5.00€ · MEDIUM
-- [ATP] **Alex Michelsen vs Carlos Alcaraz** · Match Winner: Carlos Alcaraz
-  Quote 1.36 · Modell 81.5% · EV +10.8% · Stake 5.00€ · MEDIUM
