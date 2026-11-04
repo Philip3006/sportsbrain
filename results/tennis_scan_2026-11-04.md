@@ -1,6 +1,6 @@
 # Tennis Scan 2026-11-04
 
-**Aktive Turniere:** 1 · **Signals total:** 11
+**Aktive Turniere:** 1 · **Signals total:** 10
 
 ## ⭐ TOP-PICKS — nur diese spielen
 
@@ -24,7 +24,7 @@
 Surface: hard · Best of: 3 · Matches gescannt: 14
   > ⚠️ **Satz-AH vorhanden** — beim Buchmacher **Sätze-Handicap** wählen, NICHT Spiele-Handicap!
 - [ATP] **Luca Van Assche vs Learner Tien** · Match Winner: Learner Tien
-  Quote 1.55 · Modell 76.1% · EV +18.0% · Stake 5.00€ · HIGH
+  Quote 1.56 · Modell 76.1% · EV +18.8% · Stake 5.00€ · HIGH
 - [ATP] **Nuno Borges vs Karen Khachanov** · Nuno Borges Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
   Quote 3.13 · Modell 37.7% · EV +17.9% · Stake 5.00€ · HIGH
 - [ATP] **Tommy Paul vs Daniel Merida Aguilar** · Tommy Paul Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
@@ -43,5 +43,3 @@ Surface: hard · Best of: 3 · Matches gescannt: 14
   Quote 2.80 · Modell 39.7% · EV +11.2% · Stake 5.00€ · MEDIUM
 - [ATP] **Alex Michelsen vs Carlos Alcaraz** · Match Winner: Carlos Alcaraz
   Quote 1.34 · Modell 81.5% · EV +9.2% · Stake 5.00€ · MEDIUM
-- [ATP] **Alex Molcan vs Taylor Fritz** · Match Winner: Taylor Fritz
-  Quote 1.43 · Modell 75.7% · EV +8.3% · Stake 5.00€ · MEDIUM
