@@ -17,10 +17,10 @@
 ## Paris Masters (ATP) · m1000 · 🔴 LIVE
 Surface: hard · Best of: 3 · Matches gescannt: 8
   > ⚠️ **Satz-AH vorhanden** — beim Buchmacher **Sätze-Handicap** wählen, NICHT Spiele-Handicap!
+- [ATP] **Matteo Berrettini vs Carlos Alcaraz** · Match Winner: Carlos Alcaraz
+  Quote 1.40 · Modell 84.8% · EV +18.7% · Stake 5.00€ · HIGH
 - [ATP] **Arthur Fils vs Taylor Fritz** · Match Winner: Arthur Fils
   Quote 2.20 · Modell 53.2% · EV +17.1% · Stake 5.00€ · HIGH
-- [ATP] **Matteo Berrettini vs Carlos Alcaraz** · Match Winner: Carlos Alcaraz
-  Quote 1.37 · Modell 84.8% · EV +16.1% · Stake 5.00€ · HIGH
 - [ATP] **Ben Shelton vs Arthur Rinderknech** · Ben Shelton Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
   Quote 2.24 · Modell 51.5% · EV +15.4% · Stake 5.00€ · HIGH
 - [ATP] **Lorenzo Musetti vs Luca Van Assche** · Lorenzo Musetti Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
