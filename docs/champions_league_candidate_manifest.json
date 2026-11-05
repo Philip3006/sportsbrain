@@ -1,0 +1,189 @@
+{
+  "candidates": [
+    {
+      "candidate_id": "uniform_prior_v1",
+      "family": "uniform baseline",
+      "paths": [],
+      "readiness": "READY_FOR_OFFLINE_BASELINE",
+      "reason": "parameter-free reproducible sanity baseline"
+    },
+    {
+      "candidate_id": "empirical_prior_v1",
+      "family": "development empirical prior",
+      "paths": [],
+      "readiness": "READY_FOR_OFFLINE_BASELINE",
+      "reason": "fit only on rows before the scored partition"
+    },
+    {
+      "candidate_id": "elo_v1",
+      "family": "chronological Elo",
+      "paths": [
+        {
+          "path": "src/models/elo.py",
+          "present": true,
+          "sha256": "7596e7e622f4dcbc81bb5efb6328a889eb7896133731b4a3827563308702676a"
+        }
+      ],
+      "readiness": "CONDITIONAL",
+      "reason": "compatible once CL event-time results and neutral/venue metadata are supplied"
+    },
+    {
+      "candidate_id": "dixon_coles_v1",
+      "family": "Dixon-Coles goals",
+      "paths": [
+        {
+          "path": "src/models/dixon_coles.py",
+          "present": true,
+          "sha256": "ad1cd5ec1a09d4eac6e4c73ab10273363e61c6c219fb6837d5df6e227e224ac8"
+        }
+      ],
+      "readiness": "CONDITIONAL",
+      "reason": "compatible once causal CL training rows and kickoff-safe snapshots are supplied"
+    },
+    {
+      "candidate_id": "market_prior_v1",
+      "family": "de-vigged 1X2 market prior",
+      "paths": [
+        {
+          "path": "src/betting/odds_utils.py",
+          "present": true,
+          "sha256": "ad6adff88cab75fd8cad1fb4122e6ef1a7413fb766d6d19dd4909180db694b6c"
+        }
+      ],
+      "readiness": "BLOCKED",
+      "reason": "requires CL odds with captured_at <= kickoff; existing builder does not enforce this"
+    },
+    {
+      "candidate_id": "hist_gbm_v1",
+      "family": "histogram gradient boosting challenger",
+      "paths": [
+        {
+          "path": "src/features/builder.py",
+          "present": true,
+          "sha256": "b695891d88d8d38d9d920111df2a50812ee56ef4a86d30f641867cc2cb587c3f"
+        },
+        {
+          "path": "src/models/lgbm_model.py",
+          "present": true,
+          "sha256": "eb4e8028ef4012fec01310de02eb769c759c51803847b13593f821726e49c28d"
+        }
+      ],
+      "readiness": "BLOCKED",
+      "reason": "feature timestamps and historical as-of artifacts are not yet CL-safe"
+    }
+  ],
+  "competition": "UEFA Champions League",
+  "feature_timestamp_audit": [
+    {
+      "feature_id": "rolling_form_momentum_load_h2h",
+      "reason": "uses date < match_date; exact event-time ordering is not retained",
+      "source": "src/features/form.py,src/features/head_to_head.py",
+      "status": "CONDITIONAL"
+    },
+    {
+      "feature_id": "elo_pre_match_state",
+      "reason": "pre-match state is causal only at date granularity",
+      "source": "src/features/builder.py,src/models/elo.py",
+      "status": "CONDITIONAL"
+    },
+    {
+      "feature_id": "dixon_coles_snapshot",
+      "reason": "snapshot lookup uses <= match_date; no kickoff-safe snapshot contract",
+      "source": "src/features/builder.py,src/models/dixon_coles.py",
+      "status": "BLOCKED"
+    },
+    {
+      "feature_id": "market_odds",
+      "reason": "odds lookup has no captured_at/source_timestamp and can be closing or post-kickoff",
+      "source": "src/features/builder.py,src/betting/odds_utils.py",
+      "status": "BLOCKED"
+    },
+    {
+      "feature_id": "market_value",
+      "reason": "hard-coded current values are not historical as-of snapshots",
+      "source": "src/data/market_values.py",
+      "status": "BLOCKED"
+    },
+    {
+      "feature_id": "squad_availability",
+      "reason": "default/current squad caches do not carry an event-time release attestation",
+      "source": "src/data/squad_availability.py",
+      "status": "BLOCKED"
+    },
+    {
+      "feature_id": "statsbomb_xg_player_xg",
+      "reason": "match date is retained but publication timestamp is not",
+      "source": "src/data/statsbomb.py",
+      "status": "BLOCKED"
+    },
+    {
+      "feature_id": "fotmob_ratings",
+      "reason": "ratings are post-match observations with date-only timestamps",
+      "source": "src/data/fotmob.py",
+      "status": "BLOCKED"
+    },
+    {
+      "feature_id": "ppda",
+      "reason": "FBref season fallback is not point-in-time versioned",
+      "source": "src/features/ppda.py",
+      "status": "BLOCKED"
+    },
+    {
+      "feature_id": "fixture_context",
+      "reason": "neutral/tournament fields are fixture metadata supplied before scoring",
+      "source": "src/features/builder.py",
+      "status": "PASS"
+    }
+  ],
+  "final_partition": {
+    "locked_for_selection": true,
+    "scoring_allowed_after_freeze": true
+  },
+  "input_contract": {
+    "expected_location": "data/champions_league/",
+    "present_in_repository": false,
+    "required": [
+      "season",
+      "kickoff_at",
+      "home_team",
+      "away_team",
+      "home_score",
+      "away_score"
+    ]
+  },
+  "limitations": [
+    "No committed Champions League match/prediction artifact is present in this worktree.",
+    "src/data/football_data.py only enumerates domestic football-data.co.uk leagues.",
+    "src/data/international.py is a network fetcher for broad international results and is not a CL point-in-time pipeline.",
+    "No candidate is production-enabled by this manifest."
+  ],
+  "manifest_sha256": "19a852f28209b3e0187b57851a9fceebcde99dea8c469bff5c873301aa10aae5",
+  "partition_spec": {
+    "calibration": [
+      "2022-23",
+      "2023-24"
+    ],
+    "development": [
+      "2015-16",
+      "2016-17",
+      "2017-18",
+      "2018-19",
+      "2019-20",
+      "2020-21",
+      "2021-22"
+    ],
+    "final": [
+      "2024-25"
+    ],
+    "shadow": [
+      "2025-26"
+    ]
+  },
+  "safety": {
+    "financial_data_accessed": false,
+    "network_accessed": false,
+    "production_mutated": false
+  },
+  "schema_version": "champions-league-research-readiness-v1",
+  "scope": "offline research shadow/evidence only"
+}
