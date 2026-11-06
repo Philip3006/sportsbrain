@@ -16,5 +16,5 @@
 Surface: hard · Best of: 3 · Matches gescannt: 4
 - [ATP] **Luca Van Assche vs Rinky Hijikata** · Match Winner: Rinky Hijikata ⭐
   Quote 2.37 · Modell 58.4% · EV +38.3% · Stake 5.00€ · HIGH
-- [ATP] **Casper Ruud vs Nuno Borges** · Match Winner: Casper Ruud
-  Quote 2.27 · Modell 51.4% · EV +16.6% · Stake 5.00€ · HIGH
+- [ATP] **Casper Ruud vs Nuno Borges** · Match Winner: Nuno Borges
+  Quote 2.46 · Modell 48.6% · EV +19.7% · Stake 5.00€ · HIGH
