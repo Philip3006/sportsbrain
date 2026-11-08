@@ -1,10 +1,10 @@
 {
-  "recalibrated_at": "2026-11-01T11:41:03+00:00",
+  "recalibrated_at": "2026-11-08T11:42:09+00:00",
   "window_days": 60,
   "min_n": 30,
   "surfaces": {
     "hard": {
-      "n": 437,
+      "n": 114,
       "status": "fitted"
     },
     "clay": {
