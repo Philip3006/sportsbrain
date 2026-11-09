@@ -23,6 +23,7 @@ from src.tennis.odds.base import OddsQuote, ProviderOutcome, sanity_ok
 
 name = "tennis_explorer"
 tier = 2
+_TE_PARSER_VERSION = 2
 
 _BULK: list[dict] = []
 _TS: float = 0.0
@@ -48,8 +49,18 @@ def _get_bulk() -> list[dict]:
 def _get_bulk_with_diagnostics() -> tuple[list[dict], ProviderOutcome]:
     global _BULK, _TS
     age = time.time() - _TS
-    if _BULK and age < _TTL_S:
+    if _BULK and age < _TTL_S and all(
+        isinstance(match, dict)
+        and match.get("te_parser_version") == _TE_PARSER_VERSION
+        and _source_observation_time(match.get("source_observed_at")) is not None
+        for match in _BULK
+    ):
         return _BULK, ProviderOutcome(name, True, True, "success")
+    if _BULK and age < _TTL_S:
+        # A parser deployment must not keep old, potentially false kickoff rows
+        # alive in the adapter's in-memory cache.
+        _BULK = []
+        _TS = 0.0
     try:
         from src.data.tennis_secondary_odds import fetch_te_upcoming_matches
         new_bulk = fetch_te_upcoming_matches(min_bookies=2, max_matches=200)
@@ -57,7 +68,9 @@ def _get_bulk_with_diagnostics() -> tuple[list[dict], ProviderOutcome]:
             provenanced_bulk = [
                 match
                 for match in new_bulk
-                if _source_observation_time(match.get("source_observed_at")) is not None
+                if isinstance(match, dict)
+                and match.get("te_parser_version") == _TE_PARSER_VERSION
+                and _source_observation_time(match.get("source_observed_at")) is not None
             ]
             if not provenanced_bulk:
                 _BULK = []
@@ -67,7 +80,7 @@ def _get_bulk_with_diagnostics() -> tuple[list[dict], ProviderOutcome]:
                     True,
                     True,
                     "missing_provenance",
-                    error_class="MissingSourceObservationTime",
+                    error_class="MissingSourceObservationTimeOrParserVersion",
                 )
             _BULK = provenanced_bulk
             _TS = time.time()
@@ -109,6 +122,8 @@ def _quote_from_bulk(match_hint: dict, bulk: list[dict]) -> OddsQuote | None:
         pb_key = _match_key(to_elo_name_from_odds_api(pb_raw))
 
     for m in bulk:
+        if not isinstance(m, dict) or m.get("te_parser_version") != _TE_PARSER_VERSION:
+            continue
         mpa = _match_key(to_elo_name_from_te(m.get("player_a", "")))
         mpb = _match_key(to_elo_name_from_te(m.get("player_b", "")))
         if not mpa or not mpb:
