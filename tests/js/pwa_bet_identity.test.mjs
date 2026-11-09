@@ -290,8 +290,8 @@ test('match detail opens safely when a Tennis no-bet signal has no model output'
   };
   vm.createContext(context);
   vm.runInContext(
-    `${viewsSource.slice(detailStart, detailEnd)}\\n` +
-      `${viewsSource.slice(signalStart, signalEnd)}\\n` +
+    `${viewsSource.slice(detailStart, detailEnd)}\n` +
+      `${viewsSource.slice(signalStart, signalEnd)}\n` +
       'globalThis.openSignalMatch = _openMatchDetailFromSignal;',
     context,
   );
