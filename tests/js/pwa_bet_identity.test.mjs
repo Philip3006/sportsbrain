@@ -242,6 +242,65 @@ test('match detail prefers a fresh match-level primary quote over signal or scan
   assert.equal(noSignalQuote.freshness, 'current');
 });
 
+test('match detail opens safely when a Tennis no-bet signal has no model output', async () => {
+  const detailStart = viewsSource.indexOf('function _openMatchDetail(match) {');
+  const detailEnd = viewsSource.indexOf('\nfunction _closeMatchDetail()', detailStart);
+  const signalStart = viewsSource.indexOf('async function _openMatchDetailFromSignal(');
+  const signalEnd = viewsSource.indexOf(
+    "\ndocument.getElementById('match-detail-modal-bd').addEventListener",
+    signalStart,
+  );
+  assert.ok(detailStart >= 0 && detailEnd > detailStart);
+  assert.ok(signalStart >= 0 && signalEnd > signalStart);
+
+  const elements = new Map();
+  for (const id of [
+    'match-detail-modal-title', 'match-detail-modal-sub',
+    'match-detail-modal-body', 'match-detail-modal-bd',
+  ]) {
+    elements.set(id, {
+      innerHTML: '',
+      textContent: '',
+      classes: new Set(),
+      classList: { add(name) { this.owner.classes.add(name); } },
+      owner: null,
+    });
+    elements.get(id).classList.owner = elements.get(id);
+  }
+
+  const context = {
+    _signals: [{
+      match: 'Player A vs Player B',
+      market: 'home',
+      model_prob: null,
+      sport: 'tennis',
+      signal_status: 'UNREFRESHABLE',
+    }],
+    _forecastData: {},
+    _captureAnalytics() {},
+    _analyticsFixtureKey: (home, away) => `${home} vs ${away}`,
+    matchKey: (home, away) => `${home}|${away}`.toLowerCase(),
+    loadForecast: async () => ({}),
+    teamFlag: () => '',
+    esc: (value) => String(value ?? ''),
+    document: {
+      body: { dataset: { activeView: 'tennis' }, style: {} },
+      getElementById: (id) => elements.get(id),
+    },
+  };
+  vm.createContext(context);
+  vm.runInContext(
+    `${viewsSource.slice(detailStart, detailEnd)}\\n` +
+      `${viewsSource.slice(signalStart, signalEnd)}\\n` +
+      'globalThis.openSignalMatch = _openMatchDetailFromSignal;',
+    context,
+  );
+
+  await context.openSignalMatch('Player A', 'Player B');
+  assert.equal(elements.get('match-detail-modal-bd').classes.has('show'), true);
+  assert.match(elements.get('match-detail-modal-body').innerHTML, /Keine Prognose-Daten verfügbar/);
+});
+
 test('match-level and signal quotes are time-true at render time', () => {
   const start = appSource.indexOf('const _MAX_MATCH_QUOTE_AGE_MS');
   const end = appSource.indexOf('\nfunction _matchPrimaryMarketsCard(', start);
