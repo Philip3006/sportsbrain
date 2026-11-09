@@ -1,0 +1,41 @@
+"""Experimental football sources kept outside the active provider authority."""
+
+from src.football.experimental.api_football import (
+    API_FOOTBALL_COMPETITION_ID,
+    API_FOOTBALL_COMPETITION_NAME,
+    API_FOOTBALL_MARKET_ID,
+    API_FOOTBALL_PROVIDER_IDENTITY,
+    ApiFootballCallResult,
+    ApiFootballDiagnosticBudget,
+    ApiFootballEvidenceKind,
+    ApiFootballExperimentalAdapter,
+    ApiFootballExperimentPolicy,
+    ApiFootballFailure,
+    ApiFootballFixtureCandidate,
+    ApiFootballObservation,
+    ApiFootballRequest,
+    ApiFootballRequestKind,
+    ApiFootballResponse,
+    DiagnosticPageSummary,
+    summarize_odds_payload,
+)
+
+__all__ = [
+    "API_FOOTBALL_COMPETITION_ID",
+    "API_FOOTBALL_COMPETITION_NAME",
+    "API_FOOTBALL_MARKET_ID",
+    "API_FOOTBALL_PROVIDER_IDENTITY",
+    "ApiFootballCallResult",
+    "ApiFootballDiagnosticBudget",
+    "ApiFootballEvidenceKind",
+    "ApiFootballExperimentPolicy",
+    "ApiFootballExperimentalAdapter",
+    "ApiFootballFailure",
+    "ApiFootballFixtureCandidate",
+    "ApiFootballObservation",
+    "ApiFootballRequest",
+    "ApiFootballRequestKind",
+    "ApiFootballResponse",
+    "DiagnosticPageSummary",
+    "summarize_odds_payload",
+]
