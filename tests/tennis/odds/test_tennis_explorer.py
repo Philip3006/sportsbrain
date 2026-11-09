@@ -12,6 +12,7 @@ def _reset_bulk(entries: list[dict]):
     observed_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     for entry in entries:
         entry.setdefault("source_observed_at", observed_at)
+        entry.setdefault("te_parser_version", 2)
     te._BULK = entries
     te._TS = time.time()
 
@@ -50,6 +51,7 @@ def test_fetch_preserves_provider_response_capture_timestamp():
             "odds_a": 1.90,
             "odds_b": 2.05,
             "te_bookies_count": 3,
+            "te_parser_version": 2,
             "source_observed_at": observed_at.isoformat(),
         }
     ]
@@ -70,6 +72,12 @@ def test_fetch_rejects_legacy_missing_or_stale_source_timestamp(monkeypatch):
         "te_bookies_count": 3,
     }
     monkeypatch.setattr(te, "_quote_from_requested_fixture", lambda *_: None)
+    from src.data import tennis_secondary_odds
+    monkeypatch.setattr(
+        tennis_secondary_odds,
+        "fetch_te_upcoming_matches",
+        lambda **_kwargs: [row],
+    )
     te._BULK = [row]
     te._TS = time.time()
     assert te.fetch({"player_a": "Carlos Alcaraz", "player_b": "Jannik Sinner"}) is None
@@ -169,15 +177,16 @@ def test_scraper_records_response_capture_time_without_network(monkeypatch):
     assert before.replace(microsecond=0) <= observed_at <= after.replace(microsecond=0)
 
 
-def test_scraper_prefers_full_year_match_kickoff_over_quote_history(monkeypatch):
+def test_scraper_prefers_full_year_match_header_over_quote_history(monkeypatch):
     from src.data import tennis_secondary_odds
 
     detail_html = """
-    <td class="k1">Vekic Donna</td><td class="k2">Swiatek Iga</td>
-    <div>05.10.2026</div><div>, 05:00</div>
-    <a href="/beijing/2026/wta-women/">Beijing</a>
+    <div>09.11. 22:23, GMT+1</div>
+    <h1>Vekic - Swiatek</h1>
+    <div>05.10.2026, 05:00, Beijing, final</div>
+    <table><td class="k1">Vekic Donna</td><td class="k2">Swiatek Iga</td>
     <tr class="one"><td class="k1"><div class="odds-in">1.95</div></td>
-    <td class="k2"><div class="odds-in">2.05</div></td></tr>
+    <td class="k2"><div class="odds-in">2.05</div></td></tr></table>
     <div>04.10. 23:15</div>
     """
     monkeypatch.setattr(
@@ -188,6 +197,254 @@ def test_scraper_prefers_full_year_match_kickoff_over_quote_history(monkeypatch)
 
     assert match is not None
     assert match["commence_time"] == "2026-10-05T03:00:00Z"
+
+
+def test_match_header_kickoff_ignores_page_clock_and_uses_match_time(monkeypatch):
+    from src.data import tennis_secondary_odds
+    from src.tennis.event_state import (
+        TennisEventState,
+        TennisEventStatus,
+        derive_schedule_status,
+    )
+
+    observed = datetime(2026, 11, 9, 21, 23, tzinfo=timezone.utc)
+    detail_html = """
+    <div>09.11. 22:23, GMT+1</div>
+    <h1>Gojo - Machac</h1>
+    <div>Today, 14:15, Stockholm, 1. round</div>
+    <table><td class="k1">Gojo Borna</td><td class="k2">Machac Tomas</td>
+    <tr class="one"><td class="k1"><div class="odds-in">2.99</div></td>
+    <td class="k2"><div class="odds-in">1.38</div></td></tr></table>
+    <div>09.11. 10:22</div>
+    """
+    monkeypatch.setattr(tennis_secondary_odds, "_http_get", lambda *_a, **_kw: detail_html)
+    monkeypatch.setattr(tennis_secondary_odds, "_utc_now", lambda: observed)
+
+    match = tennis_secondary_odds._fetch_match_detail("gojo-machac")
+
+    assert match is not None
+    assert match["commence_time"] == "2026-11-09T13:15:00Z"
+    assert match["kickoff_source"] == "match_header_relative_date"
+    assert match["kickoff_timezone"] == "Europe/Berlin"
+    assert match["te_parser_version"] == tennis_secondary_odds.TE_PARSER_VERSION
+    state = TennisEventState(
+        scheduled_start_current=match["commence_time"],
+        schedule_source="tennisexplorer",
+    )
+    assert derive_schedule_status(state, observed) == TennisEventStatus.AWAITING_START
+
+
+def test_two_matches_keep_distinct_match_header_kickoffs(monkeypatch):
+    from src.data import tennis_secondary_odds
+
+    observed = datetime(2026, 11, 9, 12, 0, tzinfo=timezone.utc)
+    monkeypatch.setattr(tennis_secondary_odds, "_utc_now", lambda: observed)
+    html_by_id = {
+        "one": """
+            <div>09.11. 13:00, GMT+1</div><h1>Player One - Player Two</h1>
+            <div>Today, 14:15, Stockholm, round</div>
+            <table><td class="k1">Player One</td><td class="k2">Player Two</td>
+            <tr class="one"><td class="k1"><div class="odds-in">1.80</div></td>
+            <td class="k2"><div class="odds-in">2.10</div></td></tr></table>
+        """,
+        "two": """
+            <div>09.11. 13:00, GMT+1</div><h1>Player Three - Player Four</h1>
+            <div>Today, 16:30, Stockholm, round</div>
+            <table><td class="k1">Player Three</td><td class="k2">Player Four</td>
+            <tr class="one"><td class="k1"><div class="odds-in">1.80</div></td>
+            <td class="k2"><div class="odds-in">2.10</div></td></tr></table>
+        """,
+    }
+    monkeypatch.setattr(
+        tennis_secondary_odds, "_http_get", lambda url, **_kw: html_by_id[url.rsplit("=", 1)[-1]]
+    )
+
+    first = tennis_secondary_odds._fetch_match_detail("one")
+    second = tennis_secondary_odds._fetch_match_detail("two")
+
+    assert first["commence_time"] == "2026-11-09T13:15:00Z"
+    assert second["commence_time"] == "2026-11-09T15:30:00Z"
+    assert first["commence_time"] != second["commence_time"]
+
+
+def test_missing_match_header_time_stays_unknown_not_page_or_scan_time(monkeypatch):
+    from src.data import tennis_secondary_odds
+
+    observed = datetime(2026, 11, 9, 21, 16, tzinfo=timezone.utc)
+    detail_html = """
+    <div>09.11. 22:16, GMT+1</div><h1>Player One - Player Two</h1>
+    <div>Stockholm, 1. round</div>
+    <table><td class="k1">Player One</td><td class="k2">Player Two</td>
+    <tr class="one"><td class="k1"><div class="odds-in">1.80</div></td>
+    <td class="k2"><div class="odds-in">2.10</div></td></tr></table>
+    """
+    monkeypatch.setattr(tennis_secondary_odds, "_http_get", lambda *_a, **_kw: detail_html)
+    monkeypatch.setattr(tennis_secondary_odds, "_utc_now", lambda: observed)
+
+    match = tennis_secondary_odds._fetch_match_detail("unknown-time")
+
+    assert match is not None
+    assert match["commence_time"] == ""
+    assert match["kickoff_source"] == "unknown"
+
+
+def test_yearless_or_relative_header_requires_fresh_page_date_context(monkeypatch):
+    from src.data import tennis_secondary_odds
+
+    detail_html = """
+    <h1>Player One - Player Two</h1><div>Today, 14:15, Stockholm</div>
+    <table><td class="k1">Player One</td><td class="k2">Player Two</td>
+    <tr class="one"><td class="k1"><div class="odds-in">1.80</div></td>
+    <td class="k2"><div class="odds-in">2.10</div></td></tr></table>
+    """
+    monkeypatch.setattr(tennis_secondary_odds, "_http_get", lambda *_a, **_kw: detail_html)
+    monkeypatch.setattr(
+        tennis_secondary_odds,
+        "_utc_now",
+        lambda: datetime(2026, 11, 9, 21, 16, tzinfo=timezone.utc),
+    )
+
+    match = tennis_secondary_odds._fetch_match_detail("no-page-clock")
+
+    assert match is not None
+    assert match["commence_time"] == ""
+    assert match["kickoff_source"] == "unknown"
+
+
+def test_tournament_page_next_matches_discovers_fixture_missing_from_next(monkeypatch):
+    from src.data import tennis_secondary_odds
+
+    next_html = """
+    <a href="/stockholm/2026/atp-men/">Stockholm</a>
+    <a href="/match-detail/?id=3373427">Gojo - Machac</a>
+    """
+    tournament_html = """
+    <h2>Next matches</h2>
+    <a href="/match-detail/?id=3374619">Michelsen - Cerundolo</a>
+    <h2>Tournament draw</h2>
+    <a href="/match-detail/?id=9999999">Completed draw result</a>
+    """
+    calls = []
+    monkeypatch.setattr(
+        tennis_secondary_odds,
+        "_http_get",
+        lambda url, **_kw: calls.append(url) or tournament_html,
+    )
+
+    ids = tennis_secondary_odds._discover_tournament_match_ids(next_html)
+
+    assert ids == ["3374619"]
+    assert calls == ["https://www.tennisexplorer.com/stockholm/2026/atp-men/"]
+
+
+def test_bulk_fetches_stockholm_fixture_from_linked_tournament_page(monkeypatch, tmp_path):
+    from src.data import tennis_secondary_odds
+
+    next_html = """
+    <a href="/stockholm/2026/atp-men/">Stockholm</a>
+    <a href="/match-detail/?id=3373427">Gojo - Machac</a>
+    """
+    tournament_html = """
+    <h2>Next matches</h2>
+    <a href="/match-detail/?id=3374619">Michelsen (6) - Cerundolo</a>
+    <h2>Tournament draw</h2>
+    <a href="/match-detail/?id=9999999">Completed draw result</a>
+    """
+    target_detail = """
+    <div>09.11. 22:16, GMT+1</div>
+    <h1>Michelsen - Cerundolo</h1>
+    <div>10.11.2026, 13:00, Stockholm, round of 16</div>
+    <table><td class="k1">Michelsen Alex</td><td class="k2">Cerundolo Juan Manuel</td>
+    <tr class="one"><td class="k1"><div class="odds-in">1.71</div></td>
+    <td class="k2"><div class="odds-in">2.48</div></td></tr></table>
+    <a href="/stockholm/2026/atp-men/">Stockholm</a>
+    """
+    requested = []
+    monkeypatch.setattr(tennis_secondary_odds, "_get_next_html", lambda: next_html)
+    monkeypatch.setattr(
+        tennis_secondary_odds,
+        "_http_get",
+        lambda url, **_kwargs: (
+            requested.append(url)
+            or (tournament_html if url.endswith("/stockholm/2026/atp-men/") else target_detail if "3374619" in url else None)
+        ),
+    )
+    monkeypatch.setattr(
+        tennis_secondary_odds,
+        "_utc_now",
+        lambda: datetime(2026, 11, 9, 21, 16, tzinfo=timezone.utc),
+    )
+    monkeypatch.setattr(tennis_secondary_odds, "_CACHE_PATH", tmp_path / "te.pkl")
+    monkeypatch.setattr(tennis_secondary_odds, "DATA_CACHE", tmp_path / "cache")
+
+    matches = tennis_secondary_odds.fetch_te_upcoming_matches(
+        min_bookies=1,
+        max_matches=2,
+        use_cache=False,
+        max_workers=1,
+    )
+
+    assert [match["match_id"] for match in matches] == ["te_3374619"]
+    assert matches[0]["player_a"] == "Michelsen Alex"
+    assert matches[0]["player_b"] == "Cerundolo Juan Manuel"
+    assert matches[0]["commence_time"] == "2026-11-10T12:00:00Z"
+    assert matches[0]["odds_a"] == 1.71
+    assert matches[0]["odds_b"] == 2.48
+    assert matches[0]["kickoff_source"] == "match_header_full_date"
+    assert matches[0]["source_url"] == (
+        "https://www.tennisexplorer.com/match-detail/?id=3374619"
+    )
+    assert requested.count("https://www.tennisexplorer.com/match-detail/?id=3374619") == 1
+    assert not any("9999999" in url for url in requested)
+
+
+def test_bounded_discovery_reserves_detail_slots_for_tournament_candidates(monkeypatch):
+    from src.data import tennis_secondary_odds
+
+    next_html = "".join(
+        f'<a href="/match-detail/?id={index}">Player {index} - Rival {index}</a>'
+        for index in range(150)
+    ) + '<a href="/stockholm/2026/atp-men/">Stockholm</a>'
+    monkeypatch.setattr(
+        tennis_secondary_odds,
+        "_http_get",
+        lambda *_a, **_kw: (
+            '<h2>Next matches</h2><a href="/match-detail/?id=999999">Target - Player</a>'
+            '<h2>Tournament draw</h2>'
+        ),
+    )
+
+    ids = tennis_secondary_odds._bounded_discovered_match_ids(next_html, 150)
+
+    assert len(ids) == 150
+    assert len(set(ids)) == 150
+    assert ids[-1] == "999999"
+
+
+def test_bulk_cache_rejects_old_kickoff_parser_version():
+    from src.data import tennis_secondary_odds
+
+    old_row = {
+        "source_observed_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "commence_time": "2026-11-09T21:16:00Z",
+        "te_parser_version": 1,
+    }
+    current_row = {
+        "source_observed_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "commence_time": "2026-11-09T13:15:00Z",
+        "te_parser_version": tennis_secondary_odds.TE_PARSER_VERSION,
+    }
+
+    assert not tennis_secondary_odds._bulk_has_current_source_times([old_row])
+    assert not tennis_secondary_odds._bulk_has_current_source_times(
+        {"parser_version": 1, "matches": []}
+    )
+    assert tennis_secondary_odds._bulk_has_current_source_times(
+        {"parser_version": tennis_secondary_odds.TE_PARSER_VERSION, "matches": [current_row]}
+    )
+    assert tennis_secondary_odds._bulk_has_current_source_times(
+        {"parser_version": tennis_secondary_odds.TE_PARSER_VERSION, "matches": []}
+    )
 
 
 def test_targeted_te_fixture_lookup_finds_named_match_after_bulk_cap(monkeypatch):
@@ -208,6 +465,7 @@ def test_targeted_te_fixture_lookup_finds_named_match_after_bulk_cap(monkeypatch
         "odds_a": 1.95,
         "odds_b": 2.05,
         "te_bookies_count": 6,
+        "te_parser_version": 2,
         "source_observed_at": observed_at,
     }
     monkeypatch.setattr(tennis_secondary_odds, "_get_next_html", lambda: page)
@@ -332,6 +590,7 @@ def test_adapter_uses_one_exact_fixture_result_for_both_outcomes(monkeypatch):
         "odds_a": 1.95,
         "odds_b": 2.05,
         "te_bookies_count": 6,
+        "te_parser_version": 2,
         "source_observed_at": observed_at,
     }
     calls = []
@@ -359,6 +618,38 @@ def test_adapter_uses_one_exact_fixture_result_for_both_outcomes(monkeypatch):
     assert outcome.result == "usable_quote"
 
 
+def test_adapter_in_memory_cache_rejects_old_parser_rows(monkeypatch):
+    from src.data import tennis_secondary_odds
+    from src.tennis.odds import tennis_explorer
+
+    observed_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    legacy = {
+        "player_a": "old player",
+        "player_b": "old opponent",
+        "source_observed_at": observed_at,
+    }
+    fresh = {
+        "player_a": "new player",
+        "player_b": "new opponent",
+        "source_observed_at": observed_at,
+        "te_parser_version": tennis_secondary_odds.TE_PARSER_VERSION,
+    }
+    tennis_explorer._BULK = [legacy]
+    tennis_explorer._TS = time.time()
+    calls = []
+    monkeypatch.setattr(
+        tennis_secondary_odds,
+        "fetch_te_upcoming_matches",
+        lambda **_kwargs: calls.append(True) or [fresh],
+    )
+
+    bulk, outcome = tennis_explorer._get_bulk_with_diagnostics()
+
+    assert calls == [True]
+    assert bulk == [fresh]
+    assert outcome.status_class == "success"
+
+
 def test_legacy_disk_cache_is_refreshed_without_network(monkeypatch, tmp_path):
     from src.data import tennis_secondary_odds
 
@@ -377,7 +668,11 @@ def test_legacy_disk_cache_is_refreshed_without_network(monkeypatch, tmp_path):
         )
     )
     monkeypatch.setattr(tennis_secondary_odds, "_CACHE_PATH", cache_path)
-    monkeypatch.setattr(tennis_secondary_odds, "_discover_match_ids", lambda: ["fresh"])
+    monkeypatch.setattr(
+        tennis_secondary_odds,
+        "_get_next_html",
+        lambda: '<a href="/match-detail/?id=12345">Shelton - Sinner</a>',
+    )
     observed_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     monkeypatch.setattr(
         tennis_secondary_odds,
@@ -388,6 +683,7 @@ def test_legacy_disk_cache_is_refreshed_without_network(monkeypatch, tmp_path):
             "odds_a": 1.8,
             "odds_b": 2.1,
             "te_bookies_count": 2,
+            "te_parser_version": 2,
             "source_observed_at": observed_at,
         },
     )

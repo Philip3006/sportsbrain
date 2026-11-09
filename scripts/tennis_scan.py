@@ -711,6 +711,43 @@ def format_scan_report(
     return "\n".join(lines)
 
 
+def _append_te_schedule_entry(
+    schedule: list[dict],
+    match: dict,
+    *,
+    tour: str,
+    tournament: str,
+    category: str,
+    surface: str,
+    best_of: int,
+) -> dict:
+    """Retain a validated TennisExplorer fixture independently of signal creation."""
+    entry = {
+        "sport": "tennis",
+        "match_id": match.get("match_id", ""),
+        "source_url": match.get("source_url", ""),
+        "home": match["player_a"],
+        "away": match["player_b"],
+        "kickoff": match.get("commence_time", ""),
+        "kickoff_source": match.get("kickoff_source", "unknown"),
+        "kickoff_timezone": match.get("kickoff_timezone", ""),
+        "kickoff_parser_version": match.get("te_parser_version"),
+        "source_observed_at": match.get("source_observed_at", ""),
+        "tour": tour,
+        "tournament": tournament,
+        "category": category,
+        "surface": surface,
+        "best_of": best_of,
+        "odds_home": match.get("odds_a", 0.0),
+        "odds_away": match.get("odds_b", 0.0),
+        "source": "tennisexplorer",
+        "odds_source": "tennisexplorer",
+        "sport_key": match.get("sport_key", f"te:{match.get('te_slug', 'unknown')}"),
+    }
+    schedule.append(entry)
+    return entry
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -1193,18 +1230,15 @@ def main() -> None:
                             "odds_b": float(m.get("odds_b") or 0.0),
                         }
 
-                schedule.append({
-                    "sport": "tennis",
-                    "home": m["player_a"], "away": m["player_b"],
-                    "kickoff": m.get("commence_time", ""),
-                    "tour": te_tour,
-                    "tournament": tournament_name,
-                    "category": category, "surface": surface, "best_of": best_of,
-                    "odds_home": m.get("odds_a", 0.0),
-                    "odds_away": m.get("odds_b", 0.0),
-                    "source": "tennisexplorer",
-                    "sport_key": m.get("sport_key", f"te:{m.get('te_slug', 'unknown')}"),  # Wave 3B.1
-                })
+                _append_te_schedule_entry(
+                    schedule,
+                    m,
+                    tour=te_tour,
+                    tournament=tournament_name,
+                    category=category,
+                    surface=surface,
+                    best_of=best_of,
+                )
                 added += 1
             print(f"Sekundär-Coverage (TE): {added} zusätzliche Matches hinzugefügt "
                   f"(davon {enriched} Registry-enriched, {dup_skipped} Duplikate übersprungen)")

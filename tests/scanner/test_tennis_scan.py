@@ -59,3 +59,48 @@ def test_committed_elo_snapshot_fails_closed_without_provenance(tmp_path, monkey
     monkeypatch.setattr(tennis_scan, "ROOT", tmp_path)
 
     assert tennis_scan._load_committed_elo_snapshot() is None
+
+
+def test_tennisexplorer_fixture_is_retained_in_schedule_without_signal():
+    from scripts.tennis_scan import _append_te_schedule_entry
+
+    schedule = []
+    actionable_signals = []
+    match = {
+        "match_id": "te_3374619",
+        "source_url": "https://www.tennisexplorer.com/match-detail/?id=3374619",
+        "player_a": "Alex Michelsen",
+        "player_b": "Juan Manuel Cerundolo",
+        "commence_time": "2026-11-10T12:00:00Z",
+        "kickoff_source": "match_header_full_date",
+        "kickoff_timezone": "Europe/Berlin",
+        "te_parser_version": 2,
+        "source_observed_at": "2026-11-09T21:16:00Z",
+        "odds_a": 1.71,
+        "odds_b": 2.48,
+        "sport_key": "te:stockholm_atp",
+    }
+
+    entry = _append_te_schedule_entry(
+        schedule,
+        match,
+        tour="atp",
+        tournament="Stockholm",
+        category="atp_250",
+        surface="hard",
+        best_of=3,
+    )
+
+    assert actionable_signals == []
+    assert schedule == [entry]
+    assert entry["match_id"] == "te_3374619"
+    assert entry["source_url"] == (
+        "https://www.tennisexplorer.com/match-detail/?id=3374619"
+    )
+    assert entry["home"] == "Alex Michelsen"
+    assert entry["away"] == "Juan Manuel Cerundolo"
+    assert entry["kickoff"] == "2026-11-10T12:00:00Z"
+    assert entry["source"] == "tennisexplorer"
+    assert entry["odds_source"] == "tennisexplorer"
+    assert entry["source_observed_at"] == "2026-11-09T21:16:00Z"
+    assert entry["kickoff_source"] == "match_header_full_date"
