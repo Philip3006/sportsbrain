@@ -8,6 +8,7 @@ existierender Elo-Code (`compute_tennis_elo`) unverändert läuft.
 Public API:
     load_match_history()            → (DataFrame, source_tag)
     build_live_rolling_state(df)    → RollingState (FND-MODEL1-001)
+    extract_player_ranks(df)        → dict[player_name → list[(date, rank)]] (FND-MODEL1-013)
 """
 from __future__ import annotations
 
@@ -212,3 +213,51 @@ def build_live_rolling_state(matches: pd.DataFrame) -> RollingState:
         sum(1 for v in state.form.values() if len(v) > 0),
     )
     return state
+
+
+def extract_player_ranks(matches: pd.DataFrame) -> dict[str, list[tuple[pd.Timestamp, float]]]:
+    """Extract all ATP/WTA ranking observations per player from historical match data.
+
+    Returns {elo_player_name → [(observed_at, rank), ...]} sorted ascending by
+    observed_at.  Callers must perform an as-of lookup using the target match
+    timestamp to avoid leaking future rank information into historical predictions
+    (FND-MODEL1-013).
+
+    Validity contract: positive ranking numbers only; values above 3000 are
+    rejected as implausible (same semantics as training-time _MIN_RANK=1500
+    used for missing rows).  Player names use the Elo-key format already
+    present in the historical corpus (Sackmann / XLSX "Surname I." schema).
+    """
+    _RANK_MAX_VALID = 3000.0
+    records = []
+    for name_col, rank_col in (("winner_name", "winner_rank"), ("loser_name", "loser_rank")):
+        if name_col not in matches.columns or rank_col not in matches.columns:
+            continue
+        sub = matches[["tourney_date", name_col, rank_col]].rename(
+            columns={name_col: "player", rank_col: "rank"}
+        )
+        records.append(sub)
+    if not records:
+        return {}
+    combined = pd.concat(records, ignore_index=True).dropna(subset=["rank"])
+    try:
+        combined = combined.copy()
+        combined["rank"] = combined["rank"].astype(float)
+    except (TypeError, ValueError):
+        return {}
+    combined = combined[(combined["rank"] > 0) & (combined["rank"] <= _RANK_MAX_VALID)]
+    if combined.empty:
+        return {}
+    combined["tourney_date"] = pd.to_datetime(combined["tourney_date"], errors="coerce")
+    combined = combined.dropna(subset=["tourney_date"])
+    combined = combined.sort_values("tourney_date").reset_index(drop=True)
+
+    result: dict[str, list[tuple[pd.Timestamp, float]]] = {}
+    for _, row in combined.iterrows():
+        player = str(row["player"])
+        ts = pd.Timestamp(row["tourney_date"])
+        rank = float(row["rank"])
+        if player not in result:
+            result[player] = []
+        result[player].append((ts, rank))
+    return result
