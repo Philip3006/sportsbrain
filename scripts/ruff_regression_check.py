@@ -15,6 +15,7 @@ Datei ohne Vor-Verstoß dieser Regel wird erkannt.
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from collections import Counter
@@ -70,6 +71,17 @@ def main() -> int:
 
     current_raw = json.loads(result.stdout) if result.stdout.strip() else []
     current = _load_violations(current_raw)
+
+    if os.environ.get("RUFF_BASELINE_AUDIT") == "1":
+        rows = [
+            {"filename": filename, "code": code}
+            for (filename, code), count in sorted(current.items())
+            for _ in range(count)
+        ]
+        print("RUFF_BASELINE_AUDIT_BEGIN")
+        print(json.dumps(rows, separators=(",", ":")))
+        print("RUFF_BASELINE_AUDIT_END")
+        return 0
 
     new_violations = []
     for key, count in current.items():
