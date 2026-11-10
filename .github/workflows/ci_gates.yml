@@ -53,6 +53,7 @@ jobs:
         run: |
           python -m pytest -q \
             tests/utils \
+            tests/scripts/test_ruff_regression_check.py \
             tests/test_phase_flags.py \
             tests/test_no_auto_log_regressions.py \
             tests/test_odds_api.py \
