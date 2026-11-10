@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import pickle
 import sys
@@ -711,6 +712,141 @@ def format_scan_report(
     return "\n".join(lines)
 
 
+def _te_bookmaker_count(match: dict) -> int:
+    try:
+        return max(0, int(match.get("te_bookies_count", 0) or 0))
+    except (TypeError, ValueError):
+        return 0
+
+
+def _te_match_has_actionable_odds(match: dict) -> bool:
+    """Require a real, sane two-way quote and minimum book coverage for signals."""
+    try:
+        odds_a = float(match.get("odds_a"))
+        odds_b = float(match.get("odds_b"))
+    except (TypeError, ValueError):
+        return False
+    bookies = _te_bookmaker_count(match)
+    if bookies < 2 or not math.isfinite(odds_a) or not math.isfinite(odds_b):
+        return False
+    if odds_a <= 1.0 or odds_b <= 1.0:
+        return False
+    overround = (1.0 / odds_a) + (1.0 / odds_b)
+    return 0.95 <= overround <= 1.15
+
+
+def _te_non_actionable_model_eval(match: dict) -> dict:
+    """Describe why a visible TennisExplorer fixture cannot produce a signal."""
+    odds_a = match.get("odds_a")
+    odds_b = match.get("odds_b")
+    if odds_a is None or odds_b is None:
+        status = "NO_BET_ODDS_UNAVAILABLE"
+        reason = "No valid two-way price was observed."
+    elif _te_bookmaker_count(match) < 2:
+        status = "NO_BET_INSUFFICIENT_BOOKMAKER_COVERAGE"
+        reason = "Fewer than two bookmaker rows support a signal."
+    else:
+        status = "NO_BET_INVALID_ODDS"
+        reason = "Observed prices failed the two-way odds sanity check."
+    return {
+        "status": status,
+        "reason": reason,
+        "odds_a": odds_a,
+        "odds_b": odds_b,
+        "bookmakers_count": _te_bookmaker_count(match),
+        "source": "tennisexplorer",
+    }
+
+
+def _retain_te_fixture_without_actionable_odds(
+    match: dict,
+    schedule: list[dict],
+    model_evals: dict[str, dict],
+    get_tournament_by_te,
+) -> tuple[bool, bool]:
+    """Record an identifiable fixture without passing it to signal detection.
+
+    Returns ``(retained, registry_enriched)``. ``retained`` is false for
+    fixtures with enough valid odds, which continue through the existing
+    TennisExplorer evaluation path.
+    """
+    if _te_match_has_actionable_odds(match):
+        return False, False
+
+    te_slug = match.get("te_slug", "")
+    te_tour = match.get("te_tour", "")
+    reg = get_tournament_by_te(te_slug, te_tour) if te_slug and te_tour else None
+    if reg is not None:
+        category = reg.category
+        surface = reg.surface
+        best_of = reg.best_of
+        tournament_name = reg.name
+    else:
+        category = surface = ""
+        best_of = 0
+        tournament_name = match.get("te_tournament", "")
+
+    model_evals[f"{match['player_a']} vs {match['player_b']}"] = (
+        _te_non_actionable_model_eval(match)
+    )
+    _append_te_schedule_entry(
+        schedule,
+        match,
+        tour=te_tour,
+        tournament=tournament_name,
+        category=category,
+        surface=surface,
+        best_of=best_of,
+    )
+    return True, reg is not None
+
+
+def _append_te_schedule_entry(
+    schedule: list[dict],
+    match: dict,
+    *,
+    tour: str,
+    tournament: str,
+    category: str,
+    surface: str,
+    best_of: int,
+) -> dict:
+    """Retain a validated TennisExplorer fixture independently of signal creation."""
+    entry = {
+        "sport": "tennis",
+        "match_id": match.get("match_id", ""),
+        "source_url": match.get("source_url", ""),
+        "home": match["player_a"],
+        "away": match["player_b"],
+        "kickoff": match.get("commence_time", ""),
+        "kickoff_source": match.get("kickoff_source", "unknown"),
+        "kickoff_timezone": match.get("kickoff_timezone", ""),
+        "kickoff_parser_version": match.get("te_parser_version"),
+        "source_observed_at": match.get("source_observed_at", ""),
+        "event_status": match.get("event_status", "upcoming"),
+        "event_status_source": match.get(
+            "event_status_source", "tennisexplorer_upcoming_schedule"
+        ),
+        "tour": tour,
+        "tournament": tournament,
+        "category": category,
+        "surface": surface,
+        "best_of": best_of,
+        "odds_home": match.get("odds_a"),
+        "odds_away": match.get("odds_b"),
+        "odds_bookmakers_count": _te_bookmaker_count(match),
+        "source": "tennisexplorer",
+        "odds_source": (
+            "tennisexplorer"
+            if match.get("odds_a") is not None and match.get("odds_b") is not None
+            else None
+        ),
+        "sport_key": match.get("sport_key", f"te:{match.get('te_slug', 'unknown')}"),
+    }
+    schedule.append(entry)
+    return entry
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -1049,7 +1185,7 @@ def main() -> None:
             existing_keys = {
                 canonical_match_key(g["home"], g["away"]) for g in schedule
             }
-            te_matches = fetch_te_upcoming_matches(min_bookies=2, max_matches=150)
+            te_matches = fetch_te_upcoming_matches(min_bookies=0, max_matches=150)
             added = 0
             enriched = 0
             dup_skipped = 0
@@ -1059,6 +1195,15 @@ def main() -> None:
                     dup_skipped += 1
                     continue
                 existing_keys.add(key)
+
+                retained, registry_enriched = _retain_te_fixture_without_actionable_odds(
+                    m, schedule, all_model_evals, get_tournament_by_te
+                )
+                if retained:
+                    if registry_enriched:
+                        enriched += 1
+                    added += 1
+                    continue
 
                 # Registry-Enrichment: bekannte Turniere bekommen category/surface/best_of.
                 te_slug = m.get("te_slug", "")
@@ -1193,18 +1338,15 @@ def main() -> None:
                             "odds_b": float(m.get("odds_b") or 0.0),
                         }
 
-                schedule.append({
-                    "sport": "tennis",
-                    "home": m["player_a"], "away": m["player_b"],
-                    "kickoff": m.get("commence_time", ""),
-                    "tour": te_tour,
-                    "tournament": tournament_name,
-                    "category": category, "surface": surface, "best_of": best_of,
-                    "odds_home": m.get("odds_a", 0.0),
-                    "odds_away": m.get("odds_b", 0.0),
-                    "source": "tennisexplorer",
-                    "sport_key": m.get("sport_key", f"te:{m.get('te_slug', 'unknown')}"),  # Wave 3B.1
-                })
+                _append_te_schedule_entry(
+                    schedule,
+                    m,
+                    tour=te_tour,
+                    tournament=tournament_name,
+                    category=category,
+                    surface=surface,
+                    best_of=best_of,
+                )
                 added += 1
             print(f"Sekundär-Coverage (TE): {added} zusätzliche Matches hinzugefügt "
                   f"(davon {enriched} Registry-enriched, {dup_skipped} Duplikate übersprungen)")
