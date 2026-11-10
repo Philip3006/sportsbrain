@@ -92,6 +92,8 @@ jobs:
       # existierender Altbestand steht in .ruff_baseline.json und
       # darf abgebaut werden, ohne CI zu brechen.
       - name: Ruff regression check (baseline-diff)
+        env:
+          RUFF_BASELINE_AUDIT: '1'
         run: python scripts/ruff_regression_check.py
 
       # ── HARD GATE 5: Release & Publication Provenance (TASK-P0B-004) ──
