@@ -4,5 +4,5 @@
 
 
 ## WTA Finals (WTA) · tour_final · 🔴 LIVE
-Surface: hard · Best of: 3 · Matches gescannt: 3
+Surface: hard · Best of: 3 · Matches gescannt: 2
 _Keine Value-Signals._
