@@ -1,0 +1,11 @@
+{
+  "completed_at": null,
+  "expected_slot": "tennis-scan:2026-11-12T15:00Z",
+  "provider_consuming_execution": false,
+  "resulting_publication_identity": null,
+  "run_id": "43245755325",
+  "schema_version": "tennis-scan-slot-receipt-v1",
+  "started_at": "2026-11-12T15:15:42.903489Z",
+  "status": "CLAIMED",
+  "trigger_type": "watchdog_recovery"
+}
