@@ -286,7 +286,7 @@ def test_S17_cet_converts_correctly():
     # CET applies 2026-10-27T01:00Z → 2027-03-29T01:00Z in Europe/Berlin
     from src.data.tennis_secondary_odds import _parse_commence_time
     # 2026-01-15 is winter: CET (UTC+1)
-    result = _parse_commence_time("15.01.", "15:00")
+    result = _parse_commence_time("15.01.", "15:00", reference_date=datetime(2026, 1, 15).date())
     assert result.endswith("14:00:00Z"), f"Expected 14:00 UTC (CET), got {result}"
 
 
@@ -294,17 +294,18 @@ def test_S18_cest_converts_correctly():
     """CEST (UTC+2, summer): 15:00 CEST → 13:00 UTC."""
     from src.data.tennis_secondary_odds import _parse_commence_time
     # 2026-07-15 is summer: CEST (UTC+2)
-    result = _parse_commence_time("15.07.", "15:00")
+    result = _parse_commence_time("15.07.", "15:00", reference_date=datetime(2026, 7, 15).date())
     assert result.endswith("13:00:00Z"), f"Expected 13:00 UTC (CEST), got {result}"
 
 
-def test_S19_dst_boundary_last_sunday_october():
-    """DST boundary (last Sunday October): 02:30 CEST → 00:30 UTC."""
+def test_S19_ambiguous_dst_wall_time_is_unresolved():
+    """The repeated 02:30 during the autumn clock change cannot select a fold."""
     from src.data.tennis_secondary_odds import _parse_commence_time
-    # 2026-10-25 is the last Sunday of October (CEST → CET transition at 03:00 local)
-    # 02:30 CEST = 00:30 UTC (still CEST before the clock change at 03:00)
-    result = _parse_commence_time("25.10.", "02:30")
-    assert result.endswith("00:30:00Z"), f"Expected 00:30 UTC (CEST→CET boundary), got {result}"
+
+    result = _parse_commence_time(
+        "25.10.", "02:30", reference_date=datetime(2026, 10, 25).date()
+    )
+    assert result == ""
 
 
 def test_S20_utc_to_berlin_display():
@@ -319,7 +320,7 @@ def test_S20_utc_to_berlin_display():
 def test_S21_late_evening_cest_same_date():
     """22:00 CEST → 20:00 UTC (same calendar date, no midnight crossing)."""
     from src.data.tennis_secondary_odds import _parse_commence_time
-    result = _parse_commence_time("13.08.", "22:00")
+    result = _parse_commence_time("13.08.", "22:00", reference_date=datetime(2026, 8, 13).date())
     # 22:00 CEST = 20:00 UTC — still 2026-08-13
     assert "2026-08-13T20:00:00Z" == result
 
@@ -327,7 +328,7 @@ def test_S21_late_evening_cest_same_date():
 def test_S22_midnight_boundary_no_date_shift():
     """23:59 CEST → 21:59 UTC — date stays the same (no UTC date shift for this time)."""
     from src.data.tennis_secondary_odds import _parse_commence_time
-    result = _parse_commence_time("13.08.", "23:59")
+    result = _parse_commence_time("13.08.", "23:59", reference_date=datetime(2026, 8, 13).date())
     # 23:59 CEST (UTC+2) = 21:59 UTC — still 2026-08-13
     assert result.startswith("2026-08-13"), f"Expected same date, got {result}"
     assert "21:59:00Z" in result
