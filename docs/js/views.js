@@ -3103,8 +3103,9 @@ function _openMatchDetail(match) {
   let body = '';
   if (match.played) {
     body = `<div class="modal-info" style="text-align:center;font-size:22px;font-weight:900;letter-spacing:1px">${match.home_score} – ${match.away_score}</div>`;
-  } else if (match.p_home !== undefined) {
-    const ph = match.p_home, pa = match.p_away, pd = match.p_draw ?? 0;
+  } else if (Number.isFinite(match.p_home) && Number.isFinite(match.p_away)) {
+    const ph = match.p_home, pa = match.p_away;
+    const pd = Number.isFinite(match.p_draw) ? match.p_draw : 0;
     body += `<div style="display:flex;gap:6px;margin-bottom:12px">
       <div style="flex:1;text-align:center;background:var(--surface);border-radius:var(--r-md);padding:10px 4px">
         <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase">Heim</div>
