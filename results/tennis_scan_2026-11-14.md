@@ -1,0 +1,12 @@
+# Tennis Scan 2026-11-14
+
+**Aktive Turniere:** 2 · **Signals total:** 0
+
+
+## ATP Finals (ATP) · tour_final · 🔴 LIVE
+Surface: hard · Best of: 3 · Matches gescannt: 2
+_Keine Value-Signals._
+
+## WTA Finals (WTA) · tour_final · 🔴 LIVE
+Surface: hard · Best of: 3 · Matches gescannt: 1
+_Keine Value-Signals._
