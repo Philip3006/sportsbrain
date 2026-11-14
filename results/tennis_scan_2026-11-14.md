@@ -4,7 +4,7 @@
 
 
 ## ATP Finals (ATP) · tour_final · 🔴 LIVE
-Surface: hard · Best of: 3 · Matches gescannt: 2
+Surface: hard · Best of: 3 · Matches gescannt: 3
 _Keine Value-Signals._
 
 ## WTA Finals (WTA) · tour_final · 🔴 LIVE
