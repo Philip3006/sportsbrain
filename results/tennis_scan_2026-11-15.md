@@ -1,12 +1,11 @@
 # Tennis Scan 2026-11-15
 
-**Aktive Turniere:** 2 · **Signals total:** 1
+**Aktive Turniere:** 2 · **Signals total:** 0
 
 
 ## ATP Finals (ATP) · tour_final · 🔴 LIVE
-Surface: hard · Best of: 3 · Matches gescannt: 4
-- [ATP] **Ben Shelton vs Arthur Fils** · Match Winner: Ben Shelton
-  Quote 2.47 · Modell 46.5% · EV +14.8% · Stake 5.00€ · MEDIUM
+Surface: hard · Best of: 3 · Matches gescannt: 3
+_Keine Value-Signals._
 
 ## WTA Finals (WTA) · tour_final · 🔴 LIVE
 Surface: hard · Best of: 3 · Matches gescannt: 1
