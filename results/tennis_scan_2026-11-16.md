@@ -18,4 +18,4 @@ Surface: hard · Best of: 3 · Matches gescannt: 2
 - [ATP] **Daniil Medvedev vs Flavio Cobolli** · Daniil Medvedev Set AH -1.5 _(Satz-AH = SET handicap)_ ⭐
   Quote 2.79 · Modell 41.9% · EV +17.0% · Stake 5.00€ · HIGH
 - [ATP] **Daniil Medvedev vs Flavio Cobolli** · Match Winner: Flavio Cobolli
-  Quote 3.04 · Modell 37.5% · EV +14.1% · Stake 5.00€ · MEDIUM
+  Quote 3.00 · Modell 37.5% · EV +12.6% · Stake 5.00€ · MEDIUM
