@@ -1,9 +1,9 @@
 {
   "job": "bundesliga2_scan",
   "status": "ok",
-  "last_run_at": "2026-11-16T15:30:17Z",
-  "started_at": "2026-11-16T15:30:17Z",
-  "duration_s": 0.51,
+  "last_run_at": "2026-11-17T10:25:04Z",
+  "started_at": "2026-11-17T10:25:04Z",
+  "duration_s": 0.67,
   "exit_code": 0,
   "error": null,
   "fallback_used": "no_fixtures",
