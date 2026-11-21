@@ -1,8 +1,8 @@
 {
   "job": "bundesliga2_settle",
   "status": "error",
-  "last_run_at": "2026-11-18T02:31:36Z",
-  "started_at": "2026-11-18T02:31:36Z",
+  "last_run_at": "2026-11-21T02:43:07Z",
+  "started_at": "2026-11-21T02:43:07Z",
   "duration_s": null,
   "exit_code": 1,
   "error": null,
